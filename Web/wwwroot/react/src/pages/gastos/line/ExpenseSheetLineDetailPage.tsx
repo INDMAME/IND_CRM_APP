@@ -88,6 +88,7 @@ const ExpenseSheetLineDetailContent = () => {
   } = useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canViewLinkedTicketLines = canAccess("GASTOS_TICKETS", "View");
+  const canLinkExpenseTicket = canAccess("GASTOS_HOJA_GASTO", "Add") && canViewLinkedTicketLines;
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const lineId = safeText(window.__EXPENSE_LINE_ID__);
   const lineMode = safeText(window.__EXPENSE_LINE_MODE__).toLowerCase();
@@ -703,7 +704,7 @@ const ExpenseSheetLineDetailContent = () => {
     setStatus,
   });
 
-  const { handleUpdate, handleDelete } = useExpenseSheetLineDetailMutations({
+  const { handleUpdate, handleDelete, handleDetachTicket } = useExpenseSheetLineDetailMutations({
     busy,
     isEditing,
     isCreateMode,
@@ -809,6 +810,91 @@ const ExpenseSheetLineDetailContent = () => {
       askConfirmation: isEditing,
     });
   }, [isEditing, linkedTicketReturnContext]);
+
+  // MMS - Opens the existing ticket list in single-line attachment mode. - 2026.08.04
+  const handleOpenExistingTicketLink = useCallback(() => {
+    if (
+      !sheetId ||
+      !lineId ||
+      isCreateMode ||
+      isEditing ||
+      busy ||
+      hasLinkedTicket ||
+      line?.ticket === true ||
+      !canEditExpenseCurrent ||
+      isSheetLocked ||
+      !canLinkExpenseTicket
+    ) {
+      return;
+    }
+    const query = new URLSearchParams({
+      action: "link-line",
+      hojaGastosId: sheetId,
+      sheetLineRecId: lineId,
+      lineRecId: lineId,
+      origin: "expense-line",
+    });
+    navigateToExpenseUrl(`/Gastos/Tickets?${query.toString()}`, {
+      askConfirmation: false,
+      bypassGuardOnce: true,
+    });
+  }, [
+    busy,
+    canEditExpenseCurrent,
+    canLinkExpenseTicket,
+    hasLinkedTicket,
+    isCreateMode,
+    isEditing,
+    isSheetLocked,
+    line?.ticket,
+    lineId,
+    sheetId,
+  ]);
+
+  const handleOpenDetachTicketConfirm = useCallback(() => {
+    if (
+      !hasLinkedTicket ||
+      line?.ticket === true ||
+      busy ||
+      isEditing ||
+      !canEditExpenseCurrent ||
+      isSheetLocked ||
+      !canLinkExpenseTicket
+    ) {
+      return;
+    }
+    setModalError("");
+    setStatus("");
+    openConfirm({
+      title: indT("ExpenseSheets_Line_Ticket_DetachTitle", "Detach ticket"),
+      message: indT(
+        "ExpenseSheets_Line_Ticket_DetachBody",
+        "The expense line, ticket and photo will be kept. The ticket will return to pending status."
+      ),
+      confirmText: indT("ExpenseSheets_Line_Ticket_DetachButton", "Detach ticket"),
+      cancelText: indT("Common_Cancel", "Cancel"),
+      onConfirm: async () => {
+        const detached = await handleDetachTicket();
+        if (!detached) return false;
+        invalidateCachedListForRefetch();
+        reloadExpensePage();
+        return true;
+      },
+    });
+  }, [
+    busy,
+    canEditExpenseCurrent,
+    canLinkExpenseTicket,
+    handleDetachTicket,
+    hasLinkedTicket,
+    invalidateCachedListForRefetch,
+    isEditing,
+    isSheetLocked,
+    line?.ticket,
+    openConfirm,
+    setModalError,
+    setStatus,
+  ]);
 
   const handleOpenLinkedTicketLine = useCallback(
     (ticketLineRecId: string) => {
@@ -964,6 +1050,35 @@ const ExpenseSheetLineDetailContent = () => {
           showLinkedTicketField={hasLinkedTicket}
           onOpenLinkedTicket={handleOpenLinkedTicket}
         />
+        {!isCreateMode &&
+          !isEditing &&
+          canEditExpenseCurrent &&
+          !isSheetLocked &&
+          canLinkExpenseTicket &&
+          line.ticket !== true ? (
+          <div className="glass-panel shadow-card rounded-[var(--radius-xl)] border border-slate-200 bg-white p-3 sm:p-4">
+            {!hasLinkedTicket ? (
+              <button
+                type="button"
+                className="ind-action-btn min-h-11 w-full px-4 py-2.5 text-sm font-semibold sm:text-base"
+                onClick={handleOpenExistingTicketLink}
+                disabled={busy}
+              >
+                {indT("ExpenseSheets_Line_Ticket_LinkExisting", "Attach existing ticket")}
+              </button>
+            ) : null}
+            {hasLinkedTicket ? (
+              <button
+                type="button"
+                className="ind-action-btn min-h-11 w-full border-amber-300 px-4 py-2.5 text-sm font-semibold text-amber-900 sm:text-base"
+                onClick={handleOpenDetachTicketConfirm}
+                disabled={busy}
+              >
+                {indT("ExpenseSheets_Line_Ticket_DetachButton", "Detach ticket")}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
         {linkedTicketLinesSection}
       </>
     ) : null;

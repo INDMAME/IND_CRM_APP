@@ -1,0 +1,94 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "tickets.abrir-y-filtrar-tickets",
+    "moduleId":  "tickets",
+    "sectionNumber":  "9.1",
+    "title":  "Abrir y filtrar tickets",
+    "summary":  "1. Abra el menú lateral.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Abrir y filtrar tickets",
+                                  "tickets",
+                                  "justificantes"
+                              ],
+                    "eu-ES":  [
+                                  "Tiketak ireki eta iragaztea",
+                                  "tiketa",
+                                  "gastuen frogagiriak"
+                              ],
+                    "en":  [
+                               "Open and filter tickets",
+                               "tickets",
+                               "expense receipts"
+                           ],
+                    "pt":  [
+                               "Abrir e filtrar tickets",
+                               "tickets",
+                               "comprovativos de despesa"
+                           ],
+                    "it":  [
+                               "Aprire e filtrare i ticket",
+                               "ticket",
+                               "giustificativi di spesa"
+                           ],
+                    "zh-Hans":  [
+                                    "打开和筛选票据",
+                                    "票据",
+                                    "费用凭证"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre abrir y filtrar tickets?"
+                                      ],
+                            "eu-ES":  [
+                                          "Tiketak ireki eta iragaztea gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about open and filter tickets?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Abrir e filtrar tickets."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Aprire e filtrare i ticket."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于打开和筛选票据的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "tickets.modulo-tickets"
+                        ],
+    "routeKey":  "expenses.tickets",
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "55749BF03F28E517EDB209033EA4330BC2F6F6398080A203344C1A36A4126B60",
+    "assets":  [
+                   "manual-1.5.image44",
+                   "manual-1.5.image45"
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "9.1",
+                   "pageFromTableOfContents":  24
+               }
+}

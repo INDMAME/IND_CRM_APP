@@ -1,0 +1,100 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "troubleshooting.la-identificacion-se-repite",
+    "moduleId":  "troubleshooting",
+    "sectionNumber":  "12.2",
+    "title":  "La identificación se repite",
+    "summary":  "Cierre todas las pestañas del CRM, compruebe que utiliza la cuenta corporativa correcta y vuelva a entrar desde el acceso oficial. No pruebe contraseñas repetidamente. Si la cuenta está bloqueada o la verificación falla, contacte con soporte.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "La identificación se repite",
+                                  "problemas frecuentes",
+                                  "soporte"
+                              ],
+                    "eu-ES":  [
+                                  "Identifikazioa errepikatzen da",
+                                  "ohiko arazoak",
+                                  "laguntza"
+                              ],
+                    "en":  [
+                               "Sign-in repeats",
+                               "common problems",
+                               "support"
+                           ],
+                    "pt":  [
+                               "A identificação repete-se",
+                               "problemas frequentes",
+                               "suporte"
+                           ],
+                    "it":  [
+                               "L\u0027accesso si ripete",
+                               "problemi frequenti",
+                               "assistenza"
+                           ],
+                    "zh-Hans":  [
+                                    "重复要求登录",
+                                    "常见问题",
+                                    "技术支持"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre la identificación se repite?"
+                                      ],
+                            "eu-ES":  [
+                                          "Identifikazioa errepikatzen da gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about sign-in repeats?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com A identificação repete-se."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con L\u0027accesso si ripete."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于重复要求登录的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "90DA74519A407B857E729EFC191D2C913FEE425B970077652B4AB54779143121",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+                         {
+                             "id":  "troubleshooting.la-identificacion-se-repite.quick-01",
+                             "question":  "¿Qué hago si la identificación se repite?",
+                             "answer":  "Cierre todas las pestañas del CRM, compruebe que utiliza la cuenta corporativa correcta y vuelva a entrar desde el acceso oficial. No pruebe contraseñas repetidamente. Si la cuenta está bloqueada o la verificación falla, contacte con soporte.",
+                             "sourceChunkIds":  [
+                                                    "troubleshooting.la-identificacion-se-repite--01"
+                                                ]
+                         }
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "12.2",
+                   "pageFromTableOfContents":  32
+               }
+}

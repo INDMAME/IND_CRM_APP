@@ -1,0 +1,93 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expense-approval.acciones-del-propietario",
+    "moduleId":  "expense-approval",
+    "sectionNumber":  "10.3",
+    "title":  "Acciones del propietario",
+    "summary":  "Si la autoaprobación (configurada en gestión de personas) no está habilitada, una hoja propia en Borrador ofrece Solicitar aprobación. Una hoja propia en Aprobación solicitada puede ofrecer Deshacer solicitud. Una hoja Rechazada puede ofrecer Pasar a Borrador.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Acciones del propietario",
+                                  "aprobación de gastos",
+                                  "estados de hoja"
+                              ],
+                    "eu-ES":  [
+                                  "Jabearen ekintzak",
+                                  "gastuen onarpena",
+                                  "orriaren egoerak"
+                              ],
+                    "en":  [
+                               "Owner actions",
+                               "expense approval",
+                               "sheet status"
+                           ],
+                    "pt":  [
+                               "Ações do proprietário",
+                               "aprovação de despesas",
+                               "estado da folha"
+                           ],
+                    "it":  [
+                               "Azioni del proprietario",
+                               "approvazione spese",
+                               "stato nota spese"
+                           ],
+                    "zh-Hans":  [
+                                    "所有者操作",
+                                    "费用审批",
+                                    "费用单状态"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre acciones del propietario?"
+                                      ],
+                            "eu-ES":  [
+                                          "Jabearen ekintzak gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about owner actions?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Ações do proprietário."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Azioni del proprietario."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于所有者操作的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "FF995DCA6B4D4D34F6E288BC7A1F288271438945C9E403B97EE0CFC2CC3EC667",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "10.3",
+                   "pageFromTableOfContents":  27
+               }
+}

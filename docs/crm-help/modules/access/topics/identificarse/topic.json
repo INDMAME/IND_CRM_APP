@@ -1,0 +1,92 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "access.identificarse",
+    "moduleId":  "access",
+    "sectionNumber":  "4.2",
+    "title":  "Identificarse",
+    "summary":  "1. En la pantalla Bienvenido, pulse Entrar con Microsoft.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Identificarse",
+                                  "acceso al CRM",
+                                  "iniciar sesión"
+                              ],
+                    "eu-ES":  [
+                                  "Saioa hastea",
+                                  "CRMra sartzea",
+                                  "saioa hasi"
+                              ],
+                    "en":  [
+                               "Sign in",
+                               "CRM access",
+                               "sign in"
+                           ],
+                    "pt":  [
+                               "Iniciar sessão",
+                               "acesso ao CRM",
+                               "iniciar sessão"
+                           ],
+                    "it":  [
+                               "Accedere",
+                               "accesso al CRM",
+                               "accedere"
+                           ],
+                    "zh-Hans":  [
+                                    "登录",
+                                    "访问 CRM"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre identificarse?"
+                                      ],
+                            "eu-ES":  [
+                                          "Saioa hastea gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about sign in?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Iniciar sessão."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Accedere."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于登录的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "9D3FFB1FB9302A334B7246061DBC149764FDC8C98CB7693F8CB3167BB9F2D8B9",
+    "assets":  [
+                   "manual-1.5.image2"
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "4.2",
+                   "pageFromTableOfContents":  6
+               }
+}

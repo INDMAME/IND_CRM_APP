@@ -399,6 +399,34 @@ app.UseMiddleware<IndContextRefreshMiddleware>();
 // Rutas MVC
 // -----------------------------
 app.MapControllerRoute(
+    name: "api-help-catalog",
+    pattern: "api/help/catalog",
+    defaults: new { controller = "Home", action = "ApiHelpCatalog" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
+    name: "api-help-topic",
+    pattern: "api/help/topics/{topicId}",
+    defaults: new { controller = "Home", action = "ApiHelpTopic" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
+    name: "api-help-ask",
+    pattern: "api/help/ask",
+    defaults: new { controller = "Home", action = "ApiHelpAsk" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
+    name: "api-help-feedback",
+    pattern: "api/help/feedback",
+    defaults: new { controller = "Home", action = "ApiHelpFeedback" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
     name: "api-auth-entra-context",
     pattern: "api/auth/entra/context",
     defaults: new { controller = "Auth", action = "ApiEntraContext" },
@@ -606,6 +634,21 @@ app.MapControllerRoute(
     pattern: "api/crm/expensesheets/{hojaGastosId}/reimbursable-expense/propagate",
     defaults: new { controller = "Gastos", action = "ApiExpenseSheetReimbursableExpensePropagate" },
     constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+// MMS - Registers line ticket routes before the generic expense line routes. - 2026.08.04
+app.MapControllerRoute(
+    name: "api-expense-sheets-line-ticket-attach",
+    pattern: "api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId}/ticket",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetLineTicketAttach" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("PUT") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheets-line-ticket-detach",
+    pattern: "api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId}/ticket",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetLineTicketDetach" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("DELETE") }
 );
 
 app.MapControllerRoute(

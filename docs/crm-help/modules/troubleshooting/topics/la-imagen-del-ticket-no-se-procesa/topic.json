@@ -1,0 +1,100 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "troubleshooting.la-imagen-del-ticket-no-se-procesa",
+    "moduleId":  "troubleshooting",
+    "sectionNumber":  "12.5",
+    "title":  "La imagen del ticket no se procesa",
+    "summary":  "1. Compruebe que la imagen corresponde a un formato admitido y que no supera el límite indicado por la aplicación.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "La imagen del ticket no se procesa",
+                                  "problemas frecuentes",
+                                  "soporte"
+                              ],
+                    "eu-ES":  [
+                                  "Tiketaren irudia ez da prozesatzen",
+                                  "ohiko arazoak",
+                                  "laguntza"
+                              ],
+                    "en":  [
+                               "The ticket image is not processed",
+                               "common problems",
+                               "support"
+                           ],
+                    "pt":  [
+                               "A imagem do ticket não é processada",
+                               "problemas frequentes",
+                               "suporte"
+                           ],
+                    "it":  [
+                               "L\u0027immagine del ticket non viene elaborata",
+                               "problemi frequenti",
+                               "assistenza"
+                           ],
+                    "zh-Hans":  [
+                                    "票据图片未被处理",
+                                    "常见问题",
+                                    "技术支持"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre la imagen del ticket no se procesa?"
+                                      ],
+                            "eu-ES":  [
+                                          "Tiketaren irudia ez da prozesatzen gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about the ticket image is not processed?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com A imagem do ticket não é processada."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con L\u0027immagine del ticket non viene elaborata."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于票据图片未被处理的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "1AED7D5350307584F4A053B863C795B6E9EC047AAA07B7598F80786C68D3C22A",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+                         {
+                             "id":  "troubleshooting.la-imagen-del-ticket-no-se-procesa.quick-01",
+                             "question":  "¿Qué hago si la imagen del ticket no se procesa?",
+                             "answer":  "1. Compruebe que la imagen corresponde a un formato admitido y que no supera el límite indicado por la aplicación. 2. Si usa cámara, conceda permiso solo cuando el navegador lo solicite para el CRM. 3. Tome una nueva fotografía con luz uniforme, sin recortar datos y evitando reflejos. 4. Si aparece Reintentar carga, utilícelo una sola vez y espere. 5. Si se creó un ticket parcial, anote su identificador antes de cerrar el mensaje.",
+                             "sourceChunkIds":  [
+                                                    "troubleshooting.la-imagen-del-ticket-no-se-procesa--01"
+                                                ]
+                         }
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "12.5",
+                   "pageFromTableOfContents":  32
+               }
+}

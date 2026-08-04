@@ -1,0 +1,93 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "glossary.glosario-basico",
+    "moduleId":  "glossary",
+    "sectionNumber":  "13",
+    "title":  "Glosario básico",
+    "summary":  "Aplicación web: programa que se utiliza desde un navegador sin instalar una aplicación específica para cada función.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Glosario básico",
+                                  "glosario",
+                                  "definiciones"
+                              ],
+                    "eu-ES":  [
+                                  "Oinarrizko glosarioa",
+                                  "glosarioa",
+                                  "definizioak"
+                              ],
+                    "en":  [
+                               "Basic glossary",
+                               "glossary",
+                               "definitions"
+                           ],
+                    "pt":  [
+                               "Glossário básico",
+                               "glossário",
+                               "definições"
+                           ],
+                    "it":  [
+                               "Glossario di base",
+                               "glossario",
+                               "definizioni"
+                           ],
+                    "zh-Hans":  [
+                                    "基本术语表",
+                                    "术语表",
+                                    "定义"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre glosario básico?"
+                                      ],
+                            "eu-ES":  [
+                                          "Oinarrizko glosarioa gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about basic glossary?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Glossário básico."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Glossario di base."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于基本术语表的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "1288A7A2DC2294631884F76D26A3ABE0FBF013B8F9F63DA0896264275110B616",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "13",
+                   "pageFromTableOfContents":  32
+               }
+}

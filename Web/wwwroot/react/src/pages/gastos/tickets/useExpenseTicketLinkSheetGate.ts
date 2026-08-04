@@ -3,11 +3,14 @@ import { indT } from "../../../utils/indI18n.ts";
 import { isExpenseAbortLikeError } from "../utils/expenseRequestRetry.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { resolveExpenseSheetEditAccess } from "../utils/expenseSheetEditAccess.ts";
+import type { ExpenseSheetLine } from "../expenseTypes.ts";
 
 type LinkSheetGateState = {
   linkSheetLocked: boolean;
   linkSheetBlockedMessage: string;
   linkSheetCheckBusy: boolean;
+  linkSheetCheckComplete: boolean;
+  linkSheetLines: ExpenseSheetLine[];
 };
 
 type LinkSheetGateAction =
@@ -36,6 +39,8 @@ const INITIAL_LINK_SHEET_GATE_STATE: LinkSheetGateState = {
   linkSheetLocked: false,
   linkSheetBlockedMessage: "",
   linkSheetCheckBusy: false,
+  linkSheetCheckComplete: false,
+  linkSheetLines: [],
 };
 
 const linkSheetGateReducer = (state: LinkSheetGateState, action: LinkSheetGateAction): LinkSheetGateState => {
@@ -82,6 +87,8 @@ export const useExpenseTicketLinkSheetGate = ({
           linkSheetLocked: true,
           linkSheetBlockedMessage: indT("Auth_PermissionDenied_Body", "No permission."),
           linkSheetCheckBusy: false,
+          linkSheetCheckComplete: true,
+          linkSheetLines: [],
         },
       });
       return;
@@ -92,6 +99,8 @@ export const useExpenseTicketLinkSheetGate = ({
       type: "patch",
       patch: {
         linkSheetCheckBusy: true,
+        linkSheetCheckComplete: false,
+        linkSheetLines: [],
       },
     });
 
@@ -118,6 +127,8 @@ export const useExpenseTicketLinkSheetGate = ({
                 ? resolveBlockedMessage(accessResult.isPaid)
                 : safeText(accessResult.blockedMessage),
             linkSheetCheckBusy: false,
+            linkSheetCheckComplete: true,
+            linkSheetLines: accessResult.lines,
           },
         });
       } catch (error) {
@@ -128,6 +139,7 @@ export const useExpenseTicketLinkSheetGate = ({
             type: "patch",
             patch: {
               linkSheetCheckBusy: false,
+              linkSheetCheckComplete: true,
             },
           });
           return;
@@ -140,6 +152,8 @@ export const useExpenseTicketLinkSheetGate = ({
             linkSheetBlockedMessage:
               error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."),
             linkSheetCheckBusy: false,
+            linkSheetCheckComplete: true,
+            linkSheetLines: [],
           },
         });
       }

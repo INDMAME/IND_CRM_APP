@@ -1698,4 +1698,139 @@
   <data name="ExpenseSheetLink_CompanySwitched" xml:space="preserve">
     <value>Enpresaren testuingurua aldatu da gastu-orria mezu elektronikotik irekitzeko.</value>
   </data>
+  <data name="ExpenseSheets_Line_Ticket_LinkExisting" xml:space="preserve">
+    <value>Lotu lehendik dagoen tiketa</value>
+  </data>
+  <data name="ExpenseSheets_Line_Ticket_DetachButton" xml:space="preserve">
+    <value>Deslotu tiketa</value>
+  </data>
+  <data name="ExpenseSheets_Line_Ticket_DetachTitle" xml:space="preserve">
+    <value>Deslotu tiketa</value>
+  </data>
+  <data name="ExpenseSheets_Line_Ticket_DetachBody" xml:space="preserve">
+    <value>Gastu-lerroa, tiketa eta argazkia gordeko dira. Tiketa Zain egoerara itzuliko da.</value>
+  </data>
+  <data name="ExpenseSheets_Line_Ticket_Detaching" xml:space="preserve">
+    <value>Tiketa deslotzen...</value>
+  </data>
+  <data name="ExpenseSheets_Line_Ticket_Detached" xml:space="preserve">
+    <value>Tiketa deslotuta.</value>
+  </data>
+  <data name="ExpenseSheets_Line_Ticket_DetachFailed" xml:space="preserve">
+    <value>Ezin izan da tiketa deslotu.</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_TargetTitle" xml:space="preserve">
+    <value>Helburuko gastu-lerroa</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_SelectHint" xml:space="preserve">
+    <value>Hautatu tiket bat lerro honekin alderatzeko.</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_LineValue" xml:space="preserve">
+    <value>Lerroa</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_TicketValue" xml:space="preserve">
+    <value>Tiketa</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Match" xml:space="preserve">
+    <value>Bat dator</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Difference" xml:space="preserve">
+    <value>Desberdina</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Amount" xml:space="preserve">
+    <value>Zenbatekoa</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Date" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Currency" xml:space="preserve">
+    <value>Moneta</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Type" xml:space="preserve">
+    <value>Mota</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_TargetMissing" xml:space="preserve">
+    <value>Ez da helburuko gastu-lerroa aurkitu.</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_TargetAlreadyLinked" xml:space="preserve">
+    <value>Helburuko gastu-lerroak dagoeneko tiket bat du lotuta.</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_AttachButton" xml:space="preserve">
+    <value>Lotu lehendik dagoen tiketa</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_ConfirmBody" xml:space="preserve">
+    <value>Hautatutako tiketa lotuko da eskuzko gastu-lerroaren balioak ordezkatu gabe.</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Attaching" xml:space="preserve">
+    <value>Tiketa gastu-lerrora lotzen...</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Attached" xml:space="preserve">
+    <value>Tiketa lotuta.</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_AttachFailed" xml:space="preserve">
+    <value>Ezin izan da tiketa lotu.</value>
+  </data>
+  <data name="HomeHelp_CardTitle" xml:space="preserve"><value>Zure CRM laguntzailea</value></data>
+  <data name="HomeHelp_CardBody" xml:space="preserve"><value>Galdetu dokumentatutako CRM prozesuei buruz eta jaso erantzun gidatua nahi duzun hizkuntzan.</value></data>
+  <data name="HomeHelp_SuggestionsLabel" xml:space="preserve"><value>Probatu galdera hauetako bat</value></data>
+  <data name="HomeHelp_OpenAria" xml:space="preserve"><value>Ireki CRM laguntza</value></data>
+  <data name="HomeHelp_Callout1" xml:space="preserve"><value>Laguntza behar duzu CRMarekin?</value></data>
+  <data name="HomeHelp_Callout2" xml:space="preserve"><value>Galdetu nola funtzionatzen duen prozesu batek.</value></data>
+  <data name="HomeHelp_Callout3" xml:space="preserve"><value>Urratsez urrats gidatu zaitzaket.</value></data>
+  <data name="HomeHelp_Suggestion1" xml:space="preserve"><value>Nola sortzen dut bisita bat?</value></data>
+  <data name="HomeHelp_Suggestion2" xml:space="preserve"><value>Nola sortzen dut gastu-orria?</value></data>
+  <data name="HomeHelp_Suggestion3" xml:space="preserve"><value>Nola kudeatzen dut gastu-tiketa?</value></data>
+  <data name="HomeHelp_ChatLoading" xml:space="preserve"><value>CRM laguntza irekitzen...</value></data>
+  <data name="HomeHelp_RenderError" xml:space="preserve"><value>Ezin izan da CRM laguntza erakutsi.</value></data>
+  <data name="HomeHelp_PanelTitle" xml:space="preserve"><value>CRM laguntza</value></data>
+  <data name="HomeHelp_Send" xml:space="preserve"><value>Bidali galdera</value></data>
+  <data name="HomeHelp_Sending" xml:space="preserve"><value>Bidaltzen</value></data>
+  <data name="HomeHelp_Retry" xml:space="preserve"><value>Saiatu berriro</value></data>
+  <data name="HomeHelp_Warnings" xml:space="preserve"><value>Oharrak</value></data>
+  <data name="HomeHelp_InputPlaceholder" xml:space="preserve"><value>Galdetu CRM nola erabili...</value></data>
+  <data name="HomeHelp_InputPrivacyNotice" xml:space="preserve"><value>Ez sartu datu pertsonalik, bezeroen daturik edo sekreturik.</value></data>
+  <data name="HomeHelp_EmptyTitle" xml:space="preserve"><value>Zertan behar duzu laguntza?</value></data>
+  <data name="HomeHelp_EmptyBody" xml:space="preserve"><value>Egin galdera bat edo aukeratu dokumentatutako gai bat.</value></data>
+  <data name="HomeHelp_NoContextTitle" xml:space="preserve"><value>Laguntza ez dago erabilgarri</value></data>
+  <data name="HomeHelp_NoContextBody" xml:space="preserve"><value>Ezin izan da CRM gida kargatu.</value></data>
+  <data name="HomeHelp_NoContextMessage" xml:space="preserve"><value>Birkargatu orria eta saiatu berriro.</value></data>
+  <data name="HomeHelp_LanguageLabel" xml:space="preserve"><value>Erantzunaren hizkuntza</value></data>
+  <data name="HomeHelp_CatalogTitle" xml:space="preserve"><value>Laguntza-gaiak</value></data>
+  <data name="HomeHelp_CatalogLoading" xml:space="preserve"><value>Gaiak kargatzen...</value></data>
+  <data name="HomeHelp_CatalogError" xml:space="preserve"><value>Ezin izan dira laguntza-gaiak kargatu.</value></data>
+  <data name="HomeHelp_CatalogToggle" xml:space="preserve"><value>Arakatu laguntza-gaiak</value></data>
+  <data name="HomeHelp_CatalogSearchLabel" xml:space="preserve"><value>Bilatu laguntza-gaietan</value></data>
+  <data name="HomeHelp_CatalogSearchPlaceholder" xml:space="preserve"><value>Bilatu gaiak...</value></data>
+  <data name="HomeHelp_CatalogEmpty" xml:space="preserve"><value>Ez dago bat datorren gairik.</value></data>
+  <data name="HomeHelp_Loading" xml:space="preserve"><value>CRM gidan bilatzen...</value></data>
+  <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>Eskaera gehiegi daude. Itxaron eta saiatu berriro.</value></data>
+  <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>Laguntzailea ez dago erabilgarri une honetan.</value></data>
+  <data name="HomeHelp_NeedsSelection" xml:space="preserve"><value>Aukeratu gairik hurbilena zehaztasunez erantzun ahal izateko.</value></data>
+  <data name="HomeHelp_NotDocumented" xml:space="preserve"><value>Informazio hau oraindik ez dago dokumentatuta.</value></data>
+  <data name="HomeHelp_TopicQuestionTemplate" xml:space="preserve"><value>Azaldu nola erabili {0}.</value></data>
+  <data name="HomeHelp_SelectedTopic" xml:space="preserve"><value>Hautatutako gaia: {0}</value></data>
+  <data name="HomeHelp_ClearTopic" xml:space="preserve"><value>Kendu</value></data>
+  <data name="HomeHelp_KnowledgeVersion" xml:space="preserve"><value>Gidaren {0} bertsioa</value></data>
+  <data name="HomeHelp_SourcesLabel" xml:space="preserve"><value>Iturriak</value></data>
+  <data name="HomeHelp_SourceLoading" xml:space="preserve"><value>Iturria kargatzen...</value></data>
+  <data name="HomeHelp_SourceError" xml:space="preserve"><value>Ezin izan da aipatutako atala kargatu.</value></data>
+  <data name="HomeHelp_Navigate" xml:space="preserve"><value>Ireki modulua</value></data>
+  <data name="HomeHelp_QuickAnswer" xml:space="preserve"><value>Berrikusitako erantzun azkarra</value></data>
+  <data name="HomeHelp_FeedbackPrompt" xml:space="preserve"><value>Erantzun hau erabilgarria izan da?</value></data>
+  <data name="HomeHelp_HelpfulAria" xml:space="preserve"><value>Markatu erantzuna erabilgarri gisa</value></data>
+  <data name="HomeHelp_NotHelpfulAria" xml:space="preserve"><value>Markatu erantzuna ez-erabilgarri gisa</value></data>
+  <data name="HomeHelp_FeedbackReasonLabel" xml:space="preserve"><value>Arrazoia</value></data>
+  <data name="HomeHelp_FeedbackReasonPlaceholder" xml:space="preserve"><value>Hautatu arrazoi bat</value></data>
+  <data name="HomeHelp_FeedbackReason_incorrect" xml:space="preserve"><value>Okerra da</value></data>
+  <data name="HomeHelp_FeedbackReason_outdated" xml:space="preserve"><value>Zaharkituta dago</value></data>
+  <data name="HomeHelp_FeedbackReason_unclear" xml:space="preserve"><value>Ez da argia</value></data>
+  <data name="HomeHelp_FeedbackReason_incomplete" xml:space="preserve"><value>Osatu gabe dago</value></data>
+  <data name="HomeHelp_FeedbackReason_permissions" xml:space="preserve"><value>Ez dator bat nire baimenekin</value></data>
+  <data name="HomeHelp_FeedbackReason_other" xml:space="preserve"><value>Beste arrazoi bat</value></data>
+  <data name="HomeHelp_FeedbackCommentLabel" xml:space="preserve"><value>Aukerako iruzkina</value></data>
+  <data name="HomeHelp_FeedbackCommentPlaceholder" xml:space="preserve"><value>Ez sartu datu pertsonalik edo bezeroen daturik.</value></data>
+  <data name="HomeHelp_FeedbackSubmit" xml:space="preserve"><value>Bidali balorazioa</value></data>
+  <data name="HomeHelp_FeedbackSending" xml:space="preserve"><value>Bidaltzen...</value></data>
+  <data name="HomeHelp_FeedbackThanks" xml:space="preserve"><value>Eskerrik asko. Zure balorazioa gorde da.</value></data>
+  <data name="HomeHelp_FeedbackError" xml:space="preserve"><value>Ezin izan da balorazioa gorde. Saiatu berriro.</value></data>
 </root>

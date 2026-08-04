@@ -1,0 +1,96 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "axapta.gestion-del-flujo-en-axapta",
+    "moduleId":  "axapta",
+    "sectionNumber":  "11.2",
+    "title":  "Gestión del flujo en Axapta",
+    "summary":  "Existen dos vías para gestionar el flujo en Axapta:",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Gestión del flujo en Axapta",
+                                  "Axapta",
+                                  "gastos en Axapta"
+                              ],
+                    "eu-ES":  [
+                                  "Axaptako fluxuaren kudeaketa",
+                                  "Axapta",
+                                  "gastuak Axaptan"
+                              ],
+                    "en":  [
+                               "Workflow management in Axapta",
+                               "Axapta",
+                               "expenses in Axapta"
+                           ],
+                    "pt":  [
+                               "Gestão do fluxo no Axapta",
+                               "Axapta",
+                               "despesas no Axapta"
+                           ],
+                    "it":  [
+                               "Gestione del flusso in Axapta",
+                               "Axapta",
+                               "spese in Axapta"
+                           ],
+                    "zh-Hans":  [
+                                    "Axapta 中的流程管理",
+                                    "Axapta",
+                                    "Axapta 费用"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre gestión del flujo en axapta?"
+                                      ],
+                            "eu-ES":  [
+                                          "Axaptako fluxuaren kudeaketa gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about workflow management in axapta?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Gestão do fluxo no Axapta."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Gestione del flusso in Axapta."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于Axapta 中的流程管理的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "axapta.hoja-de-gastos-crm-usuarios-hoja-de-gastos",
+                            "axapta.gestion-de-hojas-de-gastos",
+                            "axapta.estados-visibles-en-axapta",
+                            "axapta.acciones-disponibles-en-axapta"
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "3C8A05287DC8F4E357533659F71C18274766F97FC1A1D2DA27EEF9256E7011FB",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "11.2",
+                   "pageFromTableOfContents":  29
+               }
+}

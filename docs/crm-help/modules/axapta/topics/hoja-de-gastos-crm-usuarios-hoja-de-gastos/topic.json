@@ -1,0 +1,93 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "axapta.hoja-de-gastos-crm-usuarios-hoja-de-gastos",
+    "moduleId":  "axapta",
+    "sectionNumber":  "11.2.1",
+    "title":  "Hoja de gastos: CRM / Usuarios / Hoja de gastos",
+    "summary":  "Se puede realizar una acción directamente sobre el formulario tradicional de la hoja de gastos. En la botonera de la parte derecha, pulse Funciones para mostrar las opciones disponibles.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Hoja de gastos: CRM / Usuarios / Hoja de gastos",
+                                  "Axapta",
+                                  "gastos en Axapta"
+                              ],
+                    "eu-ES":  [
+                                  "Gastu-orria: CRM / Erabiltzaileak / Gastu-orria",
+                                  "Axapta",
+                                  "gastuak Axaptan"
+                              ],
+                    "en":  [
+                               "Expense sheet: CRM / Users / Expense sheet",
+                               "Axapta",
+                               "expenses in Axapta"
+                           ],
+                    "pt":  [
+                               "Folha de despesas: CRM / Utilizadores / Folha de despesas",
+                               "Axapta",
+                               "despesas no Axapta"
+                           ],
+                    "it":  [
+                               "Nota spese: CRM / Utenti / Nota spese",
+                               "Axapta",
+                               "spese in Axapta"
+                           ],
+                    "zh-Hans":  [
+                                    "费用单：CRM / 用户 / 费用单",
+                                    "Axapta",
+                                    "Axapta 费用"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre hoja de gastos: crm / usuarios / hoja de gastos?"
+                                      ],
+                            "eu-ES":  [
+                                          "Gastu-orria: CRM / Erabiltzaileak / Gastu-orria gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about expense sheet: crm / users / expense sheet?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Folha de despesas: CRM / Utilizadores / Folha de despesas."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Nota spese: CRM / Utenti / Nota spese."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于费用单：CRM / 用户 / 费用单的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "axapta.gestion-del-flujo-en-axapta"
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "50D18F989917C3E01C92A787D6D99D07FE3C9728E111927E929583544B3B16B1",
+    "assets":  [
+                   "manual-1.5.image51"
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "11.2.1",
+                   "pageFromTableOfContents":  29
+               }
+}

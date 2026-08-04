@@ -1,0 +1,121 @@
+{
+    "schemaVersion":  "1.0",
+    "allowedRouteKeys":  [
+                             "home",
+                             "visits.history",
+                             "expenses.sheets",
+                             "expenses.tickets"
+                         ],
+    "modules":  [
+                    {
+                        "moduleId":  "introduction",
+                        "topicIds":  [
+                                         "introduction.objetivo-y-personas-destinatarias",
+                                         "introduction.contexto-del-nuevo-flujo-de-gastos",
+                                         "introduction.antecedentes-del-proceso",
+                                         "introduction.alcance-del-flujo-de-gastos",
+                                         "introduction.como-utilizar-este-manual",
+                                         "introduction.que-necesita",
+                                         "introduction.partes-basicas-del-navegador",
+                                         "introduction.uso-seguro"
+                                     ]
+                    },
+                    {
+                        "moduleId":  "access",
+                        "topicIds":  [
+                                         "access.abrir-el-crm",
+                                         "access.identificarse",
+                                         "access.guardar-la-direccion-como-favorito",
+                                         "access.cerrar-la-sesion"
+                                     ]
+                    },
+                    {
+                        "moduleId":  "common-ui",
+                        "topicIds":  [
+                                         "common-ui.elementos-comunes-de-la-pantalla",
+                                         "common-ui.editar-guardar-y-cancelar",
+                                         "common-ui.que-significa-empresa-activa",
+                                         "common-ui.cambiar-el-idioma",
+                                         "common-ui.permisos",
+                                         "common-ui.perfiles-del-flujo-de-gastos"
+                                     ]
+                    },
+                    {
+                        "moduleId":  "visits",
+                        "topicIds":  [
+                                         "visits.modulo-visitas",
+                                         "visits.abrir-el-historial-de-visitas",
+                                         "visits.filtrar-el-historial",
+                                         "visits.crear-una-visita-paso-1-cuenta-y-contactos",
+                                         "visits.crear-una-visita-paso-2-datos-de-la-visita",
+                                         "visits.editor-de-texto-y-dictado",
+                                         "visits.consultar-editar-o-eliminar-una-visita"
+                                     ]
+                    },
+                    {
+                        "moduleId":  "expenses",
+                        "topicIds":  [
+                                         "expenses.modulo-hojas-de-gastos",
+                                         "expenses.flujo-general-de-una-hoja-de-gastos",
+                                         "expenses.abrir-la-lista-de-hojas",
+                                         "expenses.buscar-y-filtrar-hojas",
+                                         "expenses.utilizar-el-asistente-de-gastos",
+                                         "expenses.crear-la-cabecera-de-una-hoja",
+                                         "expenses.comprender-el-detalle-de-la-hoja",
+                                         "expenses.anadir-una-linea-manual",
+                                         "expenses.divisas-e-importes-de-una-linea",
+                                         "expenses.crear-un-ticket-desde-una-hoja",
+                                         "expenses.vincular-tickets-existentes",
+                                         "expenses.editar-la-cabecera-y-las-lineas"
+                                     ]
+                    },
+                    {
+                        "moduleId":  "tickets",
+                        "topicIds":  [
+                                         "tickets.modulo-tickets",
+                                         "tickets.abrir-y-filtrar-tickets",
+                                         "tickets.crear-un-ticket-desde-el-modulo-tickets",
+                                         "tickets.estado-del-ticket"
+                                     ]
+                    },
+                    {
+                        "moduleId":  "expense-approval",
+                        "topicIds":  [
+                                         "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos",
+                                         "expense-approval.flujo-general-de-estados",
+                                         "expense-approval.estados-de-la-hoja-de-gastos",
+                                         "expense-approval.acciones-del-propietario",
+                                         "expense-approval.acciones-del-responsable",
+                                         "expense-approval.enlaces-recibidos-por-correo"
+                                     ]
+                    },
+                    {
+                        "moduleId":  "axapta",
+                        "topicIds":  [
+                                         "axapta.relacion-entre-crm-y-axapta",
+                                         "axapta.gestion-del-flujo-en-axapta",
+                                         "axapta.hoja-de-gastos-crm-usuarios-hoja-de-gastos",
+                                         "axapta.gestion-de-hojas-de-gastos",
+                                         "axapta.estados-visibles-en-axapta",
+                                         "axapta.acciones-disponibles-en-axapta"
+                                     ]
+                    },
+                    {
+                        "moduleId":  "troubleshooting",
+                        "topicIds":  [
+                                         "troubleshooting.la-pagina-no-abre",
+                                         "troubleshooting.la-identificacion-se-repite",
+                                         "troubleshooting.no-aparece-un-menu-boton-o-usuario",
+                                         "troubleshooting.no-se-puede-guardar",
+                                         "troubleshooting.la-imagen-del-ticket-no-se-procesa",
+                                         "troubleshooting.que-informacion-enviar-a-soporte"
+                                     ]
+                    },
+                    {
+                        "moduleId":  "glossary",
+                        "topicIds":  [
+                                         "glossary.glosario-basico"
+                                     ]
+                    }
+                ]
+}

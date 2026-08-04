@@ -1,0 +1,99 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui.perfiles-del-flujo-de-gastos",
+    "moduleId":  "common-ui",
+    "sectionNumber":  "6.4",
+    "title":  "Perfiles del flujo de gastos",
+    "summary":  "Los perfiles de usuario son tres:",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Perfiles del flujo de gastos",
+                                  "pantalla",
+                                  "empresa activa",
+                                  "permisos"
+                              ],
+                    "eu-ES":  [
+                                  "Gastuen lan-fluxuko profilak",
+                                  "pantaila",
+                                  "enpresa aktiboa",
+                                  "baimenak"
+                              ],
+                    "en":  [
+                               "Expense workflow roles",
+                               "screen",
+                               "active company",
+                               "permissions"
+                           ],
+                    "pt":  [
+                               "Perfis do fluxo de despesas",
+                               "ecrã",
+                               "empresa ativa",
+                               "permissões"
+                           ],
+                    "it":  [
+                               "Profili del flusso spese",
+                               "schermata",
+                               "azienda attiva",
+                               "permessi"
+                           ],
+                    "zh-Hans":  [
+                                    "费用流程角色",
+                                    "界面",
+                                    "当前公司",
+                                    "权限"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre perfiles del flujo de gastos?"
+                                      ],
+                            "eu-ES":  [
+                                          "Gastuen lan-fluxuko profilak gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about expense workflow roles?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Perfis do fluxo de despesas."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Profili del flusso spese."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于费用流程角色的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "4445727D47F8623A80C7B82DD4B5DB65E7FC478C3C4174C8EE750D2830789EB1",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "6.4",
+                   "pageFromTableOfContents":  11
+               }
+}

@@ -1,0 +1,101 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "access.cerrar-la-sesion",
+    "moduleId":  "access",
+    "sectionNumber":  "4.4",
+    "title":  "Cerrar la sesión",
+    "summary":  "1. Abra el menú lateral izquierdo.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Cerrar la sesión",
+                                  "acceso al CRM",
+                                  "iniciar sesión"
+                              ],
+                    "eu-ES":  [
+                                  "Saioa ixtea",
+                                  "CRMra sartzea",
+                                  "saioa hasi"
+                              ],
+                    "en":  [
+                               "Sign out",
+                               "CRM access",
+                               "sign in"
+                           ],
+                    "pt":  [
+                               "Terminar sessão",
+                               "acesso ao CRM",
+                               "iniciar sessão"
+                           ],
+                    "it":  [
+                               "Disconnettersi",
+                               "accesso al CRM",
+                               "accedere"
+                           ],
+                    "zh-Hans":  [
+                                    "退出登录",
+                                    "访问 CRM",
+                                    "登录"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre cerrar la sesión?"
+                                      ],
+                            "eu-ES":  [
+                                          "Saioa ixtea gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about sign out?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Terminar sessão."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Disconnettersi."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于退出登录的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "10DBBB2409B72EF9AB84C1F0B772C646E6EB1124383D85171E0F1645E13491A8",
+    "assets":  [
+                   "manual-1.5.image3",
+                   "manual-1.5.image4"
+               ],
+    "quickAnswers":  [
+                         {
+                             "id":  "access.cerrar-la-sesion.quick-01",
+                             "question":  "¿Cómo cierro la sesión del CRM?",
+                             "answer":  "1. Abra el menú lateral izquierdo. 2. Pulse su nombre de usuario en la parte inferior. 3. Pulse Cerrar sesión y espere hasta regresar a la pantalla de acceso.",
+                             "sourceChunkIds":  [
+                                                    "access.cerrar-la-sesion--01"
+                                                ]
+                         }
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "4.4",
+                   "pageFromTableOfContents":  7
+               }
+}

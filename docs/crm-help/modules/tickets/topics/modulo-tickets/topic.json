@@ -1,0 +1,96 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "tickets.modulo-tickets",
+    "moduleId":  "tickets",
+    "sectionNumber":  "9",
+    "title":  "Módulo Tickets",
+    "summary":  "Un ticket es la imagen y los datos de un justificante de gasto. Puede crearse desde una hoja o desde el menú Tickets. Después puede vincularse a una hoja editable.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Módulo Tickets",
+                                  "Tickets",
+                                  "tickets",
+                                  "justificantes"
+                              ],
+                    "eu-ES":  [
+                                  "Tiketak modulua",
+                                  "tiketa",
+                                  "gastuen frogagiriak"
+                              ],
+                    "en":  [
+                               "Tickets module",
+                               "tickets",
+                               "expense receipts"
+                           ],
+                    "pt":  [
+                               "Módulo Tickets",
+                               "tickets",
+                               "comprovativos de despesa"
+                           ],
+                    "it":  [
+                               "Modulo Ticket",
+                               "ticket",
+                               "giustificativi di spesa"
+                           ],
+                    "zh-Hans":  [
+                                    "票据模块",
+                                    "票据",
+                                    "费用凭证"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre módulo tickets?"
+                                      ],
+                            "eu-ES":  [
+                                          "Tiketak modulua gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about tickets module?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Módulo Tickets."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Modulo Ticket."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于票据模块的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "tickets.abrir-y-filtrar-tickets",
+                            "tickets.crear-un-ticket-desde-el-modulo-tickets",
+                            "tickets.estado-del-ticket"
+                        ],
+    "routeKey":  "expenses.tickets",
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "F5F372EB4279727642789F6803A681587B8F5489D0C72BFA9CE0DFF194933AF7",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "9",
+                   "pageFromTableOfContents":  24
+               }
+}

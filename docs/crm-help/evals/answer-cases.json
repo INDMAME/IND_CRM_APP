@@ -1,0 +1,375 @@
+[
+    {
+        "id":  "answer-access.cerrar-la-sesion",
+        "question":  "¿Cómo cierro la sesión del CRM?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "access.cerrar-la-sesion",
+        "expectedTopicIds":  [
+                                 "access.cerrar-la-sesion"
+                             ],
+        "sourceChunkIds":  [
+                               "access.cerrar-la-sesion--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "access.cerrar-la-sesion--01"
+                                   ],
+        "requiredFacts":  [
+                              "Debe abrirse el menú lateral izquierdo.",
+                              "Debe pulsarse el nombre de usuario situado en la parte inferior.",
+                              "Debe pulsarse Cerrar sesión y esperarse hasta volver a la pantalla de acceso."
+                          ],
+        "forbiddenClaims":  [
+                                "El asistente ya ha cerrado la sesión por el usuario.",
+                                "Cerrar la pestaña equivale siempre a cerrar la sesión."
+                            ]
+    },
+    {
+        "id":  "answer-common-ui.cambiar-el-idioma",
+        "question":  "¿Cómo cambio el idioma del CRM?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "common-ui.cambiar-el-idioma",
+        "expectedTopicIds":  [
+                                 "common-ui.cambiar-el-idioma"
+                             ],
+        "sourceChunkIds":  [
+                               "common-ui.cambiar-el-idioma--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "common-ui.cambiar-el-idioma--01"
+                                   ],
+        "requiredFacts":  [
+                              "Debe abrirse el menú lateral y pulsarse el nombre de usuario.",
+                              "Debe elegirse el idioma desde Idiomas.",
+                              "Debe esperarse a que la pantalla vuelva a cargarse."
+                          ],
+        "forbiddenClaims":  [
+                                "El asistente ya ha cambiado el idioma por el usuario.",
+                                "No es necesario esperar a que la pantalla se recargue."
+                            ]
+    },
+    {
+        "id":  "answer-tickets.estado-del-ticket",
+        "question":  "¿Qué significan los estados Pendiente y Asignado de un ticket?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "tickets.estado-del-ticket",
+        "expectedTopicIds":  [
+                                 "tickets.estado-del-ticket"
+                             ],
+        "sourceChunkIds":  [
+                               "tickets.estado-del-ticket--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "tickets.estado-del-ticket--01"
+                                   ],
+        "requiredFacts":  [
+                              "Pendiente significa que el ticket todavía no está asignado a una hoja.",
+                              "Asignado significa que el ticket ya está relacionado con una hoja de gastos.",
+                              "El procedimiento documentado para cambiar la relación es eliminar el ticket, volver a cargarlo y vincularlo a la hoja correcta."
+                          ],
+        "forbiddenClaims":  [
+                                "Existe un botón documentado para desvincular directamente el ticket.",
+                                "El asistente ya ha cambiado la relación del ticket."
+                            ]
+    },
+    {
+        "id":  "answer-troubleshooting.la-pagina-no-abre",
+        "question":  "¿Qué hago si la página del CRM no abre?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "troubleshooting.la-pagina-no-abre",
+        "expectedTopicIds":  [
+                                 "troubleshooting.la-pagina-no-abre"
+                             ],
+        "sourceChunkIds":  [
+                               "troubleshooting.la-pagina-no-abre--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "troubleshooting.la-pagina-no-abre--01"
+                                   ],
+        "requiredFacts":  [
+                              "Debe comprobarse la conexión y que la dirección esté completa y sin espacios.",
+                              "Debe pulsarse Actualizar una sola vez y esperar.",
+                              "Si persiste, debe reabrirse el navegador y comunicar hora, dirección y mensaje cuando otras páginas sí funcionan."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe actualizarse repetidamente la página.",
+                                "El asistente ha reparado el acceso."
+                            ]
+    },
+    {
+        "id":  "answer-troubleshooting.la-identificacion-se-repite",
+        "question":  "¿Qué hago si la identificación se repite?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "troubleshooting.la-identificacion-se-repite",
+        "expectedTopicIds":  [
+                                 "troubleshooting.la-identificacion-se-repite"
+                             ],
+        "sourceChunkIds":  [
+                               "troubleshooting.la-identificacion-se-repite--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "troubleshooting.la-identificacion-se-repite--01"
+                                   ],
+        "requiredFacts":  [
+                              "Deben cerrarse todas las pestañas del CRM y comprobarse la cuenta corporativa.",
+                              "Debe volverse a entrar desde el acceso oficial sin probar contraseñas repetidamente.",
+                              "Si la cuenta está bloqueada o falla la verificación, debe contactarse con soporte."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe probarse la contraseña repetidamente.",
+                                "El asistente puede desbloquear la cuenta."
+                            ]
+    },
+    {
+        "id":  "answer-troubleshooting.no-aparece-un-menu-boton-o-usuario",
+        "question":  "¿Por qué no aparece un menú, botón o usuario?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "troubleshooting.no-aparece-un-menu-boton-o-usuario",
+        "expectedTopicIds":  [
+                                 "troubleshooting.no-aparece-un-menu-boton-o-usuario"
+                             ],
+        "sourceChunkIds":  [
+                               "troubleshooting.no-aparece-un-menu-boton-o-usuario--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "troubleshooting.no-aparece-un-menu-boton-o-usuario--01"
+                                   ],
+        "requiredFacts":  [
+                              "Debe comprobarse la empresa activa y actualizarse la pantalla.",
+                              "La ausencia puede deberse a permisos o a la jerarquía de gestión.",
+                              "No debe utilizarse la sesión de otra persona."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe usarse la sesión de otra persona para continuar.",
+                                "La ausencia del control confirma siempre un error de la aplicación."
+                            ]
+    },
+    {
+        "id":  "answer-troubleshooting.no-se-puede-guardar",
+        "question":  "¿Qué debo revisar si no puedo guardar?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "troubleshooting.no-se-puede-guardar",
+        "expectedTopicIds":  [
+                                 "troubleshooting.no-se-puede-guardar"
+                             ],
+        "sourceChunkIds":  [
+                               "troubleshooting.no-se-puede-guardar--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "troubleshooting.no-se-puede-guardar--01"
+                                   ],
+        "requiredFacts":  [
+                              "Deben revisarse los campos obligatorios y los mensajes en rojo.",
+                              "En visitas deben comprobarse Cuenta, Tipo de visita, Descripción y Comentarios; en líneas o tickets, Fecha, Categoría, importes y divisa.",
+                              "Un botón bloqueado puede deberse al estado, al pago o a los permisos."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe omitirse la validación de los campos obligatorios.",
+                                "El asistente ya ha guardado el registro."
+                            ]
+    },
+    {
+        "id":  "answer-troubleshooting.la-imagen-del-ticket-no-se-procesa",
+        "question":  "¿Qué hago si la imagen del ticket no se procesa?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "troubleshooting.la-imagen-del-ticket-no-se-procesa",
+        "expectedTopicIds":  [
+                                 "troubleshooting.la-imagen-del-ticket-no-se-procesa"
+                             ],
+        "sourceChunkIds":  [
+                               "troubleshooting.la-imagen-del-ticket-no-se-procesa--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "troubleshooting.la-imagen-del-ticket-no-se-procesa--01"
+                                   ],
+        "requiredFacts":  [
+                              "Debe comprobarse el formato y el límite indicado por la aplicación.",
+                              "La nueva foto debe tener luz uniforme, no recortar datos y evitar reflejos.",
+                              "Reintentar carga debe utilizarse una sola vez; si queda un ticket parcial, debe anotarse su identificador."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe reintentarse la carga indefinidamente.",
+                                "El asistente ha procesado la imagen."
+                            ]
+    },
+    {
+        "id":  "answer-troubleshooting.que-informacion-enviar-a-soporte",
+        "question":  "¿Qué información debo enviar a soporte?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "troubleshooting.que-informacion-enviar-a-soporte",
+        "expectedTopicIds":  [
+                                 "troubleshooting.que-informacion-enviar-a-soporte"
+                             ],
+        "sourceChunkIds":  [
+                               "troubleshooting.que-informacion-enviar-a-soporte--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "troubleshooting.que-informacion-enviar-a-soporte--01"
+                                   ],
+        "requiredFacts":  [
+                              "Deben indicarse usuario corporativo sin contraseña, empresa activa, módulo y acción.",
+                              "Deben añadirse identificador disponible, fecha y hora aproximadas y el mensaje completo.",
+                              "La captura no debe mostrar contraseñas, códigos de acceso ni datos innecesarios."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe enviarse la contraseña a soporte.",
+                                "La captura debe incluir códigos de acceso."
+                            ]
+    },
+    {
+        "id":  "answer-eu-access.cerrar-la-sesion",
+        "question":  "Nola itxi saioa CRMn?",
+        "responseLocale":  "eu-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "access.cerrar-la-sesion",
+        "expectedTopicIds":  [
+                                 "access.cerrar-la-sesion"
+                             ],
+        "sourceChunkIds":  [
+                               "access.cerrar-la-sesion--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "access.cerrar-la-sesion--01"
+                                   ],
+        "requiredFacts":  [
+                              "Ezkerreko alboko menua ireki behar da.",
+                              "Beheko erabiltzaile-izena sakatu eta saioa ixteko aukera hautatu behar da.",
+                              "Sarbide-pantailara itzuli arte itxaron behar da."
+                          ],
+        "forbiddenClaims":  [
+                                "Laguntzaileak saioa erabiltzailearen ordez itxi du.",
+                                "Fitxa ixteak beti saioa ixten du."
+                            ]
+    },
+    {
+        "id":  "answer-en-common-ui.active-company",
+        "question":  "What does the active company affect?",
+        "responseLocale":  "en",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "common-ui.que-significa-empresa-activa",
+        "expectedTopicIds":  [
+                                 "common-ui.que-significa-empresa-activa"
+                             ],
+        "sourceChunkIds":  [
+                               "common-ui.que-significa-empresa-activa--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "common-ui.que-significa-empresa-activa--01"
+                                   ],
+        "requiredFacts":  [
+                              "The active company determines which customers, projects, currencies, visits, expense sheets, and tickets can be viewed.",
+                              "The user should verify the company before creating or searching for information.",
+                              "Changing company later does not automatically move an existing record."
+                          ],
+        "forbiddenClaims":  [
+                                "The assistant has changed the active company for the user.",
+                                "Changing company automatically transfers records already created."
+                            ]
+    },
+    {
+        "id":  "answer-pt-troubleshooting.page-not-open",
+        "question":  "O que devo fazer se a página do CRM não abrir?",
+        "responseLocale":  "pt",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "troubleshooting.la-pagina-no-abre",
+        "expectedTopicIds":  [
+                                 "troubleshooting.la-pagina-no-abre"
+                             ],
+        "sourceChunkIds":  [
+                               "troubleshooting.la-pagina-no-abre--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "troubleshooting.la-pagina-no-abre--01"
+                                   ],
+        "requiredFacts":  [
+                              "É necessário verificar a ligação e confirmar que o endereço está completo e sem espaços.",
+                              "Deve premir Atualizar apenas uma vez e aguardar.",
+                              "Se o problema continuar, deve reabrir o navegador e comunicar a hora, o endereço e a mensagem apresentada."
+                          ],
+        "forbiddenClaims":  [
+                                "Deve atualizar repetidamente a página.",
+                                "O assistente já reparou o acesso."
+                            ]
+    },
+    {
+        "id":  "answer-it-expenses.link-tickets",
+        "question":  "Come collego ticket esistenti a una nota spese?",
+        "responseLocale":  "it",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "expenses.vincular-tickets-existentes",
+        "expectedTopicIds":  [
+                                 "expenses.vincular-tickets-existentes"
+                             ],
+        "sourceChunkIds":  [
+                               "expenses.vincular-tickets-existentes--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "expenses.vincular-tickets-existentes--01"
+                                   ],
+        "requiredFacts":  [
+                              "La nota spese deve essere modificabile e l\u0027azione parte da Azioni rapide e Collega ticket.",
+                              "È possibile filtrare, selezionare uno o più ticket, controllare importo e selezione, quindi confermare.",
+                              "Il risultato indica quanti ticket sono stati richiesti, collegati, ignorati o non riusciti; gli errori vanno letti e corretti prima di ripetere."
+                          ],
+        "forbiddenClaims":  [
+                                "Il collegamento riesce sempre per tutti i ticket.",
+                                "L\u0027assistente ha già collegato i ticket."
+                            ]
+    },
+    {
+        "id":  "answer-zh-common-ui.change-language",
+        "question":  "如何更改 CRM 的语言？",
+        "responseLocale":  "zh-Hans",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "common-ui.cambiar-el-idioma",
+        "expectedTopicIds":  [
+                                 "common-ui.cambiar-el-idioma"
+                             ],
+        "sourceChunkIds":  [
+                               "common-ui.cambiar-el-idioma--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "common-ui.cambiar-el-idioma--01"
+                                   ],
+        "requiredFacts":  [
+                              "需要打开侧边菜单并点击用户名。",
+                              "需要进入语言选项并选择要使用的语言。",
+                              "选择后需要等待页面重新加载。"
+                          ],
+        "forbiddenClaims":  [
+                                "助手已经替用户更改了语言。",
+                                "选择语言后不需要等待页面重新加载。"
+                            ]
+    },
+    {
+        "id":  "answer-not-documented-password-reset",
+        "question":  "¿Cómo restablezco mi contraseña corporativa?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "notDocumented",
+        "expectedTopicId":  null,
+        "expectedTopicIds":  [
+
+                             ],
+        "sourceChunkIds":  [
+
+                           ],
+        "requiredSourceChunkIds":  [
+
+                                   ],
+        "requiredFacts":  [
+                              "Debe indicarse que el procedimiento de restablecimiento de contraseña no está documentado en esta base de ayuda."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe proporcionarse un procedimiento de restablecimiento no presente en la documentación.",
+                                "El asistente ha restablecido o conoce la contraseña del usuario."
+                            ]
+    }
+]

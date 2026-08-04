@@ -1,0 +1,93 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "axapta.acciones-disponibles-en-axapta",
+    "moduleId":  "axapta",
+    "sectionNumber":  "11.2.4",
+    "title":  "Acciones disponibles en Axapta",
+    "summary":  "Para cada hoja de gastos, las acciones disponibles dependen de su estado y de los permisos del usuario de la sesión de Axapta:",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Acciones disponibles en Axapta",
+                                  "Axapta",
+                                  "gastos en Axapta"
+                              ],
+                    "eu-ES":  [
+                                  "Axaptan erabilgarri dauden ekintzak",
+                                  "Axapta",
+                                  "gastuak Axaptan"
+                              ],
+                    "en":  [
+                               "Actions available in Axapta",
+                               "Axapta",
+                               "expenses in Axapta"
+                           ],
+                    "pt":  [
+                               "Ações disponíveis no Axapta",
+                               "Axapta",
+                               "despesas no Axapta"
+                           ],
+                    "it":  [
+                               "Azioni disponibili in Axapta",
+                               "Axapta",
+                               "spese in Axapta"
+                           ],
+                    "zh-Hans":  [
+                                    "Axapta 中可用的操作",
+                                    "Axapta",
+                                    "Axapta 费用"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre acciones disponibles en axapta?"
+                                      ],
+                            "eu-ES":  [
+                                          "Axaptan erabilgarri dauden ekintzak gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about actions available in axapta?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Ações disponíveis no Axapta."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Azioni disponibili in Axapta."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于Axapta 中可用的操作的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "axapta.gestion-del-flujo-en-axapta"
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "7C44D6088514DC62924759612240E1237694E6554775F21F2D6F25C2E731281E",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "11.2.4",
+                   "pageFromTableOfContents":  31
+               }
+}

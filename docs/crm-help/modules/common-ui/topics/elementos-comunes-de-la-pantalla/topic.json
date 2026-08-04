@@ -1,0 +1,101 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui.elementos-comunes-de-la-pantalla",
+    "moduleId":  "common-ui",
+    "sectionNumber":  "5",
+    "title":  "Elementos comunes de la pantalla",
+    "summary":  "Aunque cada módulo tiene campos diferentes, la aplicación repite varios elementos. Aprenderlos una vez facilita el resto del manual.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Elementos comunes de la pantalla",
+                                  "pantalla",
+                                  "empresa activa",
+                                  "permisos"
+                              ],
+                    "eu-ES":  [
+                                  "Pantailaren elementu komunak",
+                                  "pantaila",
+                                  "enpresa aktiboa",
+                                  "baimenak"
+                              ],
+                    "en":  [
+                               "Common screen elements",
+                               "screen",
+                               "active company",
+                               "permissions"
+                           ],
+                    "pt":  [
+                               "Elementos comuns do ecrã",
+                               "ecrã",
+                               "empresa ativa",
+                               "permissões"
+                           ],
+                    "it":  [
+                               "Elementi comuni della schermata",
+                               "schermata",
+                               "azienda attiva",
+                               "permessi"
+                           ],
+                    "zh-Hans":  [
+                                    "界面通用元素",
+                                    "界面",
+                                    "当前公司",
+                                    "权限"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre elementos comunes de la pantalla?"
+                                      ],
+                            "eu-ES":  [
+                                          "Pantailaren elementu komunak gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about common screen elements?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Elementos comuns do ecrã."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Elementi comuni della schermata."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于界面通用元素的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "common-ui.editar-guardar-y-cancelar"
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "05AFF8C3D6A165E39FED94A1FF72550A0B87275F1AD03F928542F8D09242EF9D",
+    "assets":  [
+                   "manual-1.5.image5",
+                   "manual-1.5.image6",
+                   "manual-1.5.image7"
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "5",
+                   "pageFromTableOfContents":  8
+               }
+}

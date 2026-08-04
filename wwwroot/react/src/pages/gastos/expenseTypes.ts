@@ -412,6 +412,19 @@ export type ExpenseSheetLineUpdateResponseData = {
   LineRecId: number;
 };
 
+// MMS - Defines the atomic relationship contract between a manual line and a ticket. - 2026.08.04
+export type ExpenseSheetLineTicketRequest = {
+  fileId: string;
+};
+
+export type ExpenseSheetLineTicketResultDto = {
+  HojaGastosId: string;
+  LineRecId: number;
+  FileId: string;
+  TicketStatus: number | null;
+  Changed: boolean;
+};
+
 // UI filter state used by list page.
 export type ExpenseSheetListFilters = {
   filter?: string;

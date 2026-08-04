@@ -32,7 +32,7 @@ export const useExpenseTicketDetailBackNavigation = ({
 
   const nativeBackUrl = useMemo(() => {
     if (ticketReturnContext?.origin === "sheet-link" && ticketReturnContext.sheetId) {
-      return buildExpenseTicketLinkUrl(ticketReturnContext.sheetId);
+      return buildExpenseTicketLinkUrl(ticketReturnContext.sheetId, ticketReturnContext.sheetLineRecId);
     }
 
     if (ticketReturnContext?.origin === "expense-line" && ticketReturnContext.sheetId) {

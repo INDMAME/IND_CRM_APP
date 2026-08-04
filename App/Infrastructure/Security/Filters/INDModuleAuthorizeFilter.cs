@@ -153,6 +153,9 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
         // Resolves module candidates only from explicit route mapping or fixed safe fallbacks.
         private static string[] ResolveModuleCandidates(string path, IndWebCompany company)
         {
+            if (IsHelpPath(path))
+                return GetAccessibleModuleCandidates(company);
+
             if (INDModuleRegistry.TryResolveSharedRouteCandidates(path, out var sharedCandidates))
                 return sharedCandidates;
 
@@ -163,6 +166,13 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                 return GetAccessibleModuleCandidates(company);
 
             return Array.Empty<string>();
+        }
+
+        // Gives CRM help the same dynamic module candidates as Home.
+        private static bool IsHelpPath(string path)
+        {
+            return string.Equals(path, "/api/help", StringComparison.OrdinalIgnoreCase) ||
+                   path.StartsWith("/api/help/", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsHomePath(string path)

@@ -1,0 +1,94 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "visits.consultar-editar-o-eliminar-una-visita",
+    "moduleId":  "visits",
+    "sectionNumber":  "7.6",
+    "title":  "Consultar, editar o eliminar una visita",
+    "summary":  "1. En el Historial, pulse la tarjeta de la visita.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Consultar, editar o eliminar una visita",
+                                  "visitas",
+                                  "historial de visitas"
+                              ],
+                    "eu-ES":  [
+                                  "Bisita kontsultatu, editatu edo ezabatu",
+                                  "bisitak",
+                                  "bisiten historia"
+                              ],
+                    "en":  [
+                               "View, edit, or delete a visit",
+                               "visits",
+                               "visit history"
+                           ],
+                    "pt":  [
+                               "Consultar, editar ou eliminar uma visita",
+                               "visitas",
+                               "histórico de visitas"
+                           ],
+                    "it":  [
+                               "Consultare, modificare o eliminare una visita",
+                               "visite",
+                               "cronologia visite"
+                           ],
+                    "zh-Hans":  [
+                                    "查看、编辑或删除拜访",
+                                    "拜访",
+                                    "拜访记录"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre consultar, editar o eliminar una visita?"
+                                      ],
+                            "eu-ES":  [
+                                          "Bisita kontsultatu, editatu edo ezabatu gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about view, edit, or delete a visit?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Consultar, editar ou eliminar uma visita."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Consultare, modificare o eliminare una visita."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于查看、编辑或删除拜访的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "visits.modulo-visitas"
+                        ],
+    "routeKey":  "visits.history",
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "F9DF0F4889DBC7494539FA899352318981DD59C07D0A0CFE714BF08EBDBCEEC4",
+    "assets":  [
+                   "manual-1.5.image20",
+                   "manual-1.5.image21"
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "7.6",
+                   "pageFromTableOfContents":  15
+               }
+}

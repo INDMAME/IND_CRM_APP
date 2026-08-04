@@ -1,0 +1,93 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "axapta.estados-visibles-en-axapta",
+    "moduleId":  "axapta",
+    "sectionNumber":  "11.2.3",
+    "title":  "Estados visibles en Axapta",
+    "summary":  "• Borrador: el usuario está preparando la hoja de gastos, pero aún no la ha finalizado.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Estados visibles en Axapta",
+                                  "Axapta",
+                                  "gastos en Axapta"
+                              ],
+                    "eu-ES":  [
+                                  "Axaptan ikusgai dauden egoerak",
+                                  "Axapta",
+                                  "gastuak Axaptan"
+                              ],
+                    "en":  [
+                               "Statuses visible in Axapta",
+                               "Axapta",
+                               "expenses in Axapta"
+                           ],
+                    "pt":  [
+                               "Estados visíveis no Axapta",
+                               "Axapta",
+                               "despesas no Axapta"
+                           ],
+                    "it":  [
+                               "Stati visibili in Axapta",
+                               "Axapta",
+                               "spese in Axapta"
+                           ],
+                    "zh-Hans":  [
+                                    "Axapta 中可见的状态",
+                                    "Axapta",
+                                    "Axapta 费用"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre estados visibles en axapta?"
+                                      ],
+                            "eu-ES":  [
+                                          "Axaptan ikusgai dauden egoerak gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about statuses visible in axapta?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Estados visíveis no Axapta."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Stati visibili in Axapta."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于Axapta 中可见的状态的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "axapta.gestion-del-flujo-en-axapta"
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "F88225ACF22FCF01029BD67BB6CF04F0E4F2B6DC01CB69B62BC1F68CB84CB975",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "11.2.3",
+                   "pageFromTableOfContents":  31
+               }
+}

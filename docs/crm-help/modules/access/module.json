@@ -1,0 +1,39 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "access",
+    "title":  "Acceso al CRM",
+    "description":  "Apertura, identificación, favoritos y cierre de sesión.",
+    "order":  2,
+    "aliases":  {
+                    "es-ES":  [
+                                  "acceso al CRM",
+                                  "iniciar sesión"
+                              ],
+                    "eu-ES":  [
+                                  "CRMra sartzea",
+                                  "saioa hasi"
+                              ],
+                    "en":  [
+                               "CRM access",
+                               "sign in"
+                           ],
+                    "pt":  [
+                               "acesso ao CRM",
+                               "iniciar sessão"
+                           ],
+                    "it":  [
+                               "accesso al CRM",
+                               "accedere"
+                           ],
+                    "zh-Hans":  [
+                                    "访问 CRM",
+                                    "登录"
+                                ]
+                },
+    "topicIds":  [
+                     "access.abrir-el-crm",
+                     "access.identificarse",
+                     "access.guardar-la-direccion-como-favorito",
+                     "access.cerrar-la-sesion"
+                 ]
+}

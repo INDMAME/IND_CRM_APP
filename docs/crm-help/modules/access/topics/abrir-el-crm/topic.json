@@ -1,0 +1,93 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "access.abrir-el-crm",
+    "moduleId":  "access",
+    "sectionNumber":  "4.1",
+    "title":  "Abrir el CRM",
+    "summary":  "1. Abra el navegador.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Abrir el CRM",
+                                  "acceso al CRM",
+                                  "iniciar sesión"
+                              ],
+                    "eu-ES":  [
+                                  "CRM irekitzea",
+                                  "CRMra sartzea",
+                                  "saioa hasi"
+                              ],
+                    "en":  [
+                               "Open the CRM",
+                               "CRM access",
+                               "sign in"
+                           ],
+                    "pt":  [
+                               "Abrir o CRM",
+                               "acesso ao CRM",
+                               "iniciar sessão"
+                           ],
+                    "it":  [
+                               "Aprire il CRM",
+                               "accesso al CRM",
+                               "accedere"
+                           ],
+                    "zh-Hans":  [
+                                    "打开 CRM",
+                                    "访问 CRM",
+                                    "登录"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre abrir el crm?"
+                                      ],
+                            "eu-ES":  [
+                                          "CRM irekitzea gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about open the crm?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Abrir o CRM."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Aprire il CRM."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于打开 CRM的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "B35D191DDB9DB6A7FB270E3BE0B80BDF49DB49991B0E9959E13BEA82A709B80B",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "4.1",
+                   "pageFromTableOfContents":  5
+               }
+}

@@ -1,0 +1,93 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "introduction.partes-basicas-del-navegador",
+    "moduleId":  "introduction",
+    "sectionNumber":  "3.2",
+    "title":  "Partes básicas del navegador",
+    "summary":  "La barra de direcciones se encuentra normalmente en la parte superior del navegador. Es el espacio largo donde se escribe la dirección de una página. No debe confundirse con un buscador situado dentro de una página.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Partes básicas del navegador",
+                                  "primeros pasos",
+                                  "manual CRM"
+                              ],
+                    "eu-ES":  [
+                                  "Nabigatzailearen oinarrizko atalak",
+                                  "lehen urratsak",
+                                  "CRM eskuliburua"
+                              ],
+                    "en":  [
+                               "Basic browser elements",
+                               "getting started",
+                               "CRM manual"
+                           ],
+                    "pt":  [
+                               "Elementos básicos do navegador",
+                               "primeiros passos",
+                               "manual CRM"
+                           ],
+                    "it":  [
+                               "Elementi di base del browser",
+                               "primi passi",
+                               "manuale CRM"
+                           ],
+                    "zh-Hans":  [
+                                    "浏览器的基本组成",
+                                    "入门",
+                                    "CRM 手册"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre partes básicas del navegador?"
+                                      ],
+                            "eu-ES":  [
+                                          "Nabigatzailearen oinarrizko atalak gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about basic browser elements?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Elementos básicos do navegador."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Elementi di base del browser."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于浏览器的基本组成的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "ADA7237601F2B25A12F07F0744B57AA89ECB3357C711010594B5D97E93FB2D25",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "3.2",
+                   "pageFromTableOfContents":  5
+               }
+}

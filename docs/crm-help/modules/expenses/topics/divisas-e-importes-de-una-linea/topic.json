@@ -1,0 +1,94 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expenses.divisas-e-importes-de-una-linea",
+    "moduleId":  "expenses",
+    "sectionNumber":  "8.7",
+    "title":  "Divisas e importes de una línea",
+    "summary":  "Divisa gasto es la moneda en la que se pagó el importe. Divisa Reembolso pertenece a la hoja y depende de la empresa. Imp. divisa representa el gasto original e Importe reembolso representa el valor que se llevará a la hoja.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Divisas e importes de una línea",
+                                  "hojas de gastos",
+                                  "gastos"
+                              ],
+                    "eu-ES":  [
+                                  "Gastu-lerro baten dibisak eta zenbatekoak",
+                                  "gastu-orriak",
+                                  "gastuak"
+                              ],
+                    "en":  [
+                               "Currencies and line amounts",
+                               "expense sheets",
+                               "expenses"
+                           ],
+                    "pt":  [
+                               "Moedas e montantes de uma linha de despesa",
+                               "folhas de despesas",
+                               "despesas"
+                           ],
+                    "it":  [
+                               "Valute e importi di una riga di spesa",
+                               "note spese",
+                               "spese"
+                           ],
+                    "zh-Hans":  [
+                                    "费用行的币种和金额",
+                                    "费用单",
+                                    "费用"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre divisas e importes de una línea?"
+                                      ],
+                            "eu-ES":  [
+                                          "Gastu-lerro baten dibisak eta zenbatekoak gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about currencies and line amounts?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Moedas e montantes de uma linha de despesa."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Valute e importi di una riga di spesa."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于费用行的币种和金额的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expenses.modulo-hojas-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "CEE7FF98A466C0CF816D47AD661EC432D1228B9D038A0EEC1B05B65341F0E2F0",
+    "assets":  [
+                   "manual-1.5.image35",
+                   "manual-1.5.image36"
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "8.7",
+                   "pageFromTableOfContents":  21
+               }
+}

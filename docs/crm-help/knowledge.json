@@ -1,0 +1,33 @@
+{
+    "schemaVersion":  "1.0",
+    "knowledgeVersion":  "1.5.0",
+    "title":  "Ayuda de la aplicación CRM",
+    "defaultLocale":  "es-ES",
+    "supportedResponseLocales":  [
+                                     "es-ES",
+                                     "eu-ES",
+                                     "en",
+                                     "pt",
+                                     "it",
+                                     "zh-Hans"
+                                 ],
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "role":  "migration-input"
+               },
+    "modulePaths":  [
+                        "modules/introduction/module.json",
+                        "modules/access/module.json",
+                        "modules/common-ui/module.json",
+                        "modules/visits/module.json",
+                        "modules/expenses/module.json",
+                        "modules/tickets/module.json",
+                        "modules/expense-approval/module.json",
+                        "modules/axapta/module.json",
+                        "modules/troubleshooting/module.json",
+                        "modules/glossary/module.json"
+                    ],
+    "assetManifestPath":  "assets/manual-1.5/assets.json",
+    "navigationPath":  "navigation.json"
+}

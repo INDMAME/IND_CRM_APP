@@ -34,6 +34,7 @@ export type ExpenseTicketsCachedState = {
   selectedTickets: ExpenseTicketLinkCard[];
   total: number;
   linkModeSheetId: string;
+  linkModeLineId: string;
   selectionMode: ExpenseTicketLinkSelectionMode;
   excludedIds: string[];
   filteredSelectionFilters: ExpenseTicketAppliedFilterSnapshot | null;
@@ -171,6 +172,7 @@ const normalizeState = (raw: ExpenseTicketsCachedState | null): ExpenseTicketsCa
     selectedTickets,
     total,
     linkModeSheetId: String((raw as { linkModeSheetId?: unknown }).linkModeSheetId || "").trim(),
+    linkModeLineId: String((raw as { linkModeLineId?: unknown }).linkModeLineId || "").trim(),
     selectionMode: normalizeSelectionMode((raw as { selectionMode?: unknown }).selectionMode),
     excludedIds: normalizeExcludedIds((raw as { excludedIds?: unknown }).excludedIds),
     filteredSelectionFilters: (raw as { filteredSelectionFilters?: ExpenseTicketAppliedFilterSnapshot | null })

@@ -1,0 +1,94 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "visits.crear-una-visita-paso-2-datos-de-la-visita",
+    "moduleId":  "visits",
+    "sectionNumber":  "7.4",
+    "title":  "Crear una visita: paso 2, datos de la visita",
+    "summary":  "1. Revise la Fecha. Por defecto se propone la fecha actual.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Crear una visita: paso 2, datos de la visita",
+                                  "visitas",
+                                  "historial de visitas"
+                              ],
+                    "eu-ES":  [
+                                  "Bisita sortu: 2. urratsa, bisitaren datuak",
+                                  "bisitak",
+                                  "bisiten historia"
+                              ],
+                    "en":  [
+                               "Create a visit: step 2, visit details",
+                               "visits",
+                               "visit history"
+                           ],
+                    "pt":  [
+                               "Criar uma visita: passo 2, dados da visita",
+                               "visitas",
+                               "histórico de visitas"
+                           ],
+                    "it":  [
+                               "Creare una visita: fase 2, dati della visita",
+                               "visite",
+                               "cronologia visite"
+                           ],
+                    "zh-Hans":  [
+                                    "创建拜访：第 2 步，拜访信息",
+                                    "拜访",
+                                    "拜访记录"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre crear una visita: paso 2, datos de la visita?"
+                                      ],
+                            "eu-ES":  [
+                                          "Bisita sortu: 2. urratsa, bisitaren datuak gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about create a visit: step 2, visit details?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Criar uma visita: passo 2, dados da visita."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Creare una visita: fase 2, dati della visita."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于创建拜访：第 2 步，拜访信息的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "visits.modulo-visitas"
+                        ],
+    "routeKey":  "visits.history",
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "1B48E499BEE4DAF3EB942FD9672881FE5F66CE878C0B445DF8CDBBCF72B8FFCC",
+    "assets":  [
+                   "manual-1.5.image15",
+                   "manual-1.5.image16"
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "7.4",
+                   "pageFromTableOfContents":  14
+               }
+}

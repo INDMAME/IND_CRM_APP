@@ -13,6 +13,7 @@ const EXPENSE_TICKET_LINK_RETURN_STATE_TTL_MS = 12 * 60 * 60 * 1000;
 
 export type ExpenseTicketLinkReturnState = {
   sheetId: string;
+  targetLineRecId: string;
   page: number;
   scrollY: number;
   focusFileId: string;
@@ -105,6 +106,7 @@ export const normalizeExpenseTicketLinkReturnState = (value: unknown): ExpenseTi
 
   return {
     sheetId,
+    targetLineRecId: normalizeFileId(payload.targetLineRecId),
     page: Math.max(1, normalizeNonNegativeInteger(payload.page, 1)),
     scrollY: normalizeNonNegativeInteger(payload.scrollY),
     focusFileId: normalizeFileId(payload.focusFileId),
@@ -119,16 +121,23 @@ export const normalizeExpenseTicketLinkReturnState = (value: unknown): ExpenseTi
   };
 };
 
-// Reads a stored link-mode return state when it still matches the active expense sheet.
-export const readExpenseTicketLinkReturnState = (sheetId?: unknown): ExpenseTicketLinkReturnState | null => {
+// Reads a stored link-mode return state when it matches the active sheet and optional target line.
+export const readExpenseTicketLinkReturnState = (
+  sheetId?: unknown,
+  targetLineRecId?: unknown
+): ExpenseTicketLinkReturnState | null => {
   const stored = normalizeExpenseTicketLinkReturnState(
     getSessionJsonWithExpiry<ExpenseTicketLinkReturnState>(getScopedKey())
   );
   if (!stored) return null;
 
   const safeSheetId = String(sheetId || "").trim();
-  if (!safeSheetId) return stored;
-  return stored.sheetId.toUpperCase() === safeSheetId.toUpperCase() ? stored : null;
+  const safeTargetLineRecId = normalizeFileId(targetLineRecId);
+  if (safeSheetId && stored.sheetId.toUpperCase() !== safeSheetId.toUpperCase()) return null;
+  if (safeTargetLineRecId) {
+    return stored.targetLineRecId.toUpperCase() === safeTargetLineRecId.toUpperCase() ? stored : null;
+  }
+  return stored.targetLineRecId ? null : stored;
 };
 
 // Persists the minimum link-mode state required to return from ticket detail without losing selection.

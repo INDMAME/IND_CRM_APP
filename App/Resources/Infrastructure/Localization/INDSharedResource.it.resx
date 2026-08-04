@@ -1698,4 +1698,139 @@
   <data name="ExpenseSheetLink_CompanySwitched" xml:space="preserve">
     <value>Il contesto aziendale è stato modificato per aprire la nota spese dall'email.</value>
   </data>
+  <data name="ExpenseSheets_Line_Ticket_LinkExisting" xml:space="preserve">
+    <value>Associa ticket esistente</value>
+  </data>
+  <data name="ExpenseSheets_Line_Ticket_DetachButton" xml:space="preserve">
+    <value>Scollega ticket</value>
+  </data>
+  <data name="ExpenseSheets_Line_Ticket_DetachTitle" xml:space="preserve">
+    <value>Scollega ticket</value>
+  </data>
+  <data name="ExpenseSheets_Line_Ticket_DetachBody" xml:space="preserve">
+    <value>La riga di spesa, il ticket e la foto verranno conservati. Il ticket tornerà allo stato In attesa.</value>
+  </data>
+  <data name="ExpenseSheets_Line_Ticket_Detaching" xml:space="preserve">
+    <value>Scollegamento del ticket...</value>
+  </data>
+  <data name="ExpenseSheets_Line_Ticket_Detached" xml:space="preserve">
+    <value>Ticket scollegato.</value>
+  </data>
+  <data name="ExpenseSheets_Line_Ticket_DetachFailed" xml:space="preserve">
+    <value>Impossibile scollegare il ticket.</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_TargetTitle" xml:space="preserve">
+    <value>Riga di spesa di destinazione</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_SelectHint" xml:space="preserve">
+    <value>Seleziona un ticket per confrontarlo con questa riga.</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_LineValue" xml:space="preserve">
+    <value>Riga</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_TicketValue" xml:space="preserve">
+    <value>Ticket</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Match" xml:space="preserve">
+    <value>Coincide</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Difference" xml:space="preserve">
+    <value>Diverso</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Amount" xml:space="preserve">
+    <value>Importo</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Date" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Currency" xml:space="preserve">
+    <value>Valuta</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Type" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_TargetMissing" xml:space="preserve">
+    <value>La riga di spesa di destinazione non è stata trovata.</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_TargetAlreadyLinked" xml:space="preserve">
+    <value>La riga di spesa di destinazione ha già un ticket associato.</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_AttachButton" xml:space="preserve">
+    <value>Associa ticket esistente</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_ConfirmBody" xml:space="preserve">
+    <value>Il ticket selezionato verrà associato senza sostituire i valori della riga manuale.</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Attaching" xml:space="preserve">
+    <value>Associazione del ticket alla riga di spesa...</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_Attached" xml:space="preserve">
+    <value>Ticket associato.</value>
+  </data>
+  <data name="ExpenseTickets_LinkLine_AttachFailed" xml:space="preserve">
+    <value>Impossibile associare il ticket.</value>
+  </data>
+  <data name="HomeHelp_CardTitle" xml:space="preserve"><value>Il tuo assistente per il CRM</value></data>
+  <data name="HomeHelp_CardBody" xml:space="preserve"><value>Fai domande sui processi documentati del CRM e ricevi una risposta guidata nella lingua che preferisci.</value></data>
+  <data name="HomeHelp_SuggestionsLabel" xml:space="preserve"><value>Prova una di queste domande</value></data>
+  <data name="HomeHelp_OpenAria" xml:space="preserve"><value>Apri la guida del CRM</value></data>
+  <data name="HomeHelp_Callout1" xml:space="preserve"><value>Hai bisogno di aiuto con il CRM?</value></data>
+  <data name="HomeHelp_Callout2" xml:space="preserve"><value>Chiedimi come funziona un processo.</value></data>
+  <data name="HomeHelp_Callout3" xml:space="preserve"><value>Posso guidarti passo dopo passo.</value></data>
+  <data name="HomeHelp_Suggestion1" xml:space="preserve"><value>Come creo una visita?</value></data>
+  <data name="HomeHelp_Suggestion2" xml:space="preserve"><value>Come creo una nota spese?</value></data>
+  <data name="HomeHelp_Suggestion3" xml:space="preserve"><value>Come gestisco uno scontrino di spesa?</value></data>
+  <data name="HomeHelp_ChatLoading" xml:space="preserve"><value>Apertura della guida CRM...</value></data>
+  <data name="HomeHelp_RenderError" xml:space="preserve"><value>Non è stato possibile mostrare la guida CRM.</value></data>
+  <data name="HomeHelp_PanelTitle" xml:space="preserve"><value>Guida CRM</value></data>
+  <data name="HomeHelp_Send" xml:space="preserve"><value>Invia domanda</value></data>
+  <data name="HomeHelp_Sending" xml:space="preserve"><value>Invio</value></data>
+  <data name="HomeHelp_Retry" xml:space="preserve"><value>Riprova</value></data>
+  <data name="HomeHelp_Warnings" xml:space="preserve"><value>Avvisi</value></data>
+  <data name="HomeHelp_InputPlaceholder" xml:space="preserve"><value>Chiedi come utilizzare il CRM...</value></data>
+  <data name="HomeHelp_InputPrivacyNotice" xml:space="preserve"><value>Non includere dati personali, dati dei clienti o segreti.</value></data>
+  <data name="HomeHelp_EmptyTitle" xml:space="preserve"><value>In cosa ti serve aiuto?</value></data>
+  <data name="HomeHelp_EmptyBody" xml:space="preserve"><value>Fai una domanda o scegli un argomento documentato.</value></data>
+  <data name="HomeHelp_NoContextTitle" xml:space="preserve"><value>La guida non è disponibile</value></data>
+  <data name="HomeHelp_NoContextBody" xml:space="preserve"><value>Non è stato possibile caricare la guida CRM.</value></data>
+  <data name="HomeHelp_NoContextMessage" xml:space="preserve"><value>Ricarica la pagina e riprova.</value></data>
+  <data name="HomeHelp_LanguageLabel" xml:space="preserve"><value>Lingua della risposta</value></data>
+  <data name="HomeHelp_CatalogTitle" xml:space="preserve"><value>Argomenti della guida</value></data>
+  <data name="HomeHelp_CatalogLoading" xml:space="preserve"><value>Caricamento argomenti...</value></data>
+  <data name="HomeHelp_CatalogError" xml:space="preserve"><value>Non è stato possibile caricare gli argomenti.</value></data>
+  <data name="HomeHelp_CatalogToggle" xml:space="preserve"><value>Esplora gli argomenti della guida</value></data>
+  <data name="HomeHelp_CatalogSearchLabel" xml:space="preserve"><value>Cerca negli argomenti della guida</value></data>
+  <data name="HomeHelp_CatalogSearchPlaceholder" xml:space="preserve"><value>Cerca argomenti...</value></data>
+  <data name="HomeHelp_CatalogEmpty" xml:space="preserve"><value>Nessun argomento corrispondente.</value></data>
+  <data name="HomeHelp_Loading" xml:space="preserve"><value>Ricerca nella guida CRM...</value></data>
+  <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>Troppe richieste. Attendi e riprova.</value></data>
+  <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>L'assistente non è disponibile in questo momento.</value></data>
+  <data name="HomeHelp_NeedsSelection" xml:space="preserve"><value>Scegli l'argomento più vicino così potrò rispondere con precisione.</value></data>
+  <data name="HomeHelp_NotDocumented" xml:space="preserve"><value>Questa informazione non è ancora documentata.</value></data>
+  <data name="HomeHelp_TopicQuestionTemplate" xml:space="preserve"><value>Spiegami come utilizzare {0}.</value></data>
+  <data name="HomeHelp_SelectedTopic" xml:space="preserve"><value>Argomento selezionato: {0}</value></data>
+  <data name="HomeHelp_ClearTopic" xml:space="preserve"><value>Rimuovi</value></data>
+  <data name="HomeHelp_KnowledgeVersion" xml:space="preserve"><value>Versione della guida {0}</value></data>
+  <data name="HomeHelp_SourcesLabel" xml:space="preserve"><value>Fonti</value></data>
+  <data name="HomeHelp_SourceLoading" xml:space="preserve"><value>Caricamento fonte...</value></data>
+  <data name="HomeHelp_SourceError" xml:space="preserve"><value>Non è stato possibile caricare la sezione citata.</value></data>
+  <data name="HomeHelp_Navigate" xml:space="preserve"><value>Apri modulo</value></data>
+  <data name="HomeHelp_QuickAnswer" xml:space="preserve"><value>Risposta rapida verificata</value></data>
+  <data name="HomeHelp_FeedbackPrompt" xml:space="preserve"><value>Questa risposta è stata utile?</value></data>
+  <data name="HomeHelp_HelpfulAria" xml:space="preserve"><value>Contrassegna la risposta come utile</value></data>
+  <data name="HomeHelp_NotHelpfulAria" xml:space="preserve"><value>Contrassegna la risposta come non utile</value></data>
+  <data name="HomeHelp_FeedbackReasonLabel" xml:space="preserve"><value>Motivo</value></data>
+  <data name="HomeHelp_FeedbackReasonPlaceholder" xml:space="preserve"><value>Seleziona un motivo</value></data>
+  <data name="HomeHelp_FeedbackReason_incorrect" xml:space="preserve"><value>È errata</value></data>
+  <data name="HomeHelp_FeedbackReason_outdated" xml:space="preserve"><value>È obsoleta</value></data>
+  <data name="HomeHelp_FeedbackReason_unclear" xml:space="preserve"><value>Non è chiara</value></data>
+  <data name="HomeHelp_FeedbackReason_incomplete" xml:space="preserve"><value>È incompleta</value></data>
+  <data name="HomeHelp_FeedbackReason_permissions" xml:space="preserve"><value>Non corrisponde ai miei permessi</value></data>
+  <data name="HomeHelp_FeedbackReason_other" xml:space="preserve"><value>Altro motivo</value></data>
+  <data name="HomeHelp_FeedbackCommentLabel" xml:space="preserve"><value>Commento facoltativo</value></data>
+  <data name="HomeHelp_FeedbackCommentPlaceholder" xml:space="preserve"><value>Non inserire dati personali o dei clienti.</value></data>
+  <data name="HomeHelp_FeedbackSubmit" xml:space="preserve"><value>Invia valutazione</value></data>
+  <data name="HomeHelp_FeedbackSending" xml:space="preserve"><value>Invio...</value></data>
+  <data name="HomeHelp_FeedbackThanks" xml:space="preserve"><value>Grazie. La tua valutazione è stata salvata.</value></data>
+  <data name="HomeHelp_FeedbackError" xml:space="preserve"><value>Non è stato possibile salvare la valutazione. Riprova.</value></data>
 </root>

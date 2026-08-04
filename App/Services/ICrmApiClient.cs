@@ -42,6 +42,29 @@ namespace IND_CRM_APP.Services
         Task<ApiResponse<object>> GetHealthAsync(string token);
         Task<ApiResponse<object>> GetHealthPingAsync(string token);
 
+        // CRM help assistant.
+        Task<ApiTransportResponse<CrmHelpCatalogDto>> GetHelpCatalogAsync(
+            string token,
+            string responseLocale,
+            CancellationToken cancellationToken = default
+        );
+        Task<ApiTransportResponse<CrmHelpTopicDto>> GetHelpTopicAsync(
+            string token,
+            string topicId,
+            string responseLocale,
+            CancellationToken cancellationToken = default
+        );
+        Task<ApiTransportResponse<CrmHelpAskResponseData>> AskCrmHelpAsync(
+            string token,
+            CrmHelpAskRequest request,
+            CancellationToken cancellationToken = default
+        );
+        Task<ApiTransportResponse<CrmHelpFeedbackResponseData>> SubmitCrmHelpFeedbackAsync(
+            string token,
+            CrmHelpFeedbackRequest request,
+            CancellationToken cancellationToken = default
+        );
+
         // CRM enum catalog.
         Task<PagedApiResponse<CrmEnumCatalogDto>> GetEnumCatalogByNameAsync(
             string token,
@@ -165,6 +188,25 @@ namespace IND_CRM_APP.Services
             string lineRecId,
             ExpenseSheetLineRequest req,
             string? axUserIdOverride = null
+        );
+
+        // MMS - Attaches an existing ticket to one manual expense line. - 2026.08.04
+        Task<ApiTransportResponse<ExpenseSheetLineTicketResultDto>> AttachExpenseSheetLineTicketAsync(
+            string token,
+            string hojaGastosId,
+            string lineRecId,
+            ExpenseSheetLineTicketRequest req,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default
+        );
+
+        // MMS - Detaches a ticket while preserving the expense line and ticket assets. - 2026.08.04
+        Task<ApiTransportResponse<ExpenseSheetLineTicketResultDto>> DetachExpenseSheetLineTicketAsync(
+            string token,
+            string hojaGastosId,
+            string lineRecId,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default
         );
 
         // Propagates the current expense sheet header reimbursement value to its lines.

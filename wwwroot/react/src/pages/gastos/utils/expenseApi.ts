@@ -18,6 +18,8 @@ import type {
   ExpenseSheetDraftResponse,
   ExpenseSheetHeaderUpdateRequest,
   ExpenseSheetLineDto,
+  ExpenseSheetLineTicketRequest,
+  ExpenseSheetLineTicketResultDto,
   ExpenseSheetLineUpdateRequest,
   ExpenseSheetLineUpdateResponseData,
   ExpenseSheetListApiRequest,
@@ -1484,6 +1486,60 @@ export const updateExpenseSheetLine = async (
       method: "PUT",
       headers: buildExpenseHeaders(context, options, true),
       body: JSON.stringify(normalizedPayload),
+    }
+  );
+
+  return normalizeApiResponse(response);
+};
+
+// MMS - Attaches an existing ticket to a manual line through the atomic endpoint. - 2026.08.04
+export const attachExpenseSheetLineTicket = async (
+  hojaGastosId: string,
+  lineRecId: string,
+  payload: ExpenseSheetLineTicketRequest,
+  options?: ExpenseTicketListFetchOptions
+): Promise<IndApiResponse<ExpenseSheetLineTicketResultDto>> => {
+  const { axUserIdOverride, ...baseOptions } = options || {};
+  const context = await ensureExpenseApiContext(baseOptions);
+  const safeSheetId = encodeURIComponent(safeText(hojaGastosId));
+  const safeLineId = encodeURIComponent(safeText(lineRecId));
+  const safeFileId = safeText(payload?.fileId);
+  if (!safeSheetId || !safeLineId || !safeFileId) {
+    throw new ApiFetchError(indT("Api_RequestFailed", "Request failed."));
+  }
+
+  const response = await fetchJson<IndApiResponse<ExpenseSheetLineTicketResultDto>>(
+    `/api/crm/expensesheets/${safeSheetId}/lines/${safeLineId}/ticket`,
+    {
+      ...baseOptions,
+      method: "PUT",
+      headers: buildTicketListHeaders(context, baseOptions, axUserIdOverride),
+      body: JSON.stringify({ fileId: safeFileId }),
+    }
+  );
+
+  return normalizeApiResponse(response);
+};
+
+// MMS - Detaches a ticket while preserving the line, ticket header, and file. - 2026.08.04
+export const detachExpenseSheetLineTicket = async (
+  hojaGastosId: string,
+  lineRecId: string,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<ExpenseSheetLineTicketResultDto>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeSheetId = encodeURIComponent(safeText(hojaGastosId));
+  const safeLineId = encodeURIComponent(safeText(lineRecId));
+  if (!safeSheetId || !safeLineId) {
+    throw new ApiFetchError(indT("Api_RequestFailed", "Request failed."));
+  }
+
+  const response = await fetchJson<IndApiResponse<ExpenseSheetLineTicketResultDto>>(
+    `/api/crm/expensesheets/${safeSheetId}/lines/${safeLineId}/ticket`,
+    {
+      ...options,
+      method: "DELETE",
+      headers: buildExpenseHeaders(context, options),
     }
   );
 

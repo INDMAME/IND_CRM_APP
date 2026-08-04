@@ -1,0 +1,103 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expenses.modulo-hojas-de-gastos",
+    "moduleId":  "expenses",
+    "sectionNumber":  "8",
+    "title":  "Módulo Hojas de gastos",
+    "summary":  "Una hoja de gastos agrupa los importes que una persona presenta para su tratamiento y, cuando corresponde, para su reembolso. La hoja se crea primero con sus datos generales. Después se añaden líneas, se crean tickets o se vinculan tickets existentes.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Módulo Hojas de gastos",
+                                  "Hojas de gastos",
+                                  "hojas de gastos",
+                                  "gastos"
+                              ],
+                    "eu-ES":  [
+                                  "Gastu-orriak modulua",
+                                  "gastu-orriak",
+                                  "gastuak"
+                              ],
+                    "en":  [
+                               "Expense sheets module",
+                               "expense sheets",
+                               "expenses"
+                           ],
+                    "pt":  [
+                               "Módulo Folhas de despesas",
+                               "folhas de despesas",
+                               "despesas"
+                           ],
+                    "it":  [
+                               "Modulo Note spese",
+                               "note spese",
+                               "spese"
+                           ],
+                    "zh-Hans":  [
+                                    "费用单模块",
+                                    "费用单",
+                                    "费用"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre módulo hojas de gastos?"
+                                      ],
+                            "eu-ES":  [
+                                          "Gastu-orriak modulua gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about expense sheets module?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Módulo Folhas de despesas."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Modulo Note spese."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于费用单模块的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expenses.flujo-general-de-una-hoja-de-gastos",
+                            "expenses.abrir-la-lista-de-hojas",
+                            "expenses.buscar-y-filtrar-hojas",
+                            "expenses.crear-la-cabecera-de-una-hoja",
+                            "expenses.comprender-el-detalle-de-la-hoja",
+                            "expenses.anadir-una-linea-manual",
+                            "expenses.divisas-e-importes-de-una-linea",
+                            "expenses.crear-un-ticket-desde-una-hoja",
+                            "expenses.vincular-tickets-existentes",
+                            "expenses.editar-la-cabecera-y-las-lineas"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "2E07ED184E8CE8AC14C51FCB51A0441AB010673042550A96A92D420270FC04CF",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "8",
+                   "pageFromTableOfContents":  16
+               }
+}

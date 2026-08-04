@@ -1,0 +1,93 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "introduction.que-necesita",
+    "moduleId":  "introduction",
+    "sectionNumber":  "3.1",
+    "title":  "Qué necesita",
+    "summary":  "• Un ordenador, teléfono o tableta autorizado por la empresa mediante su correo empresarial.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Qué necesita",
+                                  "primeros pasos",
+                                  "manual CRM"
+                              ],
+                    "eu-ES":  [
+                                  "Zer behar duzun",
+                                  "lehen urratsak",
+                                  "CRM eskuliburua"
+                              ],
+                    "en":  [
+                               "What you need",
+                               "getting started",
+                               "CRM manual"
+                           ],
+                    "pt":  [
+                               "O que é necessário",
+                               "primeiros passos",
+                               "manual CRM"
+                           ],
+                    "it":  [
+                               "Cosa serve",
+                               "primi passi",
+                               "manuale CRM"
+                           ],
+                    "zh-Hans":  [
+                                    "所需条件",
+                                    "入门",
+                                    "CRM 手册"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre qué necesita?"
+                                      ],
+                            "eu-ES":  [
+                                          "Zer behar duzun gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about what you need?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com O que é necessário."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Cosa serve."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于所需条件的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "EA251E5DAB9CE09ECE997BF05074BA382046D574252C71DD9F621DE5A34F5A9D",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "3.1",
+                   "pageFromTableOfContents":  5
+               }
+}

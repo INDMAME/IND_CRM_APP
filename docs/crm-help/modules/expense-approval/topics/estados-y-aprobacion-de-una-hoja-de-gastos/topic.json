@@ -1,0 +1,97 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos",
+    "moduleId":  "expense-approval",
+    "sectionNumber":  "10",
+    "title":  "Estados y aprobación de una hoja de gastos",
+    "summary":  "El estado indica en qué punto se encuentra la hoja. Las acciones disponibles cambian según el propietario, los permisos de gestión y la configuración de autoaprobación.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Estados y aprobación de una hoja de gastos",
+                                  "aprobación de gastos",
+                                  "estados de hoja"
+                              ],
+                    "eu-ES":  [
+                                  "Gastu-orri baten egoerak eta onarpena",
+                                  "gastuen onarpena",
+                                  "orriaren egoerak"
+                              ],
+                    "en":  [
+                               "Expense sheet status and approval",
+                               "expense approval",
+                               "sheet status"
+                           ],
+                    "pt":  [
+                               "Estados e aprovação de uma folha de despesas",
+                               "aprovação de despesas",
+                               "estado da folha"
+                           ],
+                    "it":  [
+                               "Stati e approvazione di una nota spese",
+                               "approvazione spese",
+                               "stato nota spese"
+                           ],
+                    "zh-Hans":  [
+                                    "费用单状态和审批",
+                                    "费用审批",
+                                    "费用单状态"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre estados y aprobación de una hoja de gastos?"
+                                      ],
+                            "eu-ES":  [
+                                          "Gastu-orri baten egoerak eta onarpena gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about expense sheet status and approval?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Estados e aprovação de uma folha de despesas."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Stati e approvazione di una nota spese."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于费用单状态和审批的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expense-approval.flujo-general-de-estados",
+                            "expense-approval.estados-de-la-hoja-de-gastos",
+                            "expense-approval.acciones-del-propietario",
+                            "expense-approval.acciones-del-responsable",
+                            "expense-approval.enlaces-recibidos-por-correo"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "163F82DAE950AA2690E7C934698793BD86AA1EC0212DBBCDA5CE728E67F1F835",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "10",
+                   "pageFromTableOfContents":  26
+               }
+}

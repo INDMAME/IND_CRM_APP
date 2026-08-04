@@ -1,0 +1,93 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expense-approval.flujo-general-de-estados",
+    "moduleId":  "expense-approval",
+    "sectionNumber":  "10.1",
+    "title":  "Flujo general de estados",
+    "summary":  "El diagrama indica que las transiciones disponibles dependen de la configuración, el perfil y la acción.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Flujo general de estados",
+                                  "aprobación de gastos",
+                                  "estados de hoja"
+                              ],
+                    "eu-ES":  [
+                                  "Egoeren fluxu orokorra",
+                                  "gastuen onarpena",
+                                  "orriaren egoerak"
+                              ],
+                    "en":  [
+                               "General status flow",
+                               "expense approval",
+                               "sheet status"
+                           ],
+                    "pt":  [
+                               "Fluxo geral dos estados",
+                               "aprovação de despesas",
+                               "estado da folha"
+                           ],
+                    "it":  [
+                               "Flusso generale degli stati",
+                               "approvazione spese",
+                               "stato nota spese"
+                           ],
+                    "zh-Hans":  [
+                                    "状态的一般流程",
+                                    "费用审批",
+                                    "费用单状态"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre flujo general de estados?"
+                                      ],
+                            "eu-ES":  [
+                                          "Egoeren fluxu orokorra gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about general status flow?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Fluxo geral dos estados."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Flusso generale degli stati."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于状态的一般流程的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "FA6527315BA59BFEC02E9C7EC6C3DB6FFFDF569D86DA810EE124749606ED6A53",
+    "assets":  [
+                   "manual-1.5.image49"
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "10.1",
+                   "pageFromTableOfContents":  27
+               }
+}

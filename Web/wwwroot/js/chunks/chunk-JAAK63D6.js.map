@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../react/src/utils/indI18n.ts"],
+  "sourcesContent": ["const getI18n = (): Record<string, string> => {\r\n  return (typeof globalThis !== \"undefined\" && globalThis.__IND_I18N__) || {};\r\n};\r\n\r\nexport const indT = (key: string, fallback?: string): string => {\r\n  const dict = getI18n();\r\n  const value = dict[key];\r\n  if (typeof value === \"string\" && value.trim() && value !== key) return value;\r\n  return fallback || key;\r\n};\r\n\r\nexport const indFormat = (key: string, fallback: string | undefined, ...args: Array<string | number>) => {\r\n  const template = indT(key, fallback);\r\n  return String(template).replace(/\\{(\\d+)\\}/g, (_, idx) => String(args[Number(idx)] ?? \"\"));\r\n};\r\n"],
+  "mappings": "wCAAA,IAAMA,EAIOC,EAOAC,EAXbC,EAAAC,EAAA,KAAMJ,EAAU,IACN,OAAO,WAAe,KAAe,WAAW,cAAiB,CAAC,EAG/DC,EAAO,CAACI,EAAaC,IAA8B,CAE9D,IAAMC,EADOP,EAAQ,EACFK,CAAG,EACtB,OAAI,OAAOE,GAAU,UAAYA,EAAM,KAAK,GAAKA,IAAUF,EAAYE,EAChED,GAAYD,CACrB,EAEaH,EAAY,CAACG,EAAaC,KAAiCE,IAAiC,CACvG,IAAMC,EAAWR,EAAKI,EAAKC,CAAQ,EACnC,OAAO,OAAOG,CAAQ,EAAE,QAAQ,aAAc,CAACC,EAAGC,IAAQ,OAAOH,EAAK,OAAOG,CAAG,CAAC,GAAK,EAAE,CAAC,CAC3F",
+  "names": ["getI18n", "indT", "indFormat", "init_indI18n", "__esmMin", "key", "fallback", "value", "args", "template", "_", "idx"]
+}

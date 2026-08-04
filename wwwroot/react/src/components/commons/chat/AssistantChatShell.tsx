@@ -34,20 +34,29 @@ type AssistantChatShellProps<TActionId extends string = string> = {
   desktopPlacement?: AssistantChatDesktopPlacement;
   bottomInset?: string;
   botImageSrc: string;
-  contextNotice: string;
+  contextNotice: React.ReactNode;
+  headerActions?: React.ReactNode;
+  emptyStateContent?: React.ReactNode;
+  messagesHeaderContent?: React.ReactNode;
+  inputNotice?: React.ReactNode;
+  inputMaxLength?: number;
   draftValue: string;
   messages: AssistantChatMessage[];
   quickActions: AssistantChatQuickAction<TActionId>[];
   messagesContainerRef: RefObject<HTMLDivElement | null>;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
+  dialogRef?: RefObject<HTMLElement | null>;
+  dialogId?: string;
+  ariaModal?: boolean;
   onToggle: () => void;
   onClose: () => void;
   onDraftChange: (value: string) => void;
   onSubmit: () => void;
   onQuickAction: (question: string) => void;
-  onRetry: (question: string) => void;
+  onRetry: (question: string, assistantMessageId?: string) => void;
   onChartTypeSelect: (messageId: string, value: VisualizationType) => void;
   onDraftKeyDown: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void;
+  renderAssistantMessageFooter?: (message: AssistantChatMessage) => React.ReactNode;
 };
 
 const ASSISTANT_PAGE_INSET = "max(12px, calc(50vw - 24rem + 12px))";
@@ -103,8 +112,9 @@ type AssistantChatMessageBubbleProps = {
   message: AssistantChatMessage;
   retryLabel: string;
   warningsLabel: string;
-  onRetry: (question: string) => void;
+  onRetry: (question: string, assistantMessageId?: string) => void;
   onChartTypeSelect: (messageId: string, value: VisualizationType) => void;
+  footer?: React.ReactNode;
 };
 
 // Renders one chat bubble capable of hosting markdown, charts, tables, or pickers.
@@ -116,6 +126,7 @@ const AssistantChatMessageBubble = ({
   warningsLabel,
   onRetry,
   onChartTypeSelect,
+  footer,
 }: AssistantChatMessageBubbleProps) => {
   const warnings = Array.isArray(message.meta?.warnings) ? message.meta?.warnings : [];
   const [warningsOpen, setWarningsOpen] = React.useState(false);
@@ -168,7 +179,7 @@ const AssistantChatMessageBubble = ({
               type="button"
               className="mt-2 inline-flex items-center gap-1 rounded-[var(--radius-xl)] border border-rose-200 bg-white px-2.5 py-1.5 text-[12px] font-semibold text-rose-800 transition hover:bg-rose-100 focus:outline-hidden focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isSending}
-              onClick={() => onRetry(message.retryQuestion || "")}
+              onClick={() => onRetry(message.retryQuestion || "", message.id)}
             >
               <ArrowPathIcon className="h-3.5 w-3.5" />
               {retryLabel}
@@ -200,6 +211,8 @@ const AssistantChatMessageBubble = ({
               ) : null}
             </div>
           ) : null}
+
+          {footer ? <div className="mt-2">{footer}</div> : null}
         </div>
       </div>
     );
@@ -208,13 +221,14 @@ const AssistantChatMessageBubble = ({
   return (
     <div className="flex justify-start">
       <div className={classNames("relative w-full", shouldHideAssistantAvatar ? "max-w-full" : "max-w-[96%]")}>
-        <div
-          className={classNames(
-            "relative z-10 border px-2.5 py-2 shadow-[0_10px_24px_rgba(15,23,42,0.06)]",
-            bubbleClassName,
-            GLOBAL_CHAT_RADIUS_CLASS
-          )}
-        >
+        <div className="relative">
+          <div
+            className={classNames(
+              "relative z-10 border px-2.5 py-2 shadow-[0_10px_24px_rgba(15,23,42,0.06)]",
+              bubbleClassName,
+              GLOBAL_CHAT_RADIUS_CLASS
+            )}
+          >
           {shouldHideAssistantAvatar ? (
             <div className="w-full min-w-0 text-[12px] leading-5">
               <ChatMessageContent
@@ -264,7 +278,7 @@ const AssistantChatMessageBubble = ({
             type="button"
             className="mt-2 inline-flex items-center gap-1 rounded-[var(--radius-xl)] border border-rose-200 bg-white px-2.5 py-1.5 text-[12px] font-semibold text-rose-800 transition hover:bg-rose-100 focus:outline-hidden focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSending}
-            onClick={() => onRetry(message.retryQuestion || "")}
+            onClick={() => onRetry(message.retryQuestion || "", message.id)}
           >
             <ArrowPathIcon className="h-3.5 w-3.5" />
             {retryLabel}
@@ -296,14 +310,16 @@ const AssistantChatMessageBubble = ({
             ) : null}
           </div>
         ) : null}
+          </div>
+          <span
+            aria-hidden="true"
+            className={classNames(
+              "absolute left-[-6px] bottom-[7px] h-4 w-4 rotate-45 rounded-[4px] border",
+              bubbleTailClassName
+            )}
+          />
         </div>
-        <span
-          aria-hidden="true"
-          className={classNames(
-            "absolute left-[-6px] bottom-[7px] h-4 w-4 rotate-45 rounded-[4px] border",
-            bubbleTailClassName
-          )}
-        />
+        {footer ? <div className="relative z-10 mt-2">{footer}</div> : null}
       </div>
     </div>
   );
@@ -332,11 +348,19 @@ const AssistantChatShell = <TActionId extends string = string,>({
   bottomInset = ASSISTANT_BOTTOM_INSET,
   botImageSrc,
   contextNotice,
+  headerActions,
+  emptyStateContent,
+  messagesHeaderContent,
+  inputNotice,
+  inputMaxLength,
   draftValue,
   messages,
   quickActions,
   messagesContainerRef,
   textareaRef,
+  dialogRef,
+  dialogId,
+  ariaModal = false,
   onToggle,
   onClose,
   onDraftChange,
@@ -345,6 +369,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
   onRetry,
   onChartTypeSelect,
   onDraftKeyDown,
+  renderAssistantMessageFooter,
 }: AssistantChatShellProps<TActionId>) => {
   const sendDisabled = !hasContext || isSending || !toText(draftValue);
   const hasAssistantResponse = messages.some((message) => message.role === "assistant" && message.state !== "loading");
@@ -398,9 +423,12 @@ const AssistantChatShell = <TActionId extends string = string,>({
         />
 
         <aside
+          id={dialogId}
+          ref={dialogRef}
           role="dialog"
-          aria-modal="false"
+          aria-modal={ariaModal}
           aria-label={title}
+          tabIndex={dialogRef ? -1 : undefined}
           className={classNames(
             "absolute flex flex-col overflow-hidden rounded-[var(--radius-xl)] border border-slate-200 bg-white/96 text-[12px] shadow-[0_28px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl transition-transform duration-300 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)] [right:var(--assistant-page-inset)] lg:w-[368px]",
             desktopPlacementClassNames.panel,
@@ -420,6 +448,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
               <div className="min-w-0 flex-1">
                 <h2 className="text-[12px] font-semibold leading-4 text-primary">{title}</h2>
               </div>
+              {headerActions}
               <button
                 type="button"
                 className="rounded-[var(--radius-xl)] border border-slate-200 bg-white p-[5px] text-slate-500 transition hover:border-slate-300 hover:text-primary focus:outline-hidden focus:ring-2 focus:ring-primary/30"
@@ -437,6 +466,12 @@ const AssistantChatShell = <TActionId extends string = string,>({
             </div>
           ) : null}
 
+          {messagesHeaderContent ? (
+            <div className="border-b border-slate-200 bg-slate-50/80 px-3 py-2">
+              {messagesHeaderContent}
+            </div>
+          ) : null}
+
           <div ref={messagesContainerRef} className="flex-1 space-y-4 overflow-y-auto px-3 py-3 lg:px-3">
             {messages.length === 0 ? (
               <div className="flex min-h-full flex-col items-center justify-start px-3 pt-5 text-center">
@@ -449,6 +484,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
                 <p className="mt-2 max-w-[30ch] text-[12px] leading-5 text-slate-600">
                   {hasContext ? emptyStateBody : noContextBody}
                 </p>
+                {hasContext ? emptyStateContent : null}
               </div>
             ) : (
               messages.map((message) => (
@@ -461,6 +497,11 @@ const AssistantChatShell = <TActionId extends string = string,>({
                   warningsLabel={warningsLabel}
                   onRetry={onRetry}
                   onChartTypeSelect={onChartTypeSelect}
+                  footer={
+                    message.role === "assistant" && message.state === "done"
+                      ? renderAssistantMessageFooter?.(message)
+                      : null
+                  }
                 />
               ))
             )}
@@ -485,6 +526,12 @@ const AssistantChatShell = <TActionId extends string = string,>({
               })}
             </div>
 
+            {inputNotice ? (
+              <p className="mb-2 text-[10px] font-medium leading-4 text-amber-800" role="note">
+                {inputNotice}
+              </p>
+            ) : null}
+
             <div className="glass-panel shadow-card relative rounded-[var(--radius-xl)] border border-slate-200 bg-white/95 px-2.5 py-2">
               {!toText(draftValue) ? (
                 <span
@@ -497,6 +544,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
               <textarea
                 ref={textareaRef}
                 rows={1}
+                maxLength={inputMaxLength}
                 className="block min-h-[44px] w-full resize-none bg-transparent px-0 py-0 pr-[56px] text-[12px] leading-5 text-slate-700 placeholder:text-transparent focus:outline-hidden disabled:cursor-not-allowed disabled:text-slate-400"
                 value={draftValue}
                 disabled={!hasContext || isSending}

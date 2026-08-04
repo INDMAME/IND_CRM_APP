@@ -1,0 +1,95 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "visits.crear-una-visita-paso-1-cuenta-y-contactos",
+    "moduleId":  "visits",
+    "sectionNumber":  "7.3",
+    "title":  "Crear una visita: paso 1, cuenta y contactos",
+    "summary":  "1. En el Historial, pulse el botón Crear o el botón redondo con el signo más.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Crear una visita: paso 1, cuenta y contactos",
+                                  "visitas",
+                                  "historial de visitas"
+                              ],
+                    "eu-ES":  [
+                                  "Bisita sortu: 1. urratsa, kontua eta kontaktuak",
+                                  "bisitak",
+                                  "bisiten historia"
+                              ],
+                    "en":  [
+                               "Create a visit: step 1, account and contacts",
+                               "visits",
+                               "visit history"
+                           ],
+                    "pt":  [
+                               "Criar uma visita: passo 1, conta e contactos",
+                               "visitas",
+                               "histórico de visitas"
+                           ],
+                    "it":  [
+                               "Creare una visita: fase 1, account e contatti",
+                               "visite",
+                               "cronologia visite"
+                           ],
+                    "zh-Hans":  [
+                                    "创建拜访：第 1 步，客户和联系人",
+                                    "拜访",
+                                    "拜访记录"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre crear una visita: paso 1, cuenta y contactos?"
+                                      ],
+                            "eu-ES":  [
+                                          "Bisita sortu: 1. urratsa, kontua eta kontaktuak gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about create a visit: step 1, account and contacts?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Criar uma visita: passo 1, conta e contactos."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Creare una visita: fase 1, account e contatti."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于创建拜访：第 1 步，客户和联系人的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "visits.modulo-visitas"
+                        ],
+    "routeKey":  "visits.history",
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "F01449A4427AF1D01132F177D06AA91BC019AEAA131DEDBACE112C3EC26B3AA4",
+    "assets":  [
+                   "manual-1.5.image12",
+                   "manual-1.5.image13",
+                   "manual-1.5.image14"
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "7.3",
+                   "pageFromTableOfContents":  13
+               }
+}

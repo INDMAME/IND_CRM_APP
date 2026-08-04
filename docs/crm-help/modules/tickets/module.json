@@ -1,0 +1,39 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "tickets",
+    "title":  "Tickets",
+    "description":  "Consulta, creación y estado de justificantes de gasto.",
+    "order":  6,
+    "aliases":  {
+                    "es-ES":  [
+                                  "tickets",
+                                  "justificantes"
+                              ],
+                    "eu-ES":  [
+                                  "tiketa",
+                                  "gastuen frogagiriak"
+                              ],
+                    "en":  [
+                               "tickets",
+                               "expense receipts"
+                           ],
+                    "pt":  [
+                               "tickets",
+                               "comprovativos de despesa"
+                           ],
+                    "it":  [
+                               "ticket",
+                               "giustificativi di spesa"
+                           ],
+                    "zh-Hans":  [
+                                    "票据",
+                                    "费用凭证"
+                                ]
+                },
+    "topicIds":  [
+                     "tickets.modulo-tickets",
+                     "tickets.abrir-y-filtrar-tickets",
+                     "tickets.crear-un-ticket-desde-el-modulo-tickets",
+                     "tickets.estado-del-ticket"
+                 ]
+}

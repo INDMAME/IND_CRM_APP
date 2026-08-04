@@ -168,7 +168,11 @@ namespace IND_CRM_APP.Controllers
 
         // Shows the expense tickets list page.
         [HttpGet]
-        public async Task<IActionResult> Tickets([FromQuery(Name = "action")] string ticketsAction = "", string hojaGastosId = "")
+        public async Task<IActionResult> Tickets(
+            [FromQuery(Name = "action")] string ticketsAction = "",
+            string hojaGastosId = "",
+            string lineRecId = "",
+            string sheetLineRecId = "")
         {
             var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
@@ -177,7 +181,15 @@ namespace IND_CRM_APP.Controllers
             await LoadEnvironmentInfoAsync();
             var normalizedAction = (ticketsAction ?? string.Empty).Trim().ToLowerInvariant();
             var safeSheetId = (hojaGastosId ?? string.Empty).Trim();
-            if (normalizedAction == "link" && !string.IsNullOrWhiteSpace(safeSheetId))
+            var safeTargetLineRecId = NormalizeOptionalText(sheetLineRecId) ?? NormalizeOptionalText(lineRecId);
+            if (normalizedAction == "link-line" &&
+                !string.IsNullOrWhiteSpace(safeSheetId) &&
+                !string.IsNullOrWhiteSpace(safeTargetLineRecId))
+            {
+                ViewData["TopbarBackUrl"] =
+                    $"/Gastos/ExpenseSheetLineDetail?hojaGastosId={Uri.EscapeDataString(safeSheetId)}&lineRecId={Uri.EscapeDataString(safeTargetLineRecId)}";
+            }
+            else if (normalizedAction == "link" && !string.IsNullOrWhiteSpace(safeSheetId))
             {
                 ViewData["TopbarBackUrl"] = $"/Gastos/ExpenseSheetDetail?hojaGastosId={Uri.EscapeDataString(safeSheetId)}";
             }
@@ -188,7 +200,13 @@ namespace IND_CRM_APP.Controllers
 
         // Shows the expense ticket detail page.
         [HttpGet]
-        public async Task<IActionResult> TicketDetail(string fileId, string mode = "", string origin = "", string sheetId = "", string lineRecId = "")
+        public async Task<IActionResult> TicketDetail(
+            string fileId,
+            string mode = "",
+            string origin = "",
+            string sheetId = "",
+            string lineRecId = "",
+            string sheetLineRecId = "")
         {
             var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
@@ -203,13 +221,16 @@ namespace IND_CRM_APP.Controllers
 
             ViewBag.TicketFileId = safeFileId;
             var normalizedOrigin = (origin ?? string.Empty).Trim().ToLowerInvariant();
-            if (normalizedOrigin == "expense-line" && !string.IsNullOrWhiteSpace(sheetId) && !string.IsNullOrWhiteSpace(lineRecId))
+            var safeTargetLineRecId = NormalizeOptionalText(sheetLineRecId) ?? NormalizeOptionalText(lineRecId);
+            if (normalizedOrigin == "expense-line" && !string.IsNullOrWhiteSpace(sheetId) && !string.IsNullOrWhiteSpace(safeTargetLineRecId))
             {
-                ViewData["TopbarBackUrl"] = $"/Gastos/ExpenseSheetLineDetail?hojaGastosId={Uri.EscapeDataString(sheetId.Trim())}&lineRecId={Uri.EscapeDataString(lineRecId.Trim())}";
+                ViewData["TopbarBackUrl"] = $"/Gastos/ExpenseSheetLineDetail?hojaGastosId={Uri.EscapeDataString(sheetId.Trim())}&lineRecId={Uri.EscapeDataString(safeTargetLineRecId)}";
             }
             else if (normalizedOrigin == "sheet-link" && !string.IsNullOrWhiteSpace(sheetId))
             {
-                ViewData["TopbarBackUrl"] = $"/Gastos/Tickets?action=link&hojaGastosId={Uri.EscapeDataString(sheetId.Trim())}";
+                ViewData["TopbarBackUrl"] = string.IsNullOrWhiteSpace(safeTargetLineRecId)
+                    ? $"/Gastos/Tickets?action=link&hojaGastosId={Uri.EscapeDataString(sheetId.Trim())}"
+                    : $"/Gastos/Tickets?action=link-line&hojaGastosId={Uri.EscapeDataString(sheetId.Trim())}&sheetLineRecId={Uri.EscapeDataString(safeTargetLineRecId)}&lineRecId={Uri.EscapeDataString(safeTargetLineRecId)}&origin=expense-line";
             }
             else if (normalizedOrigin == "sheet-create" || normalizedOrigin == "ticket-create")
             {
@@ -1712,6 +1733,133 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // MMS - Attaches an existing ticket after validating the actor and sheet state. - 2026.08.04
+        [HttpPut]
+        public async Task<IActionResult> ApiExpenseSheetLineTicketAttach(
+            string hojaGastosId,
+            string lineRecId,
+            [FromBody] ExpenseSheetLineTicketRequest req)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeSheetId = NormalizeOptionalText(hojaGastosId);
+            var safeLineId = NormalizeOptionalText(lineRecId);
+            var safeFileId = NormalizeOptionalText(req?.FileId);
+            if (string.IsNullOrWhiteSpace(safeSheetId) ||
+                string.IsNullOrWhiteSpace(safeLineId) ||
+                string.IsNullOrWhiteSpace(safeFileId))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetLineTicketAttach));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
+            var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                token,
+                safeSheetId,
+                requestAxUserId,
+                nameof(ApiExpenseSheetLineTicketAttach),
+                ExpenseSheetMutationType.LineMutation);
+            if (!mutationGuard.Allowed)
+                return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+
+            try
+            {
+                var transport = await _apiClient.AttachExpenseSheetLineTicketAsync(
+                    token,
+                    safeSheetId,
+                    safeLineId,
+                    new ExpenseSheetLineTicketRequest { FileId = safeFileId },
+                    requestAxUserId,
+                    HttpContext.RequestAborted);
+                return CreateExpenseSheetLineTicketResponse(transport);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetLineTicketAttach");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetLineTicketAttach");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
+        // MMS - Detaches a ticket without deleting the line, ticket header, or file. - 2026.08.04
+        [HttpDelete]
+        public async Task<IActionResult> ApiExpenseSheetLineTicketDetach(string hojaGastosId, string lineRecId)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeSheetId = NormalizeOptionalText(hojaGastosId);
+            var safeLineId = NormalizeOptionalText(lineRecId);
+            if (string.IsNullOrWhiteSpace(safeSheetId) || string.IsNullOrWhiteSpace(safeLineId))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetLineTicketDetach));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
+            var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                token,
+                safeSheetId,
+                requestAxUserId,
+                nameof(ApiExpenseSheetLineTicketDetach),
+                ExpenseSheetMutationType.LineMutation);
+            if (!mutationGuard.Allowed)
+                return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+
+            try
+            {
+                var transport = await _apiClient.DetachExpenseSheetLineTicketAsync(
+                    token,
+                    safeSheetId,
+                    safeLineId,
+                    requestAxUserId,
+                    HttpContext.RequestAborted);
+                return CreateExpenseSheetLineTicketResponse(transport);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetLineTicketDetach");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetLineTicketDetach");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
         // API route used by React clients for /api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId}.
         [HttpDelete]
         public async Task<IActionResult> ApiExpenseSheetLineDelete(
@@ -1806,7 +1954,7 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
-        // Cleans up linked ticket blobs and headers before deleting a full expense sheet.
+        // MMS - Detaches every linked line and only cleans ticket-origin assets during whole-sheet deletion. - 2026.08.04
         private async Task<IActionResult?> CleanupExpenseSheetLinkedTicketsBeforeDeleteAsync(
             string token,
             string hojaGastosId,
@@ -1833,16 +1981,93 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status502BadGateway);
             }
 
-            var linkedFileIds = GetExpenseSheetLinkedTicketFileIds(sheet);
-            if (linkedFileIds.Count == 0)
+            var linkedLines = (sheet.Lines ?? new List<ExpenseSheetLineDto>())
+                .Select(line => (
+                    LineRecId: NormalizeOptionalText(ResolveLineRecId(line)),
+                    FileId: NormalizeOptionalText(line.FileId),
+                    IsTicketOrigin: line.Ticket == true))
+                .Where(item => !string.IsNullOrWhiteSpace(item.FileId))
+                .ToList();
+            if (linkedLines.Count == 0)
                 return null;
 
+            if (linkedLines.Any(item => string.IsNullOrWhiteSpace(item.LineRecId)))
+            {
+                _logger.LogWarning(
+                    "Stopping whole sheet delete because a linked ticket line has no record id. hojaGastosId={HojaGastosId}",
+                    hojaGastosId);
+                return CreateApiCommandError(
+                    StatusCodes.Status409Conflict,
+                    _sr["ExpenseSheets_Detail_DeleteFailed"].Value,
+                    "DETACH_TICKET_LINE_ID_MISSING");
+            }
+
+            linkedLines = linkedLines
+                .GroupBy(item => item.LineRecId!, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .ToList();
+
             _logger.LogInformation(
-                "Deleting {Count} linked ticket files and tickets before deleting expense sheet {HojaGastosId}.",
-                linkedFileIds.Count,
+                "Detaching {Count} linked ticket lines before deleting expense sheet {HojaGastosId}.",
+                linkedLines.Count,
                 hojaGastosId);
 
-            foreach (var fileId in linkedFileIds)
+            foreach (var linkedLine in linkedLines)
+            {
+                var transport = await _apiClient.DetachExpenseSheetLineTicketAsync(
+                    token,
+                    hojaGastosId,
+                    linkedLine.LineRecId!,
+                    axUserIdOverride,
+                    HttpContext.RequestAborted);
+                var response = transport.Response;
+                if (response.Success)
+                    continue;
+
+                _logger.LogWarning(
+                    "Linked ticket detach failed before whole sheet delete. hojaGastosId={HojaGastosId} lineRecId={LineRecId} fileId={FileId} errorCode={ErrorCode} traceId={TraceId} message={Message}",
+                    hojaGastosId,
+                    linkedLine.LineRecId,
+                    linkedLine.FileId,
+                    response.ErrorCode ?? string.Empty,
+                    response.TraceId ?? string.Empty,
+                    response.Message ?? string.Empty);
+
+                var statusCode = (int)transport.StatusCode;
+                if (statusCode < StatusCodes.Status400BadRequest)
+                    statusCode = StatusCodes.Status409Conflict;
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = response.GetMessageOrDefault(_sr["ExpenseSheets_Detail_DeleteFailed"].Value),
+                        ErrorCode = response.ErrorCode ?? "DETACH_TICKET_FAILED",
+                        Data = response.Data,
+                        Errors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>(),
+                        TraceId = response.TraceId
+                    },
+                    statusCode);
+            }
+
+            // MMS - Manual-line associations keep their detached ticket and photo in Pending state. - 2026.08.04
+            var ticketOriginFileIds = linkedLines
+                .GroupBy(item => item.FileId!, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.All(item => item.IsTicketOrigin))
+                .Select(group => group.Key)
+                .ToList();
+            var preservedManualTicketCount = linkedLines
+                .Where(item => !item.IsTicketOrigin)
+                .Select(item => item.FileId!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
+
+            _logger.LogInformation(
+                "Deleting {DeleteCount} ticket-origin files and tickets before deleting expense sheet {HojaGastosId}; preserving {PreservedCount} manual-line tickets.",
+                ticketOriginFileIds.Count,
+                hojaGastosId,
+                preservedManualTicketCount);
+
+            foreach (var fileId in ticketOriginFileIds)
             {
                 try
                 {
@@ -4658,6 +4883,24 @@ namespace IND_CRM_APP.Controllers
             return result;
         }
 
+        // MMS - Forwards the ticket relationship envelope and HTTP status unchanged. - 2026.08.04
+        private static JsonResult CreateExpenseSheetLineTicketResponse(
+            ApiTransportResponse<ExpenseSheetLineTicketResultDto> transport)
+        {
+            var response = transport.Response;
+            return CreateApiResponse(
+                new
+                {
+                    Success = response.Success,
+                    Message = response.Message ?? string.Empty,
+                    ErrorCode = response.ErrorCode,
+                    Data = response.Data,
+                    Errors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>(),
+                    TraceId = response.TraceId
+                },
+                (int)transport.StatusCode);
+        }
+
         // Builds a standard paged API error payload for list-like endpoints.
         private static JsonResult CreateApiPagedError(int statusCode, string message)
         {
@@ -5610,17 +5853,6 @@ namespace IND_CRM_APP.Controllers
                 string.Equals((x.HojaGastosId ?? string.Empty).Trim(), hojaGastosId.Trim(), StringComparison.OrdinalIgnoreCase));
 
             return match ?? list[0];
-        }
-
-        // Collects unique linked ticket file ids from a sheet detail payload.
-        private static List<string> GetExpenseSheetLinkedTicketFileIds(ExpenseSheetDetailDto? sheet)
-        {
-            return (sheet?.Lines ?? new List<ExpenseSheetLineDto>())
-                .Select(line => NormalizeOptionalText(line.FileId))
-                .Where(fileId => !string.IsNullOrWhiteSpace(fileId))
-                .Cast<string>()
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
         }
 
         // Treats missing blob/file cleanup responses as already-clean states.

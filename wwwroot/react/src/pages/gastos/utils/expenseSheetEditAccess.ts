@@ -1,8 +1,8 @@
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { resolveExpenseSheetDetailPolicy } from "../detail/expenseSheetDetailPolicy.ts";
-import type { ExpenseSheetDetailDto, ExpenseSheetHeader } from "../expenseTypes.ts";
-import { fetchExpenseSheetDetail, mapExpenseSheetHeader } from "./expenseApi.ts";
+import type { ExpenseSheetDetailDto, ExpenseSheetHeader, ExpenseSheetLine } from "../expenseTypes.ts";
+import { fetchExpenseSheetDetail, mapExpenseSheetHeader, mapExpenseSheetLine } from "./expenseApi.ts";
 import { isManagingOtherExpenseRecord } from "./expenseManagedUserScope.ts";
 import { hasAssignedVoucher, safeText } from "./expenseUiUtils.ts";
 
@@ -11,6 +11,7 @@ const EXPENSE_STATUS_PAID = 4;
 export type ExpenseSheetEditAccessResult = {
   sheetId: string;
   header: ExpenseSheetHeader | null;
+  lines: ExpenseSheetLine[];
   isPaid: boolean;
   isLocked: boolean;
   blockedMessage: string;
@@ -67,6 +68,7 @@ export const resolveExpenseSheetEditAccess = async ({
     return {
       sheetId: "",
       header: null,
+      lines: [],
       isPaid: false,
       isLocked: true,
       blockedMessage: indT("ExpenseSheets_NotFound", "Expense sheet was not found."),
@@ -82,6 +84,7 @@ export const resolveExpenseSheetEditAccess = async ({
       return {
         sheetId: safeSheetId,
         header: null,
+        lines: [],
         isPaid: false,
         isLocked: true,
         blockedMessage:
@@ -94,6 +97,7 @@ export const resolveExpenseSheetEditAccess = async ({
       return {
         sheetId: safeSheetId,
         header: null,
+        lines: [],
         isPaid: false,
         isLocked: true,
         blockedMessage: indT("ExpenseSheets_NotFound", "Expense sheet was not found."),
@@ -101,6 +105,10 @@ export const resolveExpenseSheetEditAccess = async ({
     }
 
     const mappedHeader = mapExpenseSheetHeader(selectedSheet);
+    const rawLines = Array.isArray(selectedSheet.Lines)
+      ? selectedSheet.Lines
+      : (Array.isArray(selectedSheet.lines) ? selectedSheet.lines : []);
+    const mappedLines = rawLines.map(mapExpenseSheetLine);
     const statusCode = typeof mappedHeader.expenseSheetStatus === "number" ? mappedHeader.expenseSheetStatus : null;
     const isPaid = statusCode === EXPENSE_STATUS_PAID || hasAssignedVoucher(mappedHeader.voucher);
     const isManagingOtherUser = isManagingOtherExpenseRecord({
@@ -122,6 +130,7 @@ export const resolveExpenseSheetEditAccess = async ({
     return {
       sheetId: safeSheetId,
       header: mappedHeader,
+      lines: mappedLines,
       isPaid,
       isLocked,
       blockedMessage: isLocked ? resolveLockedSheetMessage(isPaid) : "",
@@ -137,6 +146,7 @@ export const resolveExpenseSheetEditAccess = async ({
     return {
       sheetId: safeSheetId,
       header: null,
+      lines: [],
       isPaid: false,
       isLocked: true,
       blockedMessage,

@@ -1,0 +1,41 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "troubleshooting",
+    "title":  "Problemas frecuentes",
+    "description":  "Comprobaciones y datos que deben enviarse a soporte.",
+    "order":  9,
+    "aliases":  {
+                    "es-ES":  [
+                                  "problemas frecuentes",
+                                  "soporte"
+                              ],
+                    "eu-ES":  [
+                                  "ohiko arazoak",
+                                  "laguntza"
+                              ],
+                    "en":  [
+                               "common problems",
+                               "support"
+                           ],
+                    "pt":  [
+                               "problemas frequentes",
+                               "suporte"
+                           ],
+                    "it":  [
+                               "problemi frequenti",
+                               "assistenza"
+                           ],
+                    "zh-Hans":  [
+                                    "常见问题",
+                                    "技术支持"
+                                ]
+                },
+    "topicIds":  [
+                     "troubleshooting.la-pagina-no-abre",
+                     "troubleshooting.la-identificacion-se-repite",
+                     "troubleshooting.no-aparece-un-menu-boton-o-usuario",
+                     "troubleshooting.no-se-puede-guardar",
+                     "troubleshooting.la-imagen-del-ticket-no-se-procesa",
+                     "troubleshooting.que-informacion-enviar-a-soporte"
+                 ]
+}

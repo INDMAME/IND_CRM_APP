@@ -1,0 +1,93 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expense-approval.enlaces-recibidos-por-correo",
+    "moduleId":  "expense-approval",
+    "sectionNumber":  "10.5",
+    "title":  "Enlaces recibidos por correo",
+    "summary":  "Un correo de aprobación puede incluir un enlace directo a la hoja. Pulse el enlace, identifíquese si se solicita y espere. La aplicación puede cambiar a la empresa correcta antes de abrir el detalle. El enlace no concede permisos adicionales: solo podrá ver o actuar sobre la h...",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Enlaces recibidos por correo",
+                                  "aprobación de gastos",
+                                  "estados de hoja"
+                              ],
+                    "eu-ES":  [
+                                  "Posta elektronikoz jasotako estekak",
+                                  "gastuen onarpena",
+                                  "orriaren egoerak"
+                              ],
+                    "en":  [
+                               "Links received by email",
+                               "expense approval",
+                               "sheet status"
+                           ],
+                    "pt":  [
+                               "Ligações recebidas por correio eletrónico",
+                               "aprovação de despesas",
+                               "estado da folha"
+                           ],
+                    "it":  [
+                               "Collegamenti ricevuti via e-mail",
+                               "approvazione spese",
+                               "stato nota spese"
+                           ],
+                    "zh-Hans":  [
+                                    "通过电子邮件收到的链接",
+                                    "费用审批",
+                                    "费用单状态"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre enlaces recibidos por correo?"
+                                      ],
+                            "eu-ES":  [
+                                          "Posta elektronikoz jasotako estekak gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about links received by email?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Ligações recebidas por correio eletrónico."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Collegamenti ricevuti via e-mail."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于通过电子邮件收到的链接的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "D4EF791391DC477F73EFBF7DA969F0D5D4D9B316DF1B0BB42B6CD55E158BB935",
+    "assets":  [
+                   "manual-1.5.image50"
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "10.5",
+                   "pageFromTableOfContents":  28
+               }
+}

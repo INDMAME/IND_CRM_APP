@@ -15,6 +15,7 @@ import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts
 import ExpenseTimelineCard from "../components/ExpenseTimelineCard.tsx";
 import ExpenseTicketLinkTimelineItem from "../components/ExpenseTicketLinkTimelineItem.tsx";
 import ExpenseTicketLinkBulkSummary from "../components/ExpenseTicketLinkBulkSummary.tsx";
+import ExpenseTicketLineTargetSummary from "../components/ExpenseTicketLineTargetSummary.tsx";
 import ExpenseTicketsFiltersPanel from "../components/ExpenseTicketsFiltersPanel.tsx";
 import ExpenseQuickTicketProgressOverlay from "../components/ExpenseQuickTicketProgressOverlay.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
@@ -22,6 +23,7 @@ import { getExpenseTicketStatusLabel } from "../constants/expenseTicketStatusCat
 import {
   configureExpenseApiAuth,
   getExpenseSheetDefaultCurrencyCode,
+  attachExpenseSheetLineTicket,
   linkExpenseSheetTicketsBulk,
 } from "../utils/expenseApi.ts";
 import { clearExpenseActingUserOverride, setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
@@ -30,6 +32,7 @@ import { getExpenseGastoTypeOptions } from "../constants/expenseGastoTypeCatalog
 import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import {
   buildExpenseSheetDetailUrl,
+  buildExpenseSheetLineDetailUrl,
   clearExpenseTicketReturnContext,
   EXPENSE_TICKET_LINK_FAILURE_REPAIR_INTENT,
   saveExpenseTicketReturnContext,
@@ -64,6 +67,7 @@ import { useExpenseTicketLinkSelection } from "./useExpenseTicketLinkSelection.t
 import { useExpenseTicketAutomaticLoad } from "./useExpenseTicketAutomaticLoad.ts";
 import { useExpenseTicketLinkSheetGate } from "./useExpenseTicketLinkSheetGate.ts";
 import { setTopbarActionGroupReady as revealTopbarActionGroup } from "../../../utils/topbarActionVisibility.ts";
+import { toExpenseIsoDate } from "../utils/expenseApiDateUtils.ts";
 
 const PAGE_SIZE = 10;
 
@@ -118,15 +122,34 @@ const resolveManagedUserSelection = (requestedUserId: string, currentAxUserId: s
   return "";
 };
 
-const buildLinkModeInitialSnapshot = (managedUserId = ""): ExpenseTicketAppliedFilterSnapshot => {
+const buildLinkModeInitialSnapshot = (
+  managedUserId = "",
+  centerDateValue: unknown = ""
+): ExpenseTicketAppliedFilterSnapshot => {
   const today = startOfDay(new Date());
-  const fromDate = new Date(today);
-  // Keep automatic link-mode load bounded to avoid heavy upstream scans.
-  fromDate.setDate(today.getDate() - 29);
+  let fromDate = new Date(today);
+  let toDate = new Date(today);
+  const centerIsoDate = toExpenseIsoDate(centerDateValue);
+  let centeredOnTargetDate = false;
+  if (centerIsoDate) {
+    const centerDate = startOfDay(new Date(`${centerIsoDate}T00:00:00`));
+    if (Number.isFinite(centerDate.getTime()) && centerDate <= today) {
+      centeredOnTargetDate = true;
+      fromDate = new Date(centerDate);
+      fromDate.setDate(centerDate.getDate() - 14);
+      toDate = new Date(centerDate);
+      toDate.setDate(centerDate.getDate() + 15);
+      if (toDate > today) toDate = new Date(today);
+    }
+  }
+  if (!centeredOnTargetDate) {
+    // Keep automatic link-mode load bounded to avoid heavy upstream scans.
+    fromDate.setDate(today.getDate() - 29);
+  }
 
   return {
     fromDate: toIsoDate(fromDate),
-    toDate: toIsoDate(today),
+    toDate: toIsoDate(toDate),
     filterKey: "",
     currencyCode: "",
     managedUserId: normalizeUserId(managedUserId),
@@ -209,17 +232,27 @@ const ExpenseTicketsPageContent = () => {
     const url = new URL(window.location.href);
     const action = safeText(url.searchParams.get("action")).toLowerCase();
     const hojaGastosId = safeText(url.searchParams.get("hojaGastosId"));
-    const isLinkMode = action === "link" && !!hojaGastosId;
+    const targetLineRecId = safeText(
+      url.searchParams.get("sheetLineRecId") || url.searchParams.get("lineRecId")
+    );
+    const isLineLinkMode = action === "link-line" && !!hojaGastosId && !!targetLineRecId;
+    const isLinkMode = (action === "link" && !!hojaGastosId) || isLineLinkMode;
     return {
       isLinkMode,
+      isLineLinkMode,
       sheetId: hojaGastosId,
-      sheetOrigin: isLinkMode ? ("sheet-link" as const) : (!!hojaGastosId ? ("sheet-create" as const) : null),
+      targetLineRecId: isLineLinkMode ? targetLineRecId : "",
+      sheetOrigin: isLineLinkMode
+        ? ("expense-line" as const)
+        : (isLinkMode ? ("sheet-link" as const) : (!!hojaGastosId ? ("sheet-create" as const) : null)),
       fixedStatusFilter: isLinkMode ? (0 as const) : null,
     };
   }, []);
 
   const isLinkMode = linkModeContext.isLinkMode;
+  const isLineLinkMode = linkModeContext.isLineLinkMode;
   const linkSheetId = linkModeContext.sheetId;
+  const targetLineRecId = linkModeContext.targetLineRecId;
   const sheetCallerOrigin = linkModeContext.sheetOrigin;
   const hasSheetCallerContext = !!linkSheetId && !!sheetCallerOrigin;
   const fixedStatusFilter = linkModeContext.fixedStatusFilter;
@@ -345,6 +378,8 @@ const ExpenseTicketsPageContent = () => {
     linkSheetLocked,
     linkSheetBlockedMessage,
     linkSheetCheckBusy,
+    linkSheetCheckComplete,
+    linkSheetLines,
   } = useExpenseTicketLinkSheetGate({
     isLinkMode,
     linkSheetId,
@@ -356,19 +391,39 @@ const ExpenseTicketsPageContent = () => {
     selectedManagedUserId,
     resolveBlockedMessage: resolveLinkModeBlockedMessage,
   });
+  const targetLine = useMemo(() => {
+    if (!isLineLinkMode || !targetLineRecId) return null;
+    const normalizedTargetLineRecId = targetLineRecId.toUpperCase();
+    return (
+      linkSheetLines.find((item) => safeText(item.lineRecId).toUpperCase() === normalizedTargetLineRecId) || null
+    );
+  }, [isLineLinkMode, linkSheetLines, targetLineRecId]);
+  const targetLineBlockedMessage = useMemo(() => {
+    if (!isLineLinkMode || !linkSheetCheckComplete || linkSheetCheckBusy) return "";
+    if (!canProcessLinkMode || linkSheetLocked) return "";
+    if (!targetLine) {
+      return indT("ExpenseTickets_LinkLine_TargetMissing", "The target expense line was not found.");
+    }
+    if (safeText(targetLine.fileId) || targetLine.ticket === true) {
+      return indT("ExpenseTickets_LinkLine_TargetAlreadyLinked", "The target expense line already has a ticket.");
+    }
+    return "";
+  }, [canProcessLinkMode, isLineLinkMode, linkSheetCheckBusy, linkSheetCheckComplete, linkSheetLocked, targetLine]);
+  const linkFlowLocked = linkSheetLocked || !!targetLineBlockedMessage;
+  const linkFlowBlockedMessage = targetLineBlockedMessage || linkSheetBlockedMessage;
   const { runAutomaticListLoad } = useExpenseTicketAutomaticLoad({
     isLinkMode,
     canProcessLinkMode,
     linkSheetCheckBusy,
-    linkSheetLocked,
+    linkSheetLocked: linkFlowLocked,
     clearListCache,
     resetList,
     loadList,
   });
   const buildInitialLinkModeSnapshot = useCallback(() => {
     const initialManagedUserId = syncManagedUserSelection(defaultManagedUserId);
-    return buildLinkModeInitialSnapshot(initialManagedUserId);
-  }, [defaultManagedUserId, syncManagedUserSelection]);
+    return buildLinkModeInitialSnapshot(initialManagedUserId, isLineLinkMode ? targetLine?.transDate : "");
+  }, [defaultManagedUserId, isLineLinkMode, syncManagedUserSelection, targetLine?.transDate]);
 
   const buildInitialStandardSnapshot = useCallback((): ExpenseTicketAppliedFilterSnapshot => {
     const today = startOfDay(new Date());
@@ -543,7 +598,8 @@ const ExpenseTicketsPageContent = () => {
     [isLinkMode, openSourcePicker]
   );
 
-  const selectedTicketCount = resolveSelectedCount(total);
+  const selectedTicketCount = isLineLinkMode ? selectedTickets.length : resolveSelectedCount(total);
+  const selectedTargetTicket = isLineLinkMode ? selectedTickets[0] || null : null;
   const selectedTotalAmountText = useMemo(() => {
     let totalAmount = 0;
 
@@ -639,11 +695,11 @@ const ExpenseTicketsPageContent = () => {
       pendingScrollRestoreRef.current = cachedState.scrollY;
       pendingFocusFileIdRef.current = cachedState.focusFileId;
       restoreLinkTicketSelection({
-        selectionMode: cachedState.selectionMode,
-        selectedTickets: cachedState.selectedTickets,
-        excludedIds: cachedState.excludedIds,
-        filteredSnapshot: cachedState.filteredSelectionFilters,
-        filteredTotalCount: cachedState.filteredSelectionTotal,
+        selectionMode: isLineLinkMode ? "selected" : cachedState.selectionMode,
+        selectedTickets: isLineLinkMode ? cachedState.selectedTickets.slice(0, 1) : cachedState.selectedTickets,
+        excludedIds: isLineLinkMode ? [] : cachedState.excludedIds,
+        filteredSnapshot: isLineLinkMode ? null : cachedState.filteredSelectionFilters,
+        filteredTotalCount: isLineLinkMode ? 0 : cachedState.filteredSelectionTotal,
       });
 
       if (cachedState.items.length > 0 || cachedState.total > 0) {
@@ -661,6 +717,7 @@ const ExpenseTicketsPageContent = () => {
     },
     [
       normalizeLinkModeSnapshotForLoad,
+      isLineLinkMode,
       restoreAppliedFilters,
       restoreLinkTicketSelection,
       restoreListSnapshot,
@@ -751,7 +808,7 @@ const ExpenseTicketsPageContent = () => {
 
   const toggleTicketSelection = useCallback(
     (ticket: ExpenseTicketListPageItem) => {
-      if (!isLinkMode || !canProcessLinkMode || linkSheetCheckBusy || linkSheetLocked || linkFlowBusy) return;
+      if (!isLinkMode || !canProcessLinkMode || linkSheetCheckBusy || linkFlowLocked || linkFlowBusy) return;
       if (ticket.kind !== "link") return;
 
       const fileId = safeText(ticket.fileId);
@@ -759,9 +816,27 @@ const ExpenseTicketsPageContent = () => {
       if (!canSelectTicketForLink(ticket)) return;
 
       setLinkBulkResult(null);
+      if (isLineLinkMode) {
+        const wasSelected = isLinkTicketSelected(fileId);
+        clearLinkTicketSelection();
+        if (!wasSelected) {
+          toggleLinkTicketSelection(ticket);
+        }
+        return;
+      }
       toggleLinkTicketSelection(ticket);
     },
-    [canProcessLinkMode, isLinkMode, linkFlowBusy, linkSheetCheckBusy, linkSheetLocked, toggleLinkTicketSelection]
+    [
+      canProcessLinkMode,
+      clearLinkTicketSelection,
+      isLineLinkMode,
+      isLinkMode,
+      isLinkTicketSelected,
+      linkFlowBusy,
+      linkFlowLocked,
+      linkSheetCheckBusy,
+      toggleLinkTicketSelection,
+    ]
   );
 
   const clearTicketSelection = useCallback(() => {
@@ -782,7 +857,15 @@ const ExpenseTicketsPageContent = () => {
 
   // Activates backend-driven filtered selection for the current filter snapshot.
   const selectAllMatchingTickets = useCallback(async () => {
-    if (!isLinkMode || !canProcessLinkMode || linkSheetCheckBusy || linkSheetLocked || linkFlowBusy || selectAllBusy) {
+    if (
+      !isLinkMode ||
+      isLineLinkMode ||
+      !canProcessLinkMode ||
+      linkSheetCheckBusy ||
+      linkFlowLocked ||
+      linkFlowBusy ||
+      selectAllBusy
+    ) {
       return;
     }
 
@@ -802,10 +885,11 @@ const ExpenseTicketsPageContent = () => {
   }, [
     canProcessLinkMode,
     currentAxUserId,
+    isLineLinkMode,
     isLinkMode,
     linkFlowBusy,
     linkSheetCheckBusy,
-    linkSheetLocked,
+    linkFlowLocked,
     resolveActiveFilters,
     selectAllByFilters,
     selectAllBusy,
@@ -822,9 +906,9 @@ const ExpenseTicketsPageContent = () => {
     if (!isLinkMode || !linkSheetId || linkFlowBusy) {
       return false;
     }
-    if (linkSheetLocked || !canProcessLinkMode) {
+    if (linkFlowLocked || !canProcessLinkMode) {
       const blockedMessage =
-        linkSheetBlockedMessage ||
+        linkFlowBlockedMessage ||
         indT("ExpenseSheets_Detail_ReadOnlyByStatus", "No se puede editar esta hoja de gastos en el estado actual.");
       setLinkFlowError(blockedMessage);
       setLinkFlowStatus(blockedMessage);
@@ -832,8 +916,8 @@ const ExpenseTicketsPageContent = () => {
       return false;
     }
 
-    const selectedCount = resolveSelectedCount(total);
-    if (selectedCount < 1) {
+    const selectedCount = isLineLinkMode ? selectedTickets.length : resolveSelectedCount(total);
+    if (selectedCount < 1 || (isLineLinkMode && selectedCount !== 1)) {
       return false;
     }
 
@@ -843,9 +927,51 @@ const ExpenseTicketsPageContent = () => {
     setLinkFlowBusy(true);
     setLinkFlowError("");
     setLinkBulkResult(null);
-    setLinkFlowStatus(indT("ExpenseSheets_NewTicket_Status_LinkingLine", "Linking expense line..."));
+    setLinkFlowStatus(
+      isLineLinkMode
+        ? indT("ExpenseTickets_LinkLine_Attaching", "Attaching ticket to the expense line...")
+        : indT("ExpenseSheets_NewTicket_Status_LinkingLine", "Linking expense line...")
+    );
 
     try {
+      if (isLineLinkMode) {
+        const selectedTicket = selectedTickets[0] || null;
+        const selectedFileId = safeText(selectedTicket?.fileId);
+        if (!targetLineRecId || !selectedFileId) {
+          return false;
+        }
+
+        const response = await attachExpenseSheetLineTicket(
+          linkSheetId,
+          targetLineRecId,
+          { fileId: selectedFileId },
+          {
+            suppressPermissionModal: true,
+            axUserIdOverride: requestAxUserId || undefined,
+          }
+        );
+        if (!response.Success) {
+          const failureMessage =
+            response.Message || indT("ExpenseTickets_LinkLine_AttachFailed", "Could not attach the ticket.");
+          setLinkFlowError(failureMessage);
+          setLinkFlowStatus(failureMessage);
+          flashActionMark("errorProcess", 1500);
+          return false;
+        }
+
+        clearTicketSelection();
+        clearCachedState();
+        clearExpenseTicketLinkReturnState();
+        clearExpenseTicketReturnContext();
+        setLinkFlowStatus(indT("ExpenseTickets_LinkLine_Attached", "Ticket attached."));
+        flashActionMark("okProcess", 1200);
+        navigateToExpenseUrl(buildExpenseSheetLineDetailUrl(linkSheetId, targetLineRecId), {
+          askConfirmation: false,
+          bypassGuardOnce: true,
+        });
+        return true;
+      }
+
       const response = await linkExpenseSheetTicketsBulk(
         isFilteredSelectionActive
           ? {
@@ -921,7 +1047,6 @@ const ExpenseTicketsPageContent = () => {
       setLinkFlowBusy(false);
     }
   }, [
-    buildExpenseSheetDetailUrl,
     canProcessLinkMode,
     clearCachedState,
     clearTicketSelection,
@@ -929,32 +1054,51 @@ const ExpenseTicketsPageContent = () => {
     currentAxUserId,
     excludedIds,
     filteredSnapshot,
+    isLineLinkMode,
     isLinkMode,
     isFilteredSelectionActive,
     linkFlowBusy,
     linkSheetId,
-    linkSheetBlockedMessage,
-    linkSheetLocked,
+    linkFlowBlockedMessage,
+    linkFlowLocked,
     loadList,
     resolveActiveFilters,
     resolveSelectedCount,
     selectedTickets,
+    targetLineRecId,
     total,
   ]);
 
   const openLinkConfirmModal = useCallback(() => {
-    if (!isLinkMode || selectedTicketCount < 1 || linkFlowBusy || linkSheetCheckBusy || linkSheetLocked) {
+    if (
+      !isLinkMode ||
+      selectedTicketCount < 1 ||
+      (isLineLinkMode && selectedTicketCount !== 1) ||
+      linkFlowBusy ||
+      linkSheetCheckBusy ||
+      linkFlowLocked
+    ) {
       return;
     }
 
     setLinkFlowError("");
     setLinkFlowStatus("");
+    const targetModeTitle = indT("ExpenseTickets_LinkLine_AttachButton", "Attach existing ticket");
+    const selectedTicketLabel =
+      safeText(selectedTargetTicket?.description) || safeText(selectedTargetTicket?.fileName) || safeText(selectedTargetTicket?.fileId);
     openConfirm({
-      title: indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)"),
-      message: isFilteredSelectionActive
-        ? `${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketCount}`
-        : `${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketCount}\n${indT("ExpenseSheets_Field_TotalAmount", "Reimbursement amount")}: ${selectedTotalAmountText}`,
-      confirmText: indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)"),
+      title: isLineLinkMode ? targetModeTitle : indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)"),
+      message: isLineLinkMode
+        ? `${indT(
+            "ExpenseTickets_LinkLine_ConfirmBody",
+            "The selected ticket will be attached without replacing the manual expense line values."
+          )}\n${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketLabel}`
+        : isFilteredSelectionActive
+          ? `${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketCount}`
+          : `${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketCount}\n${indT("ExpenseSheets_Field_TotalAmount", "Reimbursement amount")}: ${selectedTotalAmountText}`,
+      confirmText: isLineLinkMode
+        ? targetModeTitle
+        : indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)"),
       cancelText: indT("Confirm_No", "Cancel"),
       onConfirm: async () => {
         return runTicketLinkFlow();
@@ -962,12 +1106,14 @@ const ExpenseTicketsPageContent = () => {
     });
   }, [
     isLinkMode,
+    isLineLinkMode,
     selectedTicketCount,
     linkFlowBusy,
     linkSheetCheckBusy,
-    linkSheetLocked,
+    linkFlowLocked,
     isFilteredSelectionActive,
     openConfirm,
+    selectedTargetTicket,
     selectedTotalAmountText,
     runTicketLinkFlow,
   ]);
@@ -1015,6 +1161,7 @@ const ExpenseTicketsPageContent = () => {
         total,
         selectedTickets,
         linkModeSheetId: isLinkMode ? linkSheetId : "",
+        linkModeLineId: isLineLinkMode ? targetLineRecId : "",
         selectionMode,
         excludedIds,
         filteredSelectionFilters: filteredSnapshot,
@@ -1026,6 +1173,7 @@ const ExpenseTicketsPageContent = () => {
         saveCachedState(currentState);
         saveExpenseTicketLinkReturnState({
           sheetId: linkSheetId,
+          targetLineRecId: isLineLinkMode ? targetLineRecId : "",
           page: currentState.page,
           scrollY: currentState.scrollY,
           focusFileId: fileId,
@@ -1044,13 +1192,19 @@ const ExpenseTicketsPageContent = () => {
           query.set("intent", EXPENSE_TICKET_LINK_FAILURE_REPAIR_INTENT);
         }
         if (hasSheetCallerContext && sheetCallerOrigin) {
+          const detailReturnOrigin = isLineLinkMode ? ("sheet-link" as const) : sheetCallerOrigin;
           saveExpenseTicketReturnContext({
             fileId,
             sheetId: linkSheetId,
-            origin: sheetCallerOrigin,
+            origin: detailReturnOrigin,
+            sheetLineRecId: isLineLinkMode ? targetLineRecId : undefined,
           });
-          query.set("origin", sheetCallerOrigin);
+          query.set("origin", detailReturnOrigin);
           query.set("sheetId", linkSheetId);
+          if (isLineLinkMode && targetLineRecId) {
+            query.set("sheetLineRecId", targetLineRecId);
+            query.set("lineRecId", targetLineRecId);
+          }
         }
         navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
           askConfirmation: false,
@@ -1090,6 +1244,7 @@ const ExpenseTicketsPageContent = () => {
       currentFilters,
       hasSheetCallerContext,
       linkSheetId,
+      isLineLinkMode,
       isLinkMode,
       items,
       filteredTotalCount,
@@ -1102,6 +1257,7 @@ const ExpenseTicketsPageContent = () => {
       selectedTickets,
       selectionMode,
       total,
+      targetLineRecId,
     ]
   );
 
@@ -1124,15 +1280,15 @@ const ExpenseTicketsPageContent = () => {
   const totalPages = Math.ceil((total || 0) / PAGE_SIZE);
   const showListLoading = isLoading;
   const linkModeSelectionButtonsDisabled = linkFlowBusy || selectAllBusy || isLoading;
+  const pageLocale = typeof document === "undefined" ? "es-ES" : document.documentElement?.lang || "es-ES";
 
   const summaryItems = useMemo(() => {
     const snapshot = appliedFilters;
     if (!snapshot) return [] as Array<{ key: string; label: string; value: string }>;
 
     const summary: Array<{ key: string; label: string; value: string }> = [];
-    const locale = document?.documentElement?.lang || "es-ES";
-    const fromDateText = formatExpenseDisplayDate(snapshot.fromDate, locale, "");
-    const toDateText = formatExpenseDisplayDate(snapshot.toDate, locale, "");
+    const fromDateText = formatExpenseDisplayDate(snapshot.fromDate, pageLocale, "");
+    const toDateText = formatExpenseDisplayDate(snapshot.toDate, pageLocale, "");
 
     if (fromDateText || toDateText) {
       summary.push({
@@ -1192,7 +1348,7 @@ const ExpenseTicketsPageContent = () => {
     }
 
     return summary;
-  }, [appliedFilters, gastoTypeLabelMap]);
+  }, [appliedFilters, gastoTypeLabelMap, pageLocale]);
 
   const showSummary = !isLinkMode && !showFilters && summaryItems.length > 0;
 
@@ -1242,6 +1398,10 @@ const ExpenseTicketsPageContent = () => {
       logExpenseTicketsWarn("mountRestoreEffect:waiting-management-bootstrap");
       return;
     }
+    if (isLineLinkMode && !linkSheetCheckComplete) {
+      logExpenseTicketsInfo("mountRestoreEffect:waiting-target-line");
+      return;
+    }
     didRestoreOnMountRef.current = true;
     const isHistoryBackForward = isExpenseHistoryBackForwardNavigation();
     const isReturnFromTicketDetail = hasExpenseReturnReferrer([
@@ -1269,7 +1429,12 @@ const ExpenseTicketsPageContent = () => {
       const isReturningFromDetail = hasReturnFlag || isHistoryBackForward || isReturnFromTicketDetail;
       const cachedState = isReturningFromDetail ? readCachedState() : null;
       const cachedSheetId = safeText(cachedState?.linkModeSheetId);
-      if (cachedState && cachedSheetId && cachedSheetId === safeText(linkSheetId)) {
+      const cachedLineId = safeText(cachedState?.linkModeLineId);
+      const expectedLineId = isLineLinkMode ? targetLineRecId : "";
+      const cacheMatchesContext =
+        cachedSheetId.toUpperCase() === safeText(linkSheetId).toUpperCase() &&
+        cachedLineId.toUpperCase() === expectedLineId.toUpperCase();
+      if (cachedState && cachedSheetId && cacheMatchesContext) {
         logExpenseTicketsInfo("mountRestoreEffect:restore-link-mode-cache", {
           cachedSheetId,
           page: cachedState.page,
@@ -1279,7 +1444,9 @@ const ExpenseTicketsPageContent = () => {
         return;
       }
 
-      const linkReturnState = isReturningFromDetail ? readExpenseTicketLinkReturnState(linkSheetId) : null;
+      const linkReturnState = isReturningFromDetail
+        ? readExpenseTicketLinkReturnState(linkSheetId, isLineLinkMode ? targetLineRecId : "")
+        : null;
       if (linkReturnState) {
         logExpenseTicketsInfo("mountRestoreEffect:restore-link-mode-return-state", {
           sheetId: linkReturnState.sheetId,
@@ -1295,6 +1462,7 @@ const ExpenseTicketsPageContent = () => {
           selectedTickets: linkReturnState.selectedTickets,
           total: 0,
           linkModeSheetId: linkReturnState.sheetId,
+          linkModeLineId: linkReturnState.targetLineRecId,
           selectionMode: linkReturnState.selectionMode,
           excludedIds: linkReturnState.excludedIds,
           filteredSelectionFilters: linkReturnState.filteredSelectionFilters,
@@ -1334,6 +1502,8 @@ const ExpenseTicketsPageContent = () => {
     consumeReturnMode,
     hasAccess,
     isLinkMode,
+    isLineLinkMode,
+    linkSheetCheckComplete,
     linkSheetId,
     managementBootstrapReady,
     readCachedState,
@@ -1343,6 +1513,7 @@ const ExpenseTicketsPageContent = () => {
     restoreInitialStandardState,
     restoreLinkModeReturnState,
     restoreStandardReturnState,
+    targetLineRecId,
   ]);
 
   useEffect(() => {
@@ -1593,6 +1764,15 @@ const ExpenseTicketsPageContent = () => {
         </div>
       ) : null}
 
+      {isLineLinkMode && targetLine ? (
+        <ExpenseTicketLineTargetSummary
+          targetLine={targetLine}
+          selectedTicket={selectedTargetTicket}
+          fallbackCurrencyCode={reimbursementCurrencyCode}
+          gastoTypeLabelMap={gastoTypeLabelMap}
+        />
+      ) : null}
+
       <ExpenseTicketsFiltersPanel
         mode={isLinkMode ? "link" : "general"}
         visible={showFilters}
@@ -1641,25 +1821,25 @@ const ExpenseTicketsPageContent = () => {
             </div>
           ) : null}
 
-          {canProcessLinkMode && !linkSheetCheckBusy && selectAllBusy ? (
+          {canProcessLinkMode && !isLineLinkMode && !linkSheetCheckBusy && selectAllBusy ? (
             <div className="flex items-center gap-2 text-sm text-slate-700">
               <Spinner size="h-4 w-4" label={indT("Common_Loading", "Loading")} />
               <span>{indT("Common_Loading", "Loading")}</span>
             </div>
           ) : null}
 
-          {canProcessLinkMode && !linkSheetCheckBusy && linkSheetLocked ? (
+          {canProcessLinkMode && !linkSheetCheckBusy && linkFlowLocked ? (
             <div className="text-sm text-rose-700">
-              {linkSheetBlockedMessage ||
+              {linkFlowBlockedMessage ||
                 indT("ExpenseSheets_Detail_ReadOnlyByStatus", "No se puede editar esta hoja de gastos en el estado actual.")}
             </div>
           ) : null}
 
-          {canProcessLinkMode && !linkSheetCheckBusy && !linkSheetLocked && selectAllError ? (
+          {canProcessLinkMode && !isLineLinkMode && !linkSheetCheckBusy && !linkFlowLocked && selectAllError ? (
             <div className="text-sm text-rose-700">{selectAllError}</div>
           ) : null}
 
-          {canProcessLinkMode && !linkSheetCheckBusy && !linkSheetLocked ? (
+          {canProcessLinkMode && !isLineLinkMode && !linkSheetCheckBusy && !linkFlowLocked ? (
             <>
               <div className="mb-5 grid grid-cols-2 gap-1.5 pt-0.5 sm:mb-6">
                 <button
@@ -1686,7 +1866,7 @@ const ExpenseTicketsPageContent = () => {
         </div>
       ) : null}
 
-      {isLinkMode ? <ExpenseTicketLinkBulkSummary result={linkBulkResult} /> : null}
+      {isLinkMode && !isLineLinkMode ? <ExpenseTicketLinkBulkSummary result={linkBulkResult} /> : null}
 
       <div
         className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
@@ -1708,7 +1888,7 @@ const ExpenseTicketsPageContent = () => {
         <div ref={timelineContainerRef} className="timeline-box">
           {items.map((item) => {
             const fileId = safeText(item.fileId);
-            const dateParts = formatExpenseDateParts(item.transDate, document?.documentElement?.lang || "es-ES");
+            const dateParts = formatExpenseDateParts(item.transDate, pageLocale);
             const description = normalizeCardTitleText(item.description, "");
             const title = description || safeText(item.fileName) || fileId || "-";
             const amountText = formatAmountWithCurrency(item.totalAmount ?? null, reimbursementCurrencyCode);
@@ -1740,7 +1920,7 @@ const ExpenseTicketsPageContent = () => {
                   amountText={amountText}
                   isSelected={isSelectedInLinkMode}
                   isSelectable={isSelectableInLinkMode}
-                  selectionDisabled={linkFlowBusy || linkSheetCheckBusy || linkSheetLocked}
+                  selectionDisabled={linkFlowBusy || linkSheetCheckBusy || linkFlowLocked}
                   selectLabel={selectTicketLabel}
                   onOpenDetail={() => openTicketDetail(fileId)}
                   onToggleSelect={() => toggleTicketSelection(item)}
@@ -1817,12 +1997,26 @@ const ExpenseTicketsPageContent = () => {
         labels={paginationLabels}
       />
 
-      {isLinkMode && canProcessLinkMode && !linkSheetCheckBusy && !linkSheetLocked ? (
-        <PageBottomActions ariaLabel={indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)")}>
+      {isLinkMode && canProcessLinkMode && !linkSheetCheckBusy && !linkFlowLocked ? (
+        <PageBottomActions
+          ariaLabel={
+            isLineLinkMode
+              ? indT("ExpenseTickets_LinkLine_AttachButton", "Attach existing ticket")
+              : indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)")
+          }
+        >
           <PageBottomActionButton
-            label={indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)")}
+            label={
+              isLineLinkMode
+                ? indT("ExpenseTickets_LinkLine_AttachButton", "Attach existing ticket")
+                : indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)")
+            }
             onClick={openLinkConfirmModal}
-            disabled={linkFlowBusy || selectAllBusy || selectedTicketCount < 1}
+            disabled={
+              linkFlowBusy ||
+              selectAllBusy ||
+              (isLineLinkMode ? selectedTicketCount !== 1 : selectedTicketCount < 1)
+            }
           />
         </PageBottomActions>
       ) : null}

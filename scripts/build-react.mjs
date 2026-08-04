@@ -30,6 +30,7 @@ const entryPoints = {
   "expense-line-detail": "Web/wwwroot/react/src/pages/gastos/line/ExpenseSheetLineDetailPage.tsx",
   "ind-text-editor": "Web/wwwroot/react/src/pages/system/TextEditor.tsx",
   "audio-recorder": "Web/wwwroot/react/src/pages/system/AudioRecorder.tsx",
+  "home-help": "Web/wwwroot/react/src/pages/system/homeHelp/HomeHelpAssistantPage.tsx",
   "ind-audio-worklet": "Web/wwwroot/react/audio-recorder/ind-audio-worklet.ts",
 };
 

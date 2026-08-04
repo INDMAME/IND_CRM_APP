@@ -1,0 +1,41 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "axapta",
+    "title":  "Continuidad en Axapta",
+    "description":  "Relación y continuidad del flujo de gastos en Axapta.",
+    "order":  8,
+    "aliases":  {
+                    "es-ES":  [
+                                  "Axapta",
+                                  "gastos en Axapta"
+                              ],
+                    "eu-ES":  [
+                                  "Axapta",
+                                  "gastuak Axaptan"
+                              ],
+                    "en":  [
+                               "Axapta",
+                               "expenses in Axapta"
+                           ],
+                    "pt":  [
+                               "Axapta",
+                               "despesas no Axapta"
+                           ],
+                    "it":  [
+                               "Axapta",
+                               "spese in Axapta"
+                           ],
+                    "zh-Hans":  [
+                                    "Axapta",
+                                    "Axapta 费用"
+                                ]
+                },
+    "topicIds":  [
+                     "axapta.relacion-entre-crm-y-axapta",
+                     "axapta.gestion-del-flujo-en-axapta",
+                     "axapta.hoja-de-gastos-crm-usuarios-hoja-de-gastos",
+                     "axapta.gestion-de-hojas-de-gastos",
+                     "axapta.estados-visibles-en-axapta",
+                     "axapta.acciones-disponibles-en-axapta"
+                 ]
+}

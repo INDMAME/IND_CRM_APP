@@ -1,0 +1,36 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "glossary",
+    "title":  "Glosario",
+    "description":  "Definiciones básicas utilizadas en el manual.",
+    "order":  10,
+    "aliases":  {
+                    "es-ES":  [
+                                  "glosario",
+                                  "definiciones"
+                              ],
+                    "eu-ES":  [
+                                  "glosarioa",
+                                  "definizioak"
+                              ],
+                    "en":  [
+                               "glossary",
+                               "definitions"
+                           ],
+                    "pt":  [
+                               "glossário",
+                               "definições"
+                           ],
+                    "it":  [
+                               "glossario",
+                               "definizioni"
+                           ],
+                    "zh-Hans":  [
+                                    "术语表",
+                                    "定义"
+                                ]
+                },
+    "topicIds":  [
+                     "glossary.glosario-basico"
+                 ]
+}

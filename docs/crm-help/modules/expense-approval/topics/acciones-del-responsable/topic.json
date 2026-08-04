@@ -1,0 +1,93 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expense-approval.acciones-del-responsable",
+    "moduleId":  "expense-approval",
+    "sectionNumber":  "10.4",
+    "title":  "Acciones del responsable",
+    "summary":  "Al consultar una hoja de una persona gestionada (subordinado), el responsable no edita su contenido. En Aprobación solicitada puede Aprobar o Rechazar. En Aprobado puede Deshacer aprobación. En Rechazado puede Deshacer rechazo. Estas reversiones devuelven la hoja al estado ant...",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Acciones del responsable",
+                                  "aprobación de gastos",
+                                  "estados de hoja"
+                              ],
+                    "eu-ES":  [
+                                  "Arduradunaren ekintzak",
+                                  "gastuen onarpena",
+                                  "orriaren egoerak"
+                              ],
+                    "en":  [
+                               "Manager actions",
+                               "expense approval",
+                               "sheet status"
+                           ],
+                    "pt":  [
+                               "Ações do responsável",
+                               "aprovação de despesas",
+                               "estado da folha"
+                           ],
+                    "it":  [
+                               "Azioni del responsabile",
+                               "approvazione spese",
+                               "stato nota spese"
+                           ],
+                    "zh-Hans":  [
+                                    "负责人操作",
+                                    "费用审批",
+                                    "费用单状态"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre acciones del responsable?"
+                                      ],
+                            "eu-ES":  [
+                                          "Arduradunaren ekintzak gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about manager actions?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Ações do responsável."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Azioni del responsabile."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于负责人操作的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "FB2B45003DAA75DDCA75A073DA5D34BB9AA04A2623C3FA3F6CA40CB88AC0902D",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "10.4",
+                   "pageFromTableOfContents":  27
+               }
+}

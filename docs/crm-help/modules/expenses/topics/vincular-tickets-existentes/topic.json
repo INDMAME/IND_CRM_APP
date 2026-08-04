@@ -1,0 +1,95 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expenses.vincular-tickets-existentes",
+    "moduleId":  "expenses",
+    "sectionNumber":  "8.9",
+    "title":  "Vincular tickets existentes",
+    "summary":  "1. En una hoja editable, abra Acciones rápidas y pulse Vincular ticket.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Vincular tickets existentes",
+                                  "hojas de gastos",
+                                  "gastos"
+                              ],
+                    "eu-ES":  [
+                                  "Dauden tiket-ak lotzea",
+                                  "gastu-orriak",
+                                  "gastuak"
+                              ],
+                    "en":  [
+                               "Link existing tickets",
+                               "expense sheets",
+                               "expenses"
+                           ],
+                    "pt":  [
+                               "Associar tickets existentes",
+                               "folhas de despesas",
+                               "despesas"
+                           ],
+                    "it":  [
+                               "Collegare ticket esistenti",
+                               "note spese",
+                               "spese"
+                           ],
+                    "zh-Hans":  [
+                                    "关联现有票据",
+                                    "费用单",
+                                    "费用"
+                                ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre vincular tickets existentes?"
+                                      ],
+                            "eu-ES":  [
+                                          "Dauden tiket-ak lotzea gaiari buruzko laguntza behar dut."
+                                      ],
+                            "en":  [
+                                       "Where can I find information about link existing tickets?"
+                                   ],
+                            "pt":  [
+                                       "Preciso de ajuda com Associar tickets existentes."
+                                   ],
+                            "it":  [
+                                       "Ho bisogno di aiuto con Collegare ticket esistenti."
+                                   ],
+                            "zh-Hans":  [
+                                            "我需要关于关联现有票据的帮助。"
+                                        ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expenses.modulo-hojas-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.5.0",
+    "contentHash":  "B366013E6285C438908D440DDA8368F3AB95F4E65E3FB0BF5F43A15B0EAFD197",
+    "assets":  [
+                   "manual-1.5.image41",
+                   "manual-1.5.image42",
+                   "manual-1.5.image43"
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source",
+                                "eu-ES":  "machine-draft",
+                                "en":  "machine-draft",
+                                "pt":  "machine-draft",
+                                "it":  "machine-draft",
+                                "zh-Hans":  "machine-draft"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "8.9",
+                   "pageFromTableOfContents":  23
+               }
+}

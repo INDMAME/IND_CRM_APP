@@ -31,6 +31,17 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public const string SpeechTranscribe = "api/ia/service/speech";
         public const string ExpenseFromTicket = "api/ia/service/expensefromticket";
         public const string ExpenseSheetsAsk = "api/ia/service/expensesheets/ask";
+        public const string HelpCatalog = "api/help/catalog";
+        public const string HelpAsk = "api/ia/service/help/ask";
+        public const string HelpFeedback = "api/help/feedback";
+
+        // Builds the localized CRM help catalog route.
+        public static string HelpCatalogByLocale(string safeLocale) =>
+            $"{HelpCatalog}?responseLocale={safeLocale}";
+
+        // Builds the localized CRM help topic route.
+        public static string HelpTopic(string safeTopicId, string safeLocale) =>
+            $"api/help/topics/{safeTopicId}?responseLocale={safeLocale}";
 
         // Builds the activity by code route.
         public static string ActivityByCode(string safeCode) =>
@@ -64,6 +75,10 @@ namespace IND_CRM_APP.Services.ApiHelpers
         // Builds the expense sheet line route.
         public static string ExpenseSheetLine(string safeSheetId, string safeLineId) =>
             $"api/crm/expensesheets/{safeSheetId}/lines/{safeLineId}";
+
+        // MMS - Builds the atomic ticket relationship route for an expense line. - 2026.08.04
+        public static string ExpenseSheetLineTicket(string safeSheetId, string safeLineId) =>
+            $"{ExpenseSheetLine(safeSheetId, safeLineId)}/ticket";
 
         // Builds the route that propagates the current header reimbursement value to all lines.
         public static string ExpenseSheetReimbursableExpensePropagate(string safeSheetId) =>
