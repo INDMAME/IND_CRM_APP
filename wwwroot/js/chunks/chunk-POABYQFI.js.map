@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../react/src/components/commons/Spinner.tsx", "../../react/src/utils/classNames.ts"],
-  "sourcesContent": ["import React from \"react\";\r\nimport { indT } from \"../../utils/indI18n.ts\";\r\n\r\ntype Props = {\r\n  size?: string;\r\n  label?: string;\r\n};\r\n\r\nconst Spinner = ({ size = \"h-4 w-4\", label }: Props) => (\r\n  <svg className={`ind-spinner ${size}`} viewBox=\"0 0 20 20\" role=\"status\" aria-label={label || indT(\"Common_Loading\", \"Loading\")}>\r\n    <circle className=\"ind-spinner__circle\" cx=\"10\" cy=\"10\" r=\"8\" strokeWidth=\"2\" />\r\n  </svg>\r\n);\r\n\r\nexport default Spinner;\r\n", "export const classNames = (...classes: Array<string | false | null | undefined>) =>\r\n  classes.filter(Boolean).join(\" \");\r\n"],
-  "mappings": "sIAAA,IAUIA,EAFEC,EAMCC,EAdPC,EAAAC,EAAA,KACAC,IASIL,EAAA,OAFEC,EAAU,CAAC,CAAE,KAAAK,EAAO,UAAW,MAAAC,CAAM,OACzC,OAAC,OAAI,UAAW,eAAeD,CAAI,GAAI,QAAQ,YAAY,KAAK,SAAS,aAAYC,GAASC,EAAK,iBAAkB,SAAS,EAC5H,mBAAC,UAAO,UAAU,sBAAsB,GAAG,KAAK,GAAG,KAAK,EAAE,IAAI,YAAY,IAAI,EAChF,EAGKN,EAAQD,ICdf,IAAaQ,EAAbC,EAAAC,EAAA,KAAaF,EAAa,IAAIG,IAC5BA,EAAQ,OAAO,OAAO,EAAE,KAAK,GAAG",
-  "names": ["import_jsx_runtime", "Spinner", "Spinner_default", "init_Spinner", "__esmMin", "init_indI18n", "size", "label", "indT", "classNames", "init_classNames", "__esmMin", "classes"]
-}

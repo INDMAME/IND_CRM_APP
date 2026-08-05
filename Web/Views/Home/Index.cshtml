@@ -18,38 +18,41 @@
         || environmentName.Equals("Development", StringComparison.OrdinalIgnoreCase)
         || environmentName.StartsWith("DEV-", StringComparison.OrdinalIgnoreCase)
         || environmentName.StartsWith("DEV_", StringComparison.OrdinalIgnoreCase);
+    var homePageSpacingClass = helpAssistantEnabled
+        ? "pt-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pt-8"
+        : "py-4 md:py-8";
 }
 
-<div class="relative isolate flex-1 flex flex-col gap-8">
-    @if (isDevEnvironment)
-    {
-        <div class="pointer-events-none absolute inset-0 z-0 flex items-center justify-center" role="status" aria-label="@($"{environmentLabel}: DEV")">
-            <span class="select-none text-[8.5rem] font-black uppercase leading-none tracking-normal text-slate-300 sm:text-[11rem] md:text-[15rem] lg:text-[18rem]" translate="no">DEV</span>
-        </div>
-    }
-
-    <div class="relative z-10 space-y-2 pt-2">
-        <h2 class="text-2xl font-semibold text-slate-900">@SR["Home_Welcome"]</h2>
-        <p class="text-slate-700">@SR["Home_SelectLeftMenu"]</p>
-    </div>
-
+<div class="relative isolate flex flex-1 items-stretch @homePageSpacingClass">
     @if (helpAssistantEnabled)
     {
         <div id="home-help-assistant-root"
-             class="relative z-10 w-full"
-             data-response-locale="@currentCulture"></div>
+             class="relative z-10 flex min-h-0 w-full"
+             data-response-locale="@currentCulture"
+             data-environment-label="@environmentLabel"
+             data-environment-name="@environmentName"
+             data-company-name="@companyName"
+             data-is-dev="@isDevEnvironment.ToString().ToLowerInvariant()"></div>
     }
-
-    <div class="relative z-10 w-full flex justify-center pb-6 mt-auto">
-        <div class="tech-info text-center space-y-1 leading-tight">
-            @if (!isDevEnvironment)
+    else
+    {
+        <section class="relative z-10 flex w-full flex-col overflow-hidden rounded-[var(--radius-xl)] border border-slate-200 bg-white/95 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+            @if (isDevEnvironment)
             {
-                <div>@environmentLabel: @environmentName</div>
+                <div class="pointer-events-none absolute inset-0 flex items-center justify-center" role="status" aria-label="@($"{environmentLabel}: DEV")">
+                    <span class="select-none text-[8.5rem] font-black uppercase leading-none tracking-normal text-slate-100 sm:text-[11rem] md:text-[15rem]" translate="no" aria-hidden="true">DEV</span>
+                </div>
             }
-            <div>Microsoft Navision Axapta 3.0</div>
-            <div><strong>@companyName</strong></div>
-        </div>
-    </div>
+            <div class="tech-info relative z-10 mt-auto border-t border-slate-100 px-5 py-4 text-center space-y-1 leading-tight">
+                @if (!isDevEnvironment)
+                {
+                    <div>@environmentLabel: @environmentName</div>
+                }
+                <div>Microsoft Navision Axapta 3.0</div>
+                <div><strong>@companyName</strong></div>
+            </div>
+        </section>
+    }
 </div>
 
 @section Styles {
@@ -64,7 +67,6 @@
         {
             HomeHelp_CardTitle = SR["HomeHelp_CardTitle"].Value,
             HomeHelp_CardBody = SR["HomeHelp_CardBody"].Value,
-            HomeHelp_SuggestionsLabel = SR["HomeHelp_SuggestionsLabel"].Value,
             HomeHelp_OpenAria = SR["HomeHelp_OpenAria"].Value,
             HomeHelp_Callout1 = SR["HomeHelp_Callout1"].Value,
             HomeHelp_Callout2 = SR["HomeHelp_Callout2"].Value,
@@ -86,23 +88,18 @@
             HomeHelp_NoContextTitle = SR["HomeHelp_NoContextTitle"].Value,
             HomeHelp_NoContextBody = SR["HomeHelp_NoContextBody"].Value,
             HomeHelp_NoContextMessage = SR["HomeHelp_NoContextMessage"].Value,
-            HomeHelp_LanguageLabel = SR["HomeHelp_LanguageLabel"].Value,
-            HomeHelp_CatalogTitle = SR["HomeHelp_CatalogTitle"].Value,
             HomeHelp_CatalogLoading = SR["HomeHelp_CatalogLoading"].Value,
             HomeHelp_CatalogError = SR["HomeHelp_CatalogError"].Value,
-            HomeHelp_CatalogToggle = SR["HomeHelp_CatalogToggle"].Value,
-            HomeHelp_CatalogSearchLabel = SR["HomeHelp_CatalogSearchLabel"].Value,
-            HomeHelp_CatalogSearchPlaceholder = SR["HomeHelp_CatalogSearchPlaceholder"].Value,
             HomeHelp_CatalogEmpty = SR["HomeHelp_CatalogEmpty"].Value,
+            HomeHelp_ModuleSelectionTitle = SR["HomeHelp_ModuleSelectionTitle"].Value,
+            HomeHelp_ModuleSelectionBody = SR["HomeHelp_ModuleSelectionBody"].Value,
+            HomeHelp_ModuleSelectionLocked = SR["HomeHelp_ModuleSelectionLocked"].Value,
+            HomeHelp_TopicQuestionTemplate = SR["HomeHelp_TopicQuestionTemplate"].Value,
             HomeHelp_Loading = SR["HomeHelp_Loading"].Value,
             HomeHelp_ErrorRateLimit = SR["HomeHelp_ErrorRateLimit"].Value,
             HomeHelp_ErrorRequest = SR["HomeHelp_ErrorRequest"].Value,
             HomeHelp_NeedsSelection = SR["HomeHelp_NeedsSelection"].Value,
             HomeHelp_NotDocumented = SR["HomeHelp_NotDocumented"].Value,
-            HomeHelp_TopicQuestionTemplate = SR["HomeHelp_TopicQuestionTemplate"].Value,
-            HomeHelp_SelectedTopic = SR["HomeHelp_SelectedTopic"].Value,
-            HomeHelp_ClearTopic = SR["HomeHelp_ClearTopic"].Value,
-            HomeHelp_KnowledgeVersion = SR["HomeHelp_KnowledgeVersion"].Value,
             HomeHelp_SourcesLabel = SR["HomeHelp_SourcesLabel"].Value,
             HomeHelp_SourceLoading = SR["HomeHelp_SourceLoading"].Value,
             HomeHelp_SourceError = SR["HomeHelp_SourceError"].Value,
@@ -127,13 +124,7 @@
             HomeHelp_FeedbackError = SR["HomeHelp_FeedbackError"].Value,
             Common_Close = SR["Common_Close"].Value,
             Common_NotAvailable = SR["Common_NotAvailable"].Value,
-            Api_RequestFailed = SR["Api_RequestFailed"].Value,
-            Language_ES_Name = SR["Language_ES_Name"].Value,
-            Language_EU_Name = SR["Language_EU_Name"].Value,
-            Language_EN_Name = SR["Language_EN_Name"].Value,
-            Language_PT_Name = SR["Language_PT_Name"].Value,
-            Language_IT_Name = SR["Language_IT_Name"].Value,
-            Language_ZH_Name = SR["Language_ZH_Name"].Value
+            Api_RequestFailed = SR["Api_RequestFailed"].Value
         })));
     </script>
     <script nonce="@cspNonce" type="module" src="~/js/home-help.js" asp-append-version="true"></script>

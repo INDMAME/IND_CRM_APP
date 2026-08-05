@@ -69,6 +69,9 @@
   <data name="Nav_Expenses" xml:space="preserve">
     <value>费用</value>
   </data>
+  <data name="Nav_Manual" xml:space="preserve">
+    <value>使用手册</value>
+  </data>
   <data name="Nav_ExpenseSheets" xml:space="preserve">
     <value>费用单</value>
   </data>
@@ -1771,7 +1774,7 @@
     <value>无法关联票据。</value>
   </data>
   <data name="HomeHelp_CardTitle" xml:space="preserve"><value>您的 CRM 帮助助手</value></data>
-  <data name="HomeHelp_CardBody" xml:space="preserve"><value>询问已记录的 CRM 流程，并以您选择的语言获取引导式回答。</value></data>
+  <data name="HomeHelp_CardBody" xml:space="preserve"><value>询问已记录的 CRM 流程，并以应用中配置的语言获取引导式回答。</value></data>
   <data name="HomeHelp_SuggestionsLabel" xml:space="preserve"><value>试试以下问题</value></data>
   <data name="HomeHelp_OpenAria" xml:space="preserve"><value>打开 CRM 帮助</value></data>
   <data name="HomeHelp_Callout1" xml:space="preserve"><value>需要 CRM 帮助吗？</value></data>
@@ -1780,25 +1783,28 @@
   <data name="HomeHelp_Suggestion1" xml:space="preserve"><value>如何创建拜访？</value></data>
   <data name="HomeHelp_Suggestion2" xml:space="preserve"><value>如何创建费用表？</value></data>
   <data name="HomeHelp_Suggestion3" xml:space="preserve"><value>如何管理费用票据？</value></data>
-  <data name="HomeHelp_ChatLoading" xml:space="preserve"><value>正在打开 CRM 帮助...</value></data>
+  <data name="HomeHelp_ChatLoading" xml:space="preserve"><value>正在打开 CRM 帮助…</value></data>
   <data name="HomeHelp_RenderError" xml:space="preserve"><value>无法显示 CRM 帮助。</value></data>
   <data name="HomeHelp_PanelTitle" xml:space="preserve"><value>CRM 帮助</value></data>
   <data name="HomeHelp_Send" xml:space="preserve"><value>发送问题</value></data>
   <data name="HomeHelp_Sending" xml:space="preserve"><value>正在发送</value></data>
   <data name="HomeHelp_Retry" xml:space="preserve"><value>重试</value></data>
   <data name="HomeHelp_Warnings" xml:space="preserve"><value>提示</value></data>
-  <data name="HomeHelp_InputPlaceholder" xml:space="preserve"><value>询问如何使用 CRM...</value></data>
+  <data name="HomeHelp_InputPlaceholder" xml:space="preserve"><value>询问如何使用 CRM…</value></data>
   <data name="HomeHelp_InputPrivacyNotice" xml:space="preserve"><value>请勿包含个人数据、客户数据或秘密信息。</value></data>
-  <data name="HomeHelp_EmptyTitle" xml:space="preserve"><value>您需要什么帮助？</value></data>
-  <data name="HomeHelp_EmptyBody" xml:space="preserve"><value>提出问题或选择一个已记录的主题。</value></data>
+  <data name="HomeHelp_EmptyTitle" xml:space="preserve"><value>您好！您需要什么帮助？</value></data>
+  <data name="HomeHelp_EmptyBody" xml:space="preserve"><value>请自然地提出问题，我会帮助您使用 CRM。</value></data>
   <data name="HomeHelp_NoContextTitle" xml:space="preserve"><value>帮助不可用</value></data>
   <data name="HomeHelp_NoContextBody" xml:space="preserve"><value>无法加载 CRM 指南。</value></data>
   <data name="HomeHelp_NoContextMessage" xml:space="preserve"><value>请重新加载页面后再试。</value></data>
   <data name="HomeHelp_LanguageLabel" xml:space="preserve"><value>回答语言</value></data>
   <data name="HomeHelp_CatalogTitle" xml:space="preserve"><value>帮助主题</value></data>
-  <data name="HomeHelp_CatalogLoading" xml:space="preserve"><value>正在加载主题...</value></data>
+  <data name="HomeHelp_CatalogLoading" xml:space="preserve"><value>正在加载主题…</value></data>
   <data name="HomeHelp_CatalogError" xml:space="preserve"><value>无法加载帮助主题。</value></data>
-  <data name="HomeHelp_Loading" xml:space="preserve"><value>正在搜索 CRM 指南...</value></data>
+  <data name="HomeHelp_ModuleSelectionTitle" xml:space="preserve"><value>您需要哪个部分的帮助？</value></data>
+  <data name="HomeHelp_ModuleSelectionBody" xml:space="preserve"><value>选择一个部分后即可输入问题。</value></data>
+  <data name="HomeHelp_ModuleSelectionLocked" xml:space="preserve"><value>对话部分：{0}</value></data>
+  <data name="HomeHelp_Loading" xml:space="preserve"><value>正在搜索 CRM 指南…</value></data>
   <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>请求过多。请稍候再试。</value></data>
   <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>助手当前不可用。</value></data>
   <data name="HomeHelp_NeedsSelection" xml:space="preserve"><value>请选择最接近的主题，以便我准确回答。</value></data>
@@ -1808,8 +1814,10 @@
   <data name="HomeHelp_ClearTopic" xml:space="preserve"><value>清除</value></data>
   <data name="HomeHelp_KnowledgeVersion" xml:space="preserve"><value>指南版本 {0}</value></data>
   <data name="HomeHelp_SourcesLabel" xml:space="preserve"><value>来源</value></data>
-  <data name="HomeHelp_SourceLoading" xml:space="preserve"><value>正在加载来源...</value></data>
+  <data name="HomeHelp_SourceLoading" xml:space="preserve"><value>正在加载来源…</value></data>
   <data name="HomeHelp_SourceError" xml:space="preserve"><value>无法加载引用的章节。</value></data>
+  <data name="ManualHelp_TopicLoading" xml:space="preserve"><value>正在加载手册章节…</value></data>
+  <data name="ManualHelp_TopicError" xml:space="preserve"><value>无法加载手册章节。</value></data>
   <data name="HomeHelp_Navigate" xml:space="preserve"><value>打开模块</value></data>
   <data name="HomeHelp_QuickAnswer" xml:space="preserve"><value>已审核的快速回答</value></data>
   <data name="HomeHelp_FeedbackPrompt" xml:space="preserve"><value>这个回答有帮助吗？</value></data>
@@ -1826,11 +1834,11 @@
   <data name="HomeHelp_FeedbackCommentLabel" xml:space="preserve"><value>可选评论</value></data>
   <data name="HomeHelp_FeedbackCommentPlaceholder" xml:space="preserve"><value>请勿包含个人或客户数据。</value></data>
   <data name="HomeHelp_FeedbackSubmit" xml:space="preserve"><value>发送反馈</value></data>
-  <data name="HomeHelp_FeedbackSending" xml:space="preserve"><value>正在发送...</value></data>
+  <data name="HomeHelp_FeedbackSending" xml:space="preserve"><value>正在发送…</value></data>
   <data name="HomeHelp_FeedbackThanks" xml:space="preserve"><value>谢谢。您的反馈已保存。</value></data>
   <data name="HomeHelp_FeedbackError" xml:space="preserve"><value>无法保存反馈，请重试。</value></data>
   <data name="HomeHelp_CatalogToggle" xml:space="preserve"><value>浏览帮助主题</value></data>
   <data name="HomeHelp_CatalogSearchLabel" xml:space="preserve"><value>搜索帮助主题</value></data>
-  <data name="HomeHelp_CatalogSearchPlaceholder" xml:space="preserve"><value>搜索主题...</value></data>
+  <data name="HomeHelp_CatalogSearchPlaceholder" xml:space="preserve"><value>搜索主题…</value></data>
   <data name="HomeHelp_CatalogEmpty" xml:space="preserve"><value>没有匹配的主题。</value></data>
 </root>

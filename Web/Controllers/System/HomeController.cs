@@ -14,6 +14,7 @@ namespace IND_CRM_APP.Controllers
     {
         private const string HelpFeatureFlagKey = "Features:CrmHelpAssistantEnabled";
         private const int MaxQuestionLength = 1200;
+        private const int MaxSelectedModuleIdLength = 80;
         private const int MaxHistoryItems = 8;
         private const int MaxHistoryContentLength = 1600;
         private const int MaxFeedbackCommentLength = 500;
@@ -55,6 +56,18 @@ namespace IND_CRM_APP.Controllers
 
             await LoadEnvironmentInfoAsync();
             ViewBag.CrmHelpAssistantEnabled = IsHelpAssistantEnabled();
+            return View();
+        }
+
+        // Renders the dedicated CRM manual while the help feature is enabled.
+        [HttpGet]
+        public async Task<IActionResult> Manual()
+        {
+            if (!IsHelpAssistantEnabled())
+                return NotFound(StatusCodes.Status404NotFound);
+
+            // Keep the sidebar company and permission context fresh on direct navigation.
+            await _authContext.EnsureContextAsync(forceRefresh: true);
             return View();
         }
 
@@ -226,11 +239,15 @@ namespace IND_CRM_APP.Controllers
             request.Question = NormalizeText(request.Question) ?? string.Empty;
             request.ResponseLocale = locale;
             request.SelectedTopicId = NormalizeText(request.SelectedTopicId);
+            request.SelectedModuleId = NormalizeText(request.SelectedModuleId) ?? string.Empty;
+            request.AnswerInstructions = CrmHelpAnswerInstructions.Value;
             request.ClientInteractionId = NormalizeText(request.ClientInteractionId) ?? string.Empty;
             request.History ??= new List<CrmHelpHistoryMessage>();
 
             if (request.Question.Length == 0 || request.Question.Length > MaxQuestionLength)
                 return CreateHelpError(StatusCodes.Status400BadRequest, "INVALID_QUESTION");
+            if (request.SelectedModuleId.Length == 0 || request.SelectedModuleId.Length > MaxSelectedModuleIdLength)
+                return CreateHelpError(StatusCodes.Status400BadRequest, "INVALID_MODULE_ID");
             if (request.SelectedTopicId?.Length > 128)
                 return CreateHelpError(StatusCodes.Status400BadRequest, "INVALID_TOPIC_ID");
             if (!Guid.TryParse(request.ClientInteractionId, out _))

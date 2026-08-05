@@ -105,6 +105,12 @@ namespace IND_CRM_APP.Models.CRM
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? SelectedTopicId { get; set; }
 
+        [JsonPropertyName("selectedModuleId")]
+        public string SelectedModuleId { get; set; } = string.Empty;
+
+        [JsonPropertyName("answerInstructions")]
+        public string AnswerInstructions { get; set; } = string.Empty;
+
         [JsonPropertyName("history")]
         public List<CrmHelpHistoryMessage> History { get; set; } = new();
 

@@ -1,2 +1,0 @@
-import{b as o}from"./chunk-5CCUPKHG.js";import{a as r,c as l}from"./chunk-JAAK63D6.js";import{a as i,d as n}from"./chunk-ORJLERH4.js";var s,t,m,c=i(()=>{l();s=n(o()),t=({size:e="h-4 w-4",label:a})=>(0,s.jsx)("svg",{className:`ind-spinner ${e}`,viewBox:"0 0 20 20",role:"status","aria-label":a||r("Common_Loading","Loading"),children:(0,s.jsx)("circle",{className:"ind-spinner__circle",cx:"10",cy:"10",r:"8",strokeWidth:"2"})}),m=t});var f,p=i(()=>{f=(...e)=>e.filter(Boolean).join(" ")});export{m as a,c as b,f as c,p as d};
-//# sourceMappingURL=chunk-POABYQFI.js.map

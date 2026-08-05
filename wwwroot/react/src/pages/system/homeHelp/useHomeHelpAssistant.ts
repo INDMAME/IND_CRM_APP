@@ -11,26 +11,22 @@ import type { AssistantChatMessage, AssistantChatQuickAction } from "../../../co
 import { createMarkdownMessage } from "../../../components/commons/chat/chatMessageFactories.ts";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indFormat, indT } from "../../../utils/indI18n.ts";
-import { askCrmHelp, fetchHelpCatalog } from "./helpService.ts";
+import { askCrmHelp } from "./helpService.ts";
 import {
-  HELP_CATALOG_LOCALE,
   buildBoundedHelpHistory,
   resolveReusableHelpTurn,
-  shouldLoadCanonicalHelpCatalog,
 } from "./helpConversation.ts";
 import { getHelpResolutionFallback } from "./helpResponseCopy.ts";
 import type {
   HelpAnswerDetails,
-  HelpCatalog,
-  HelpDraftSeed,
+  HelpModule,
   HelpResponseLocale,
-  HelpTopicSummary,
 } from "./helpTypes.ts";
 
 type UseHomeHelpAssistantArgs = {
   isOpen: boolean;
   responseLocale: HelpResponseLocale;
-  draftSeed: HelpDraftSeed;
+  selectedModule: HelpModule | null;
   onClose: () => void;
 };
 
@@ -39,10 +35,6 @@ type UseHomeHelpAssistantResult = {
   draftQuestion: string;
   messages: AssistantChatMessage[];
   answerDetailsByMessageId: Record<string, HelpAnswerDetails>;
-  catalog: HelpCatalog | null;
-  catalogLoading: boolean;
-  catalogError: string;
-  selectedTopic: HelpTopicSummary | null;
   quickActions: AssistantChatQuickAction[];
   messagesContainerRef: RefObject<HTMLDivElement | null>;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
@@ -51,8 +43,6 @@ type UseHomeHelpAssistantResult = {
   submitDraftQuestion: () => Promise<void>;
   retryQuestion: (question: string, assistantMessageId: string) => Promise<void>;
   selectCandidate: (question: string, topicId: string, assistantMessageId: string) => Promise<void>;
-  selectTopic: (topic: HelpTopicSummary) => void;
-  clearSelectedTopic: () => void;
   handleDraftKeyDown: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void;
 };
 
@@ -109,21 +99,17 @@ const resolveAskError = (error: unknown): { text: string; retryable: boolean; st
   };
 };
 
-// Owns the Home help conversation, catalog, bounded history, and request lifecycle.
+// Owns the Home help conversation, bounded history, and request lifecycle.
 export const useHomeHelpAssistant = ({
   isOpen,
   responseLocale,
-  draftSeed,
+  selectedModule,
   onClose,
 }: UseHomeHelpAssistantArgs): UseHomeHelpAssistantResult => {
   const [isSending, setIsSending] = useState(false);
   const [draftQuestion, setDraftQuestion] = useState("");
   const [messages, setMessages] = useState<AssistantChatMessage[]>([]);
   const [answerDetailsByMessageId, setAnswerDetailsByMessageId] = useState<Record<string, HelpAnswerDetails>>({});
-  const [catalog, setCatalog] = useState<HelpCatalog | null>(null);
-  const [catalogLoading, setCatalogLoading] = useState(false);
-  const [catalogError, setCatalogError] = useState("");
-  const [selectedTopic, setSelectedTopic] = useState<HelpTopicSummary | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
@@ -132,60 +118,23 @@ export const useHomeHelpAssistant = ({
   const retryTopicByMessageIdRef = useRef(new Map<string, string | null>());
 
   const quickActions = useMemo<AssistantChatQuickAction[]>(
-    () => [
-      {
-        id: "create-visit",
-        label: indT("HomeHelp_Suggestion1", "How do I create a visit?"),
-        question: indT("HomeHelp_Suggestion1", "How do I create a visit?"),
-      },
-      {
-        id: "expense-sheet",
-        label: indT("HomeHelp_Suggestion2", "How do I create an expense sheet?"),
-        question: indT("HomeHelp_Suggestion2", "How do I create an expense sheet?"),
-      },
-      {
-        id: "expense-ticket",
-        label: indT("HomeHelp_Suggestion3", "How do I manage an expense ticket?"),
-        question: indT("HomeHelp_Suggestion3", "How do I manage an expense ticket?"),
-      },
-    ],
-    []
+    () => (selectedModule?.topics || [])
+      .filter((topic) => Boolean(String(topic.id || "").trim()) && Boolean(String(topic.title || "").trim()))
+      .slice(0, 3)
+      .map((topic) => {
+        const question = indFormat(
+          "HomeHelp_TopicQuestionTemplate",
+          "Explain how to use {0}.",
+          topic.title
+        );
+        return {
+          id: `${selectedModule?.id || "module"}:${topic.id}`,
+          label: question,
+          question,
+        };
+      }),
+    [selectedModule]
   );
-
-  useEffect(() => {
-    if (!shouldLoadCanonicalHelpCatalog(isOpen, catalog)) {
-      return;
-    }
-
-    const controller = new AbortController();
-    setCatalogLoading(true);
-    setCatalogError("");
-
-    void fetchHelpCatalog(HELP_CATALOG_LOCALE, controller.signal)
-      .then((nextCatalog) => setCatalog(nextCatalog))
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return;
-        }
-        setCatalog(null);
-        setCatalogError(indT("HomeHelp_CatalogError", "The help topics could not be loaded."));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setCatalogLoading(false);
-        }
-      });
-
-    return () => controller.abort();
-  }, [catalog, isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    setDraftQuestion(String(draftSeed.value || "").slice(0, MAX_QUESTION_LENGTH));
-  }, [draftSeed.sequence, draftSeed.value, isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -279,7 +228,8 @@ export const useHomeHelpAssistant = ({
   const sendQuestion = useCallback(
     async (rawQuestion: string, options: SendQuestionOptions = {}) => {
       const question = String(rawQuestion || "").trim().slice(0, MAX_QUESTION_LENGTH);
-      if (!question || askInFlightRef.current) {
+      const selectedModuleId = String(selectedModule?.id || "").trim();
+      if (!question || !selectedModuleId || askInFlightRef.current) {
         return;
       }
 
@@ -296,7 +246,7 @@ export const useHomeHelpAssistant = ({
       const assistantMessageId = reusableTurn?.assistantMessage.id ?? createMessageId();
       const hasTopicOverride = Object.prototype.hasOwnProperty.call(options, "topicIdOverride");
       const selectedTopicId = String(
-        hasTopicOverride ? options.topicIdOverride ?? "" : selectedTopic?.id ?? ""
+        hasTopicOverride ? options.topicIdOverride ?? "" : ""
       ).trim() || null;
       const userMessage: AssistantChatMessage = {
         id: userMessageId,
@@ -307,7 +257,7 @@ export const useHomeHelpAssistant = ({
       const loadingMessage: AssistantChatMessage = {
         id: assistantMessageId,
         role: "assistant",
-        message: createMarkdownMessage(indT("HomeHelp_Loading", "Searching the CRM help guide...")),
+        message: createMarkdownMessage(indT("HomeHelp_Loading", "Searching the CRM help guide…")),
         state: "loading",
       };
 
@@ -324,6 +274,7 @@ export const useHomeHelpAssistant = ({
         const response = await askCrmHelp({
           question,
           responseLocale,
+          selectedModuleId,
           selectedTopicId,
           history,
           clientInteractionId: createMessageId(),
@@ -378,7 +329,7 @@ export const useHomeHelpAssistant = ({
         setIsSending(false);
       }
     },
-    [messages, responseLocale, selectedTopic]
+    [messages, responseLocale, selectedModule]
   );
 
   const submitDraftQuestion = useCallback(async () => {
@@ -401,15 +352,6 @@ export const useHomeHelpAssistant = ({
     await sendQuestion(question, { topicIdOverride: topicId, reuseAssistantMessageId: assistantMessageId });
   }, [sendQuestion]);
 
-  const selectTopic = useCallback((topic: HelpTopicSummary) => {
-    setSelectedTopic(topic);
-    setDraftQuestion(
-      indFormat("HomeHelp_TopicQuestionTemplate", "Explain how to use {0}.", topic.title).slice(0, MAX_QUESTION_LENGTH)
-    );
-  }, []);
-
-  const clearSelectedTopic = useCallback(() => setSelectedTopic(null), []);
-
   const handleDraftKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLTextAreaElement>) => {
       if (event.key !== "Enter" || event.shiftKey) {
@@ -429,10 +371,6 @@ export const useHomeHelpAssistant = ({
     draftQuestion,
     messages,
     answerDetailsByMessageId,
-    catalog,
-    catalogLoading,
-    catalogError,
-    selectedTopic,
     quickActions,
     messagesContainerRef,
     textareaRef,
@@ -441,8 +379,6 @@ export const useHomeHelpAssistant = ({
     submitDraftQuestion,
     retryQuestion,
     selectCandidate,
-    selectTopic,
-    clearSelectedTopic,
     handleDraftKeyDown,
   };
 };

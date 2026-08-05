@@ -64,6 +64,7 @@ export type HelpHistoryMessage = {
 export type HelpAskRequest = {
   question: string;
   responseLocale: HelpResponseLocale;
+  selectedModuleId: string;
   selectedTopicId: string | null;
   history: HelpHistoryMessage[];
   clientInteractionId: string;
@@ -125,9 +126,4 @@ export type HelpApiEnvelope<T> = {
 
 export type HelpAnswerDetails = HelpAskResponseData & {
   question: string;
-};
-
-export type HelpDraftSeed = {
-  value: string;
-  sequence: number;
 };

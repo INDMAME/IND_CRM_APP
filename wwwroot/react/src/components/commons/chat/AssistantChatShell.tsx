@@ -8,10 +8,17 @@ import {
 } from "@heroicons/react/24/outline";
 import Spinner from "../Spinner.tsx";
 import { classNames } from "../../../utils/classNames.ts";
+import AssistantLauncherButton, {
+  ASSISTANT_BOTTOM_INSET,
+  ASSISTANT_PAGE_INSET,
+  type AssistantLauncherDesktopPlacement,
+} from "./AssistantLauncherButton.tsx";
 import ChatMessageContent from "./ChatMessageContent.tsx";
+import AssistantQuickActions, { type AssistantQuickActionsLayout } from "./AssistantQuickActions.tsx";
 import type { AssistantChatMessage, AssistantChatQuickAction, VisualizationType } from "./assistantChatTypes.ts";
 
-type AssistantChatDesktopPlacement = "content-frame" | "viewport-start";
+type AssistantChatDesktopPlacement = AssistantLauncherDesktopPlacement;
+export type AssistantChatComposerState = "enabled" | "blocked";
 
 type AssistantChatShellProps<TActionId extends string = string> = {
   isOpen: boolean;
@@ -40,9 +47,11 @@ type AssistantChatShellProps<TActionId extends string = string> = {
   messagesHeaderContent?: React.ReactNode;
   inputNotice?: React.ReactNode;
   inputMaxLength?: number;
+  composerState?: AssistantChatComposerState;
   draftValue: string;
   messages: AssistantChatMessage[];
   quickActions: AssistantChatQuickAction<TActionId>[];
+  quickActionsLayout?: AssistantQuickActionsLayout;
   messagesContainerRef: RefObject<HTMLDivElement | null>;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
   dialogRef?: RefObject<HTMLElement | null>;
@@ -59,8 +68,6 @@ type AssistantChatShellProps<TActionId extends string = string> = {
   renderAssistantMessageFooter?: (message: AssistantChatMessage) => React.ReactNode;
 };
 
-const ASSISTANT_PAGE_INSET = "max(12px, calc(50vw - 24rem + 12px))";
-const ASSISTANT_BOTTOM_INSET = "calc(0.75rem + env(safe-area-inset-bottom, 0px))";
 const GLOBAL_CHAT_RADIUS_CLASS = "rounded-[var(--radius-xl)]";
 const DEFAULT_PANEL_HEIGHT_CLASS =
   "h-[69vh] max-h-[69vh] lg:h-[min(640px,calc(100vh-8rem))] lg:max-h-[640px]";
@@ -72,15 +79,13 @@ const LARGE_TABLE_VISUAL_THRESHOLD = 8;
 
 const DESKTOP_PLACEMENT_CLASS_NAMES: Record<
   AssistantChatDesktopPlacement,
-  { launcher: string; panel: string; closedPanel: string }
+  { panel: string; closedPanel: string }
 > = {
   "content-frame": {
-    launcher: "",
     panel: "lg:left-auto lg:right-[var(--assistant-page-inset)]",
     closedPanel: "lg:translate-x-[110%]",
   },
   "viewport-start": {
-    launcher: "lg:left-4",
     panel: "lg:left-4 lg:right-auto",
     closedPanel: "lg:-translate-x-[110%]",
   },
@@ -353,9 +358,11 @@ const AssistantChatShell = <TActionId extends string = string,>({
   messagesHeaderContent,
   inputNotice,
   inputMaxLength,
+  composerState = "enabled",
   draftValue,
   messages,
   quickActions,
+  quickActionsLayout = "inline",
   messagesContainerRef,
   textareaRef,
   dialogRef,
@@ -371,7 +378,8 @@ const AssistantChatShell = <TActionId extends string = string,>({
   onDraftKeyDown,
   renderAssistantMessageFooter,
 }: AssistantChatShellProps<TActionId>) => {
-  const sendDisabled = !hasContext || isSending || !toText(draftValue);
+  const composerDisabled = !hasContext || isSending || composerState === "blocked";
+  const sendDisabled = composerDisabled || !toText(draftValue);
   const hasAssistantResponse = messages.some((message) => message.role === "assistant" && message.state !== "loading");
   const shouldExpandForVisuals = messages.some(
     (message) => message.role === "assistant" && message.state !== "loading" && shouldUseExpandedVisualLayout(message.message)
@@ -385,27 +393,14 @@ const AssistantChatShell = <TActionId extends string = string,>({
   return (
     <>
       {showLauncher ? (
-        <button
-          type="button"
+        <AssistantLauncherButton
           aria-label={launcherAriaLabel}
           title={launcherAriaLabel}
-          data-ind-assistant-launcher="true"
-          className={classNames(
-            "fixed z-[1850] flex items-center rounded-[var(--radius-xl)] bg-transparent p-0 text-left shadow-none transition duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus:outline-hidden focus:ring-4 focus:ring-primary/20 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)]",
-            desktopPlacementClassNames.launcher
-          )}
-          style={assistantFloatingStyle}
+          botImageSrc={botImageSrc}
+          desktopPlacement={desktopPlacement}
+          bottomInset={bottomInset}
           onClick={onToggle}
-        >
-          <span className="relative flex h-[60px] w-[60px] shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-xl)] border border-slate-300/95 bg-white/98 p-[2px] shadow-[0_10px_26px_rgba(148,163,184,0.24),0_3px_10px_rgba(15,23,42,0.08)] ring-1 ring-slate-100/80 backdrop-blur-sm">
-            <img
-              src={botImageSrc}
-              alt=""
-              className="h-[54px] w-[54px] scale-[1.04] rounded-[calc(var(--radius-xl)-2px)] object-contain drop-shadow-[0_6px_12px_rgba(15,23,42,0.16)]"
-              aria-hidden="true"
-            />
-          </span>
-        </button>
+        />
       ) : null}
 
       <div
@@ -508,23 +503,12 @@ const AssistantChatShell = <TActionId extends string = string,>({
           </div>
 
           <div className="border-t border-slate-200 bg-white/90 px-3 py-2.5 lg:px-3">
-            <div className="mb-2.5 flex gap-1.5 whitespace-nowrap">
-              {quickActions.map((action) => {
-                const Icon = action.icon || SparklesIcon;
-                return (
-                  <button
-                    key={action.id}
-                    type="button"
-                    disabled={!hasContext || isSending}
-                    className="inline-flex min-w-0 flex-1 items-center justify-start gap-1 rounded-[var(--radius-xl)] border border-slate-200 bg-slate-100 pl-1.5 pr-2 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:border-primary/20 hover:bg-slate-50 hover:text-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
-                    onClick={() => onQuickAction(action.question)}
-                  >
-                    <Icon className="h-3.5 w-3.5 shrink-0" />
-                    <span className="min-w-0 truncate tracking-[-0.01em]">{action.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <AssistantQuickActions
+              actions={quickActions}
+              disabled={composerDisabled}
+              layout={quickActionsLayout}
+              onSelect={onQuickAction}
+            />
 
             {inputNotice ? (
               <p className="mb-2 text-[10px] font-medium leading-4 text-amber-800" role="note">
@@ -547,7 +531,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
                 maxLength={inputMaxLength}
                 className="block min-h-[44px] w-full resize-none bg-transparent px-0 py-0 pr-[56px] text-[12px] leading-5 text-slate-700 placeholder:text-transparent focus:outline-hidden disabled:cursor-not-allowed disabled:text-slate-400"
                 value={draftValue}
-                disabled={!hasContext || isSending}
+                disabled={composerDisabled}
                 placeholder={inputPlaceholder}
                 aria-label={inputPlaceholder}
                 onChange={(event) => onDraftChange(event.target.value || "")}

@@ -2,24 +2,28 @@ import React, { Suspense, lazy, useCallback, useRef, useState } from "react";
 import AppErrorBoundary from "../../../components/commons/AppErrorBoundary.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
-import HomeHelpCard from "./HomeHelpCard.tsx";
-import type { HelpDraftSeed } from "./helpTypes.ts";
+import HomeHelpCard, { type HomeHelpTechnicalInfo } from "./HomeHelpCard.tsx";
+import HomeHelpBotCallout from "./HomeHelpBotCallout.tsx";
 
 const HomeHelpAssistant = lazy(() => import("./HomeHelpAssistant.tsx"));
+const HOME_HELP_CALLOUT_MESSAGES = [
+  indT("HomeHelp_Callout1", "Do you need help with the CRM?"),
+  indT("HomeHelp_Callout2", "Ask me how a process works."),
+  indT("HomeHelp_Callout3", "I can guide you step by step."),
+];
 
 type HomeHelpAssistantPageProps = {
   initialLocale: string;
+  technicalInfo: HomeHelpTechnicalInfo;
 };
 
 // Composes the visible Home card and lazily loads the chat only after activation.
-const HomeHelpAssistantPage = ({ initialLocale }: HomeHelpAssistantPageProps) => {
+const HomeHelpAssistantPage = ({ initialLocale, technicalInfo }: HomeHelpAssistantPageProps) => {
   const [chatOpen, setChatOpen] = useState(false);
   const [assistantActivated, setAssistantActivated] = useState(false);
-  const [draftSeed, setDraftSeed] = useState<HelpDraftSeed>({ value: "", sequence: 0 });
   const botButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  const openWithDraft = useCallback((value: string) => {
-    setDraftSeed((current) => ({ value, sequence: current.sequence + 1 }));
+  const openChat = useCallback(() => {
     setAssistantActivated(true);
     setChatOpen(true);
   }, []);
@@ -29,30 +33,20 @@ const HomeHelpAssistantPage = ({ initialLocale }: HomeHelpAssistantPageProps) =>
     window.requestAnimationFrame(() => botButtonRef.current?.focus({ preventScroll: true }));
   }, []);
 
-  const calloutMessages = [
-    indT("HomeHelp_Callout1", "Do you need help with the CRM?"),
-    indT("HomeHelp_Callout2", "Ask me how a process works."),
-    indT("HomeHelp_Callout3", "I can guide you step by step."),
-  ];
-  const suggestions = [
-    indT("HomeHelp_Suggestion1", "How do I create a visit?"),
-    indT("HomeHelp_Suggestion2", "How do I create an expense sheet?"),
-    indT("HomeHelp_Suggestion3", "How do I manage an expense ticket?"),
-  ];
-
   return (
     <>
       <HomeHelpCard
         title={indT("HomeHelp_CardTitle", "Your CRM help assistant")}
-        body={indT("HomeHelp_CardBody", "Ask questions about documented CRM processes and get a guided answer in your preferred language.")}
-        suggestionsLabel={indT("HomeHelp_SuggestionsLabel", "Try one of these questions")}
-        openAriaLabel={indT("HomeHelp_OpenAria", "Open CRM help")}
-        calloutMessages={calloutMessages}
-        suggestions={suggestions}
+        body={indT("HomeHelp_CardBody", "Ask about documented CRM processes and receive a guided answer in your configured app language.")}
+        technicalInfo={technicalInfo}
         chatOpen={chatOpen}
-        botButtonRef={botButtonRef}
-        onOpen={() => openWithDraft("")}
-        onSuggestion={openWithDraft}
+      />
+      <HomeHelpBotCallout
+        ariaLabel={indT("HomeHelp_OpenAria", "Open CRM help")}
+        messages={HOME_HELP_CALLOUT_MESSAGES}
+        chatOpen={chatOpen}
+        buttonRef={botButtonRef}
+        onOpen={openChat}
       />
 
       {assistantActivated ? (
@@ -63,7 +57,7 @@ const HomeHelpAssistantPage = ({ initialLocale }: HomeHelpAssistantPageProps) =>
                 className="fixed inset-x-4 bottom-4 z-[2050] mx-auto max-w-sm rounded-[var(--radius-xl)] border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold text-primary shadow-xl"
                 role="status"
               >
-                {indT("HomeHelp_ChatLoading", "Opening CRM help...")}
+                {indT("HomeHelp_ChatLoading", "Opening CRM help…")}
               </div>
             ) : null
           }
@@ -71,7 +65,6 @@ const HomeHelpAssistantPage = ({ initialLocale }: HomeHelpAssistantPageProps) =>
           <HomeHelpAssistant
             isOpen={chatOpen}
             initialLocale={initialLocale}
-            draftSeed={draftSeed}
             onClose={closeChat}
           />
         </Suspense>
@@ -88,10 +81,16 @@ const mount = () => {
   }
 
   const initialLocale = rootElement.dataset.responseLocale || document.documentElement.lang || "es-ES";
+  const technicalInfo = {
+    environmentLabel: rootElement.dataset.environmentLabel || "",
+    environmentName: rootElement.dataset.environmentName || "",
+    companyName: rootElement.dataset.companyName || "",
+    isDev: rootElement.dataset.isDev === "true",
+  };
   mountReactIsland(
     rootElement,
     <AppErrorBoundary fallbackMessage={indT("HomeHelp_RenderError", "CRM help could not be displayed.")}>
-      <HomeHelpAssistantPage initialLocale={initialLocale} />
+      <HomeHelpAssistantPage initialLocale={initialLocale} technicalInfo={technicalInfo} />
     </AppErrorBoundary>
   );
 };

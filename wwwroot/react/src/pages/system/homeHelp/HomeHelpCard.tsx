@@ -1,76 +1,72 @@
-import React, { type RefObject } from "react";
-import { ChatBubbleLeftRightIcon, SparklesIcon } from "@heroicons/react/24/outline";
-import HomeHelpBotCallout from "./HomeHelpBotCallout.tsx";
+import React from "react";
+import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
+
+export type HomeHelpTechnicalInfo = {
+  environmentLabel: string;
+  environmentName: string;
+  companyName: string;
+  isDev: boolean;
+};
 
 type HomeHelpCardProps = {
   title: string;
   body: string;
-  suggestionsLabel: string;
-  openAriaLabel: string;
-  calloutMessages: string[];
-  suggestions: string[];
+  technicalInfo: HomeHelpTechnicalInfo;
   chatOpen: boolean;
-  botButtonRef: RefObject<HTMLButtonElement | null>;
-  onOpen: () => void;
-  onSuggestion: (question: string) => void;
 };
 
-// Renders the Home-only assistant entry card and its non-generative suggestions.
+// Renders the Home assistant card with its environment-aware technical footer.
 const HomeHelpCard = ({
   title,
   body,
-  suggestionsLabel,
-  openAriaLabel,
-  calloutMessages,
-  suggestions,
+  technicalInfo,
   chatOpen,
-  botButtonRef,
-  onOpen,
-  onSuggestion,
 }: HomeHelpCardProps) => {
+  const contentVisibilityClassName = chatOpen ? "invisible" : "visible";
+
   return (
     <section
       aria-labelledby="home-help-card-title"
-      className="overflow-hidden rounded-[var(--radius-xl)] border border-slate-200 bg-white/95 shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
+      aria-hidden={chatOpen}
+      className="relative flex min-h-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto rounded-[var(--radius-xl)] border border-slate-200 bg-white/95 shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
     >
-      <div className="grid items-stretch gap-2 md:grid-cols-[minmax(0,1fr)_280px]">
-        <div className="flex flex-col justify-center px-5 py-6 sm:px-7">
+      {technicalInfo.isDev ? (
+        <div
+          className={`pointer-events-none absolute inset-0 z-0 flex items-center justify-center ${contentVisibilityClassName}`}
+          role="status"
+          aria-label={`${technicalInfo.environmentLabel}: DEV`}
+        >
+          <span
+            className="select-none text-[8.5rem] font-black uppercase leading-none tracking-normal text-slate-100 sm:text-[11rem] md:text-[15rem]"
+            translate="no"
+            aria-hidden="true"
+          >
+            DEV
+          </span>
+        </div>
+      ) : null}
+
+      <div className={`relative z-10 flex flex-1 ${contentVisibilityClassName}`}>
+        <div className="flex w-full flex-col justify-center px-5 py-6 sm:px-7">
           <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-xl)] bg-primary/10 text-primary">
             <ChatBubbleLeftRightIcon className="h-6 w-6" aria-hidden="true" />
           </span>
-          <h2 id="home-help-card-title" className="text-xl font-semibold text-primary">
+          <h1 id="home-help-card-title" className="text-xl font-semibold text-primary">
             {title}
-          </h2>
+          </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{body}</p>
-
-          <p className="mt-5 text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-            {suggestionsLabel}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {suggestions.map((question) => (
-              <button
-                key={question}
-                type="button"
-                className="inline-flex items-center gap-1.5 rounded-[var(--radius-xl)] border border-primary/15 bg-primary/5 px-3 py-2 text-left text-[12px] font-semibold leading-4 text-primary transition hover:border-primary/30 hover:bg-primary/10 focus:outline-hidden focus:ring-2 focus:ring-primary/25"
-                onClick={() => onSuggestion(question)}
-              >
-                <SparklesIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                {question}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="border-t border-slate-100 bg-linear-to-br from-sky-50 via-white to-slate-50 px-3 md:border-l md:border-t-0">
-          <HomeHelpBotCallout
-            ariaLabel={openAriaLabel}
-            messages={calloutMessages}
-            chatOpen={chatOpen}
-            buttonRef={botButtonRef}
-            onOpen={onOpen}
-          />
         </div>
       </div>
+
+      {!chatOpen ? (
+        <footer className="tech-info relative z-10 shrink-0 space-y-1 border-t border-slate-100 px-5 py-4 text-center leading-tight">
+          {!technicalInfo.isDev ? (
+            <div>{technicalInfo.environmentLabel}: {technicalInfo.environmentName}</div>
+          ) : null}
+          <div>Microsoft Navision Axapta 3.0</div>
+          <div><strong>{technicalInfo.companyName}</strong></div>
+        </footer>
+      ) : null}
     </section>
   );
 };

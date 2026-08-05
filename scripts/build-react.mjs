@@ -31,6 +31,7 @@ const entryPoints = {
   "ind-text-editor": "Web/wwwroot/react/src/pages/system/TextEditor.tsx",
   "audio-recorder": "Web/wwwroot/react/src/pages/system/AudioRecorder.tsx",
   "home-help": "Web/wwwroot/react/src/pages/system/homeHelp/HomeHelpAssistantPage.tsx",
+  "manual-help": "Web/wwwroot/react/src/pages/system/homeHelp/ManualHelpPage.tsx",
   "ind-audio-worklet": "Web/wwwroot/react/audio-recorder/ind-audio-worklet.ts",
 };
 

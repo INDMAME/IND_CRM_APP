@@ -26,10 +26,8 @@ const bundled = await build({
 });
 const moduleUrl = `data:text/javascript;base64,${Buffer.from(bundled.outputFiles[0]?.text || "").toString("base64")}`;
 const {
-  HELP_CATALOG_LOCALE,
   buildBoundedHelpHistory,
   resolveReusableHelpTurn,
-  shouldLoadCanonicalHelpCatalog,
 } = await import(moduleUrl);
 
 const markdownMessage = (id, role, markdown, state = "done") => ({
@@ -37,16 +35,6 @@ const markdownMessage = (id, role, markdown, state = "done") => ({
   role,
   state,
   message: { type: "markdown", markdown },
-});
-
-test("canonical catalog stays in es-ES and is reused by presence", () => {
-  assert.equal(HELP_CATALOG_LOCALE, "es-ES");
-  assert.equal(shouldLoadCanonicalHelpCatalog(false, null), false);
-  assert.equal(shouldLoadCanonicalHelpCatalog(true, null), true);
-  assert.equal(
-    shouldLoadCanonicalHelpCatalog(true, { responseLocale: "es-ES", modules: [] }),
-    false
-  );
 });
 
 test("retry or candidate selection reuses the pending turn and excludes it from history", () => {

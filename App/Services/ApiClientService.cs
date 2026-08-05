@@ -967,6 +967,8 @@ namespace IND_CRM_APP.Services
                 Question = NormalizeOptionalText(request.Question) ?? string.Empty,
                 ResponseLocale = NormalizeOptionalText(request.ResponseLocale) ?? "es-ES",
                 SelectedTopicId = NormalizeOptionalText(request.SelectedTopicId),
+                SelectedModuleId = NormalizeOptionalText(request.SelectedModuleId) ?? string.Empty,
+                AnswerInstructions = CrmHelpAnswerInstructions.Value,
                 ClientInteractionId = NormalizeOptionalText(request.ClientInteractionId) ?? string.Empty,
                 History = (request.History ?? new List<CrmHelpHistoryMessage>())
                     .Where(item => item != null)
@@ -980,9 +982,10 @@ namespace IND_CRM_APP.Services
             };
 
             _logger.LogInformation(
-                "CRM help ask request. QuestionLength: {QuestionLength}. Locale: {Locale}. HasSelectedTopic: {HasSelectedTopic}. HistoryCount: {HistoryCount}.",
+                "CRM help ask request. QuestionLength: {QuestionLength}. Locale: {Locale}. SelectedModuleId: {SelectedModuleId}. HasSelectedTopic: {HasSelectedTopic}. HistoryCount: {HistoryCount}.",
                 payload.Question.Length,
                 payload.ResponseLocale,
+                payload.SelectedModuleId,
                 !string.IsNullOrWhiteSpace(payload.SelectedTopicId),
                 payload.History.Count);
 
