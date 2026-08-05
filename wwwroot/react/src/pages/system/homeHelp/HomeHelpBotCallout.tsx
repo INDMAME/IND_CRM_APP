@@ -1,5 +1,7 @@
 import React, { useState, type FocusEvent, type RefObject } from "react";
-import AssistantLauncherButton from "../../../components/commons/chat/AssistantLauncherButton.tsx";
+import AssistantLauncherButton, {
+  type AssistantLauncherImageSources,
+} from "../../../components/commons/chat/AssistantLauncherButton.tsx";
 import { useHomeHelpCallout } from "./useHomeHelpCallout.ts";
 
 type HomeHelpBotCalloutProps = {
@@ -7,10 +9,10 @@ type HomeHelpBotCalloutProps = {
   messages: string[];
   chatOpen: boolean;
   buttonRef: RefObject<HTMLButtonElement | null>;
+  launcherImageSources: AssistantLauncherImageSources;
   onOpen: () => void;
 };
 
-const BOT_IMAGE_SRC = "/images/kaloria_bot.png";
 const FLOATING_BOTTOM_INSET = "calc(24px + env(safe-area-inset-bottom, 0px))";
 
 // Presents the existing bot artwork with a local, rotating HTML speech bubble.
@@ -19,6 +21,7 @@ const HomeHelpBotCallout = ({
   messages,
   chatOpen,
   buttonRef,
+  launcherImageSources,
   onOpen,
 }: HomeHelpBotCalloutProps) => {
   const [interacting, setInteracting] = useState(false);
@@ -37,7 +40,7 @@ const HomeHelpBotCallout = ({
   return (
     <AssistantLauncherButton
       buttonRef={buttonRef}
-      botImageSrc={BOT_IMAGE_SRC}
+      imageSources={launcherImageSources}
       desktopPlacement="viewport-start"
       bottomInset={FLOATING_BOTTOM_INSET}
       aria-label={ariaLabel}

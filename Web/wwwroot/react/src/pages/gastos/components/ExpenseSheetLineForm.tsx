@@ -225,7 +225,7 @@ const ExpenseSheetLineForm = ({
   );
   const reimbursableStatusLabel = indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable");
   const hasPendingReimbursementRecalculation =
-    line.reimbursableExpense === LINE_REIMBURSABLE_EXPENSE_YES_VALUE && line.reimbursableAmount === 0;
+    !isEditing && line.reimbursableExpense === LINE_REIMBURSABLE_EXPENSE_YES_VALUE && line.reimbursableAmount === 0;
   const internationalField = isEditing ? (
     <SelectCombobox
       label={indT("ExpenseSheets_Field_International", "International")}

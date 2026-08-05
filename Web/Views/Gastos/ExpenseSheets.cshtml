@@ -12,7 +12,11 @@
     <link rel="stylesheet" href="~/css/historial.css" asp-append-version="true" />
 }
 
-<div id="expense-sheets-root" class="max-w-3xl mx-auto px-1 sm:px-2 pt-3 pb-4"></div>
+<div id="expense-sheets-root"
+     class="max-w-3xl mx-auto px-1 sm:px-2 pt-3 pb-4"
+     data-assistant-launcher-animated-webp="@Url.Content("~/assets/kaloria/thinking/animated/kaloria-thinking.webp")"
+     data-assistant-launcher-animated-gif="@Url.Content("~/assets/kaloria/thinking/animated/kaloria-thinking.gif")"
+     data-assistant-launcher-reduced-motion-png="@Url.Content("~/assets/kaloria/thinking/static/kaloria-thinking-static.png")"></div>
 
 @section Scripts {
     <script nonce="@cspNonce">

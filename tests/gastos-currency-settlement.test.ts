@@ -65,6 +65,9 @@ import { fetchExpenseSheetListSourceJson } from "../Web/wwwroot/react/src/pages/
 import { getVisibleReimbursableTotal } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseVisibleTotals.ts";
 import { toNullableNumber } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseApiTransforms.ts";
 import { formatExpenseAmountLabel } from "../Web/wwwroot/react/src/pages/gastos/expenseFormatters.ts";
+import { resolveExpenseLineReimbursableAmountPreview } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseLineReimbursement.ts";
+import { resolveExpenseQuickDateFilterFromRange } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseQuickDateFilterState.ts";
+import { buildExpenseTicketLinkInitialSnapshot } from "../Web/wwwroot/react/src/pages/gastos/tickets/expenseTicketLinkFilterSnapshot.ts";
 import {
   normalizeCardTitleText,
   normalizeDescriptionText,
@@ -695,6 +698,24 @@ assert.equal(camelTicketLines[0]?.reimbursableAmount, 0);
 assert.equal(camelTicketLines[1]?.reimbursableExpense, 1);
 assert.equal(camelTicketLines[1]?.reimbursableAmount, null);
 
+assert.equal(resolveExpenseLineReimbursableAmountPreview(LINE_REIMBURSABLE_EXPENSE_YES_VALUE, 125.45), 125.45);
+assert.equal(resolveExpenseLineReimbursableAmountPreview(LINE_REIMBURSABLE_EXPENSE_NO_VALUE, 125.45), 0);
+assert.equal(resolveExpenseLineReimbursableAmountPreview(LINE_REIMBURSABLE_EXPENSE_YES_VALUE, 0), 0);
+assert.equal(resolveExpenseLineReimbursableAmountPreview(LINE_REIMBURSABLE_EXPENSE_YES_VALUE, null), null);
+assert.equal(resolveExpenseLineReimbursableAmountPreview(null, 125.45), null);
+assert.equal(resolveExpenseLineReimbursableAmountPreview(null, 125.45, 42), 42);
+
+const fixedLinkSnapshot = buildExpenseTicketLinkInitialSnapshot("AX-USER", new Date(2026, 7, 5, 12, 0, 0));
+assert.equal(fixedLinkSnapshot.fromDate, "2026-05-08");
+assert.equal(fixedLinkSnapshot.toDate, "2026-08-05");
+assert.equal(fixedLinkSnapshot.managedUserId, "AX-USER");
+assert.equal(fixedLinkSnapshot.statusFilter, 0);
+const currentLinkSnapshot = buildExpenseTicketLinkInitialSnapshot();
+assert.equal(
+  resolveExpenseQuickDateFilterFromRange(currentLinkSnapshot.fromDate, currentLinkSnapshot.toDate),
+  "days-90"
+);
+
 const repositoryRoot = process.cwd();
 const ticketModelsSource = readFileSync(
   path.join(repositoryRoot, "App", "Models", "CRM", "ExpenseSheetTicketModels.cs"),
@@ -783,6 +804,34 @@ const expenseTicketLinkedSheetLineSource = readFileSync(
   ),
   "utf8"
 );
+const expenseSheetLineDetailPageSource = readFileSync(
+  path.join(
+    repositoryRoot,
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "line",
+    "ExpenseSheetLineDetailPage.tsx"
+  ),
+  "utf8"
+);
+const expenseTicketsPageSource = readFileSync(
+  path.join(
+    repositoryRoot,
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "tickets",
+    "ExpenseTicketsPage.tsx"
+  ),
+  "utf8"
+);
 const ticketProxyMapperStart = gastosControllerSource.indexOf(
   "private static object ToExpenseSheetTicketApiDetailLine"
 );
@@ -862,6 +911,14 @@ assert.match(
   /ReimbursableExpense\s*=\s*IsEditableExpenseSheetHeaderReimbursableExpense\(snapshot\.ReimbursableExpense\)[\s\S]*?\?\s*snapshot\.ReimbursableExpense[\s\S]*?:\s*null/
 );
 assert.match(expenseSheetLineFormSource, /betweenAmountsAndCurrency=\{reimbursementSection\}/);
+assert.match(expenseSheetLineDetailPageSource, /resolveExpenseLineReimbursableAmountPreview/);
+assert.match(expenseSheetLineDetailPageSource, /<ExpenseSheetLineTicketFab/);
+assert.match(
+  expenseSheetLineDetailPageSource,
+  /const handleLineSaveSuccess[\s\S]*?reloadExpensePage\(\)/
+);
+assert.match(expenseTicketsPageSource, /buildExpenseTicketLinkInitialSnapshot/);
+assert.doesNotMatch(expenseTicketsPageSource, /ExpenseTicketLineTargetSummary/);
 assert.match(expenseTicketDetailPageSource, /visible:\s*isFromExpenseLine \|\| isFromExpenseSheetCreate/);
 assert.match(
   expenseTicketDetailPageSource,

@@ -11,6 +11,7 @@ import ExpenseSheetLineForm from "../components/ExpenseSheetLineForm.tsx";
 import ExpenseTicketLinesList from "../components/ExpenseTicketLinesList.tsx";
 import { getExpenseInternationalLabel, getExpenseInternationalOptions } from "../constants/internationalOptions.ts";
 import { parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
+import { resolveExpenseLineReimbursableAmountPreview } from "../utils/expenseLineReimbursement.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { navigateToExpenseUrl, reloadExpensePage } from "../utils/expenseNavigation.ts";
@@ -39,11 +40,14 @@ import { useExpenseSheetLineDetailConfirmDialog } from "./useExpenseSheetLineDet
 import { useExpenseSheetLineDetailState } from "./useExpenseSheetLineDetailState.ts";
 import { useExpenseSheetLineTicketPreview } from "./useExpenseSheetLineTicketPreview.ts";
 import ExpenseSheetLineDetailView from "./ExpenseSheetLineDetailView.tsx";
+import ExpenseSheetLineTicketFab from "./ExpenseSheetLineTicketFab.tsx";
 import { useExpenseSheetLineTypeValidation } from "./useExpenseSheetLineTypeValidation.ts";
 import { useExpenseTicketDetailState } from "../tickets/detail/useExpenseTicketDetailState.ts";
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
 
 const LINKED_TICKET_LINES_PAGE_SIZE = 6;
+const LINE_TICKET_FAB_BASELINE_BOTTOM_PX = 24;
+const LINE_TICKET_FAB_WITH_NAVIGATOR_BOTTOM_PX = 98;
 
 const pagedSlice = <T,>(items: T[], page: number, pageSize: number): T[] => {
   if (!items.length) return [];
@@ -246,9 +250,16 @@ const ExpenseSheetLineDetailContent = () => {
     () => formatAmountWithCurrency(displayAmountMST, localCurrencyCode),
     [displayAmountMST, localCurrencyCode]
   );
+  const displayedReimbursableAmount = isEditing
+    ? resolveExpenseLineReimbursableAmountPreview(
+        draftReimbursableExpense,
+        parseDecimalInput(draftAmountMST),
+        line?.reimbursableAmount
+      )
+    : line?.reimbursableAmount ?? null;
   const reimbursableAmountText = useMemo(
-    () => formatAmountWithCurrency(line?.reimbursableAmount ?? null, localCurrencyCode),
-    [line?.reimbursableAmount, localCurrencyCode]
+    () => formatAmountWithCurrency(displayedReimbursableAmount, localCurrencyCode),
+    [displayedReimbursableAmount, localCurrencyCode]
   );
   const projectValue = safeText(line?.projId || header?.projId);
   const sheetDescription = safeText(header?.description) || "-";
@@ -965,6 +976,16 @@ const ExpenseSheetLineDetailContent = () => {
         onLast={handleNavigateLastLine}
       />
     ) : null;
+  const canManageLineTicketLink =
+    !isCreateMode &&
+    !isEditing &&
+    canEditExpenseCurrent &&
+    !isSheetLocked &&
+    canLinkExpenseTicket &&
+    line?.ticket !== true;
+  const lineTicketFabBottom = lineNavigator
+    ? LINE_TICKET_FAB_WITH_NAVIGATOR_BOTTOM_PX
+    : LINE_TICKET_FAB_BASELINE_BOTTOM_PX;
 
   const linkedTicketLinesSection =
     showLinkedTicketLines ? (
@@ -1050,33 +1071,23 @@ const ExpenseSheetLineDetailContent = () => {
           showLinkedTicketField={hasLinkedTicket}
           onOpenLinkedTicket={handleOpenLinkedTicket}
         />
-        {!isCreateMode &&
-          !isEditing &&
-          canEditExpenseCurrent &&
-          !isSheetLocked &&
-          canLinkExpenseTicket &&
-          line.ticket !== true ? (
+        {canManageLineTicketLink && !hasLinkedTicket ? (
+          <ExpenseSheetLineTicketFab
+            bottom={lineTicketFabBottom}
+            disabled={busy}
+            onLinkTicket={handleOpenExistingTicketLink}
+          />
+        ) : null}
+        {canManageLineTicketLink && hasLinkedTicket ? (
           <div className="glass-panel shadow-card rounded-[var(--radius-xl)] border border-slate-200 bg-white p-3 sm:p-4">
-            {!hasLinkedTicket ? (
-              <button
-                type="button"
-                className="ind-action-btn min-h-11 w-full px-4 py-2.5 text-sm font-semibold sm:text-base"
-                onClick={handleOpenExistingTicketLink}
-                disabled={busy}
-              >
-                {indT("ExpenseSheets_Line_Ticket_LinkExisting", "Attach existing ticket")}
-              </button>
-            ) : null}
-            {hasLinkedTicket ? (
-              <button
-                type="button"
-                className="ind-action-btn min-h-11 w-full border-amber-300 px-4 py-2.5 text-sm font-semibold text-amber-900 sm:text-base"
-                onClick={handleOpenDetachTicketConfirm}
-                disabled={busy}
-              >
-                {indT("ExpenseSheets_Line_Ticket_DetachButton", "Detach ticket")}
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className="ind-action-btn min-h-11 w-full border-amber-300 px-4 py-2.5 text-sm font-semibold text-amber-900 sm:text-base"
+              onClick={handleOpenDetachTicketConfirm}
+              disabled={busy}
+            >
+              {indT("ExpenseSheets_Line_Ticket_DetachButton", "Detach ticket")}
+            </button>
           </div>
         ) : null}
         {linkedTicketLinesSection}

@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useCallback, useRef, useState } from "react";
 import AppErrorBoundary from "../../../components/commons/AppErrorBoundary.tsx";
+import type { AssistantLauncherImageSources } from "../../../components/commons/chat/AssistantLauncherButton.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
 import HomeHelpCard, { type HomeHelpTechnicalInfo } from "./HomeHelpCard.tsx";
@@ -14,11 +15,16 @@ const HOME_HELP_CALLOUT_MESSAGES = [
 
 type HomeHelpAssistantPageProps = {
   initialLocale: string;
+  launcherImageSources: AssistantLauncherImageSources;
   technicalInfo: HomeHelpTechnicalInfo;
 };
 
 // Composes the visible Home card and lazily loads the chat only after activation.
-const HomeHelpAssistantPage = ({ initialLocale, technicalInfo }: HomeHelpAssistantPageProps) => {
+const HomeHelpAssistantPage = ({
+  initialLocale,
+  launcherImageSources,
+  technicalInfo,
+}: HomeHelpAssistantPageProps) => {
   const [chatOpen, setChatOpen] = useState(false);
   const [assistantActivated, setAssistantActivated] = useState(false);
   const botButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -46,6 +52,7 @@ const HomeHelpAssistantPage = ({ initialLocale, technicalInfo }: HomeHelpAssista
         messages={HOME_HELP_CALLOUT_MESSAGES}
         chatOpen={chatOpen}
         buttonRef={botButtonRef}
+        launcherImageSources={launcherImageSources}
         onOpen={openChat}
       />
 
@@ -65,6 +72,7 @@ const HomeHelpAssistantPage = ({ initialLocale, technicalInfo }: HomeHelpAssista
           <HomeHelpAssistant
             isOpen={chatOpen}
             initialLocale={initialLocale}
+            launcherImageSources={launcherImageSources}
             onClose={closeChat}
           />
         </Suspense>
@@ -81,6 +89,11 @@ const mount = () => {
   }
 
   const initialLocale = rootElement.dataset.responseLocale || document.documentElement.lang || "es-ES";
+  const launcherImageSources: AssistantLauncherImageSources = {
+    animatedWebp: rootElement.dataset.assistantLauncherAnimatedWebp || "",
+    animatedGif: rootElement.dataset.assistantLauncherAnimatedGif || "",
+    reducedMotionPng: rootElement.dataset.assistantLauncherReducedMotionPng || "",
+  };
   const technicalInfo = {
     environmentLabel: rootElement.dataset.environmentLabel || "",
     environmentName: rootElement.dataset.environmentName || "",
@@ -90,7 +103,11 @@ const mount = () => {
   mountReactIsland(
     rootElement,
     <AppErrorBoundary fallbackMessage={indT("HomeHelp_RenderError", "CRM help could not be displayed.")}>
-      <HomeHelpAssistantPage initialLocale={initialLocale} technicalInfo={technicalInfo} />
+      <HomeHelpAssistantPage
+        initialLocale={initialLocale}
+        launcherImageSources={launcherImageSources}
+        technicalInfo={technicalInfo}
+      />
     </AppErrorBoundary>
   );
 };

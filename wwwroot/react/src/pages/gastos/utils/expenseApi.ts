@@ -2177,7 +2177,7 @@ export const deleteExpenseSheetTicket = async (
   const context = await ensureExpenseApiContext(options);
   const safeFileId = encodeURIComponent(String(fileId || "").trim());
   const query = new URLSearchParams();
-  if (Number.isInteger(Number(lineRecId)) && Number(lineRecId) > 0) {
+  if (Number.isInteger(Number(lineRecId)) && Number(lineRecId) !== 0) {
     query.set("lineRecId", String(lineRecId));
   }
 

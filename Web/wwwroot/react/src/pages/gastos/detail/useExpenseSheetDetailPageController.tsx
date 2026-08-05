@@ -23,7 +23,7 @@ import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopba
 import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
 import { useExpenseSheetQuickTicketFlow } from "./useExpenseSheetQuickTicketFlow.ts";
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
-import { LinkTicketIcon, NewLineIcon, NewTicketIcon } from "./ExpenseSheetDetailIcons.tsx";
+import { LinkTicketIcon, NewLineIcon, NewTicketIcon } from "../components/ExpenseSheetActionIcons.tsx";
 
 const LINES_PAGE_SIZE = 6;
 const EXPENSE_STATUS_APPROVAL_REQUESTED = 1;

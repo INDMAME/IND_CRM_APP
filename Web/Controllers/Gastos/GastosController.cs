@@ -3111,7 +3111,7 @@ namespace IND_CRM_APP.Controllers
                     "SESSION_EXPIRED");
 
             var safeFileId = NormalizeOptionalText(fileId);
-            if (string.IsNullOrWhiteSpace(safeFileId) || (lineRecId.HasValue && lineRecId.Value <= 0))
+            if (string.IsNullOrWhiteSpace(safeFileId) || (lineRecId.HasValue && lineRecId.Value == 0))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,

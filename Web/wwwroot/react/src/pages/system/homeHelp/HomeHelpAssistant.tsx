@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from "react";
 import AssistantChatShell from "../../../components/commons/chat/AssistantChatShell.tsx";
+import type { AssistantLauncherImageSources } from "../../../components/commons/chat/AssistantLauncherButton.tsx";
 import { indFormat, indT } from "../../../utils/indI18n.ts";
 import { normalizeHelpResponseLocale } from "./helpLocale.ts";
 import HomeHelpMessageFooter from "./HomeHelpMessageFooter.tsx";
@@ -10,6 +11,7 @@ import { useHomeHelpModuleCatalog } from "./useHomeHelpModuleCatalog.ts";
 type HomeHelpAssistantProps = {
   isOpen: boolean;
   initialLocale: string;
+  launcherImageSources: AssistantLauncherImageSources;
   onClose: () => void;
 };
 
@@ -17,7 +19,12 @@ const BOT_IMAGE_SRC = "/images/kaloria_bot.png";
 const noopChartSelection = () => {};
 
 // Adapts Home help state to the shared assistant shell.
-const HomeHelpAssistant = ({ isOpen, initialLocale, onClose }: HomeHelpAssistantProps) => {
+const HomeHelpAssistant = ({
+  isOpen,
+  initialLocale,
+  launcherImageSources,
+  onClose,
+}: HomeHelpAssistantProps) => {
   const responseLocale = normalizeHelpResponseLocale(initialLocale);
   const [selectedModuleId, setSelectedModuleId] = useState("");
   const {
@@ -92,6 +99,7 @@ const HomeHelpAssistant = ({ isOpen, initialLocale, onClose }: HomeHelpAssistant
       noContextBody={indT("HomeHelp_NoContextBody", "The CRM guide could not be loaded.")}
       noContextMessage={indT("HomeHelp_NoContextMessage", "Reload the page and try again.")}
       botImageSrc={BOT_IMAGE_SRC}
+      launcherImageSources={launcherImageSources}
       contextNotice={null}
       emptyStateContent={
         <div className="mt-4 w-full text-left">

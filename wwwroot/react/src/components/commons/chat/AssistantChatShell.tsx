@@ -12,6 +12,7 @@ import AssistantLauncherButton, {
   ASSISTANT_BOTTOM_INSET,
   ASSISTANT_PAGE_INSET,
   type AssistantLauncherDesktopPlacement,
+  type AssistantLauncherImageSources,
 } from "./AssistantLauncherButton.tsx";
 import ChatMessageContent from "./ChatMessageContent.tsx";
 import AssistantQuickActions, { type AssistantQuickActionsLayout } from "./AssistantQuickActions.tsx";
@@ -41,6 +42,7 @@ type AssistantChatShellProps<TActionId extends string = string> = {
   desktopPlacement?: AssistantChatDesktopPlacement;
   bottomInset?: string;
   botImageSrc: string;
+  launcherImageSources: AssistantLauncherImageSources;
   contextNotice: React.ReactNode;
   headerActions?: React.ReactNode;
   emptyStateContent?: React.ReactNode;
@@ -352,6 +354,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
   desktopPlacement = "content-frame",
   bottomInset = ASSISTANT_BOTTOM_INSET,
   botImageSrc,
+  launcherImageSources,
   contextNotice,
   headerActions,
   emptyStateContent,
@@ -396,7 +399,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
         <AssistantLauncherButton
           aria-label={launcherAriaLabel}
           title={launcherAriaLabel}
-          botImageSrc={botImageSrc}
+          imageSources={launcherImageSources}
           desktopPlacement={desktopPlacement}
           bottomInset={bottomInset}
           onClick={onToggle}

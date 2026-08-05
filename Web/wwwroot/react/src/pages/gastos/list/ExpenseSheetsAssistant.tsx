@@ -5,6 +5,7 @@ import {
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import AssistantChatShell from "../../../components/commons/chat/AssistantChatShell.tsx";
+import type { AssistantLauncherImageSources } from "../../../components/commons/chat/AssistantLauncherButton.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import {
   resolveExpenseSheetsAssistantCopy,
@@ -19,6 +20,7 @@ import { useExpenseSheetsAssistant } from "./useExpenseSheetsAssistant.ts";
 type ExpenseSheetsAssistantProps = {
   context: ExpenseSheetsAssistantContextSnapshot;
   isListLoading: boolean;
+  launcherImageSources: AssistantLauncherImageSources;
 };
 
 const BOT_IMAGE_SRC = "/images/kaloria_bot.png";
@@ -31,7 +33,11 @@ const QUICK_ACTION_ICON_BY_ID: Record<ExpenseSheetsAssistantQuickActionId, React
 };
 
 // Adapts the expense sheet assistant state to the shared assistant chat shell.
-const ExpenseSheetsAssistant = ({ context, isListLoading }: ExpenseSheetsAssistantProps) => {
+const ExpenseSheetsAssistant = ({
+  context,
+  isListLoading,
+  launcherImageSources,
+}: ExpenseSheetsAssistantProps) => {
   const uiLanguage = useAssistantUiLanguage();
   const assistantCopy = React.useMemo(
     () => resolveExpenseSheetsAssistantCopy(uiLanguage),
@@ -94,6 +100,7 @@ const ExpenseSheetsAssistant = ({ context, isListLoading }: ExpenseSheetsAssista
       desktopPlacement="viewport-start"
       bottomInset={FLOATING_BOTTOM_INSET}
       botImageSrc={BOT_IMAGE_SRC}
+      launcherImageSources={launcherImageSources}
       contextNotice={contextNotice}
       draftValue={draftQuestion}
       messages={messages}

@@ -111,7 +111,7 @@ test("Home stretches the assistant card while reserving the floating launcher ar
 
 test("Home reuses the compact left assistant launcher and keeps its rotating callout", () => {
   assert.match(calloutSource, /<AssistantLauncherButton/u);
-  assert.match(calloutSource, /botImageSrc=\{BOT_IMAGE_SRC\}/u);
+  assert.match(calloutSource, /imageSources=\{launcherImageSources\}/u);
   assert.match(calloutSource, /desktopPlacement="viewport-start"/u);
   assert.match(calloutSource, /currentMessage/u);
   assert.doesNotMatch(calloutSource, /kaloria_horno|172px|188px/u);

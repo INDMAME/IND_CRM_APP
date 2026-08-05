@@ -8,11 +8,17 @@ import { classNames } from "../../../utils/classNames.ts";
 
 export type AssistantLauncherDesktopPlacement = "content-frame" | "viewport-start";
 
+export type AssistantLauncherImageSources = {
+  animatedWebp: string;
+  animatedGif: string;
+  reducedMotionPng: string;
+};
+
 type AssistantLauncherButtonProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
   "children" | "type"
 > & {
-  botImageSrc: string;
+  imageSources: AssistantLauncherImageSources;
   desktopPlacement?: AssistantLauncherDesktopPlacement;
   bottomInset?: string;
   buttonRef?: RefObject<HTMLButtonElement | null>;
@@ -29,7 +35,7 @@ const DESKTOP_PLACEMENT_CLASS_NAMES: Record<AssistantLauncherDesktopPlacement, s
 
 // Renders the standard floating assistant launcher and optional composed content.
 const AssistantLauncherButton = ({
-  botImageSrc,
+  imageSources,
   desktopPlacement = "content-frame",
   bottomInset = ASSISTANT_BOTTOM_INSET,
   buttonRef,
@@ -58,12 +64,22 @@ const AssistantLauncherButton = ({
       style={launcherStyle}
     >
       <span className="relative flex h-[60px] w-[60px] shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-xl)] border border-slate-300/95 bg-white/98 p-[2px] shadow-[0_10px_26px_rgba(148,163,184,0.24),0_3px_10px_rgba(15,23,42,0.08)] ring-1 ring-slate-100/80 backdrop-blur-sm">
-        <img
-          src={botImageSrc}
-          alt=""
-          className="h-[54px] w-[54px] scale-[1.04] rounded-[calc(var(--radius-xl)-2px)] object-contain drop-shadow-[0_6px_12px_rgba(15,23,42,0.16)]"
-          aria-hidden="true"
-        />
+        <picture className="flex h-[54px] w-[54px] shrink-0 items-center justify-center">
+          <source
+            media="(prefers-reduced-motion: reduce)"
+            srcSet={imageSources.reducedMotionPng}
+            type="image/png"
+          />
+          <source srcSet={imageSources.animatedWebp} type="image/webp" />
+          <img
+            src={imageSources.animatedGif}
+            width={60}
+            height={60}
+            alt=""
+            className="h-[54px] w-[54px] scale-[1.04] rounded-[calc(var(--radius-xl)-2px)] object-contain drop-shadow-[0_6px_12px_rgba(15,23,42,0.16)]"
+            aria-hidden="true"
+          />
+        </picture>
       </span>
       {children}
     </button>

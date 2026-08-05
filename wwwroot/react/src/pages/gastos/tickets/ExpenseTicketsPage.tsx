@@ -15,7 +15,6 @@ import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts
 import ExpenseTimelineCard from "../components/ExpenseTimelineCard.tsx";
 import ExpenseTicketLinkTimelineItem from "../components/ExpenseTicketLinkTimelineItem.tsx";
 import ExpenseTicketLinkBulkSummary from "../components/ExpenseTicketLinkBulkSummary.tsx";
-import ExpenseTicketLineTargetSummary from "../components/ExpenseTicketLineTargetSummary.tsx";
 import ExpenseTicketsFiltersPanel from "../components/ExpenseTicketsFiltersPanel.tsx";
 import ExpenseQuickTicketProgressOverlay from "../components/ExpenseQuickTicketProgressOverlay.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
@@ -66,8 +65,8 @@ import type {
 import { useExpenseTicketLinkSelection } from "./useExpenseTicketLinkSelection.ts";
 import { useExpenseTicketAutomaticLoad } from "./useExpenseTicketAutomaticLoad.ts";
 import { useExpenseTicketLinkSheetGate } from "./useExpenseTicketLinkSheetGate.ts";
+import { buildExpenseTicketLinkInitialSnapshot } from "./expenseTicketLinkFilterSnapshot.ts";
 import { setTopbarActionGroupReady as revealTopbarActionGroup } from "../../../utils/topbarActionVisibility.ts";
-import { toExpenseIsoDate } from "../utils/expenseApiDateUtils.ts";
 
 const PAGE_SIZE = 10;
 
@@ -120,43 +119,6 @@ const resolveManagedUserSelection = (requestedUserId: string, currentAxUserId: s
     return self?.axUserId || normalizedCurrent;
   }
   return "";
-};
-
-const buildLinkModeInitialSnapshot = (
-  managedUserId = "",
-  centerDateValue: unknown = ""
-): ExpenseTicketAppliedFilterSnapshot => {
-  const today = startOfDay(new Date());
-  let fromDate = new Date(today);
-  let toDate = new Date(today);
-  const centerIsoDate = toExpenseIsoDate(centerDateValue);
-  let centeredOnTargetDate = false;
-  if (centerIsoDate) {
-    const centerDate = startOfDay(new Date(`${centerIsoDate}T00:00:00`));
-    if (Number.isFinite(centerDate.getTime()) && centerDate <= today) {
-      centeredOnTargetDate = true;
-      fromDate = new Date(centerDate);
-      fromDate.setDate(centerDate.getDate() - 14);
-      toDate = new Date(centerDate);
-      toDate.setDate(centerDate.getDate() + 15);
-      if (toDate > today) toDate = new Date(today);
-    }
-  }
-  if (!centeredOnTargetDate) {
-    // Keep automatic link-mode load bounded to avoid heavy upstream scans.
-    fromDate.setDate(today.getDate() - 29);
-  }
-
-  return {
-    fromDate: toIsoDate(fromDate),
-    toDate: toIsoDate(toDate),
-    filterKey: "",
-    currencyCode: "",
-    managedUserId: normalizeUserId(managedUserId),
-    statusFilter: 0,
-    gastoTypeFilter: "",
-    processedByIaFilter: "all",
-  };
 };
 
 const resolveLinkModeBlockedMessage = (isPaid: boolean): string => {
@@ -272,7 +234,7 @@ const ExpenseTicketsPageContent = () => {
     (snapshot: ExpenseTicketAppliedFilterSnapshot): ExpenseTicketAppliedFilterSnapshot => {
       if (!isLinkMode) return snapshot;
 
-      const fallback = buildLinkModeInitialSnapshot(snapshot.managedUserId);
+      const fallback = buildExpenseTicketLinkInitialSnapshot(snapshot.managedUserId);
       const normalizedFromDate = safeText(snapshot.fromDate) || fallback.fromDate;
       const normalizedToDate = safeText(snapshot.toDate) || fallback.toDate;
       const normalizedManagedUserId = normalizeUserId(snapshot.managedUserId) || fallback.managedUserId;
@@ -422,8 +384,8 @@ const ExpenseTicketsPageContent = () => {
   });
   const buildInitialLinkModeSnapshot = useCallback(() => {
     const initialManagedUserId = syncManagedUserSelection(defaultManagedUserId);
-    return buildLinkModeInitialSnapshot(initialManagedUserId, isLineLinkMode ? targetLine?.transDate : "");
-  }, [defaultManagedUserId, isLineLinkMode, syncManagedUserSelection, targetLine?.transDate]);
+    return buildExpenseTicketLinkInitialSnapshot(initialManagedUserId);
+  }, [defaultManagedUserId, syncManagedUserSelection]);
 
   const buildInitialStandardSnapshot = useCallback((): ExpenseTicketAppliedFilterSnapshot => {
     const today = startOfDay(new Date());
@@ -1762,15 +1724,6 @@ const ExpenseTicketsPageContent = () => {
             ))}
           </div>
         </div>
-      ) : null}
-
-      {isLineLinkMode && targetLine ? (
-        <ExpenseTicketLineTargetSummary
-          targetLine={targetLine}
-          selectedTicket={selectedTargetTicket}
-          fallbackCurrencyCode={reimbursementCurrencyCode}
-          gastoTypeLabelMap={gastoTypeLabelMap}
-        />
       ) : null}
 
       <ExpenseTicketsFiltersPanel
