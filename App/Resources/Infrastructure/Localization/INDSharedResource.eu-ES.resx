@@ -1774,7 +1774,7 @@
     <value>Ezin izan da tiketa lotu.</value>
   </data>
   <data name="HomeHelp_CardTitle" xml:space="preserve"><value>Zure CRM laguntzailea</value></data>
-  <data name="HomeHelp_CardBody" xml:space="preserve"><value>Galdetu dokumentatutako CRM prozesuei buruz eta jaso erantzun gidatua aplikazioan konfiguratutako hizkuntzan.</value></data>
+  <data name="HomeHelp_CardBody" xml:space="preserve"><value>CRM-a erabiltzeko moduari buruzko zalantzarik al duzu? Galdetu chatbotari eta jaso web-aplikazioaren funtzionamenduari buruzko laguntza argi eta erraza.</value></data>
   <data name="HomeHelp_SuggestionsLabel" xml:space="preserve"><value>Probatu galdera hauetako bat</value></data>
   <data name="HomeHelp_OpenAria" xml:space="preserve"><value>Ireki CRM laguntza</value></data>
   <data name="HomeHelp_Callout1" xml:space="preserve"><value>Laguntza behar duzu CRMarekin?</value></data>

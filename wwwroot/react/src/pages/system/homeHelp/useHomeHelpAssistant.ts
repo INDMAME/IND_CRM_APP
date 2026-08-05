@@ -1,16 +1,15 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type RefObject,
 } from "react";
-import type { AssistantChatMessage, AssistantChatQuickAction } from "../../../components/commons/chat/assistantChatTypes.ts";
+import type { AssistantChatMessage } from "../../../components/commons/chat/assistantChatTypes.ts";
 import { createMarkdownMessage } from "../../../components/commons/chat/chatMessageFactories.ts";
 import { ApiFetchError } from "../../../services/apiService.ts";
-import { indFormat, indT } from "../../../utils/indI18n.ts";
+import { indT } from "../../../utils/indI18n.ts";
 import { askCrmHelp } from "./helpService.ts";
 import {
   buildBoundedHelpHistory,
@@ -35,7 +34,6 @@ type UseHomeHelpAssistantResult = {
   draftQuestion: string;
   messages: AssistantChatMessage[];
   answerDetailsByMessageId: Record<string, HelpAnswerDetails>;
-  quickActions: AssistantChatQuickAction[];
   messagesContainerRef: RefObject<HTMLDivElement | null>;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
   dialogRef: RefObject<HTMLElement | null>;
@@ -116,25 +114,6 @@ export const useHomeHelpAssistant = ({
   const askControllerRef = useRef<AbortController | null>(null);
   const askInFlightRef = useRef(false);
   const retryTopicByMessageIdRef = useRef(new Map<string, string | null>());
-
-  const quickActions = useMemo<AssistantChatQuickAction[]>(
-    () => (selectedModule?.topics || [])
-      .filter((topic) => Boolean(String(topic.id || "").trim()) && Boolean(String(topic.title || "").trim()))
-      .slice(0, 3)
-      .map((topic) => {
-        const question = indFormat(
-          "HomeHelp_TopicQuestionTemplate",
-          "Explain how to use {0}.",
-          topic.title
-        );
-        return {
-          id: `${selectedModule?.id || "module"}:${topic.id}`,
-          label: question,
-          question,
-        };
-      }),
-    [selectedModule]
-  );
 
   useEffect(() => {
     if (!isOpen) {
@@ -371,7 +350,6 @@ export const useHomeHelpAssistant = ({
     draftQuestion,
     messages,
     answerDetailsByMessageId,
-    quickActions,
     messagesContainerRef,
     textareaRef,
     dialogRef,

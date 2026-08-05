@@ -43,7 +43,7 @@ const HomeHelpAssistantPage = ({
     <>
       <HomeHelpCard
         title={indT("HomeHelp_CardTitle", "Your CRM help assistant")}
-        body={indT("HomeHelp_CardBody", "Ask about documented CRM processes and receive a guided answer in your configured app language.")}
+        body={indT("HomeHelp_CardBody", "Do you have questions about how to use the CRM? Ask the chatbot and receive clear, simple help about how the web application works.")}
         technicalInfo={technicalInfo}
         chatOpen={chatOpen}
       />

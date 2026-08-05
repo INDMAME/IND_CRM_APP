@@ -1774,7 +1774,7 @@
     <value>无法关联票据。</value>
   </data>
   <data name="HomeHelp_CardTitle" xml:space="preserve"><value>您的 CRM 帮助助手</value></data>
-  <data name="HomeHelp_CardBody" xml:space="preserve"><value>询问已记录的 CRM 流程，并以应用中配置的语言获取引导式回答。</value></data>
+  <data name="HomeHelp_CardBody" xml:space="preserve"><value>对如何使用 CRM 有疑问吗？向聊天机器人提问，即可获得清晰易懂的 Web 应用程序使用帮助。</value></data>
   <data name="HomeHelp_SuggestionsLabel" xml:space="preserve"><value>试试以下问题</value></data>
   <data name="HomeHelp_OpenAria" xml:space="preserve"><value>打开 CRM 帮助</value></data>
   <data name="HomeHelp_Callout1" xml:space="preserve"><value>需要 CRM 帮助吗？</value></data>

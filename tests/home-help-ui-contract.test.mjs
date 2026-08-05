@@ -19,12 +19,14 @@ const { normalizeHelpResponseLocale } = await import(localeModuleUrl);
 
 const [
   assistantSource,
+  assistantPageSource,
   cardSource,
   calloutSource,
   launcherSource,
   shellSource,
   quickActionsSource,
   assistantHookSource,
+  expenseAssistantSource,
   moduleSelectorSource,
   helpTypesSource,
   manualSource,
@@ -33,14 +35,18 @@ const [
   helpControllerSource,
   apiClientSource,
   answerInstructionsSource,
+  defaultResourceSource,
+  spanishResourceSource,
 ] = await Promise.all([
   readFile(path.join(helpRoot, "HomeHelpAssistant.tsx"), "utf8"),
+  readFile(path.join(helpRoot, "HomeHelpAssistantPage.tsx"), "utf8"),
   readFile(path.join(helpRoot, "HomeHelpCard.tsx"), "utf8"),
   readFile(path.join(helpRoot, "HomeHelpBotCallout.tsx"), "utf8"),
   readFile(path.join(repoRoot, "Web", "wwwroot", "react", "src", "components", "commons", "chat", "AssistantLauncherButton.tsx"), "utf8"),
   readFile(path.join(repoRoot, "Web", "wwwroot", "react", "src", "components", "commons", "chat", "AssistantChatShell.tsx"), "utf8"),
   readFile(path.join(repoRoot, "Web", "wwwroot", "react", "src", "components", "commons", "chat", "AssistantQuickActions.tsx"), "utf8"),
   readFile(path.join(helpRoot, "useHomeHelpAssistant.ts"), "utf8"),
+  readFile(path.join(repoRoot, "Web", "wwwroot", "react", "src", "pages", "gastos", "list", "ExpenseSheetsAssistant.tsx"), "utf8"),
   readFile(path.join(helpRoot, "HomeHelpModuleSelector.tsx"), "utf8"),
   readFile(path.join(helpRoot, "helpTypes.ts"), "utf8"),
   readFile(path.join(helpRoot, "ManualHelpView.tsx"), "utf8"),
@@ -49,6 +55,8 @@ const [
   readFile(path.join(repoRoot, "Web", "Controllers", "System", "HomeController.cs"), "utf8"),
   readFile(path.join(repoRoot, "App", "Services", "ApiClientService.cs"), "utf8"),
   readFile(path.join(repoRoot, "App", "Services", "CrmHelpAnswerInstructions.cs"), "utf8"),
+  readFile(path.join(repoRoot, "App", "Resources", "Infrastructure", "Localization", "INDSharedResource.resx"), "utf8"),
+  readFile(path.join(repoRoot, "App", "Resources", "Infrastructure", "Localization", "INDSharedResource.es-ES.resx"), "utf8"),
 ]);
 
 test("assistant response locale follows the supported global app culture", () => {
@@ -57,18 +65,32 @@ test("assistant response locale follows the supported global app culture", () =>
   assert.equal(normalizeHelpResponseLocale("unsupported"), "es-ES");
 });
 
-test("chat requires one global module before enabling its composer", () => {
+test("Home card presents the requested chatbot guidance", () => {
+  const englishCopy = "Do you have questions about how to use the CRM? Ask the chatbot and receive clear, simple help about how the web application works.";
+  const spanishCopy = "¿Tienes dudas sobre cómo usar el CRM? Pregunta al chatbot y recibe ayuda clara y sencilla sobre el funcionamiento de la aplicación web.";
+
+  assert.ok(assistantPageSource.includes(`indT("HomeHelp_CardBody", "${englishCopy}")`));
+  assert.ok(defaultResourceSource.includes(`<value>${spanishCopy}</value>`));
+  assert.ok(spanishResourceSource.includes(`<value>${spanishCopy}</value>`));
+});
+
+test("chat requires one global module and manual input before enabling its composer", () => {
   assert.match(assistantSource, /normalizeHelpResponseLocale\(initialLocale\)/u);
   assert.match(assistantSource, /<HomeHelpModuleSelector[\s\S]*variant="choices"/u);
   assert.match(assistantSource, /composerState=\{selectedModule \? "enabled" : "blocked"\}/u);
   assert.match(assistantSource, /conversationStarted && selectedModule/u);
-  assert.match(assistantSource, /quickActions=\{quickActions\}/u);
-  assert.match(assistantSource, /quickActionsLayout="stacked"/u);
+  assert.doesNotMatch(assistantSource, /quickActions=|quickActionsLayout=|onQuickAction=/u);
+  assert.doesNotMatch(assistantSource, /textareaRef\.current\?\.focus/u);
   assert.match(shellSource, /composerState = "enabled"/u);
   assert.match(shellSource, /composerState === "blocked"/u);
+  assert.match(shellSource, /quickActions\?: AssistantChatQuickAction/u);
+  assert.match(shellSource, /onQuickAction\?: \(question: string\) => void/u);
+  assert.match(shellSource, /quickActions && quickActions\.length > 0 && onQuickAction/u);
   assert.match(shellSource, /quickActionsLayout = "inline"/u);
   assert.match(quickActionsSource, /isStacked \? "flex-col" : "whitespace-nowrap"/u);
   assert.match(quickActionsSource, /isStacked \? "whitespace-normal break-words text-left leading-4" : "truncate"/u);
+  assert.match(expenseAssistantSource, /quickActions=\{visualQuickActions\}/u);
+  assert.match(expenseAssistantSource, /onQuickAction=/u);
   assert.match(moduleSelectorSource, /\{module\.title\}/u);
   assert.doesNotMatch(moduleSelectorSource, /module\.description|module\.topics/u);
   assert.doesNotMatch(assistantSource, /HomeHelpLocaleSelect|HomeHelpTopicBrowser|catalogOpen/u);
@@ -79,7 +101,7 @@ test("Home sends the selected module while keeping answer instructions server-ow
   assert.doesNotMatch(helpTypesSource, /answerInstructions/u);
   assert.match(assistantHookSource, /if \(!question \|\| !selectedModuleId \|\| askInFlightRef\.current\)/u);
   assert.match(assistantHookSource, /selectedModuleId,\s+selectedTopicId/u);
-  assert.match(assistantHookSource, /\(selectedModule\?\.topics \|\| \[\]\)[\s\S]*\.slice\(0, 3\)/u);
+  assert.doesNotMatch(assistantHookSource, /AssistantChatQuickAction|HomeHelp_TopicQuestionTemplate|\bquickActions\b/u);
   assert.match(helpControllerSource, /request\.AnswerInstructions = CrmHelpAnswerInstructions\.Value/u);
   assert.match(helpControllerSource, /MaxSelectedModuleIdLength = 80/u);
   assert.match(helpControllerSource, /request\.SelectedModuleId\.Length == 0[\s\S]*"INVALID_MODULE_ID"/u);

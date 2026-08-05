@@ -38,7 +38,6 @@ const HomeHelpAssistant = ({
     draftQuestion,
     messages,
     answerDetailsByMessageId,
-    quickActions,
     messagesContainerRef,
     textareaRef,
     dialogRef,
@@ -50,19 +49,13 @@ const HomeHelpAssistant = ({
   } = useHomeHelpAssistant({ isOpen, responseLocale, selectedModule, onClose });
   const conversationStarted = messages.some((message) => message.role === "user");
 
-  const fillDraft = useCallback((question: string) => {
-    setDraftQuestion(question);
-    window.requestAnimationFrame(() => textareaRef.current?.focus({ preventScroll: true }));
-  }, [setDraftQuestion, textareaRef]);
-
   const selectModule = useCallback((moduleId: string) => {
     if (conversationStarted) {
       return;
     }
     setSelectedModuleId(moduleId);
     setDraftQuestion("");
-    window.requestAnimationFrame(() => textareaRef.current?.focus({ preventScroll: true }));
-  }, [conversationStarted, setDraftQuestion, textareaRef]);
+  }, [conversationStarted, setDraftQuestion]);
 
   if (!isOpen) {
     return null;
@@ -129,8 +122,6 @@ const HomeHelpAssistant = ({
       composerState={selectedModule ? "enabled" : "blocked"}
       draftValue={draftQuestion}
       messages={messages}
-      quickActions={quickActions}
-      quickActionsLayout="stacked"
       messagesContainerRef={messagesContainerRef}
       textareaRef={textareaRef}
       dialogRef={dialogRef}
@@ -140,7 +131,6 @@ const HomeHelpAssistant = ({
       onClose={onClose}
       onDraftChange={setDraftQuestion}
       onSubmit={() => void submitDraftQuestion()}
-      onQuickAction={fillDraft}
       onRetry={(question, assistantMessageId) => {
         if (assistantMessageId) {
           void retryQuestion(question, assistantMessageId);

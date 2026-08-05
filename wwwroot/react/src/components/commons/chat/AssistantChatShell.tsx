@@ -52,7 +52,7 @@ type AssistantChatShellProps<TActionId extends string = string> = {
   composerState?: AssistantChatComposerState;
   draftValue: string;
   messages: AssistantChatMessage[];
-  quickActions: AssistantChatQuickAction<TActionId>[];
+  quickActions?: AssistantChatQuickAction<TActionId>[];
   quickActionsLayout?: AssistantQuickActionsLayout;
   messagesContainerRef: RefObject<HTMLDivElement | null>;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
@@ -63,7 +63,7 @@ type AssistantChatShellProps<TActionId extends string = string> = {
   onClose: () => void;
   onDraftChange: (value: string) => void;
   onSubmit: () => void;
-  onQuickAction: (question: string) => void;
+  onQuickAction?: (question: string) => void;
   onRetry: (question: string, assistantMessageId?: string) => void;
   onChartTypeSelect: (messageId: string, value: VisualizationType) => void;
   onDraftKeyDown: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void;
@@ -506,12 +506,14 @@ const AssistantChatShell = <TActionId extends string = string,>({
           </div>
 
           <div className="border-t border-slate-200 bg-white/90 px-3 py-2.5 lg:px-3">
-            <AssistantQuickActions
-              actions={quickActions}
-              disabled={composerDisabled}
-              layout={quickActionsLayout}
-              onSelect={onQuickAction}
-            />
+            {quickActions && quickActions.length > 0 && onQuickAction ? (
+              <AssistantQuickActions
+                actions={quickActions}
+                disabled={composerDisabled}
+                layout={quickActionsLayout}
+                onSelect={onQuickAction}
+              />
+            ) : null}
 
             {inputNotice ? (
               <p className="mb-2 text-[10px] font-medium leading-4 text-amber-800" role="note">

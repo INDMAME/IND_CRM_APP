@@ -1774,7 +1774,7 @@
     <value>Could not attach the ticket.</value>
   </data>
   <data name="HomeHelp_CardTitle" xml:space="preserve"><value>Your CRM help assistant</value></data>
-  <data name="HomeHelp_CardBody" xml:space="preserve"><value>Ask about documented CRM processes and receive a guided answer in the language configured in the app.</value></data>
+  <data name="HomeHelp_CardBody" xml:space="preserve"><value>Do you have questions about how to use the CRM? Ask the chatbot and receive clear, simple help about how the web application works.</value></data>
   <data name="HomeHelp_SuggestionsLabel" xml:space="preserve"><value>Try one of these questions</value></data>
   <data name="HomeHelp_OpenAria" xml:space="preserve"><value>Open CRM help</value></data>
   <data name="HomeHelp_Callout1" xml:space="preserve"><value>Do you need help with the CRM?</value></data>

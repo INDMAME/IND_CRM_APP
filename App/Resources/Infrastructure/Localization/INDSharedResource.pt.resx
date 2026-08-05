@@ -1774,7 +1774,7 @@
     <value>Não foi possível associar o ticket.</value>
   </data>
   <data name="HomeHelp_CardTitle" xml:space="preserve"><value>O seu assistente de ajuda do CRM</value></data>
-  <data name="HomeHelp_CardBody" xml:space="preserve"><value>Pergunte sobre os processos documentados do CRM e receba uma resposta orientada no idioma configurado na aplicação.</value></data>
+  <data name="HomeHelp_CardBody" xml:space="preserve"><value>Tem dúvidas sobre como utilizar o CRM? Pergunte ao chatbot e receba ajuda clara e simples sobre o funcionamento da aplicação web.</value></data>
   <data name="HomeHelp_SuggestionsLabel" xml:space="preserve"><value>Experimente uma destas perguntas</value></data>
   <data name="HomeHelp_OpenAria" xml:space="preserve"><value>Abrir a ajuda do CRM</value></data>
   <data name="HomeHelp_Callout1" xml:space="preserve"><value>Precisa de ajuda com o CRM?</value></data>
