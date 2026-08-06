@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosTable unloaded at Miércoles 29/07/2026
+; Navision Axapta Table : CRMHojaGastosTable unloaded at Jueves 06/08/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -1190,6 +1190,8 @@ Formatversion: 1
         #            hojaGastosTableUpdate.TransDateAprobacion   = _operacion == 1 ? today() : datenull();
         #            //MMS - Ajustes CRM - 2026.05.27
         #            newExpenseSheetStatus                       = hojaGastosTableUpdate.ExpenseSheetStatus;
+        #
+        #            hojaGastosTableUpdate.MostrarParaPago       = hojaGastosTableUpdate.MostrarParaPago(); //IJL.27/07/26
         #            //MMS - Ajustes CRM - 2026.05.27
         #            hojaGastosTableNotificacion                 = hojaGastosTableUpdate;
         #            hojaGastosTableUpdate.doUpdate();
@@ -1250,7 +1252,8 @@ Formatversion: 1
         #    index hint index1
         #    Order by TransDate
         #    where hojaGastosLine.HojaGastosId        == this.HojaGastosId
-        #       && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes {
+        #       //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #    {
         #
         #        //POs si acaso pongo esto para no procesar dos veces la misma línea.
         #        //if (_operacion == 1 && hojaGastosLine.VoucherPhysical)
@@ -1343,8 +1346,12 @@ Formatversion: 1
         #
         #        journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
         #
-        #        journalTrans.AmountCurCredit    = _operacion == 1 ? hojaGastosLine.ReimbursableAmount : 0;
-        #        journalTrans.AmountCurDebit     = _operacion == 1 ? 0                                  : hojaGastosLine.ReimbursableAmount;
+        #        //journalTrans.AmountCurCredit    = _operacion == 1 ? hojaGastosLine.ReimbursableAmount : 0;
+        #        //journalTrans.AmountCurDebit     = _operacion == 1 ? 0                                  : hojaGastosLine.ReimbursableAmount;
+        #
+        #        journalTrans.AmountCurCredit    = _operacion == 1 ? hojaGastosLine.LineAmountMST() : 0;
+        #        journalTrans.AmountCurDebit     = _operacion == 1 ? 0                                  : hojaGastosLine.LineAmountMST();
+        #
         #        journalTrans.INDRemesaLineRecId = 0;
         #        journalTrans.INDRefRecId        = hojaGastosLine.RecId;
         #        journalTrans.INDRefTableId      = hojaGastosLine.TableId;
@@ -1617,7 +1624,7 @@ Formatversion: 1
         #
         #        select maxOf(TransDate) from hojaGastosLine
         #        where hojaGastosLine.HojaGastosId        == this.HojaGastosId
-        #           && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #           //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #           && (hojaGastosLine.Type == CRMGastoType::Km || hojaGastosLine.Type == CRMGastoType::Gasolina);
         #
         #        transDate = hojaGastosLine.TransDate;
@@ -1756,7 +1763,7 @@ Formatversion: 1
         #                index hint index1
         #                Order by TransDate
         #                where hojaGastosLine.HojaGastosId   == this.HojaGastosId
-        #                      && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #                      //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #                      && (hojaGastosLine.Type        == CRMGastoType::Km ||
         #                          hojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::TarjetaGasolina){
         #
@@ -1779,7 +1786,7 @@ Formatversion: 1
         #        index hint index1
         #        Order by TransDate
         #        where    hojaGastosLine.HojaGastosId    == this.HojaGastosId
-        #              && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #              //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #              && hojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::Efectivo;
         #    }
         #    else {
@@ -1789,7 +1796,7 @@ Formatversion: 1
         #        index hint index1
         #        Order by TransDate
         #        where    hojaGastosLine.HojaGastosId    == this.HojaGastosId
-        #              && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #              //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #              && hojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::Efectivo
         #              && hojaGastosLine.Type            != CRMGastoType::Gasolina
         #              && hojaGastosLine.Type            != CRMGastoType::Km;
@@ -1818,7 +1825,8 @@ Formatversion: 1
         #
         #
         #            //MMS - La contabilizacion con factura usa el importe MST reembolsable persistido - 2026.07.29
-        #            amountAnticipo      = hojaGastosLine.ReimbursableAmount;
+        #            //IJL.04/08/26. En México de momento el importe reembolsable no afecta a este proceso.
+        #            amountAnticipo      = hojaGastosLine.LineAmountMST();//ReimbursableAmount;
         #            amountIVA           = hojaGastosLine.AmountIVA;
         #            amountRetencion     = hojaGastosLine.AmountRetencion;
         #            amountGasto         = amountAnticipo + amountRetencion - amountIVA;
@@ -2019,7 +2027,8 @@ Formatversion: 1
         #            //La línea NO Tiene Factura . Asiento es Gasto contra ANTICIPO
         #
         #            //MMS - La contabilizacion sin factura usa el importe MST reembolsable persistido - 2026.07.29
-        #            amount      = hojaGastosLine.ReimbursableAmount;
+        #            //IJL.04/08/26. El importe reembolsable no afecta a este proceso de momento.
+        #            amount      = hojaGastosLine.LineAmountMST();//ReimbursableAmount;
         #            transDate   = ValidaTransDate(hojaGastosLine.TransDate);
         #
         #            //GASTO
@@ -2737,7 +2746,8 @@ Formatversion: 1
         #    CRMUsuarioTable         usuarioTable    = CRMUsuarioTable::Find(this.UserId);
         #
         #    //boolean                 dimensionObligatoria;
-        #    Amount                  totalAmountFromHojaGastos   = this.TotalAmountMST(); //MMS - Este metodo MST heredado devuelve intencionadamente el importe reembolsable - 2026.07.29
+        #    //Amount                  totalAmountFromHojaGastos   = this.TotalAmountMST(); //MMS - Este metodo MST heredado devuelve intencionadamente el importe reembolsable - 2026.07.29
+        #    Amount                  totalAmountFromHojaGastos   = this.TotalBrutoAmountMST(); //IJL.06/08/26. Se toma el valor total independientemente de que haya que reembolsarlo o no.
         #    Amount                  totalEnMapa;
         #    ;
         #
@@ -2756,9 +2766,11 @@ Formatversion: 1
         #    while select hojaGastosLine
         #    index hint index1
         #    where hojaGastosLine.HojaGastosId        == this.HojaGastosId
-        #       && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes {
+        #          //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #    {
         #
-        #        amountLine              = hojaGastosLine.ReimbursableAmount;
+        #
+        #        amountLine              = hojaGastosLine.LineAmountMST();//hojaGastosLine.ReimbursableAmount;
         #        amountLineTotalFromCust = 0;
         #
         #        while select hojaGastosLineCust
@@ -3447,6 +3459,28 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #TotalEfectivo_Gasolina
+        #//IJL.06/08/26. Este método no dbe ser modificado por el momento.
+        #display Amount TotalEfectivo_Gasolina()
+        #{
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    Amount              amount;
+        #    ;
+        #    if (this.NoContabilizarGasolina)
+        #        return 0;
+        #
+        #    while select hojaGastosLine
+        #    index hint index1
+        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId
+        #          && hojaGastosLine.Type == CRMGastoType::Gasolina
+        #          && hojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo {
+        #
+        #        amount  += hojaGastosLine.LineAmountMST();
+        #
+        #    }
+        #
+        #    return amount;
+        #}
+        #/*
         #//INDMMS_ExternalCRM - 2026.05.21
         #display Amount TotalEfectivo_Gasolina()
         #{
@@ -3460,9 +3494,26 @@ Formatversion: 1
         #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo
         #               && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #}
+        #*/
         #
       ENDSOURCE
       SOURCE #TotalEfectivo_GasolinaMST
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #//IJL.06/08/26. Este método no debe ser modificado por el momento.
+        #display Amount TotalEfectivo_GasolinaMST()
+        #{
+        #    ;
+        #
+        #    if (this.NoContabilizarGasolina)
+        #        return 0;
+        #
+        #    return (select sum(AmountMST) from CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId  == this.HojaGastosId
+        #               && CRMHojaGastosLine.Type          == CRMGastoType::Gasolina
+        #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo).AmountMST;
+        #}
+        #
+        #/*
         #//INDMMS_ExternalCRM - 2026.05.21
         #display Amount TotalEfectivo_GasolinaMST()
         #{
@@ -3478,6 +3529,7 @@ Formatversion: 1
         #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo
         #               && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #}
+        #*/
         #
       ENDSOURCE
       SOURCE #TotalModalidadPago
@@ -3506,6 +3558,36 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #TotalPorModalidadPago
+        #//IJL.06/08/26. Este método no debe ser modificado por el momento
+        #Map TotalPorModalidadPago()
+        #{
+        #    CRMHojaGAstosLine   hojaGastosLine;
+        #    Map                 map;
+        #    ;
+        #
+        #    map = new Map(Types::String, Types::Real);
+        #
+        #    while select hojaGastosLine
+        #    where hojaGastosLine.HojaGastosId   == this.HojaGastosId
+        #          //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #          /*
+        #          &&
+        #          hojaGastosLine.Ticket         == NoYes::Yes         &&
+        #          hojaGastosLine.NoCobrar       == NoYes::No          &&
+        #          hojaGastosLine.Internacional  == NoYes::No          &&
+        #          hojaGastosLine.VisaEmpresa    == Noyes::No
+        #          */
+        #    {
+        #        if (map.exists(hojaGastosLine.ModalidadPago)){
+        #            map.insert(hojaGastosLine.ModalidadPago, map.lookup(hojaGastosLine.ModalidadPago) + hojaGastosLine.Amount);
+        #        }
+        #        else {
+        #            map.insert(hojaGastosLine.ModalidadPago, hojaGastosLine.Amount);
+        #        }
+        #    }
+        #    return map;
+        #}
+        #/*
         #Map TotalPorModalidadPago()
         #{
         #    CRMHojaGAstosLine   hojaGastosLine;
@@ -3534,9 +3616,37 @@ Formatversion: 1
         #    }
         #    return map;
         #}
+        #*/
         #
       ENDSOURCE
       SOURCE #TotalPorModalidadPagoMST
+        #//MMS - Divisa desde línea - 2026.05.21
+        #//IJL.06/08/26. Este método no debe ser modificado por el momento.
+        #Map TotalPorModalidadPagoMST()
+        #{
+        #    CRMHojaGAstosLine   hojaGastosLine;
+        #    Map                 map;
+        #    Amount            amount;
+        #    ;
+        #
+        #    map = new Map(Types::String, Types::Real);
+        #
+        #    while select hojaGastosLine
+        #    index hint index1
+        #        where hojaGastosLine.HojaGastosId   == this.HojaGastosId
+        #              //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #    {
+        #        amount = hojaGastosLine.AmountMST;
+        #
+        #        if (map.exists(hojaGastosLine.ModalidadPago))
+        #            map.insert(hojaGastosLine.ModalidadPago, map.lookup(hojaGastosLine.ModalidadPago) + amount);
+        #        else
+        #            map.insert(hojaGastosLine.ModalidadPago, amount);
+        #    }
+        #
+        #    return map;
+        #}
+        #/*
         #//MMS - Divisa desde línea - 2026.05.21
         #Map TotalPorModalidadPagoMST()
         #{
@@ -3563,6 +3673,7 @@ Formatversion: 1
         #
         #    return map;
         #}
+        #*/
         #
       ENDSOURCE
       SOURCE #TotalReembolsarMexico
@@ -3883,6 +3994,10 @@ Formatversion: 1
         #    oldExpenseSheetStatus                       = hojaGastosTableUpdate.ExpenseSheetStatus;
         #    hojaGastosTableUpdate.ExpenseSheetStatus    = _newStatus;
         #    hojaGastosTableUpdate.EstadoComentarios     = hojaGastosTableUpdate.EstadoComentarios ? strfmt("%1\n\n%2", hojaGastosTableUpdate.EstadoComentarios, _estadoComentarios) : _estadoComentarios;
+        #
+        #    hojaGastosTableUpdate.NecesariaHGImpresa    = hojaGastosTableUpdate.NecesitaHGFisica(); //IJL.27/07/26
+        #    hojaGastosTableUpdate.MostrarParaPago       = hojaGastosTableUpdate.MostrarParaPago(); //IJL.27/07/26
+        #
         #    hojaGastosTableUpdate.doUpdate();
         #    ttscommit;
         #

@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : INDTicketInfoTable unloaded at Miércoles 29/07/2026
+; Navision Axapta Table : INDTicketInfoTable unloaded at Jueves 06/08/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -1070,6 +1070,8 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #validateField
+        #//MMS - Ajustes CRM - 2026.07.29
+        #// Conserva las validaciones funcionales del tipo de gasto del ticket.
         #public boolean validateField(fieldId _fieldIdToCheck)
         #{
         #    boolean     ret;
@@ -1083,7 +1085,7 @@ Formatversion: 1
         #    switch (_fieldIdToCheck){
         #
         #
-        #        case FieldNum(CRMHojaGastosLine, Type):
+        #        case FieldNum(INDTicketInfoTable, GastoType):
         #
         #            if (this.GastoType == CRMGastoType::Propinas && !INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico)
         #                ret = checkFailed("Este tipo de gasto no está permitido en tu compañía.");
@@ -1107,9 +1109,10 @@ Formatversion: 1
         #
         #    return ret;
         #}
+        #
       ENDSOURCE
       SOURCE #validateUniqueTicketDateTime
-        #//MMS - Valida duplicados solo cuando el ticket tiene una hora valida - 2026.07.29
+        #//MMS - Acota duplicados por usuario cuando la identidad esta informada - 2026.08.03
         #public boolean validateUniqueTicketDateTime()
         #{
         #    INDTicketInfoTable ticketInfoTable;
@@ -1119,11 +1122,23 @@ Formatversion: 1
         #        return true;
         #    }
         #
+        #    if (this.CreatedByUserId)
+        #    {
+        #        select firstonly RecId, FileId
+        #            from ticketInfoTable
+        #            where ticketInfoTable.TicketDate      == this.TicketDate
+        #               && ticketInfoTable.TicketTime      == this.TicketTime
+        #               && ticketInfoTable.CreatedByUserId == this.CreatedByUserId
+        #               && ticketInfoTable.RecId           != this.RecId;
+        #    }
+        #    else
+        #    {
         #    select firstonly RecId, FileId
         #        from ticketInfoTable
         #        where ticketInfoTable.TicketDate == this.TicketDate
         #           && ticketInfoTable.TicketTime == this.TicketTime
         #           && ticketInfoTable.RecId      != this.RecId;
+        #    }
         #
         #    if (ticketInfoTable.RecId)
         #    {

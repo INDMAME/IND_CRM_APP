@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Martes 04/08/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Jueves 06/08/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -231,6 +231,28 @@ Formatversion: 1
         #                  date2Str(sheetDate, 123, 2, 2, 2, 2, 4),
         #                  _expenseSheet.Description,
         #                  _link);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetLineTicketResult
+        #//MMS - Normalizes the ticket link response with stable columns - 2026.08.04
+        #static server container buildExpenseSheetLineTicketResult(boolean            _success,
+        #                                                               str                _message,
+        #                                                               str                _reasonCode,
+        #                                                               CRMHojaGastosId   _hojaId,
+        #                                                               RecId              _lineRecId,
+        #                                                               INDFileId          _fileId,
+        #                                                               str                _ticketStatus,
+        #                                                               boolean            _changed)
+        #{
+        #    return INDCRMUtilityService::buildHeader(_success,
+        #                                              _message,
+        #                                              [_reasonCode,
+        #                                               _hojaId,
+        #                                               strFmt('%1', _lineRecId),
+        #                                               _fileId,
+        #                                               _ticketStatus,
+        #                                               _changed ? 1 : 0]);
         #}
         #
       ENDSOURCE
@@ -3636,6 +3658,257 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #linkExpenseSheetLineTicket
+        #//MMS - Links a pending ticket to a manual line on a Draft expense sheet - 2026.08.04
+        #// Input: [companyId, ownerAxUserId, viewerAxUserId, hojaGastosId, lineRecId, fileId].
+        #static server container linkExpenseSheetLineTicket(container _data)
+        #{
+        #    DataAreaId          companyId;
+        #    str 20              ownerAxUserId;
+        #    str 20              viewerAxUserId;
+        #    CRMUserId           crmUserId;
+        #    CRMHojaGastosId     hojaId;
+        #    RecId               lineRecId;
+        #    INDFileId           fileId;
+        #    int                 startLine;
+        #    str                 msg;
+        #    str 10              ticketStatusOut;
+        #    boolean             changed;
+        #    boolean             alreadyLinked;
+        #    boolean             lineChanged;
+        #
+        #    CRMHojaGastosTable  header;
+        #    CRMHojaGastosLine   line;
+        #    CRMHojaGastosLine   existingFileLine;
+        #    INDTicketInfoTable  ticketHeader;
+        #    DocuRef             docuRef;
+        #    INDWebModuleAccessLevel sheetModuleAccess;
+        #    INDWebModuleAccessLevel ticketModuleAccess;
+        #    ;
+        #
+        #    companyId = INDCRMUtilityService::getCompany(_data);
+        #
+        #    if (!companyId)
+        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'CompanyId es obligatorio.', 'INVALID_INPUT', hojaId, lineRecId, '', '', false);
+        #
+        #    if (conLen(_data) < 6)
+        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Input container invalido. Se esperan 6 campos.', 'INVALID_INPUT', hojaId, lineRecId, fileId, '', false);
+        #
+        #    ownerAxUserId  = conPeek(_data, 2);
+        #    viewerAxUserId = conPeek(_data, 3);
+        #    hojaId         = conPeek(_data, 4);
+        #    lineRecId      = conPeek(_data, 5);
+        #    fileId         = conPeek(_data, 6);
+        #
+        #    if (!ownerAxUserId || !viewerAxUserId || !hojaId || !lineRecId || !fileId)
+        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'OwnerAxUserId, ViewerAxUserId, HojaGastosId, LineRecId y FileId son obligatorios.', 'INVALID_INPUT', hojaId, lineRecId, fileId, '', false);
+        #
+        #    startLine = infolog.line();
+        #
+        #    try
+        #    {
+        #        changecompany(companyId)
+        #        {
+        #            //MMS - Restringe la asociacion de tickets al propietario firmado - 2026.08.06
+        #            if (strUpr(strLRTrim(viewerAxUserId)) != strUpr(strLRTrim(ownerAxUserId)))
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Solo el propietario de la hoja puede vincular tickets.', 'FORBIDDEN', hojaId, lineRecId, fileId, '', false);
+        #
+        #            sheetModuleAccess = INDControlDataVisibilityResolver::findModuleAccessLevel(viewerAxUserId,
+        #                                                                                        companyId,
+        #                                                                                        'CRM',
+        #                                                                                        'GASTOS_HOJA_GASTO');
+        #            if (!sheetModuleAccess.RecId || sheetModuleAccess.AccessRights < SysAccessRights::Edit)
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Se requiere permiso Edit sobre hojas de gastos.', 'FORBIDDEN', hojaId, lineRecId, fileId, '', false);
+        #
+        #            ticketModuleAccess = INDControlDataVisibilityResolver::findModuleAccessLevel(viewerAxUserId,
+        #                                                                                         companyId,
+        #                                                                                         'CRM',
+        #                                                                                         'GASTOS_TICKETS');
+        #            if (!ticketModuleAccess.RecId || ticketModuleAccess.AccessRights < SysAccessRights::View)
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Se requiere permiso View sobre tickets.', 'FORBIDDEN', hojaId, lineRecId, fileId, '', false);
+        #
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(ownerAxUserId);
+        #            if (!crmUserId)
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Propietario no encontrado.', 'NOT_FOUND', hojaId, lineRecId, fileId, '', false);
+        #
+        #            //MMS - Applies the signed mutation policy for the expense sheet module - 2026.08.04
+        #            if (!INDCRMUtilityService::ctrlCanMutateOwnerAxUserId(viewerAxUserId,
+        #                                                                  companyId,
+        #                                                                  'CRM',
+        #                                                                  'GASTOS_HOJA_GASTO',
+        #                                                                  ownerAxUserId))
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'El usuario visor no puede modificar gastos del propietario.', 'FORBIDDEN', hojaId, lineRecId, fileId, '', false);
+        #
+        #            ttsbegin;
+        #
+        #            // Lock order is header, line, and ticket.
+        #            header = INDCRMUtilityService::findHeaderForUpdate(crmUserId, hojaId);
+        #            if (!header.RecId)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Hoja de gastos no encontrada.', 'NOT_FOUND', hojaId, lineRecId, fileId, '', false);
+        #            }
+        #
+        #            if (header.ExpenseSheetStatus != INDExpenseSheetStatus::Draft ||
+        #                header.Voucher != '' ||
+        #                header.Aprobado)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'La hoja debe estar en Draft, sin aprobar y sin Voucher.', 'INVALID_STATE', hojaId, lineRecId, fileId, '', false);
+        #            }
+        #
+        #            select firstonly forupdate line
+        #                where line.RecId        == lineRecId
+        #                   && line.UserId       == crmUserId
+        #                   && line.HojaGastosId == hojaId;
+        #
+        #            if (!line.RecId)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Linea no encontrada para la hoja indicada.', 'NOT_FOUND', hojaId, lineRecId, fileId, '', false);
+        #            }
+        #
+        #            if (line.Ticket == NoYes::Yes || line.Factura == NoYes::Yes)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'La linea tiene marcado Ticket o Factura y no admite un ticket digital.', 'INVALID_STATE', hojaId, lineRecId, fileId, '', false);
+        #            }
+        #
+        #            if (line.FileId && line.FileId != fileId)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'La linea ya esta vinculada a otro ticket.', 'CONFLICT', hojaId, lineRecId, fileId, '', false);
+        #            }
+        #
+        #            select firstonly forupdate ticketHeader
+        #                where ticketHeader.FileId          == fileId
+        #                   && ticketHeader.CreatedByUserId == ownerAxUserId;
+        #
+        #            if (!ticketHeader.RecId)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Ticket no encontrado para el propietario.', 'NOT_FOUND', hojaId, lineRecId, fileId, '', false);
+        #            }
+        #
+        #            ticketStatusOut = strFmt('%1', any2int(ticketHeader.Status));
+        #
+        #            select firstonly existingFileLine
+        #                where existingFileLine.FileId == fileId
+        #                   && existingFileLine.RecId  != line.RecId;
+        #
+        #            if (existingFileLine.RecId)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'FileId ya esta asignado a otra linea.', 'CONFLICT', hojaId, lineRecId, fileId, ticketStatusOut, false);
+        #            }
+        #
+        #            alreadyLinked = line.FileId == fileId;
+        #
+        #            if (!alreadyLinked && ticketHeader.Status != INDTicketStatus::Pending)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'El ticket no esta pendiente.', 'INVALID_TICKET', hojaId, lineRecId, fileId, ticketStatusOut, false);
+        #            }
+        #
+        #            if (ticketHeader.TotalAmount <= 0)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'El ticket debe tener un importe total mayor que cero.', 'INVALID_TICKET', hojaId, lineRecId, fileId, ticketStatusOut, false);
+        #            }
+        #
+        #            if (!alreadyLinked)
+        #            {
+        #            select firstonly docuRef
+        #                where docuRef.RefTableId == tableNum(INDTicketInfoTable)
+        #                   && docuRef.RefRecId   == ticketHeader.RecId
+        #                   && docuRef.INDFileId  == ticketHeader.FileId;
+        #
+        #            if (!docuRef.RecId ||
+        #                (!strLRTrim(docuRef.INDURLFile) && !strLRTrim(docuRef.INDFilename)))
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'El ticket no tiene una foto o documento asociado.', 'INVALID_TICKET', hojaId, lineRecId, fileId, ticketStatusOut, false);
+        #            }
+        #            }
+        #
+        #            line.FileId = fileId;
+        #            line.Qty = 1;
+        #            line.Price = ticketHeader.TotalAmount;
+        #            line.Amount = ticketHeader.TotalAmount;
+        #            line.Currency = ticketHeader.CurrencyCode;
+        #            line.ExchRate = ticketHeader.ExchRate;
+        #            line.AmountMST = ticketHeader.AmountMST;
+        #            line.normalizeCurrencyAmounts(line.AmountMST != 0);
+        #            line.recalculateReimbursableAmount();
+        #
+        #            if (!line.validateCurrencyAmounts())
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Datos de divisa del ticket invalidos para la linea.', 'INVALID_TICKET', hojaId, lineRecId, fileId, ticketStatusOut, false);
+        #            }
+        #
+        #            lineChanged = line.FileId             != line.orig().FileId ||
+        #                          line.Qty                != line.orig().Qty ||
+        #                          line.Price              != line.orig().Price ||
+        #                          line.Amount             != line.orig().Amount ||
+        #                          line.Currency           != line.orig().Currency ||
+        #                          line.ExchRate           != line.orig().ExchRate ||
+        #                          line.AmountMST          != line.orig().AmountMST ||
+        #                          line.ReimbursableAmount != line.orig().ReimbursableAmount ||
+        #                          line.VisaEmpresa        != line.orig().VisaEmpresa;
+        #            changed = lineChanged || ticketHeader.Status != INDTicketStatus::Assigned;
+        #
+        #            if (lineChanged)
+        #            {
+        #                //MMS - Bypasses reverse ticket synchronization after applying the ticket monetary snapshot - 2026.08.06
+        #                line.doUpdate();
+        #                line.CreaActualizaProyectoEnLineCust();
+        #                INDProjCostRevenueTable::CreateProjCostFromCommon(line);
+        #                line.syncHojaGastosTable();
+        #            }
+        #
+        #            INDCRMExpenseSheetService::refreshTicketStatusByFileId(ownerAxUserId, fileId);
+        #
+        #            ticketStatusOut = strFmt('%1', any2int(INDTicketStatus::Assigned));
+        #            if (alreadyLinked)
+        #                msg = 'La linea ya estaba vinculada al ticket y sus importes fueron reconciliados.';
+        #            else
+        #                msg = 'Ticket vinculado correctamente.';
+        #
+        #            ttscommit;
+        #
+        #            return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(true, msg, '', hojaId, lineRecId, fileId, ticketStatusOut, changed);
+        #        }
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Deadlock detectado. Reintentar la operacion.', 'CONFLICT', hojaId, lineRecId, fileId, ticketStatusOut, false);
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, INDCRMUtilityService::getInfologMessagesSince(startLine), 'ERROR', hojaId, lineRecId, fileId, ticketStatusOut, false);
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Error interno del sistema.', 'ERROR', hojaId, lineRecId, fileId, ticketStatusOut, false);
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        ttsabort;
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        if (!msg)
+        #            msg = 'Error en el proceso. Revisar infolog.';
+        #
+        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, msg, 'ERROR', hojaId, lineRecId, fileId, ticketStatusOut, false);
+        #    }
+        #
+        #    return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Error no controlado.', 'ERROR', hojaId, lineRecId, fileId, ticketStatusOut, false);
+        #}
+        #
+      ENDSOURCE
       SOURCE #propagateExpenseSheetCurrencyDefaults
         #// Metodo: propagateExpenseSheetCurrencyDefaults
         #// Proposito: Sin operacion heredada. La divisa de cabecera siempre es local; no se deben sobrescribir las divisas de linea.
@@ -3949,7 +4222,9 @@ Formatversion: 1
         #        if (msg)
         #            throw error(msg);
         #
-        #        ticketHeader.update();
+        #        //MMS - Persists only status and search data without reverse line synchronization - 2026.08.06
+        #        ticketHeader.updateSearchKey();
+        #        ticketHeader.doUpdate();
         #    }
         #    else if (!hasAssignedLine && ticketHeader.Status != INDTicketStatus::Pending)
         #    {
@@ -3959,7 +4234,9 @@ Formatversion: 1
         #        if (msg)
         #            throw error(msg);
         #
-        #        ticketHeader.update();
+        #        //MMS - Persists only status and search data without reverse line synchronization - 2026.08.06
+        #        ticketHeader.updateSearchKey();
+        #        ticketHeader.doUpdate();
         #    }
         #}
         #
@@ -4559,6 +4836,176 @@ Formatversion: 1
         #                                                                                _correlationId,
         #                                                                                false);
         #    }
+        #
+      ENDSOURCE
+      SOURCE #unlinkExpenseSheetLineTicket
+        #//MMS - Unlinks a ticket from a Draft line without deleting the line, ticket, or document - 2026.08.04
+        #// Input: [companyId, ownerAxUserId, viewerAxUserId, hojaGastosId, lineRecId].
+        #static server container unlinkExpenseSheetLineTicket(container _data)
+        #{
+        #    DataAreaId          companyId;
+        #    str 20              ownerAxUserId;
+        #    str 20              viewerAxUserId;
+        #    CRMUserId           crmUserId;
+        #    CRMHojaGastosId     hojaId;
+        #    RecId               lineRecId;
+        #    INDFileId           previousFileId;
+        #    int                 startLine;
+        #    str                 msg;
+        #    str 10              ticketStatusOut;
+        #
+        #    CRMHojaGastosTable  header;
+        #    CRMHojaGastosLine   line;
+        #    CRMHojaGastosLine   existingFileLine;
+        #    INDTicketInfoTable  ticketHeader;
+        #    INDWebModuleAccessLevel sheetModuleAccess;
+        #    INDWebModuleAccessLevel ticketModuleAccess;
+        #    ;
+        #
+        #    companyId = INDCRMUtilityService::getCompany(_data);
+        #
+        #    if (!companyId)
+        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'CompanyId es obligatorio.', 'INVALID_INPUT', hojaId, lineRecId, '', '', false);
+        #
+        #    if (conLen(_data) < 5)
+        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Input container invalido. Se esperan 5 campos.', 'INVALID_INPUT', hojaId, lineRecId, '', '', false);
+        #
+        #    ownerAxUserId  = conPeek(_data, 2);
+        #    viewerAxUserId = conPeek(_data, 3);
+        #    hojaId         = conPeek(_data, 4);
+        #    lineRecId      = conPeek(_data, 5);
+        #
+        #    if (!ownerAxUserId || !viewerAxUserId || !hojaId || !lineRecId)
+        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'OwnerAxUserId, ViewerAxUserId, HojaGastosId y LineRecId son obligatorios.', 'INVALID_INPUT', hojaId, lineRecId, '', '', false);
+        #
+        #    startLine = infolog.line();
+        #
+        #    try
+        #    {
+        #        changecompany(companyId)
+        #        {
+        #            //MMS - Restringe la asociacion de tickets al propietario firmado - 2026.08.06
+        #            if (strUpr(strLRTrim(viewerAxUserId)) != strUpr(strLRTrim(ownerAxUserId)))
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Solo el propietario de la hoja puede desvincular tickets.', 'FORBIDDEN', hojaId, lineRecId, '', '', false);
+        #
+        #            sheetModuleAccess = INDControlDataVisibilityResolver::findModuleAccessLevel(viewerAxUserId,
+        #                                                                                        companyId,
+        #                                                                                        'CRM',
+        #                                                                                        'GASTOS_HOJA_GASTO');
+        #            if (!sheetModuleAccess.RecId || sheetModuleAccess.AccessRights < SysAccessRights::Edit)
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Se requiere permiso Edit sobre hojas de gastos.', 'FORBIDDEN', hojaId, lineRecId, '', '', false);
+        #
+        #            ticketModuleAccess = INDControlDataVisibilityResolver::findModuleAccessLevel(viewerAxUserId,
+        #                                                                                         companyId,
+        #                                                                                         'CRM',
+        #                                                                                         'GASTOS_TICKETS');
+        #            if (!ticketModuleAccess.RecId || ticketModuleAccess.AccessRights < SysAccessRights::View)
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Se requiere permiso View sobre tickets.', 'FORBIDDEN', hojaId, lineRecId, '', '', false);
+        #
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(ownerAxUserId);
+        #            if (!crmUserId)
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Propietario no encontrado.', 'NOT_FOUND', hojaId, lineRecId, '', '', false);
+        #
+        #            //MMS - Applies the signed mutation policy for the expense sheet module - 2026.08.04
+        #            if (!INDCRMUtilityService::ctrlCanMutateOwnerAxUserId(viewerAxUserId,
+        #                                                                  companyId,
+        #                                                                  'CRM',
+        #                                                                  'GASTOS_HOJA_GASTO',
+        #                                                                  ownerAxUserId))
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'El usuario visor no puede modificar gastos del propietario.', 'FORBIDDEN', hojaId, lineRecId, '', '', false);
+        #
+        #            ttsbegin;
+        #
+        #            // Lock order is header, line, and ticket.
+        #            header = INDCRMUtilityService::findHeaderForUpdate(crmUserId, hojaId);
+        #            if (!header.RecId)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Hoja de gastos no encontrada.', 'NOT_FOUND', hojaId, lineRecId, '', '', false);
+        #            }
+        #
+        #            if (header.ExpenseSheetStatus != INDExpenseSheetStatus::Draft ||
+        #                header.Voucher != '' ||
+        #                header.Aprobado)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'La hoja debe estar en Draft, sin aprobar y sin Voucher.', 'INVALID_STATE', hojaId, lineRecId, '', '', false);
+        #            }
+        #
+        #            select firstonly forupdate line
+        #                where line.RecId        == lineRecId
+        #                   && line.UserId       == crmUserId
+        #                   && line.HojaGastosId == hojaId;
+        #
+        #            if (!line.RecId)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Linea no encontrada para la hoja indicada.', 'NOT_FOUND', hojaId, lineRecId, '', '', false);
+        #            }
+        #
+        #            previousFileId = line.FileId;
+        #            if (!previousFileId)
+        #            {
+        #                ttscommit;
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(true, 'La linea ya estaba desvinculada.', '', hojaId, lineRecId, '', '', false);
+        #            }
+        #
+        #            select firstonly forupdate ticketHeader
+        #                where ticketHeader.FileId          == previousFileId
+        #                   && ticketHeader.CreatedByUserId == ownerAxUserId;
+        #
+        #            if (ticketHeader.RecId)
+        #            {
+        #                ticketStatusOut = strFmt('%1', any2int(ticketHeader.Status));
+        #
+        #                select firstonly existingFileLine
+        #                    where existingFileLine.FileId == previousFileId
+        #                       && existingFileLine.RecId  != line.RecId;
+        #            }
+        #
+        #            line.FileId = '';
+        #            line.update();
+        #
+        #            if (ticketHeader.RecId)
+        #            {
+        #                INDCRMExpenseSheetService::refreshTicketStatusByFileId(ownerAxUserId, previousFileId);
+        #                if (existingFileLine.RecId)
+        #                    ticketStatusOut = strFmt('%1', any2int(INDTicketStatus::Assigned));
+        #                else
+        #                    ticketStatusOut = strFmt('%1', any2int(INDTicketStatus::Pending));
+        #            }
+        #            ttscommit;
+        #
+        #            return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(true, 'Ticket desvinculado correctamente.', '', hojaId, lineRecId, '', ticketStatusOut, true);
+        #        }
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Deadlock detectado. Reintentar la operacion.', 'CONFLICT', hojaId, lineRecId, previousFileId, ticketStatusOut, false);
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, INDCRMUtilityService::getInfologMessagesSince(startLine), 'ERROR', hojaId, lineRecId, previousFileId, ticketStatusOut, false);
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Error interno del sistema.', 'ERROR', hojaId, lineRecId, previousFileId, ticketStatusOut, false);
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        ttsabort;
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        if (!msg)
+        #            msg = 'Error en el proceso. Revisar infolog.';
+        #
+        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, msg, 'ERROR', hojaId, lineRecId, previousFileId, ticketStatusOut, false);
+        #    }
+        #
+        #    return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Error no controlado.', 'ERROR', hojaId, lineRecId, previousFileId, ticketStatusOut, false);
+        #}
         #
       ENDSOURCE
       SOURCE #updateExpenseSheetHeader
@@ -6264,413 +6711,6 @@ Formatversion: 1
         #        msg = 'Ya existe otro ticket con la misma fecha y hora.';
         #
         #    return msg;
-        #}
-        #
-      ENDSOURCE
-      SOURCE #buildExpenseSheetLineTicketResult
-        #//MMS - Normalizes the ticket link response with stable columns - 2026.08.04
-        #static server container buildExpenseSheetLineTicketResult(boolean            _success,
-        #                                                               str                _message,
-        #                                                               str                _reasonCode,
-        #                                                               CRMHojaGastosId   _hojaId,
-        #                                                               RecId              _lineRecId,
-        #                                                               INDFileId          _fileId,
-        #                                                               str                _ticketStatus,
-        #                                                               boolean            _changed)
-        #{
-        #    return INDCRMUtilityService::buildHeader(_success,
-        #                                              _message,
-        #                                              [_reasonCode,
-        #                                               _hojaId,
-        #                                               strFmt('%1', _lineRecId),
-        #                                               _fileId,
-        #                                               _ticketStatus,
-        #                                               _changed ? 1 : 0]);
-        #}
-        #
-      ENDSOURCE
-      SOURCE #linkExpenseSheetLineTicket
-        #//MMS - Links a pending ticket to a manual line on a Draft expense sheet - 2026.08.04
-        #// Input: [companyId, ownerAxUserId, viewerAxUserId, hojaGastosId, lineRecId, fileId].
-        #static server container linkExpenseSheetLineTicket(container _data)
-        #{
-        #    DataAreaId          companyId;
-        #    str 20              ownerAxUserId;
-        #    str 20              viewerAxUserId;
-        #    CRMUserId           crmUserId;
-        #    CRMHojaGastosId     hojaId;
-        #    RecId               lineRecId;
-        #    INDFileId           fileId;
-        #    int                 startLine;
-        #    str                 msg;
-        #    str 10              ticketStatusOut;
-        #    boolean             changed;
-        #
-        #    CRMHojaGastosTable  header;
-        #    CRMHojaGastosLine   line;
-        #    CRMHojaGastosLine   existingFileLine;
-        #    INDTicketInfoTable  ticketHeader;
-        #    DocuRef             docuRef;
-        #    INDWebModuleAccessLevel sheetModuleAccess;
-        #    INDWebModuleAccessLevel ticketModuleAccess;
-        #    ;
-        #
-        #    companyId = INDCRMUtilityService::getCompany(_data);
-        #
-        #    if (!companyId)
-        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'CompanyId es obligatorio.', 'INVALID_INPUT', hojaId, lineRecId, '', '', false);
-        #
-        #    if (conLen(_data) < 6)
-        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Input container invalido. Se esperan 6 campos.', 'INVALID_INPUT', hojaId, lineRecId, fileId, '', false);
-        #
-        #    ownerAxUserId  = conPeek(_data, 2);
-        #    viewerAxUserId = conPeek(_data, 3);
-        #    hojaId         = conPeek(_data, 4);
-        #    lineRecId      = conPeek(_data, 5);
-        #    fileId         = conPeek(_data, 6);
-        #
-        #    if (!ownerAxUserId || !viewerAxUserId || !hojaId || !lineRecId || !fileId)
-        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'OwnerAxUserId, ViewerAxUserId, HojaGastosId, LineRecId y FileId son obligatorios.', 'INVALID_INPUT', hojaId, lineRecId, fileId, '', false);
-        #
-        #    startLine = infolog.line();
-        #
-        #    try
-        #    {
-        #        changecompany(companyId)
-        #        {
-        #            //MMS - Restricts line ticket associations to the signed expense owner - 2026.08.06
-        #            if (strUpr(strLRTrim(viewerAxUserId)) != strUpr(strLRTrim(ownerAxUserId)))
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Solo el propietario de la hoja puede vincular tickets.', 'FORBIDDEN', hojaId, lineRecId, fileId, '', false);
-        #
-        #            sheetModuleAccess = INDControlDataVisibilityResolver::findModuleAccessLevel(viewerAxUserId,
-        #                                                                                        companyId,
-        #                                                                                        'CRM',
-        #                                                                                        'GASTOS_HOJA_GASTO');
-        #            if (!sheetModuleAccess.RecId || sheetModuleAccess.AccessRights < SysAccessRights::Edit)
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Se requiere permiso Edit sobre hojas de gastos.', 'FORBIDDEN', hojaId, lineRecId, fileId, '', false);
-        #
-        #            ticketModuleAccess = INDControlDataVisibilityResolver::findModuleAccessLevel(viewerAxUserId,
-        #                                                                                         companyId,
-        #                                                                                         'CRM',
-        #                                                                                         'GASTOS_TICKETS');
-        #            if (!ticketModuleAccess.RecId || ticketModuleAccess.AccessRights < SysAccessRights::View)
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Se requiere permiso View sobre tickets.', 'FORBIDDEN', hojaId, lineRecId, fileId, '', false);
-        #
-        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(ownerAxUserId);
-        #            if (!crmUserId)
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Propietario no encontrado.', 'NOT_FOUND', hojaId, lineRecId, fileId, '', false);
-        #
-        #            //MMS - Applies the signed mutation policy for the expense sheet module - 2026.08.04
-        #            if (!INDCRMUtilityService::ctrlCanMutateOwnerAxUserId(viewerAxUserId,
-        #                                                                  companyId,
-        #                                                                  'CRM',
-        #                                                                  'GASTOS_HOJA_GASTO',
-        #                                                                  ownerAxUserId))
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'El usuario visor no puede modificar gastos del propietario.', 'FORBIDDEN', hojaId, lineRecId, fileId, '', false);
-        #
-        #            ttsbegin;
-        #
-        #            // Lock order is header, line, and ticket.
-        #            header = INDCRMUtilityService::findHeaderForUpdate(crmUserId, hojaId);
-        #            if (!header.RecId)
-        #            {
-        #                ttsabort;
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Hoja de gastos no encontrada.', 'NOT_FOUND', hojaId, lineRecId, fileId, '', false);
-        #            }
-        #
-        #            if (header.ExpenseSheetStatus != INDExpenseSheetStatus::Draft ||
-        #                header.Voucher != '' ||
-        #                header.Aprobado)
-        #            {
-        #                ttsabort;
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'La hoja debe estar en Draft, sin aprobar y sin Voucher.', 'INVALID_STATE', hojaId, lineRecId, fileId, '', false);
-        #            }
-        #
-        #            select firstonly forupdate line
-        #                where line.RecId        == lineRecId
-        #                   && line.UserId       == crmUserId
-        #                   && line.HojaGastosId == hojaId;
-        #
-        #            if (!line.RecId)
-        #            {
-        #                ttsabort;
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Linea no encontrada para la hoja indicada.', 'NOT_FOUND', hojaId, lineRecId, fileId, '', false);
-        #            }
-        #
-        #            if (line.Ticket == NoYes::Yes || line.Factura == NoYes::Yes)
-        #            {
-        #                ttsabort;
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'La linea tiene marcado Ticket o Factura y no admite un ticket digital.', 'INVALID_STATE', hojaId, lineRecId, fileId, '', false);
-        #            }
-        #
-        #            if (line.FileId && line.FileId != fileId)
-        #            {
-        #                ttsabort;
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'La linea ya esta vinculada a otro ticket.', 'CONFLICT', hojaId, lineRecId, fileId, '', false);
-        #            }
-        #
-        #            select firstonly forupdate ticketHeader
-        #                where ticketHeader.FileId          == fileId
-        #                   && ticketHeader.CreatedByUserId == ownerAxUserId;
-        #
-        #            if (!ticketHeader.RecId)
-        #            {
-        #                ttsabort;
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Ticket no encontrado para el propietario.', 'NOT_FOUND', hojaId, lineRecId, fileId, '', false);
-        #            }
-        #
-        #            ticketStatusOut = strFmt('%1', any2int(ticketHeader.Status));
-        #
-        #            select firstonly existingFileLine
-        #                where existingFileLine.FileId == fileId
-        #                   && existingFileLine.RecId  != line.RecId;
-        #
-        #            if (existingFileLine.RecId)
-        #            {
-        #                ttsabort;
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'FileId ya esta asignado a otra linea.', 'CONFLICT', hojaId, lineRecId, fileId, ticketStatusOut, false);
-        #            }
-        #
-        #            if (line.FileId == fileId)
-        #            {
-        #                changed = ticketHeader.Status != INDTicketStatus::Assigned;
-        #                INDCRMExpenseSheetService::refreshTicketStatusByFileId(ownerAxUserId, fileId);
-        #                ticketStatusOut = strFmt('%1', any2int(INDTicketStatus::Assigned));
-        #                ttscommit;
-        #
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(true, 'La linea ya estaba vinculada al ticket.', '', hojaId, lineRecId, fileId, ticketStatusOut, changed);
-        #            }
-        #
-        #            if (ticketHeader.Status != INDTicketStatus::Pending)
-        #            {
-        #                ttsabort;
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'El ticket no esta pendiente.', 'INVALID_TICKET', hojaId, lineRecId, fileId, ticketStatusOut, false);
-        #            }
-        #
-        #            if (ticketHeader.TotalAmount == 0)
-        #            {
-        #                ttsabort;
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'El ticket debe tener un importe total distinto de cero.', 'INVALID_TICKET', hojaId, lineRecId, fileId, ticketStatusOut, false);
-        #            }
-        #
-        #            select firstonly docuRef
-        #                where docuRef.RefTableId == tableNum(INDTicketInfoTable)
-        #                   && docuRef.RefRecId   == ticketHeader.RecId
-        #                   && docuRef.INDFileId  == ticketHeader.FileId;
-        #
-        #            if (!docuRef.RecId ||
-        #                (!strLRTrim(docuRef.INDURLFile) && !strLRTrim(docuRef.INDFilename)))
-        #            {
-        #                ttsabort;
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'El ticket no tiene una foto o documento asociado.', 'INVALID_TICKET', hojaId, lineRecId, fileId, ticketStatusOut, false);
-        #            }
-        #
-        #            line.FileId = fileId;
-        #            line.update();
-        #            INDCRMExpenseSheetService::refreshTicketStatusByFileId(ownerAxUserId, fileId);
-        #
-        #            ticketStatusOut = strFmt('%1', any2int(INDTicketStatus::Assigned));
-        #            ttscommit;
-        #
-        #            return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(true, 'Ticket vinculado correctamente.', '', hojaId, lineRecId, fileId, ticketStatusOut, true);
-        #        }
-        #    }
-        #    catch (Exception::Deadlock)
-        #    {
-        #        ttsabort;
-        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Deadlock detectado. Reintentar la operacion.', 'CONFLICT', hojaId, lineRecId, fileId, ticketStatusOut, false);
-        #    }
-        #    catch (Exception::DDEerror)
-        #    {
-        #        ttsabort;
-        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, INDCRMUtilityService::getInfologMessagesSince(startLine), 'ERROR', hojaId, lineRecId, fileId, ticketStatusOut, false);
-        #    }
-        #    catch (Exception::Internal)
-        #    {
-        #        ttsabort;
-        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Error interno del sistema.', 'ERROR', hojaId, lineRecId, fileId, ticketStatusOut, false);
-        #    }
-        #    catch (Exception::Error)
-        #    {
-        #        ttsabort;
-        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
-        #        if (!msg)
-        #            msg = 'Error en el proceso. Revisar infolog.';
-        #
-        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, msg, 'ERROR', hojaId, lineRecId, fileId, ticketStatusOut, false);
-        #    }
-        #
-        #    return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Error no controlado.', 'ERROR', hojaId, lineRecId, fileId, ticketStatusOut, false);
-        #}
-        #
-      ENDSOURCE
-      SOURCE #unlinkExpenseSheetLineTicket
-        #//MMS - Unlinks a ticket from a Draft line without deleting the line, ticket, or document - 2026.08.04
-        #// Input: [companyId, ownerAxUserId, viewerAxUserId, hojaGastosId, lineRecId].
-        #static server container unlinkExpenseSheetLineTicket(container _data)
-        #{
-        #    DataAreaId          companyId;
-        #    str 20              ownerAxUserId;
-        #    str 20              viewerAxUserId;
-        #    CRMUserId           crmUserId;
-        #    CRMHojaGastosId     hojaId;
-        #    RecId               lineRecId;
-        #    INDFileId           previousFileId;
-        #    int                 startLine;
-        #    str                 msg;
-        #    str 10              ticketStatusOut;
-        #
-        #    CRMHojaGastosTable  header;
-        #    CRMHojaGastosLine   line;
-        #    CRMHojaGastosLine   existingFileLine;
-        #    INDTicketInfoTable  ticketHeader;
-        #    INDWebModuleAccessLevel sheetModuleAccess;
-        #    INDWebModuleAccessLevel ticketModuleAccess;
-        #    ;
-        #
-        #    companyId = INDCRMUtilityService::getCompany(_data);
-        #
-        #    if (!companyId)
-        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'CompanyId es obligatorio.', 'INVALID_INPUT', hojaId, lineRecId, '', '', false);
-        #
-        #    if (conLen(_data) < 5)
-        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Input container invalido. Se esperan 5 campos.', 'INVALID_INPUT', hojaId, lineRecId, '', '', false);
-        #
-        #    ownerAxUserId  = conPeek(_data, 2);
-        #    viewerAxUserId = conPeek(_data, 3);
-        #    hojaId         = conPeek(_data, 4);
-        #    lineRecId      = conPeek(_data, 5);
-        #
-        #    if (!ownerAxUserId || !viewerAxUserId || !hojaId || !lineRecId)
-        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'OwnerAxUserId, ViewerAxUserId, HojaGastosId y LineRecId son obligatorios.', 'INVALID_INPUT', hojaId, lineRecId, '', '', false);
-        #
-        #    startLine = infolog.line();
-        #
-        #    try
-        #    {
-        #        changecompany(companyId)
-        #        {
-        #            //MMS - Restricts line ticket associations to the signed expense owner - 2026.08.06
-        #            if (strUpr(strLRTrim(viewerAxUserId)) != strUpr(strLRTrim(ownerAxUserId)))
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Solo el propietario de la hoja puede desvincular tickets.', 'FORBIDDEN', hojaId, lineRecId, '', '', false);
-        #
-        #            sheetModuleAccess = INDControlDataVisibilityResolver::findModuleAccessLevel(viewerAxUserId,
-        #                                                                                        companyId,
-        #                                                                                        'CRM',
-        #                                                                                        'GASTOS_HOJA_GASTO');
-        #            if (!sheetModuleAccess.RecId || sheetModuleAccess.AccessRights < SysAccessRights::Edit)
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Se requiere permiso Edit sobre hojas de gastos.', 'FORBIDDEN', hojaId, lineRecId, '', '', false);
-        #
-        #            ticketModuleAccess = INDControlDataVisibilityResolver::findModuleAccessLevel(viewerAxUserId,
-        #                                                                                         companyId,
-        #                                                                                         'CRM',
-        #                                                                                         'GASTOS_TICKETS');
-        #            if (!ticketModuleAccess.RecId || ticketModuleAccess.AccessRights < SysAccessRights::View)
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Se requiere permiso View sobre tickets.', 'FORBIDDEN', hojaId, lineRecId, '', '', false);
-        #
-        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(ownerAxUserId);
-        #            if (!crmUserId)
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Propietario no encontrado.', 'NOT_FOUND', hojaId, lineRecId, '', '', false);
-        #
-        #            //MMS - Applies the signed mutation policy for the expense sheet module - 2026.08.04
-        #            if (!INDCRMUtilityService::ctrlCanMutateOwnerAxUserId(viewerAxUserId,
-        #                                                                  companyId,
-        #                                                                  'CRM',
-        #                                                                  'GASTOS_HOJA_GASTO',
-        #                                                                  ownerAxUserId))
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'El usuario visor no puede modificar gastos del propietario.', 'FORBIDDEN', hojaId, lineRecId, '', '', false);
-        #
-        #            ttsbegin;
-        #
-        #            // Lock order is header, line, and ticket.
-        #            header = INDCRMUtilityService::findHeaderForUpdate(crmUserId, hojaId);
-        #            if (!header.RecId)
-        #            {
-        #                ttsabort;
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Hoja de gastos no encontrada.', 'NOT_FOUND', hojaId, lineRecId, '', '', false);
-        #            }
-        #
-        #            if (header.ExpenseSheetStatus != INDExpenseSheetStatus::Draft ||
-        #                header.Voucher != '' ||
-        #                header.Aprobado)
-        #            {
-        #                ttsabort;
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'La hoja debe estar en Draft, sin aprobar y sin Voucher.', 'INVALID_STATE', hojaId, lineRecId, '', '', false);
-        #            }
-        #
-        #            select firstonly forupdate line
-        #                where line.RecId        == lineRecId
-        #                   && line.UserId       == crmUserId
-        #                   && line.HojaGastosId == hojaId;
-        #
-        #            if (!line.RecId)
-        #            {
-        #                ttsabort;
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Linea no encontrada para la hoja indicada.', 'NOT_FOUND', hojaId, lineRecId, '', '', false);
-        #            }
-        #
-        #            previousFileId = line.FileId;
-        #            if (!previousFileId)
-        #            {
-        #                ttscommit;
-        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(true, 'La linea ya estaba desvinculada.', '', hojaId, lineRecId, '', '', false);
-        #            }
-        #
-        #            select firstonly forupdate ticketHeader
-        #                where ticketHeader.FileId          == previousFileId
-        #                   && ticketHeader.CreatedByUserId == ownerAxUserId;
-        #
-        #            if (ticketHeader.RecId)
-        #            {
-        #                ticketStatusOut = strFmt('%1', any2int(ticketHeader.Status));
-        #
-        #                select firstonly existingFileLine
-        #                    where existingFileLine.FileId == previousFileId
-        #                       && existingFileLine.RecId  != line.RecId;
-        #            }
-        #
-        #            line.FileId = '';
-        #            line.update();
-        #
-        #            if (ticketHeader.RecId)
-        #            {
-        #                INDCRMExpenseSheetService::refreshTicketStatusByFileId(ownerAxUserId, previousFileId);
-        #                if (existingFileLine.RecId)
-        #                    ticketStatusOut = strFmt('%1', any2int(INDTicketStatus::Assigned));
-        #                else
-        #                    ticketStatusOut = strFmt('%1', any2int(INDTicketStatus::Pending));
-        #            }
-        #            ttscommit;
-        #
-        #            return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(true, 'Ticket desvinculado correctamente.', '', hojaId, lineRecId, '', ticketStatusOut, true);
-        #        }
-        #    }
-        #    catch (Exception::Deadlock)
-        #    {
-        #        ttsabort;
-        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Deadlock detectado. Reintentar la operacion.', 'CONFLICT', hojaId, lineRecId, previousFileId, ticketStatusOut, false);
-        #    }
-        #    catch (Exception::DDEerror)
-        #    {
-        #        ttsabort;
-        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, INDCRMUtilityService::getInfologMessagesSince(startLine), 'ERROR', hojaId, lineRecId, previousFileId, ticketStatusOut, false);
-        #    }
-        #    catch (Exception::Internal)
-        #    {
-        #        ttsabort;
-        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Error interno del sistema.', 'ERROR', hojaId, lineRecId, previousFileId, ticketStatusOut, false);
-        #    }
-        #    catch (Exception::Error)
-        #    {
-        #        ttsabort;
-        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
-        #        if (!msg)
-        #            msg = 'Error en el proceso. Revisar infolog.';
-        #
-        #        return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, msg, 'ERROR', hojaId, lineRecId, previousFileId, ticketStatusOut, false);
-        #    }
-        #
-        #    return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Error no controlado.', 'ERROR', hojaId, lineRecId, previousFileId, ticketStatusOut, false);
         #}
         #
       ENDSOURCE

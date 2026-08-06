@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosLine unloaded at Miércoles 29/07/2026
+; Navision Axapta Table : CRMHojaGastosLine unloaded at Jueves 06/08/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -1037,7 +1037,7 @@ Formatversion: 1
       FIELD #ReimbursableAmount
         REAL
         PROPERTIES
-          Type                #Real
+          Type                #Real 
           Name                #ReimbursableAmount
           Label               #Importe reembolsable
           HelpText            #
@@ -1050,14 +1050,14 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosLine
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #INDReimbursableAmount
               #
             ENDARRAY
           FieldUpdate         #Absolute
         ENDPROPERTIES
-
+        
     ENDFIELDS
     GROUPS
       GROUP #AutoReport
@@ -1946,7 +1946,7 @@ Formatversion: 1
         #
         #    //boolean                 dimensionObligatoria;
         #    //MMS - Los mapas contables usan el importe reembolsable; AmountMST conserva el valor bruto en divisa de empresa - 2026.07.29
-        #    Amount                  totalAmountFromHojaGastos   = this.ReimbursableAmount;
+        #    Amount                  totalAmountFromHojaGastos   = this.LineAmountMST();//this.ReimbursableAmount;
         #    Amount                  totalEnMapa;
         #    ;
         #
@@ -1965,10 +1965,10 @@ Formatversion: 1
         #    index hint index1
         #    where    hojaGastosLine.HojaGastosId    == this.HojaGastosId
         #          && hojaGastosLine.RecId           == this.RecId
-        #       && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #       //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #    {
         #
-        #        amountLine              = hojaGastosLine.ReimbursableAmount;
+        #        amountLine              = hojaGastosLine.AmountMST;//hojaGastosLine.ReimbursableAmount;
         #        amountLineTotalFromCust = 0;
         #
         #        while select hojaGastosLineCust
@@ -2239,7 +2239,7 @@ Formatversion: 1
         #    Dimension               dimension;
         #    LedgerAccount           accountGasto, accountIVA, accountTemporal;
         #    LedgerJournalEngine     ledgerJournalEngine;
-        #    Amount                  amountInvoiceReimbursableMST;
+        #    Amount                  amountInvoiceBrutoMST;//amountInvoiceReimbursableMST;
         #
         #
         #    LedgerJournalTrans CrearLinea(Voucher             _voucher,
@@ -2307,8 +2307,9 @@ Formatversion: 1
         #        return;
         #
         #    //MMS - Las lineas excluidas no deben crear asientos contables de reembolso - 2026.07.29
-        #    if (this.ReimbursableExpense == INDReimbursableExpenseLines::No)
-        #        return;
+        #    //IJL.04/08/26. Este proceso contabiliza la factura. No depende de que sea reembolsable o no.
+        #    //if (this.ReimbursableExpense == INDReimbursableExpenseLines::No)
+        #    //    return;
         #
         #    if (! this.Amount){
         #        return;
@@ -2321,7 +2322,7 @@ Formatversion: 1
         #    accountIVA      = "";
         #    accountTemporal = "";
         #
-        #    amountInvoiceReimbursableMST = this.ReimbursableAmount;
+        #    amountInvoiceBrutoMST   = this.LineAmountMST();
         #
         #    //Asiento 01 - Línea del proveedor
         #    journalTrans    = CrearLinea(voucher,
@@ -2329,7 +2330,7 @@ Formatversion: 1
         #                                 LedgerJournalACType::Vend,
         #                                 _vendAccount,
         #                                 0,
-        #                                 amountInvoiceReimbursableMST,
+        #                                 amountInvoiceBrutoMST,
         #                                 this.Currency,
         #                                 dimension,
         #                                 strfmt("%1 - %2 - %3", _invoiceId, this.Type, this.Description),
@@ -2344,7 +2345,7 @@ Formatversion: 1
         #                                 _transDate,
         #                                 LedgerJournalACType::Ledger,
         #                                 accountTemporal,
-        #                                 amountInvoiceReimbursableMST,
+        #                                 amountInvoiceBrutoMST,
         #                                 0,
         #                                 CompanyInfo::standardCurrency(),
         #                                 dimension,
@@ -2363,7 +2364,7 @@ Formatversion: 1
         #                                 _transDate,
         #                                 LedgerJournalACType::Vend,
         #                                 _vendAccount,
-        #                                 amountInvoiceReimbursableMST,
+        #                                 amountInvoiceBrutoMST,
         #                                 0,
         #                                 CompanyInfo::standardCurrency(),
         #                                 dimension,
@@ -2379,7 +2380,7 @@ Formatversion: 1
         #                                 LedgerJournalACType::Ledger,
         #                                 accountTemporal,
         #                                 0,
-        #                                 amountInvoiceReimbursableMST - amountIVA,
+        #                                 amountInvoiceBrutoMST - amountIVA,
         #                                 CompanyInfo::standardCurrency(),
         #                                 dimension,
         #                                 strfmt("%1 - %2 - %3", _invoiceId, this.Type, this.Description),
@@ -2472,7 +2473,8 @@ Formatversion: 1
         #    ;
         #    if (! this.Internacional){
         #
-        #        return percent ? (this.ReimbursableAmount / (1 + percent / 100)) * (percent / 100) : 0; //MMS - Usa el importe contable reembolsable - 2026.07.28
+        #        return percent ? (this.Amount / (1 + percent / 100)) * (percent / 100) : 0; //IJL.04/08/26. Se usa el importe de la línea.
+        #        //return percent ? (this.ReimbursableAmount / (1 + percent / 100)) * (percent / 100) : 0; //MMS - Usa el importe contable reembolsable - 2026.07.28
         #    }
         #
         #    return 0;

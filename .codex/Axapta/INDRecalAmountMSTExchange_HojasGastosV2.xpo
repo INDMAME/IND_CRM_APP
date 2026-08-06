@@ -3,10 +3,10 @@ Formatversion: 1
 
 ***Element: JOB
 
-; Navision Axapta Job: INDRecalAmountMSTExchange_HojasGastosV2 descargados en Lunes 03/08/2026
+; Navision Axapta Job: INDRecalAmountMSTExchange_HojasGastosV2 descargados en Jueves 06/08/2026
 ; --------------------------------------------------------------------------------
   JOBVERSION 1
-
+  
   SOURCE #INDRecalAmountMSTExchange_HojasGastosV2
     #static void INDRecalAmountMSTExchange_HojasGastosV2(Args _args)
     #{
@@ -273,7 +273,7 @@ Formatversion: 1
     #
     #    //MMS - Ajustes CRM - 2026.08.03
     #    // Conserva el conjunto multiempresa heredado y evita limitar la migracion a la compania actual.
-    #    setCia.add("LAN");
+    #    /*setCia.add("LAN");
     #    setCia.add("IHI");
     #    setCia.add("RSI");
     #    setCia.add("SET");
@@ -284,13 +284,14 @@ Formatversion: 1
     #    setCia.add("AZM");
     #    setCia.add("CUM");
     #    setCia.add("IST");
-    #    setCia.add("RIS");
+    #    setCia.add("RIS");   */
     #
     #    /* Companias excluidas del recorrido heredado.
     #    setCia.add("TAZ");
     #    setCia.add("ITA");
     #    setCia.add("ISE");
     #    */
+    #    setCia.add("ISE");
     #
     #    si = new SetIterator(setCia);
     #
@@ -307,7 +308,7 @@ Formatversion: 1
     #            updateReimbursableAmounts();
     #            updateLines();
     #            updateHeaderReimbursableExpenseStates();
-    #            refreshAccountingLines();
+    #            //refreshAccountingLines();
     #        }
     #
     #        si.next();
