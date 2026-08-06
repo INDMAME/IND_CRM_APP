@@ -1,4 +1,4 @@
-import React from "react";
+import React, { type ReactNode } from "react";
 import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 
 export type HomeHelpTechnicalInfo = {
@@ -13,6 +13,7 @@ type HomeHelpCardProps = {
   body: string;
   technicalInfo: HomeHelpTechnicalInfo;
   chatOpen: boolean;
+  children?: ReactNode;
 };
 
 // Renders the Home assistant card with its environment-aware technical footer.
@@ -21,6 +22,7 @@ const HomeHelpCard = ({
   body,
   technicalInfo,
   chatOpen,
+  children,
 }: HomeHelpCardProps) => {
   const contentVisibilityClassName = chatOpen ? "invisible" : "visible";
 
@@ -55,6 +57,7 @@ const HomeHelpCard = ({
             {title}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{body}</p>
+          {children ? <div className="mt-6 flex w-full justify-center">{children}</div> : null}
         </div>
       </div>
 

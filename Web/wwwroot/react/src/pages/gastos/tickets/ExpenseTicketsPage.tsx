@@ -1103,7 +1103,7 @@ const ExpenseTicketsPageContent = () => {
       message: isLineLinkMode
         ? `${indT(
             "ExpenseTickets_LinkLine_ConfirmBody",
-            "The selected ticket will be attached without replacing the manual expense line values."
+            "The selected ticket will replace only the amount and currency on the manual expense line. Its date, type, description, project, and reimbursable setting will be preserved."
           )}\n${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketLabel}`
         : isFilteredSelectionActive
           ? `${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketCount}`

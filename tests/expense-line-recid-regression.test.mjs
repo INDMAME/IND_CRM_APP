@@ -238,6 +238,30 @@ const moduleAuthorizeFilterSource = readFileSync(
   ),
   "utf8",
 );
+const expenseLineLinkConfirmationResources = new Map(
+  [
+    "INDSharedResource.resx",
+    "INDSharedResource.es-ES.resx",
+    "INDSharedResource.en.resx",
+    "INDSharedResource.eu-ES.resx",
+    "INDSharedResource.it.resx",
+    "INDSharedResource.pt.resx",
+    "INDSharedResource.zh-Hans.resx",
+  ].map((fileName) => [
+    fileName,
+    readFileSync(
+      path.join(
+        repositoryRoot,
+        "App",
+        "Resources",
+        "Infrastructure",
+        "Localization",
+        fileName,
+      ),
+      "utf8",
+    ),
+  ]),
+);
 
 // Extracts one source unit so each assertion stays scoped to the intended flow.
 function sourceBetween(source, startMarker, endMarker) {
@@ -313,6 +337,50 @@ test("manual-line link and detach actions share the standard ticket FAB", () => 
     assert.match(source, /ExpenseSheets_Fab_LinkTicket/);
     assert.match(source, /ExpenseSheets_Line_Ticket_DetachButton/);
     assert.match(source, /UnlinkTicketIcon/);
+  }
+});
+
+test("manual-line link confirmation discloses the monetary-only replacement", () => {
+  const englishConfirmation =
+    "The selected ticket will replace only the amount and currency on the manual expense line. Its date, type, description, project, and reimbursable setting will be preserved.";
+  const expectedTranslations = new Map([
+    [
+      "INDSharedResource.resx",
+      "El ticket seleccionado sustituirá únicamente el importe y la divisa de la línea manual. Se conservarán la fecha, el tipo, la descripción, el proyecto y la opción Reembolsable.",
+    ],
+    [
+      "INDSharedResource.es-ES.resx",
+      "El ticket seleccionado sustituirá únicamente el importe y la divisa de la línea manual. Se conservarán la fecha, el tipo, la descripción, el proyecto y la opción Reembolsable.",
+    ],
+    ["INDSharedResource.en.resx", englishConfirmation],
+    [
+      "INDSharedResource.eu-ES.resx",
+      "Hautatutako tiketaren zenbatekoa eta dibisa soilik aplikatuko zaizkio eskuzko gastu-lerroari. Data, mota, deskribapena, proiektua eta itzulgarriaren ezarpena mantenduko dira.",
+    ],
+    [
+      "INDSharedResource.it.resx",
+      "Il ticket selezionato sostituirà solo l'importo e la valuta della riga manuale. Data, tipo, descrizione, progetto e impostazione di rimborsabilità resteranno invariati.",
+    ],
+    [
+      "INDSharedResource.pt.resx",
+      "O ticket selecionado substituirá apenas o valor e a moeda da linha manual. A data, o tipo, a descrição, o projeto e a configuração de reembolso serão mantidos.",
+    ],
+    [
+      "INDSharedResource.zh-Hans.resx",
+      "所选票据只会替换手工费用行的金额和币种。日期、类型、说明、项目和可报销设置将保持不变。",
+    ],
+  ]);
+
+  assert.ok(expenseTicketsPageSource.includes(`"${englishConfirmation}"`));
+  assert.doesNotMatch(expenseTicketsPageSource, /without replacing the manual expense line values/);
+
+  for (const [fileName, expectedTranslation] of expectedTranslations) {
+    const resourceSource = expenseLineLinkConfirmationResources.get(fileName);
+    assert.ok(resourceSource, `Missing localization resource: ${fileName}`);
+    assert.ok(
+      resourceSource.includes(`<value>${expectedTranslation}</value>`),
+      `Unexpected manual-line link confirmation in ${fileName}`,
+    );
   }
 });
 

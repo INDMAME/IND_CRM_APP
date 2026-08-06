@@ -1762,7 +1762,7 @@
     <value>Associar ticket existente</value>
   </data>
   <data name="ExpenseTickets_LinkLine_ConfirmBody" xml:space="preserve">
-    <value>O ticket selecionado será associado sem substituir os valores da linha manual.</value>
+    <value>O ticket selecionado substituirá apenas o valor e a moeda da linha manual. A data, o tipo, a descrição, o projeto e a configuração de reembolso serão mantidos.</value>
   </data>
   <data name="ExpenseTickets_LinkLine_Attaching" xml:space="preserve">
     <value>A associar o ticket à linha de despesa...</value>

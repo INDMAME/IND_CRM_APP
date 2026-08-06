@@ -36,7 +36,7 @@ const DESKTOP_PLACEMENT_CLASS_NAMES: Record<AssistantLauncherDesktopPlacement, s
 };
 const LAYOUT_VARIANT_CLASS_NAMES: Record<AssistantLauncherLayoutVariant, string> = {
   floating: "fixed z-[1850] [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)]",
-  inline: "relative z-20 flex-col-reverse gap-2 self-center",
+  inline: "relative z-20 max-w-full gap-3 self-center",
 };
 
 // Renders the standard assistant launcher in floating or inline layouts.

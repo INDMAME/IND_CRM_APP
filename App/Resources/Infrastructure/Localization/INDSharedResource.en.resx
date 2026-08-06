@@ -1762,7 +1762,7 @@
     <value>Attach existing ticket</value>
   </data>
   <data name="ExpenseTickets_LinkLine_ConfirmBody" xml:space="preserve">
-    <value>The selected ticket will be attached without replacing the manual expense line values.</value>
+    <value>The selected ticket will replace only the amount and currency on the manual expense line. Its date, type, description, project, and reimbursable setting will be preserved.</value>
   </data>
   <data name="ExpenseTickets_LinkLine_Attaching" xml:space="preserve">
     <value>Attaching ticket to the expense line...</value>

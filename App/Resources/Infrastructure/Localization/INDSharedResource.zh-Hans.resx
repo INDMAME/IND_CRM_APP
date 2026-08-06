@@ -1762,7 +1762,7 @@
     <value>关联现有票据</value>
   </data>
   <data name="ExpenseTickets_LinkLine_ConfirmBody" xml:space="preserve">
-    <value>所选票据将被关联，且不会替换手工费用行中的值。</value>
+    <value>所选票据只会替换手工费用行的金额和币种。日期、类型、说明、项目和可报销设置将保持不变。</value>
   </data>
   <data name="ExpenseTickets_LinkLine_Attaching" xml:space="preserve">
     <value>正在将票据关联到费用行...</value>

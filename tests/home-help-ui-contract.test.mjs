@@ -270,35 +270,34 @@ test("Home owns technical details and no longer renders welcome or suggestion co
   assert.doesNotMatch(homeViewSource, /Home_Welcome|Home_SelectLeftMenu/u);
 });
 
-test("Home reserves safe clearance below its centered assistant card", () => {
-  assert.match(homeViewSource, /var homePageSpacingClass = helpAssistantEnabled/u);
-  assert.match(homeViewSource, /pt-4 pb-\[calc\(7rem\+env\(safe-area-inset-bottom,0px\)\)\] md:pt-8/u);
-  assert.match(homeViewSource, /items-stretch @homePageSpacingClass/u);
+test("Home uses standard page spacing and stretches its assistant card through the available height", () => {
+  assert.doesNotMatch(homeViewSource, /homePageSpacingClass|7rem/u);
+  assert.match(homeViewSource, /items-stretch py-4 md:py-8/u);
   assert.match(homeViewSource, /class="relative z-10 flex min-h-0 w-full"/u);
   assert.match(cardSource, /relative flex min-h-0 w-full flex-1 flex-col/u);
   assert.match(cardSource, /overflow-x-hidden overflow-y-auto/u);
   assert.match(cardSource, /relative z-10 flex flex-1/u);
   assert.match(cardSource, /flex w-full flex-col justify-center px-5 py-6/u);
-  assert.doesNotMatch(cardSource, /children|justify-evenly/u);
+  assert.match(cardSource, /children\?: ReactNode/u);
+  assert.match(cardSource, /mt-6 flex w-full justify-center/u);
+  assert.doesNotMatch(cardSource, /justify-evenly/u);
   assert.match(cardSource, /relative z-10 shrink-0/u);
 });
 
-test("Home composes one floating launcher with a single-line callout outside its card", () => {
+test("Home composes one inline launcher below the card copy", () => {
   const cardStart = assistantPageSource.indexOf("<HomeHelpCard");
   const callout = assistantPageSource.indexOf("<HomeHelpBotCallout");
-  const cardEnd = assistantPageSource.indexOf("/>", cardStart);
+  const cardEnd = assistantPageSource.indexOf("</HomeHelpCard>", cardStart);
 
-  assert.ok(cardStart >= 0 && cardEnd > cardStart && callout > cardEnd);
+  assert.ok(cardStart >= 0 && callout > cardStart && cardEnd > callout);
   assert.equal((assistantPageSource.match(/<HomeHelpBotCallout\b/gu) || []).length, 1);
   assert.match(calloutSource, /<AssistantLauncherButton/u);
   assert.match(calloutSource, /imageSources=\{launcherImageSources\}/u);
-  assert.doesNotMatch(calloutSource, /layoutVariant="inline"/u);
-  assert.match(calloutSource, /const FLOATING_BOTTOM_INSET/u);
-  assert.match(calloutSource, /desktopPlacement="viewport-start"/u);
-  assert.match(calloutSource, /bottomInset=\{FLOATING_BOTTOM_INSET\}/u);
+  assert.match(calloutSource, /layoutVariant="inline"/u);
+  assert.doesNotMatch(calloutSource, /FLOATING_BOTTOM_INSET|desktopPlacement=|bottomInset=/u);
   assert.match(calloutSource, /currentMessage/u);
   assert.match(calloutSource, /truncate whitespace-nowrap/u);
-  assert.doesNotMatch(calloutSource, /line-clamp|flex-col-reverse/u);
+  assert.doesNotMatch(calloutSource, /line-clamp|left-\[calc\(100%/u);
   assert.match(calloutSource, /-left-2 top-1\/2/u);
   assert.match(calloutSource, /aria-haspopup="dialog"/u);
   assert.match(calloutSource, /aria-controls="home-help-assistant-dialog"/u);
@@ -308,7 +307,7 @@ test("Home composes one floating launcher with a single-line callout outside its
   assert.match(launcherSource, /AssistantLauncherLayoutVariant = "floating" \| "inline"/u);
   assert.match(launcherSource, /layoutVariant = "floating"/u);
   assert.match(launcherSource, /floating: "fixed[^\n]*\[bottom:var\(--assistant-bottom-inset\)\][^\n]*\[left:var\(--assistant-page-inset\)\]/u);
-  assert.match(launcherSource, /inline: "relative z-20 flex-col-reverse/u);
+  assert.match(launcherSource, /inline: "relative z-20 max-w-full gap-3 self-center"/u);
   assert.match(launcherSource, /layoutVariant === "floating" \? DESKTOP_PLACEMENT_CLASS_NAMES\[desktopPlacement\] : ""/u);
   assert.match(launcherSource, /h-\[60px\] w-\[60px\]/u);
   assert.match(launcherSource, /h-\[54px\] w-\[54px\]/u);

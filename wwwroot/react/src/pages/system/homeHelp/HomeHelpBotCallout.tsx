@@ -4,8 +4,6 @@ import AssistantLauncherButton, {
 } from "../../../components/commons/chat/AssistantLauncherButton.tsx";
 import { useHomeHelpCallout } from "./useHomeHelpCallout.ts";
 
-const FLOATING_BOTTOM_INSET = "calc(24px + env(safe-area-inset-bottom, 0px))";
-
 type HomeHelpBotCalloutProps = {
   ariaLabel: string;
   messages: string[];
@@ -41,8 +39,7 @@ const HomeHelpBotCallout = ({
     <AssistantLauncherButton
       buttonRef={buttonRef}
       imageSources={launcherImageSources}
-      desktopPlacement="viewport-start"
-      bottomInset={FLOATING_BOTTOM_INSET}
+      layoutVariant="inline"
       aria-label={ariaLabel}
       aria-haspopup="dialog"
       aria-expanded={chatOpen}
@@ -55,7 +52,7 @@ const HomeHelpBotCallout = ({
     >
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 z-20 w-max max-w-[calc(100vw-7rem)] -translate-y-1/2 truncate whitespace-nowrap rounded-[var(--radius-xl)] border border-sky-100 bg-white px-3 py-2 text-center text-[12px] font-semibold leading-4 text-primary shadow-[0_12px_30px_rgba(15,23,42,0.12)] sm:max-w-[min(32rem,calc(100vw-8rem))]"
+        className="pointer-events-none relative min-w-0 max-w-[min(32rem,calc(100vw-9rem))] truncate whitespace-nowrap rounded-[var(--radius-xl)] border border-sky-100 bg-white px-3 py-2 text-center text-[12px] font-semibold leading-4 text-primary shadow-[0_12px_30px_rgba(15,23,42,0.12)]"
       >
         {currentMessage}
         <span

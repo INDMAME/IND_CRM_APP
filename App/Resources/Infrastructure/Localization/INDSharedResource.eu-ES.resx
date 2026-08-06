@@ -1762,7 +1762,7 @@
     <value>Lotu lehendik dagoen tiketa</value>
   </data>
   <data name="ExpenseTickets_LinkLine_ConfirmBody" xml:space="preserve">
-    <value>Hautatutako tiketa lotuko da eskuzko gastu-lerroaren balioak ordezkatu gabe.</value>
+    <value>Hautatutako tiketaren zenbatekoa eta dibisa soilik aplikatuko zaizkio eskuzko gastu-lerroari. Data, mota, deskribapena, proiektua eta itzulgarriaren ezarpena mantenduko dira.</value>
   </data>
   <data name="ExpenseTickets_LinkLine_Attaching" xml:space="preserve">
     <value>Tiketa gastu-lerrora lotzen...</value>
