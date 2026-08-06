@@ -23,6 +23,7 @@ const ManualHelpView = ({ responseLocale }: ManualHelpViewProps) => {
     topicError,
     selectTopic,
   } = useManualHelpCatalog(responseLocale);
+  const hasTopicDetail = topicLoading || Boolean(topicError) || Boolean(topic);
 
   useEffect(() => {
     if (!topic?.id || pendingFocusTopicIdRef.current !== topic.id) {
@@ -39,10 +40,10 @@ const ManualHelpView = ({ responseLocale }: ManualHelpViewProps) => {
   }, [topic?.id]);
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-5">
+    <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col gap-5">
       <section
         aria-labelledby="manual-help-catalog-title"
-        className="rounded-[var(--radius-xl)] border border-slate-200 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-5"
+        className="flex min-h-0 flex-1 flex-col rounded-[var(--radius-xl)] border border-slate-200 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-5"
       >
         <h2
           id="manual-help-catalog-title"
@@ -78,7 +79,7 @@ const ManualHelpView = ({ responseLocale }: ManualHelpViewProps) => {
         )}
       </section>
 
-      <div id="manual-help-topic-detail" aria-busy={topicLoading}>
+      <div id="manual-help-topic-detail" hidden={!hasTopicDetail} aria-busy={topicLoading}>
         {topicLoading ? (
           <p
             className="rounded-[var(--radius-xl)] border border-sky-100 bg-sky-50 px-4 py-4 text-center text-sm text-sky-900"
