@@ -1,6 +1,14 @@
-import React, { type KeyboardEvent as ReactKeyboardEvent, type RefObject } from "react";
+import React, {
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type KeyboardEventHandler,
+  type PointerEventHandler,
+  type RefObject,
+} from "react";
 import {
   ArrowPathIcon,
+  ArrowsPointingOutIcon,
+  Bars2Icon,
   ChatBubbleLeftRightIcon,
   PaperAirplaneIcon,
   SparklesIcon,
@@ -21,6 +29,23 @@ import type { AssistantChatMessage, AssistantChatQuickAction, VisualizationType 
 type AssistantChatDesktopPlacement = AssistantLauncherDesktopPlacement;
 export type AssistantChatComposerState = "enabled" | "blocked";
 
+type AssistantChatDesktopWindowHandle = {
+  ariaLabel: string;
+  onPointerDown: PointerEventHandler<HTMLElement>;
+  onPointerMove: PointerEventHandler<HTMLElement>;
+  onPointerUp: PointerEventHandler<HTMLElement>;
+  onPointerCancel: PointerEventHandler<HTMLElement>;
+  onLostPointerCapture: PointerEventHandler<HTMLElement>;
+  onKeyDown: KeyboardEventHandler<HTMLElement>;
+};
+
+export type AssistantChatDesktopWindow = {
+  panelStyle?: CSSProperties;
+  isInteracting: boolean;
+  moveHandle: AssistantChatDesktopWindowHandle;
+  resizeHandle: AssistantChatDesktopWindowHandle;
+};
+
 type AssistantChatShellProps<TActionId extends string = string> = {
   isOpen: boolean;
   showLauncher: boolean;
@@ -40,6 +65,7 @@ type AssistantChatShellProps<TActionId extends string = string> = {
   noContextBody: string;
   noContextMessage: string;
   desktopPlacement?: AssistantChatDesktopPlacement;
+  desktopWindow?: AssistantChatDesktopWindow;
   bottomInset?: string;
   botImageSrc: string;
   launcherImageSources: AssistantLauncherImageSources;
@@ -383,6 +409,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
   noContextBody,
   noContextMessage,
   desktopPlacement = "content-frame",
+  desktopWindow,
   bottomInset = ASSISTANT_BOTTOM_INSET,
   botImageSrc,
   launcherImageSources,
@@ -417,10 +444,25 @@ const AssistantChatShell = <TActionId extends string = string,>({
   const hasAssistantResponse = messages.some((message) => message.role === "assistant" && message.state !== "loading");
   const shouldExpandForContent = shouldUseExpandedContentLayout(messages);
   const desktopPlacementClassNames = DESKTOP_PLACEMENT_CLASS_NAMES[desktopPlacement];
+  const emptyStateDescription = toText(hasContext ? emptyStateBody : noContextBody);
   const assistantFloatingStyle = {
     ["--assistant-page-inset" as "--assistant-page-inset"]: ASSISTANT_PAGE_INSET,
     ["--assistant-bottom-inset" as "--assistant-bottom-inset"]: bottomInset,
   } as React.CSSProperties;
+
+  // Starts movement only from non-interactive header space.
+  const handleDesktopHeaderPointerDown = (event: React.PointerEvent<HTMLElement>) => {
+    if (!desktopWindow) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    if (target.closest?.("button, a, input, textarea, select, [contenteditable='true']")) {
+      return;
+    }
+
+    desktopWindow.moveHandle.onPointerDown(event);
+  };
 
   return (
     <>
@@ -456,16 +498,28 @@ const AssistantChatShell = <TActionId extends string = string,>({
           aria-modal={ariaModal}
           aria-label={title}
           tabIndex={dialogRef ? -1 : undefined}
+          style={desktopWindow?.panelStyle}
           className={classNames(
             "absolute flex flex-col overflow-hidden rounded-[var(--radius-xl)] border border-slate-200 bg-white/96 text-[12px] shadow-[0_28px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl transition-transform duration-300 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)] [right:var(--assistant-page-inset)] lg:w-[368px]",
             desktopPlacementClassNames.panel,
             shouldExpandForContent ? EXPANDED_PANEL_HEIGHT_CLASS : DEFAULT_PANEL_HEIGHT_CLASS,
+            desktopWindow?.isInteracting ? "select-none" : "",
             isOpen
               ? "translate-y-0 lg:translate-x-0"
               : classNames("translate-y-full lg:translate-y-0", desktopPlacementClassNames.closedPanel)
           )}
         >
-          <header className="border-b border-slate-200 bg-linear-to-r from-slate-50 via-white to-sky-50/70 px-3 py-1.5">
+          <header
+            className={classNames(
+              "border-b border-slate-200 bg-linear-to-r from-slate-50 via-white to-sky-50/70 px-3 py-1.5",
+              desktopWindow ? "lg:cursor-move lg:touch-none" : ""
+            )}
+            onPointerDown={desktopWindow ? handleDesktopHeaderPointerDown : undefined}
+            onPointerMove={desktopWindow?.moveHandle.onPointerMove}
+            onPointerUp={desktopWindow?.moveHandle.onPointerUp}
+            onPointerCancel={desktopWindow?.moveHandle.onPointerCancel}
+            onLostPointerCapture={desktopWindow?.moveHandle.onLostPointerCapture}
+          >
             <div className="flex items-center gap-2">
               {!hasAssistantResponse ? (
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-visible">
@@ -475,6 +529,20 @@ const AssistantChatShell = <TActionId extends string = string,>({
               <div className="min-w-0 flex-1">
                 <h2 className="text-[12px] font-semibold leading-4 text-primary">{title}</h2>
               </div>
+              {desktopWindow ? (
+                <button
+                  type="button"
+                  className="hidden h-7 w-7 cursor-move touch-none items-center justify-center rounded-md border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-white hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 lg:inline-flex"
+                  aria-label={desktopWindow.moveHandle.ariaLabel}
+                  aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
+                  title={desktopWindow.moveHandle.ariaLabel}
+                  onPointerDown={desktopWindow.moveHandle.onPointerDown}
+                  onLostPointerCapture={desktopWindow.moveHandle.onLostPointerCapture}
+                  onKeyDown={desktopWindow.moveHandle.onKeyDown}
+                >
+                  <Bars2Icon className="h-4 w-4" aria-hidden="true" />
+                </button>
+              ) : null}
               {headerActions}
               <button
                 type="button"
@@ -508,9 +576,11 @@ const AssistantChatShell = <TActionId extends string = string,>({
                 <h3 className="text-[12px] font-semibold tracking-[0.01em] text-primary">
                   {hasContext ? emptyStateTitle : noContextTitle}
                 </h3>
-                <p className="mt-2 max-w-[30ch] text-[12px] leading-5 text-slate-600">
-                  {hasContext ? emptyStateBody : noContextBody}
-                </p>
+                {emptyStateDescription ? (
+                  <p className="mt-2 max-w-[30ch] text-[12px] leading-5 text-slate-600">
+                    {emptyStateDescription}
+                  </p>
+                ) : null}
                 {hasContext ? emptyStateContent : null}
               </div>
             ) : (
@@ -584,6 +654,24 @@ const AssistantChatShell = <TActionId extends string = string,>({
               {!hasContext ? <p className="mt-2 text-[12px] leading-5 text-amber-900">{noContextMessage}</p> : null}
             </div>
           </div>
+
+          {desktopWindow ? (
+            <button
+              type="button"
+              className="absolute bottom-0 right-0 z-20 hidden h-6 w-6 cursor-se-resize touch-none items-center justify-center rounded-tl-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 lg:inline-flex"
+              aria-label={desktopWindow.resizeHandle.ariaLabel}
+              aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
+              title={desktopWindow.resizeHandle.ariaLabel}
+              onPointerDown={desktopWindow.resizeHandle.onPointerDown}
+              onPointerMove={desktopWindow.resizeHandle.onPointerMove}
+              onPointerUp={desktopWindow.resizeHandle.onPointerUp}
+              onPointerCancel={desktopWindow.resizeHandle.onPointerCancel}
+              onLostPointerCapture={desktopWindow.resizeHandle.onLostPointerCapture}
+              onKeyDown={desktopWindow.resizeHandle.onKeyDown}
+            >
+              <ArrowsPointingOutIcon className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          ) : null}
         </aside>
       </div>
     </>

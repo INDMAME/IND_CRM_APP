@@ -10,18 +10,40 @@ export type ReusableHelpTurn = {
   history: HelpHistoryMessage[];
 };
 
-// Keeps only completed markdown messages that fit the API conversation contract.
+// Keeps only complete user/assistant turns that fit the API conversation contract.
 export const buildBoundedHelpHistory = (messages: AssistantChatMessage[]): HelpHistoryMessage[] => {
   const history: HelpHistoryMessage[] = [];
+  let pendingUserMessage: AssistantChatMessage | null = null;
+
   for (const message of messages) {
-    if (message.state !== "done" || message.message.type !== "markdown") {
+    if (message.role === "user") {
+      pendingUserMessage = message.state === "done" && message.message.type === "markdown"
+        ? message
+        : null;
       continue;
     }
 
-    const content = message.message.markdown.slice(0, MAX_HISTORY_CONTENT_LENGTH);
-    if (content.trim()) {
-      history.push({ role: message.role, content });
+    if (
+      !pendingUserMessage
+      || message.state !== "done"
+      || message.message.type !== "markdown"
+      || message.meta?.includeInHistory === false
+    ) {
+      pendingUserMessage = null;
+      continue;
     }
+
+    const userContent = pendingUserMessage.message.type === "markdown"
+      ? pendingUserMessage.message.markdown.slice(0, MAX_HISTORY_CONTENT_LENGTH)
+      : "";
+    const assistantContent = message.message.markdown.slice(0, MAX_HISTORY_CONTENT_LENGTH);
+    if (userContent.trim() && assistantContent.trim()) {
+      history.push(
+        { role: "user", content: userContent },
+        { role: "assistant", content: assistantContent }
+      );
+    }
+    pendingUserMessage = null;
   }
 
   return history.slice(-MAX_HISTORY_ITEMS);
@@ -55,4 +77,18 @@ export const resolveReusableHelpTurn = (
     userMessageId: userMessage.id,
     history: buildBoundedHelpHistory(messages.slice(0, assistantIndex - 1)),
   };
+};
+
+// Reuses the latest failed or undocumented turn when the same question is submitted again.
+export const resolveLatestRepeatableHelpTurn = (
+  messages: AssistantChatMessage[],
+  rawQuestion: string
+): ReusableHelpTurn | null => {
+  const latestMessage = messages[messages.length - 1];
+  const canReuse = latestMessage?.role === "assistant"
+    && (latestMessage.state === "error" || latestMessage.meta?.includeInHistory === false);
+
+  return canReuse
+    ? resolveReusableHelpTurn(messages, latestMessage.id, rawQuestion)
+    : null;
 };

@@ -1,4 +1,4 @@
-import React, { type ReactNode } from "react";
+import React from "react";
 import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 
 export type HomeHelpTechnicalInfo = {
@@ -13,7 +13,6 @@ type HomeHelpCardProps = {
   body: string;
   technicalInfo: HomeHelpTechnicalInfo;
   chatOpen: boolean;
-  children?: ReactNode;
 };
 
 // Renders the Home assistant card with its environment-aware technical footer.
@@ -22,7 +21,6 @@ const HomeHelpCard = ({
   body,
   technicalInfo,
   chatOpen,
-  children,
 }: HomeHelpCardProps) => {
   const contentVisibilityClassName = chatOpen ? "invisible" : "visible";
 
@@ -49,19 +47,14 @@ const HomeHelpCard = ({
       ) : null}
 
       <div className={`relative z-10 flex flex-1 ${contentVisibilityClassName}`}>
-        <div className="flex w-full flex-col justify-evenly gap-5 px-5 py-5 sm:px-7 sm:py-6 lg:justify-center">
-          <div className="shrink-0">
-            <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-xl)] bg-primary/10 text-primary">
-              <ChatBubbleLeftRightIcon className="h-6 w-6" aria-hidden="true" />
-            </span>
-            <h1 id="home-help-card-title" className="text-xl font-semibold text-primary">
-              {title}
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{body}</p>
-          </div>
-          {children ? (
-            <div className="flex shrink-0 justify-center">{children}</div>
-          ) : null}
+        <div className="flex w-full flex-col justify-center px-5 py-6 sm:px-7">
+          <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-xl)] bg-primary/10 text-primary">
+            <ChatBubbleLeftRightIcon className="h-6 w-6" aria-hidden="true" />
+          </span>
+          <h1 id="home-help-card-title" className="text-xl font-semibold text-primary">
+            {title}
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{body}</p>
         </div>
       </div>
 

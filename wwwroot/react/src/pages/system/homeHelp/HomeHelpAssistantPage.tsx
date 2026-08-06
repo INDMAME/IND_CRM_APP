@@ -46,16 +46,16 @@ const HomeHelpAssistantPage = ({
         body={indT("HomeHelp_CardBody", "Do you have questions about how to use the CRM? Ask the chatbot and receive clear, simple help about how the web application works.")}
         technicalInfo={technicalInfo}
         chatOpen={chatOpen}
-      >
-        <HomeHelpBotCallout
-          ariaLabel={indT("HomeHelp_OpenAria", "Open CRM help")}
-          messages={HOME_HELP_CALLOUT_MESSAGES}
-          chatOpen={chatOpen}
-          buttonRef={botButtonRef}
-          launcherImageSources={launcherImageSources}
-          onOpen={openChat}
-        />
-      </HomeHelpCard>
+      />
+
+      <HomeHelpBotCallout
+        ariaLabel={indT("HomeHelp_OpenAria", "Open CRM help")}
+        messages={HOME_HELP_CALLOUT_MESSAGES}
+        chatOpen={chatOpen}
+        buttonRef={botButtonRef}
+        launcherImageSources={launcherImageSources}
+        onOpen={openChat}
+      />
 
       {assistantActivated ? (
         <Suspense

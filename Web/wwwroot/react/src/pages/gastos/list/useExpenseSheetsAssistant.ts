@@ -28,7 +28,6 @@ import type { ExpenseSheetListResponseEnvelope, ExpenseSheetsAskResult, IndValid
 import { safeText, sanitizeAssistantText } from "../utils/expenseUiUtils.ts";
 import {
   buildExpenseSheetsVisualizationSelectionMessage,
-  formatExpenseSheetsRetryAfterMessage,
   resolveExpenseSheetsAssistantCopy,
   type ExpenseSheetsAssistantCopy,
 } from "./expenseSheetsAssistantI18n.ts";
@@ -119,7 +118,27 @@ const extractTraceIdFromApiError = (error: ApiFetchError): string => {
   }
 };
 
-const isRetryableStatus = (status: number | undefined): boolean => {
+const ASSISTANT_QUERY_RATE_LIMIT_ERROR_CODE = "ASSISTANT_QUERY_RATE_LIMIT_EXCEEDED";
+
+// Extracts the stable API error code without exposing the raw response body.
+const extractErrorCodeFromApiError = (error: ApiFetchError): string => {
+  const payload = safeText(error.responseBody);
+  if (!payload) return "";
+
+  try {
+    const parsed = JSON.parse(payload) as Record<string, unknown>;
+    return safeText(parsed.ErrorCode ?? parsed.errorCode);
+  } catch {
+    return "";
+  }
+};
+
+const isAssistantQueryRateLimit = (status: number | undefined, errorCode: string): boolean => {
+  return status === 429 && errorCode === ASSISTANT_QUERY_RATE_LIMIT_ERROR_CODE;
+};
+
+const isRetryableStatus = (status: number | undefined, errorCode: string): boolean => {
+  if (isAssistantQueryRateLimit(status, errorCode)) return false;
   return status === 429 || status === 500 || status === 502 || status === 503 || status === 504;
 };
 
@@ -129,18 +148,16 @@ const resolveFailedAskMessage = (
 ): string => {
   const validationText = formatValidationErrors(response.Errors);
   const responseMessage = sanitizeAssistantText(response.Message);
-  const retryAfter = safeText(response.RetryAfter);
-
   if (response.HttpStatus === 422) {
     return validationText || responseMessage || assistantCopy.errorValidation;
   }
 
+  if (isAssistantQueryRateLimit(response.HttpStatus, safeText(response.ErrorCode))) {
+    return assistantCopy.errorRateLimit;
+  }
+
   if (response.HttpStatus === 429) {
-    const parts = [responseMessage || assistantCopy.errorRateLimit];
-    if (retryAfter) {
-      parts.push(formatExpenseSheetsRetryAfterMessage(retryAfter));
-    }
-    return parts.filter(Boolean).join(" ");
+    return responseMessage || indT("Api_RequestFailed", "Request failed.");
   }
 
   if (response.HttpStatus === 500) {
@@ -153,22 +170,25 @@ const resolveFailedAskMessage = (
 const resolveThrownAskMessage = (
   error: unknown,
   assistantCopy: ExpenseSheetsAssistantCopy
-): { message: string; status?: number; traceId: string } => {
+): { message: string; status?: number; traceId: string; errorCode: string } => {
   if (error instanceof ApiFetchError) {
+    const errorCode = extractErrorCodeFromApiError(error);
     const validationText = formatValidationErrors(error.validationErrors);
     if (validationText) {
       return {
         message: validationText,
         status: error.status,
         traceId: extractTraceIdFromApiError(error),
+        errorCode,
       };
     }
 
-    if (error.status === 429) {
+    if (isAssistantQueryRateLimit(error.status, errorCode)) {
       return {
-        message: sanitizeAssistantText(error.message) || assistantCopy.errorRateLimit,
+        message: assistantCopy.errorRateLimit,
         status: error.status,
         traceId: extractTraceIdFromApiError(error),
+        errorCode,
       };
     }
 
@@ -177,6 +197,7 @@ const resolveThrownAskMessage = (
         message: assistantCopy.errorServer,
         status: error.status,
         traceId: extractTraceIdFromApiError(error),
+        errorCode,
       };
     }
 
@@ -184,6 +205,7 @@ const resolveThrownAskMessage = (
       message: sanitizeAssistantText(error.message) || indT("Api_RequestFailed", "Request failed."),
       status: error.status,
       traceId: extractTraceIdFromApiError(error),
+      errorCode,
     };
   }
 
@@ -193,6 +215,7 @@ const resolveThrownAskMessage = (
       : indT("Api_RequestFailed", "Request failed."),
     status: undefined,
     traceId: "",
+    errorCode: "",
   };
 };
 
@@ -202,13 +225,14 @@ const buildErrorMessage = (
   message: string,
   status: number | undefined,
   traceId: string,
-  retryAfter?: string | null
+  retryAfter?: string | null,
+  errorCode = ""
 ): ExpenseSheetsAssistantMessage => ({
   id,
   role: "assistant",
   message: createMarkdownMessage(message),
   state: "error",
-  retryQuestion: isRetryableStatus(status) ? question : null,
+  retryQuestion: isRetryableStatus(status, errorCode) ? question : null,
   meta: {
     httpStatus: status,
     traceId,
@@ -655,7 +679,8 @@ export const useExpenseSheetsAssistant = ({
             resolveFailedAskMessage(response, assistantCopy),
             response.HttpStatus,
             safeText(response.TraceId),
-            response.RetryAfter
+            response.RetryAfter,
+            safeText(response.ErrorCode)
           );
           setMessages((previous) => previous.map((entry) => (entry.id === assistantMessageId ? failedMessage : entry)));
           return;
@@ -691,7 +716,9 @@ export const useExpenseSheetsAssistant = ({
           question,
           thrown.message,
           thrown.status,
-          thrown.traceId
+          thrown.traceId,
+          null,
+          thrown.errorCode
         );
         setMessages((previous) => previous.map((entry) => (entry.id === assistantMessageId ? failedMessage : entry)));
       } finally {

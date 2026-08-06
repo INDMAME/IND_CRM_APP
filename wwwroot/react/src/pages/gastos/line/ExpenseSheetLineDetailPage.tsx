@@ -92,7 +92,7 @@ const ExpenseSheetLineDetailContent = () => {
   } = useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canViewLinkedTicketLines = canAccess("GASTOS_TICKETS", "View");
-  const canLinkExpenseTicket = canAccess("GASTOS_HOJA_GASTO", "Add") && canViewLinkedTicketLines;
+  const canManageExpenseLineTicket = canAccess("GASTOS_HOJA_GASTO", "Edit") && canViewLinkedTicketLines;
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const lineId = safeText(window.__EXPENSE_LINE_ID__);
   const lineMode = safeText(window.__EXPENSE_LINE_MODE__).toLowerCase();
@@ -141,6 +141,8 @@ const ExpenseSheetLineDetailContent = () => {
     isFuelPriceLoading,
     fuelPriceMessage,
     fuelPriceMessageIsError,
+    isManagingOtherUser,
+    isCurrentUserExpenseOwner,
     isSheetLocked,
     isLineEditLocked,
     isLineDeleteLocked,
@@ -834,7 +836,9 @@ const ExpenseSheetLineDetailContent = () => {
       line?.ticket === true ||
       !canEditExpenseCurrent ||
       isSheetLocked ||
-      !canLinkExpenseTicket
+      !canManageExpenseLineTicket ||
+      isManagingOtherUser ||
+      !isCurrentUserExpenseOwner
     ) {
       return;
     }
@@ -852,10 +856,12 @@ const ExpenseSheetLineDetailContent = () => {
   }, [
     busy,
     canEditExpenseCurrent,
-    canLinkExpenseTicket,
+    canManageExpenseLineTicket,
     hasLinkedTicket,
     isCreateMode,
     isEditing,
+    isManagingOtherUser,
+    isCurrentUserExpenseOwner,
     isSheetLocked,
     line?.ticket,
     lineId,
@@ -870,7 +876,9 @@ const ExpenseSheetLineDetailContent = () => {
       isEditing ||
       !canEditExpenseCurrent ||
       isSheetLocked ||
-      !canLinkExpenseTicket
+      !canManageExpenseLineTicket ||
+      isManagingOtherUser ||
+      !isCurrentUserExpenseOwner
     ) {
       return;
     }
@@ -895,11 +903,13 @@ const ExpenseSheetLineDetailContent = () => {
   }, [
     busy,
     canEditExpenseCurrent,
-    canLinkExpenseTicket,
+    canManageExpenseLineTicket,
     handleDetachTicket,
     hasLinkedTicket,
     invalidateCachedListForRefetch,
     isEditing,
+    isManagingOtherUser,
+    isCurrentUserExpenseOwner,
     isSheetLocked,
     line?.ticket,
     openConfirm,
@@ -980,8 +990,10 @@ const ExpenseSheetLineDetailContent = () => {
     !isCreateMode &&
     !isEditing &&
     canEditExpenseCurrent &&
+    !isManagingOtherUser &&
+    isCurrentUserExpenseOwner &&
     !isSheetLocked &&
-    canLinkExpenseTicket &&
+    canManageExpenseLineTicket &&
     line?.ticket !== true;
   const lineTicketFabBottom = lineNavigator
     ? LINE_TICKET_FAB_WITH_NAVIGATOR_BOTTOM_PX
@@ -1071,24 +1083,13 @@ const ExpenseSheetLineDetailContent = () => {
           showLinkedTicketField={hasLinkedTicket}
           onOpenLinkedTicket={handleOpenLinkedTicket}
         />
-        {canManageLineTicketLink && !hasLinkedTicket ? (
+        {canManageLineTicketLink ? (
           <ExpenseSheetLineTicketFab
+            action={hasLinkedTicket ? "detach" : "link"}
             bottom={lineTicketFabBottom}
             disabled={busy}
-            onLinkTicket={handleOpenExistingTicketLink}
+            onAction={hasLinkedTicket ? handleOpenDetachTicketConfirm : handleOpenExistingTicketLink}
           />
-        ) : null}
-        {canManageLineTicketLink && hasLinkedTicket ? (
-          <div className="glass-panel shadow-card rounded-[var(--radius-xl)] border border-slate-200 bg-white p-3 sm:p-4">
-            <button
-              type="button"
-              className="ind-action-btn min-h-11 w-full border-amber-300 px-4 py-2.5 text-sm font-semibold text-amber-900 sm:text-base"
-              onClick={handleOpenDetachTicketConfirm}
-              disabled={busy}
-            >
-              {indT("ExpenseSheets_Line_Ticket_DetachButton", "Detach ticket")}
-            </button>
-          </div>
         ) : null}
         {linkedTicketLinesSection}
       </>

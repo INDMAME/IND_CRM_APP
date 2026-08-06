@@ -1663,7 +1663,7 @@
     <value>Laguntzailea ez dago erabilgarri une honetan.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RateLimit" xml:space="preserve">
-    <value>Laguntzaileari eskaera gehiegi egin zaizkio.</value>
+    <value>Kontsulta-muga gainditu da. Mesedez, saiatu berriro 15 minutu barru.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RetryAfter" xml:space="preserve">
     <value>Saiatu berriro {0} ondoren.</value>
@@ -1786,6 +1786,8 @@
   <data name="HomeHelp_ChatLoading" xml:space="preserve"><value>CRM laguntza irekitzen…</value></data>
   <data name="HomeHelp_RenderError" xml:space="preserve"><value>Ezin izan da CRM laguntza erakutsi.</value></data>
   <data name="HomeHelp_PanelTitle" xml:space="preserve"><value>CRM laguntza</value></data>
+  <data name="HomeHelp_MoveWindow" xml:space="preserve"><value>Mugitu CRM laguntzaren leihoa</value></data>
+  <data name="HomeHelp_ResizeWindow" xml:space="preserve"><value>Aldatu CRM laguntzaren leihoaren tamaina</value></data>
   <data name="HomeHelp_Send" xml:space="preserve"><value>Bidali galdera</value></data>
   <data name="HomeHelp_Sending" xml:space="preserve"><value>Bidaltzen</value></data>
   <data name="HomeHelp_Retry" xml:space="preserve"><value>Saiatu berriro</value></data>
@@ -1810,7 +1812,7 @@
   <data name="HomeHelp_CatalogSearchPlaceholder" xml:space="preserve"><value>Bilatu gaiak…</value></data>
   <data name="HomeHelp_CatalogEmpty" xml:space="preserve"><value>Ez dago bat datorren gairik.</value></data>
   <data name="HomeHelp_Loading" xml:space="preserve"><value>CRM gidan bilatzen…</value></data>
-  <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>Eskaera gehiegi daude. Itxaron eta saiatu berriro.</value></data>
+  <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>Kontsulta-muga gainditu da. Mesedez, saiatu berriro 15 minutu barru.</value></data>
   <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>Laguntzailea ez dago erabilgarri une honetan.</value></data>
   <data name="HomeHelp_NeedsSelection" xml:space="preserve"><value>Aukeratu gairik hurbilena zehaztasunez erantzun ahal izateko.</value></data>
   <data name="HomeHelp_NotDocumented" xml:space="preserve"><value>Informazio hau oraindik ez dago dokumentatuta.</value></data>

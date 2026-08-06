@@ -247,8 +247,14 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
             if (path.StartsWith("/api/crm/expensesheets", StringComparison.OrdinalIgnoreCase))
             {
                 if (path.Equals("/api/crm/expensesheets/list", StringComparison.OrdinalIgnoreCase) ||
-                    path.Equals("/api/crm/expensesheets/tickets/list", StringComparison.OrdinalIgnoreCase))
+                    path.Equals("/api/crm/expensesheets/tickets/list", StringComparison.OrdinalIgnoreCase) ||
+                    path.Equals("/api/crm/expensesheets/tickets/link/list", StringComparison.OrdinalIgnoreCase))
                     return IndAccessRights.View;
+
+                // Both dedicated line-ticket verbs update an existing expense line.
+                if ((HttpMethods.IsPut(method) || HttpMethods.IsDelete(method)) &&
+                    IsExpenseSheetLineTicketAssociationPath(path))
+                    return IndAccessRights.Edit;
 
                 // Reimbursement propagation mutates an existing sheet even though the route uses POST.
                 if (HttpMethods.IsPost(method) &&
@@ -289,6 +295,15 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                 return IndAccessRights.FullAccess;
 
             return IndAccessRights.View;
+        }
+
+        // Matches only the dedicated expense-line ticket association route.
+        private static bool IsExpenseSheetLineTicketAssociationPath(string path)
+        {
+            var normalizedPath = (path ?? string.Empty).TrimEnd('/');
+            return normalizedPath.StartsWith("/api/crm/expensesheets/", StringComparison.OrdinalIgnoreCase) &&
+                   normalizedPath.IndexOf("/lines/", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                   normalizedPath.EndsWith("/ticket", StringComparison.OrdinalIgnoreCase);
         }
 
         // Allows status management updates for self-management companies on expense sheet headers.

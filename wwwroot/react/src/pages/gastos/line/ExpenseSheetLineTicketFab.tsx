@@ -3,27 +3,43 @@ import FloatingActionButton, {
   type FloatingActionButtonMenuItem,
 } from "../../../components/commons/FloatingActionButton.tsx";
 import { indT } from "../../../utils/indI18n.ts";
-import { LinkTicketIcon } from "../components/ExpenseSheetActionIcons.tsx";
+import { LinkTicketIcon, UnlinkTicketIcon } from "../components/ExpenseSheetActionIcons.tsx";
+
+export type ExpenseSheetLineTicketFabAction = "link" | "detach";
 
 type ExpenseSheetLineTicketFabProps = {
+  action: ExpenseSheetLineTicketFabAction;
   bottom: number;
   disabled: boolean;
-  onLinkTicket: () => void;
+  onAction: () => void;
 };
 
-// Renders the standard expense action FAB for linking one ticket to a manual line.
-const ExpenseSheetLineTicketFab = ({ bottom, disabled, onLinkTicket }: ExpenseSheetLineTicketFabProps) => {
+// Renders the standard expense action FAB for linking or detaching one ticket.
+const ExpenseSheetLineTicketFab = ({ action, bottom, disabled, onAction }: ExpenseSheetLineTicketFabProps) => {
   const menuItems = useMemo<FloatingActionButtonMenuItem[]>(
-    () => [
-      {
-        id: "link-existing-ticket",
-        label: indT("ExpenseSheets_Fab_LinkTicket", "Vincular Ticket"),
-        icon: <LinkTicketIcon />,
-        onClick: onLinkTicket,
-        disabled,
-      },
-    ],
-    [disabled, onLinkTicket]
+    () => {
+      const item =
+        action === "detach"
+          ? {
+              id: "detach-linked-ticket",
+              label: indT("ExpenseSheets_Line_Ticket_DetachButton", "Detach ticket"),
+              icon: <UnlinkTicketIcon />,
+            }
+          : {
+              id: "link-existing-ticket",
+              label: indT("ExpenseSheets_Fab_LinkTicket", "Vincular Ticket"),
+              icon: <LinkTicketIcon />,
+            };
+
+      return [
+        {
+          ...item,
+          onClick: onAction,
+          disabled,
+        },
+      ];
+    },
+    [action, disabled, onAction]
   );
 
   return (

@@ -13,6 +13,7 @@ import { indT } from "../../../utils/indI18n.ts";
 import { askCrmHelp } from "./helpService.ts";
 import {
   buildBoundedHelpHistory,
+  resolveLatestRepeatableHelpTurn,
   resolveReusableHelpTurn,
 } from "./helpConversation.ts";
 import { getHelpResolutionFallback } from "./helpResponseCopy.ts";
@@ -74,12 +75,38 @@ type SendQuestionOptions = {
   reuseAssistantMessageId?: string;
 };
 
+const ASSISTANT_QUERY_RATE_LIMIT_ERROR_CODE = "ASSISTANT_QUERY_RATE_LIMIT_EXCEEDED";
+
+// Distinguishes the configured 15-minute quota from short-lived 429 responses.
+const isAssistantQueryRateLimitError = (error: ApiFetchError): boolean => {
+  if (error.status !== 429 || !error.responseBody) return false;
+
+  try {
+    const payload = JSON.parse(error.responseBody) as Record<string, unknown>;
+    const errorCode = payload.ErrorCode ?? payload.errorCode;
+    return errorCode === ASSISTANT_QUERY_RATE_LIMIT_ERROR_CODE;
+  } catch {
+    return false;
+  }
+};
+
 // Resolves a localized safe error without exposing upstream response bodies.
 const resolveAskError = (error: unknown): { text: string; retryable: boolean; status?: number } => {
   if (error instanceof ApiFetchError) {
+    if (isAssistantQueryRateLimitError(error)) {
+      return {
+        text: indT(
+          "HomeHelp_ErrorRateLimit",
+          "The query limit has been exceeded. Please try again in 15 minutes."
+        ),
+        retryable: false,
+        status: error.status,
+      };
+    }
+
     if (error.status === 429) {
       return {
-        text: indT("HomeHelp_ErrorRateLimit", "Too many requests. Please wait and try again."),
+        text: error.message || indT("HomeHelp_ErrorRequest", "The assistant is not available right now."),
         retryable: true,
         status: error.status,
       };
@@ -219,7 +246,7 @@ export const useHomeHelpAssistant = ({
       const reuseAssistantMessageId = String(options.reuseAssistantMessageId || "").trim();
       const reusableTurn = reuseAssistantMessageId
         ? resolveReusableHelpTurn(messages, reuseAssistantMessageId, question)
-        : null;
+        : resolveLatestRepeatableHelpTurn(messages, question);
       if (reuseAssistantMessageId && !reusableTurn) {
         return;
       }
@@ -227,9 +254,12 @@ export const useHomeHelpAssistant = ({
       const history = reusableTurn?.history ?? buildBoundedHelpHistory(messages);
       const userMessageId = reusableTurn?.userMessageId ?? createMessageId();
       const assistantMessageId = reusableTurn?.assistantMessage.id ?? createMessageId();
-      const hasTopicOverride = Object.prototype.hasOwnProperty.call(options, "topicIdOverride");
+      const hasExplicitTopicOverride = Object.prototype.hasOwnProperty.call(options, "topicIdOverride");
+      const storedTopicOverride = reusableTurn
+        ? retryTopicByMessageIdRef.current.get(reusableTurn.assistantMessage.id)
+        : undefined;
       const selectedTopicId = String(
-        hasTopicOverride ? options.topicIdOverride ?? "" : ""
+        hasExplicitTopicOverride ? options.topicIdOverride ?? "" : storedTopicOverride ?? ""
       ).trim() || null;
       const userMessage: AssistantChatMessage = {
         id: userMessageId,
@@ -272,7 +302,10 @@ export const useHomeHelpAssistant = ({
           role: "assistant",
           message: createMarkdownMessage(String(response.answer || fallbackAnswer)),
           state: "done",
-          meta: { traceId: response.interactionId },
+          meta: {
+            traceId: response.interactionId,
+            includeInHistory: response.resolution !== "notDocumented",
+          },
         };
 
         setMessages((current) =>

@@ -6311,6 +6311,8 @@ Formatversion: 1
         #    CRMHojaGastosLine   existingFileLine;
         #    INDTicketInfoTable  ticketHeader;
         #    DocuRef             docuRef;
+        #    INDWebModuleAccessLevel sheetModuleAccess;
+        #    INDWebModuleAccessLevel ticketModuleAccess;
         #    ;
         #
         #    companyId = INDCRMUtilityService::getCompany(_data);
@@ -6336,6 +6338,24 @@ Formatversion: 1
         #    {
         #        changecompany(companyId)
         #        {
+        #            //MMS - Restricts line ticket associations to the signed expense owner - 2026.08.06
+        #            if (strUpr(strLRTrim(viewerAxUserId)) != strUpr(strLRTrim(ownerAxUserId)))
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Solo el propietario de la hoja puede vincular tickets.', 'FORBIDDEN', hojaId, lineRecId, fileId, '', false);
+        #
+        #            sheetModuleAccess = INDControlDataVisibilityResolver::findModuleAccessLevel(viewerAxUserId,
+        #                                                                                        companyId,
+        #                                                                                        'CRM',
+        #                                                                                        'GASTOS_HOJA_GASTO');
+        #            if (!sheetModuleAccess.RecId || sheetModuleAccess.AccessRights < SysAccessRights::Edit)
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Se requiere permiso Edit sobre hojas de gastos.', 'FORBIDDEN', hojaId, lineRecId, fileId, '', false);
+        #
+        #            ticketModuleAccess = INDControlDataVisibilityResolver::findModuleAccessLevel(viewerAxUserId,
+        #                                                                                         companyId,
+        #                                                                                         'CRM',
+        #                                                                                         'GASTOS_TICKETS');
+        #            if (!ticketModuleAccess.RecId || ticketModuleAccess.AccessRights < SysAccessRights::View)
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Se requiere permiso View sobre tickets.', 'FORBIDDEN', hojaId, lineRecId, fileId, '', false);
+        #
         #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(ownerAxUserId);
         #            if (!crmUserId)
         #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Propietario no encontrado.', 'NOT_FOUND', hojaId, lineRecId, fileId, '', false);
@@ -6504,6 +6524,8 @@ Formatversion: 1
         #    CRMHojaGastosLine   line;
         #    CRMHojaGastosLine   existingFileLine;
         #    INDTicketInfoTable  ticketHeader;
+        #    INDWebModuleAccessLevel sheetModuleAccess;
+        #    INDWebModuleAccessLevel ticketModuleAccess;
         #    ;
         #
         #    companyId = INDCRMUtilityService::getCompany(_data);
@@ -6528,6 +6550,24 @@ Formatversion: 1
         #    {
         #        changecompany(companyId)
         #        {
+        #            //MMS - Restricts line ticket associations to the signed expense owner - 2026.08.06
+        #            if (strUpr(strLRTrim(viewerAxUserId)) != strUpr(strLRTrim(ownerAxUserId)))
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Solo el propietario de la hoja puede desvincular tickets.', 'FORBIDDEN', hojaId, lineRecId, '', '', false);
+        #
+        #            sheetModuleAccess = INDControlDataVisibilityResolver::findModuleAccessLevel(viewerAxUserId,
+        #                                                                                        companyId,
+        #                                                                                        'CRM',
+        #                                                                                        'GASTOS_HOJA_GASTO');
+        #            if (!sheetModuleAccess.RecId || sheetModuleAccess.AccessRights < SysAccessRights::Edit)
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Se requiere permiso Edit sobre hojas de gastos.', 'FORBIDDEN', hojaId, lineRecId, '', '', false);
+        #
+        #            ticketModuleAccess = INDControlDataVisibilityResolver::findModuleAccessLevel(viewerAxUserId,
+        #                                                                                         companyId,
+        #                                                                                         'CRM',
+        #                                                                                         'GASTOS_TICKETS');
+        #            if (!ticketModuleAccess.RecId || ticketModuleAccess.AccessRights < SysAccessRights::View)
+        #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Se requiere permiso View sobre tickets.', 'FORBIDDEN', hojaId, lineRecId, '', '', false);
+        #
         #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(ownerAxUserId);
         #            if (!crmUserId)
         #                return INDCRMExpenseSheetService::buildExpenseSheetLineTicketResult(false, 'Propietario no encontrado.', 'NOT_FOUND', hojaId, lineRecId, '', '', false);

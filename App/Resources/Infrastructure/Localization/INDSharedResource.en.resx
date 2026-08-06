@@ -1663,7 +1663,7 @@
     <value>The assistant is not available right now.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RateLimit" xml:space="preserve">
-    <value>Too many assistant requests.</value>
+    <value>The query limit has been exceeded. Please try again in 15 minutes.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RetryAfter" xml:space="preserve">
     <value>Retry after {0}.</value>
@@ -1786,6 +1786,8 @@
   <data name="HomeHelp_ChatLoading" xml:space="preserve"><value>Opening CRM help…</value></data>
   <data name="HomeHelp_RenderError" xml:space="preserve"><value>CRM help could not be displayed.</value></data>
   <data name="HomeHelp_PanelTitle" xml:space="preserve"><value>CRM help</value></data>
+  <data name="HomeHelp_MoveWindow" xml:space="preserve"><value>Move the CRM help window</value></data>
+  <data name="HomeHelp_ResizeWindow" xml:space="preserve"><value>Resize the CRM help window</value></data>
   <data name="HomeHelp_Send" xml:space="preserve"><value>Send question</value></data>
   <data name="HomeHelp_Sending" xml:space="preserve"><value>Sending</value></data>
   <data name="HomeHelp_Retry" xml:space="preserve"><value>Try again</value></data>
@@ -1806,7 +1808,7 @@
   <data name="HomeHelp_ModuleSelectionLocked" xml:space="preserve"><value>Conversation section: {0}</value></data>
   <data name="HomeHelp_ChangeModule" xml:space="preserve"><value>Choose another section</value></data>
   <data name="HomeHelp_Loading" xml:space="preserve"><value>Searching the CRM guide…</value></data>
-  <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>Too many requests. Please wait and try again.</value></data>
+  <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>The query limit has been exceeded. Please try again in 15 minutes.</value></data>
   <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>The assistant is not available right now.</value></data>
   <data name="HomeHelp_NeedsSelection" xml:space="preserve"><value>Choose the closest topic so I can answer precisely.</value></data>
   <data name="HomeHelp_NotDocumented" xml:space="preserve"><value>This information is not documented yet.</value></data>

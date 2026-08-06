@@ -114,6 +114,7 @@ namespace IND_CRM_APP.Controllers
         {
             HeaderUpdate,
             LineMutation,
+            OwnLineTicketMutation,
             DeleteSheet
         }
 
@@ -1767,7 +1768,7 @@ namespace IND_CRM_APP.Controllers
                 safeSheetId,
                 requestAxUserId,
                 nameof(ApiExpenseSheetLineTicketAttach),
-                ExpenseSheetMutationType.LineMutation);
+                ExpenseSheetMutationType.OwnLineTicketMutation);
             if (!mutationGuard.Allowed)
                 return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
 
@@ -1828,7 +1829,7 @@ namespace IND_CRM_APP.Controllers
                 safeSheetId,
                 requestAxUserId,
                 nameof(ApiExpenseSheetLineTicketDetach),
-                ExpenseSheetMutationType.LineMutation);
+                ExpenseSheetMutationType.OwnLineTicketMutation);
             if (!mutationGuard.Allowed)
                 return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
 
@@ -4243,7 +4244,7 @@ namespace IND_CRM_APP.Controllers
                     result.TraceId ?? "<null>",
                     result.GetAnyItems().Count(),
                     result.Message ?? "<null>");
-                var sheet = SelectSheet(result.GetAnyItems(), safeSheetId);
+                var sheet = SelectSheetExact(result.GetAnyItems(), safeSheetId);
                 if (sheet == null)
                 {
                     LogExpenseSheetLookupMiss(
@@ -4306,6 +4307,18 @@ namespace IND_CRM_APP.Controllers
                     snapshot.OwnerUserId,
                     axUserIdOverride);
 
+                if (mutationType == ExpenseSheetMutationType.OwnLineTicketMutation && isManagingOtherUser)
+                {
+                    return new ExpenseSheetMutationGuardResult
+                    {
+                        Allowed = false,
+                        StatusCode = StatusCodes.Status403Forbidden,
+                        Message = _sr["Auth_PermissionDenied_Body"].Value,
+                        ErrorCode = ExpenseManagedUserReadOnlyErrorCode,
+                        Snapshot = snapshot
+                    };
+                }
+
                 if (isManagingOtherUser)
                 {
                     var subordinateGuard = await ValidateManagedExpenseSheetOwnerAsync(token, snapshot.OwnerUserId, operationName, snapshot);
@@ -4315,7 +4328,9 @@ namespace IND_CRM_APP.Controllers
 
                 var policy = ResolveExpenseSheetMutationPolicy(snapshot, isManagingOtherUser, allowSelfManagement);
 
-                if (mutationType == ExpenseSheetMutationType.LineMutation && policy.InteractionMode != ExpenseSheetInteractionMode.FullEdit)
+                if ((mutationType == ExpenseSheetMutationType.LineMutation ||
+                     mutationType == ExpenseSheetMutationType.OwnLineTicketMutation) &&
+                    policy.InteractionMode != ExpenseSheetInteractionMode.FullEdit)
                 {
                     return BuildExpenseSheetReadOnlyGuard(snapshot, policy);
                 }
@@ -5853,6 +5868,17 @@ namespace IND_CRM_APP.Controllers
                 string.Equals((x.HojaGastosId ?? string.Empty).Trim(), hojaGastosId.Trim(), StringComparison.OrdinalIgnoreCase));
 
             return match ?? list[0];
+        }
+
+        // Selects only the requested sheet for mutation authorization.
+        private static ExpenseSheetDetailDto? SelectSheetExact(IEnumerable<ExpenseSheetDetailDto> items, string hojaGastosId)
+        {
+            var safeSheetId = (hojaGastosId ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(safeSheetId))
+                return null;
+
+            return (items ?? Enumerable.Empty<ExpenseSheetDetailDto>()).FirstOrDefault(x =>
+                string.Equals((x.HojaGastosId ?? string.Empty).Trim(), safeSheetId, StringComparison.OrdinalIgnoreCase));
         }
 
         // Treats missing blob/file cleanup responses as already-clean states.

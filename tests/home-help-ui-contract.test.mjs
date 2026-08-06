@@ -40,7 +40,11 @@ const [
   shellSource,
   quickActionsSource,
   assistantHookSource,
+  desktopWindowHookSource,
+  desktopWindowGeometrySource,
   expenseAssistantSource,
+  expenseAssistantHookSource,
+  expenseAssistantI18nSource,
   moduleSelectorSource,
   helpTypesSource,
   manualSource,
@@ -60,7 +64,11 @@ const [
   readFile(path.join(repoRoot, "Web", "wwwroot", "react", "src", "components", "commons", "chat", "AssistantChatShell.tsx"), "utf8"),
   readFile(path.join(repoRoot, "Web", "wwwroot", "react", "src", "components", "commons", "chat", "AssistantQuickActions.tsx"), "utf8"),
   readFile(path.join(helpRoot, "useHomeHelpAssistant.ts"), "utf8"),
+  readFile(path.join(helpRoot, "useHomeHelpDesktopWindow.ts"), "utf8"),
+  readFile(path.join(helpRoot, "homeHelpDesktopWindowGeometry.ts"), "utf8"),
   readFile(path.join(repoRoot, "Web", "wwwroot", "react", "src", "pages", "gastos", "list", "ExpenseSheetsAssistant.tsx"), "utf8"),
+  readFile(path.join(repoRoot, "Web", "wwwroot", "react", "src", "pages", "gastos", "list", "useExpenseSheetsAssistant.ts"), "utf8"),
+  readFile(path.join(repoRoot, "Web", "wwwroot", "react", "src", "pages", "gastos", "list", "expenseSheetsAssistantI18n.ts"), "utf8"),
   readFile(path.join(helpRoot, "HomeHelpModuleSelector.tsx"), "utf8"),
   readFile(path.join(helpRoot, "helpTypes.ts"), "utf8"),
   readFile(path.join(helpRoot, "ManualHelpView.tsx"), "utf8"),
@@ -102,6 +110,10 @@ test("chat requires one global module and manual input before enabling its compo
   assert.match(shellSource, /onQuickAction\?: \(question: string\) => void/u);
   assert.match(shellSource, /quickActions && quickActions\.length > 0 && onQuickAction/u);
   assert.match(shellSource, /quickActionsLayout = "inline"/u);
+  assert.match(assistantSource, /emptyStateBody=\{selectedModule\s+\? ""\s+: indT\("HomeHelp_ModuleSelectionBody"/u);
+  assert.doesNotMatch(assistantSource, /indT\("HomeHelp_EmptyBody"/u);
+  assert.match(shellSource, /const emptyStateDescription = toText\(hasContext \? emptyStateBody : noContextBody\)/u);
+  assert.match(shellSource, /\{emptyStateDescription \? \(\s+<p/u);
   assert.match(quickActionsSource, /isStacked \? "flex-col" : "whitespace-nowrap"/u);
   assert.match(quickActionsSource, /isStacked \? "whitespace-normal break-words text-left leading-4" : "truncate"/u);
   assert.match(expenseAssistantSource, /quickActions=\{visualQuickActions\}/u);
@@ -128,7 +140,8 @@ test("Home hides getting started and lets the selected section return to a clean
   });
 
   const returnStart = assistantSource.indexOf("const returnToModuleSelection");
-  const returnEnd = assistantSource.indexOf("\n\n  if (!isOpen)", returnStart);
+  const returnEndOffset = assistantSource.slice(returnStart).search(/\r?\n\r?\n  if \(!isOpen\)/u);
+  const returnEnd = returnEndOffset < 0 ? -1 : returnStart + returnEndOffset;
   const returnBlock = assistantSource.slice(returnStart, returnEnd);
   assert.ok(returnStart >= 0 && returnEnd > returnStart);
   assert.ok(returnBlock.indexOf("resetConversation();") < returnBlock.indexOf('setSelectedModuleId("");'));
@@ -139,7 +152,8 @@ test("Home hides getting started and lets the selected section return to a clean
 
 test("Home conversation reset invalidates stale requests and clears all topic state", () => {
   const resetStart = assistantHookSource.indexOf("const resetConversation");
-  const resetEnd = assistantHookSource.indexOf("\n\n  return {", resetStart);
+  const resetEndOffset = assistantHookSource.slice(resetStart).search(/\r?\n\r?\n  return \{/u);
+  const resetEnd = resetEndOffset < 0 ? -1 : resetStart + resetEndOffset;
   const resetBlock = assistantHookSource.slice(resetStart, resetEnd);
   assert.ok(resetStart >= 0 && resetEnd > resetStart);
   assert.ok(resetBlock.indexOf("askControllerRef.current = null") < resetBlock.indexOf("controller?.abort()"));
@@ -166,6 +180,73 @@ test("shared chat grows for long text or accumulated messages", () => {
   assert.match(shellSource, /lg:h-\[min\(800px,calc\(100dvh-4rem\)\)\]/u);
 });
 
+test("Home opts into a movable double-width desktop window without changing Gastos or mobile", () => {
+  assert.match(assistantSource, /useHomeHelpDesktopWindow\(\{/u);
+  assert.match(assistantSource, /desktopWindow=\{desktopWindow\}/u);
+  assert.doesNotMatch(expenseAssistantSource, /desktopWindow=/u);
+  assert.match(shellSource, /desktopWindow\?: AssistantChatDesktopWindow/u);
+  assert.match(shellSource, /style=\{desktopWindow\?\.panelStyle\}/u);
+  assert.match(shellSource, /lg:inline-flex/u);
+  assert.match(desktopWindowGeometrySource, /HOME_HELP_DESKTOP_STANDARD_WIDTH_PX = 368/u);
+  assert.match(desktopWindowGeometrySource, /HOME_HELP_DESKTOP_INITIAL_WIDTH_PX = HOME_HELP_DESKTOP_STANDARD_WIDTH_PX \* 2/u);
+  assert.match(desktopWindowGeometrySource, /HOME_HELP_DESKTOP_BREAKPOINT_PX = 1024/u);
+  assert.match(desktopWindowHookSource, /right: windowState\.position \? "auto" : HOME_HELP_DESKTOP_EDGE_INSET_PX/u);
+  assert.match(desktopWindowHookSource, /bottom: windowState\.position \? "auto" : HOME_HELP_DESKTOP_EDGE_INSET_PX/u);
+  assert.match(desktopWindowHookSource, /useLayoutEffect\(\(\) => \{[\s\S]*commitWindowState\(INITIAL_WINDOW_STATE\)/u);
+  assert.match(desktopWindowHookSource, /removeEventListener\("resize", keepWindowInsideViewport\)/u);
+  assert.doesNotMatch(desktopWindowHookSource, /localStorage|sessionStorage/u);
+});
+
+test("Home localizes the desktop move and resize controls in every supported culture", () => {
+  assert.match(assistantSource, /indT\("HomeHelp_MoveWindow"/u);
+  assert.match(assistantSource, /indT\("HomeHelp_ResizeWindow"/u);
+  assert.match(homeViewSource, /HomeHelp_MoveWindow = SR\["HomeHelp_MoveWindow"\]\.Value/u);
+  assert.match(homeViewSource, /HomeHelp_ResizeWindow = SR\["HomeHelp_ResizeWindow"\]\.Value/u);
+  localizedResourceSources.forEach((resourceSource) => {
+    assert.match(resourceSource, /<data name="HomeHelp_MoveWindow"/u);
+    assert.match(resourceSource, /<data name="HomeHelp_ResizeWindow"/u);
+  });
+});
+
+test("both assistants explain the configured 15-minute query limit in every supported culture", () => {
+  const localizedRateLimitMessages = [
+    "Se ha superado el límite de consultas. Por favor, vuelva a intentarlo dentro de 15 minutos.",
+    "Se ha superado el límite de consultas. Por favor, vuelva a intentarlo dentro de 15 minutos.",
+    "The query limit has been exceeded. Please try again in 15 minutes.",
+    "Kontsulta-muga gainditu da. Mesedez, saiatu berriro 15 minutu barru.",
+    "O limite de consultas foi excedido. Por favor, tente novamente dentro de 15 minutos.",
+    "È stato superato il limite di richieste. Riprova tra 15 minuti.",
+    "已超过查询次数限制。请在 15 分钟后重试。",
+  ];
+
+  assert.match(assistantHookSource, /The query limit has been exceeded\. Please try again in 15 minutes\./u);
+  assert.match(assistantHookSource, /ASSISTANT_QUERY_RATE_LIMIT_EXCEEDED/u);
+  assert.match(assistantHookSource, /if \(isAssistantQueryRateLimitError\(error\)\)[\s\S]*retryable: false/u);
+  assert.match(assistantHookSource, /if \(error\.status === 429\)[\s\S]*retryable: true/u);
+  assert.match(expenseAssistantI18nSource, /The query limit has been exceeded\. Please try again in 15 minutes\./u);
+  assert.match(expenseAssistantHookSource, /ASSISTANT_QUERY_RATE_LIMIT_EXCEEDED/u);
+  assert.match(expenseAssistantHookSource, /if \(isAssistantQueryRateLimit\(status, errorCode\)\) return false;/u);
+  assert.match(expenseAssistantHookSource, /return status === 429 \|\| status === 500 \|\| status === 502 \|\| status === 503 \|\| status === 504;/u);
+  assert.doesNotMatch(expenseAssistantHookSource, /formatExpenseSheetsRetryAfterMessage/u);
+
+  const responseRateLimitStart = expenseAssistantHookSource.indexOf("if (isAssistantQueryRateLimit(response.HttpStatus");
+  const responseRateLimitEnd = expenseAssistantHookSource.indexOf("if (response.HttpStatus === 429)", responseRateLimitStart);
+  const responseRateLimitBlock = expenseAssistantHookSource.slice(responseRateLimitStart, responseRateLimitEnd);
+  assert.match(responseRateLimitBlock, /return assistantCopy\.errorRateLimit;/u);
+  assert.doesNotMatch(responseRateLimitBlock, /responseMessage|RetryAfter/u);
+
+  const thrownRateLimitStart = expenseAssistantHookSource.indexOf("if (isAssistantQueryRateLimit(error.status");
+  const thrownRateLimitEnd = expenseAssistantHookSource.indexOf("if (error.status === 500)", thrownRateLimitStart);
+  const thrownRateLimitBlock = expenseAssistantHookSource.slice(thrownRateLimitStart, thrownRateLimitEnd);
+  assert.match(thrownRateLimitBlock, /message: assistantCopy\.errorRateLimit/u);
+  assert.doesNotMatch(thrownRateLimitBlock, /sanitizeAssistantText\(error\.message\)/u);
+
+  localizedResourceSources.forEach((resourceSource, index) => {
+    const localizedMessage = `<value>${localizedRateLimitMessages[index]}</value>`;
+    assert.equal(resourceSource.split(localizedMessage).length - 1, 2);
+  });
+});
+
 test("Home sends the selected module while keeping answer instructions server-owned", () => {
   assert.match(helpTypesSource, /selectedModuleId: string/u);
   assert.doesNotMatch(helpTypesSource, /answerInstructions/u);
@@ -189,32 +270,36 @@ test("Home owns technical details and no longer renders welcome or suggestion co
   assert.doesNotMatch(homeViewSource, /Home_Welcome|Home_SelectLeftMenu/u);
 });
 
-test("Home stretches the assistant card into the former launcher clearance", () => {
-  assert.doesNotMatch(homeViewSource, /pb-\[calc\(7rem\+env\(safe-area-inset-bottom,0px\)\)\]/u);
-  assert.match(homeViewSource, /items-stretch py-4 md:py-8/u);
+test("Home reserves safe clearance below its centered assistant card", () => {
+  assert.match(homeViewSource, /var homePageSpacingClass = helpAssistantEnabled/u);
+  assert.match(homeViewSource, /pt-4 pb-\[calc\(7rem\+env\(safe-area-inset-bottom,0px\)\)\] md:pt-8/u);
+  assert.match(homeViewSource, /items-stretch @homePageSpacingClass/u);
   assert.match(homeViewSource, /class="relative z-10 flex min-h-0 w-full"/u);
   assert.match(cardSource, /relative flex min-h-0 w-full flex-1 flex-col/u);
   assert.match(cardSource, /overflow-x-hidden overflow-y-auto/u);
   assert.match(cardSource, /relative z-10 flex flex-1/u);
-  assert.match(cardSource, /justify-evenly gap-5/u);
-  assert.match(cardSource, /\{children \? \(/u);
+  assert.match(cardSource, /flex w-full flex-col justify-center px-5 py-6/u);
+  assert.doesNotMatch(cardSource, /children|justify-evenly/u);
   assert.match(cardSource, /relative z-10 shrink-0/u);
 });
 
-test("Home composes one inline launcher with a two-line callout inside its card", () => {
+test("Home composes one floating launcher with a single-line callout outside its card", () => {
   const cardStart = assistantPageSource.indexOf("<HomeHelpCard");
   const callout = assistantPageSource.indexOf("<HomeHelpBotCallout");
-  const cardEnd = assistantPageSource.indexOf("</HomeHelpCard>");
+  const cardEnd = assistantPageSource.indexOf("/>", cardStart);
 
-  assert.ok(cardStart >= 0 && callout > cardStart && cardEnd > callout);
+  assert.ok(cardStart >= 0 && cardEnd > cardStart && callout > cardEnd);
   assert.equal((assistantPageSource.match(/<HomeHelpBotCallout\b/gu) || []).length, 1);
   assert.match(calloutSource, /<AssistantLauncherButton/u);
   assert.match(calloutSource, /imageSources=\{launcherImageSources\}/u);
-  assert.match(calloutSource, /layoutVariant="inline"/u);
-  assert.doesNotMatch(calloutSource, /desktopPlacement=|bottomInset=|FLOATING_BOTTOM_INSET/u);
+  assert.doesNotMatch(calloutSource, /layoutVariant="inline"/u);
+  assert.match(calloutSource, /const FLOATING_BOTTOM_INSET/u);
+  assert.match(calloutSource, /desktopPlacement="viewport-start"/u);
+  assert.match(calloutSource, /bottomInset=\{FLOATING_BOTTOM_INSET\}/u);
   assert.match(calloutSource, /currentMessage/u);
-  assert.match(calloutSource, /line-clamp-2/u);
-  assert.match(calloutSource, /-bottom-2 left-1\/2/u);
+  assert.match(calloutSource, /truncate whitespace-nowrap/u);
+  assert.doesNotMatch(calloutSource, /line-clamp|flex-col-reverse/u);
+  assert.match(calloutSource, /-left-2 top-1\/2/u);
   assert.match(calloutSource, /aria-haspopup="dialog"/u);
   assert.match(calloutSource, /aria-controls="home-help-assistant-dialog"/u);
   assert.match(calloutSource, /aria-expanded=\{chatOpen\}/u);
@@ -227,6 +312,8 @@ test("Home composes one inline launcher with a two-line callout inside its card"
   assert.match(launcherSource, /layoutVariant === "floating" \? DESKTOP_PLACEMENT_CLASS_NAMES\[desktopPlacement\] : ""/u);
   assert.match(launcherSource, /h-\[60px\] w-\[60px\]/u);
   assert.match(launcherSource, /h-\[54px\] w-\[54px\]/u);
+  assert.match(launcherSource, /focus-visible:ring-2/u);
+  assert.doesNotMatch(launcherSource, /focus:ring-4/u);
 });
 
 test("Manual reuses the topic browser and is linked after the expense section", () => {

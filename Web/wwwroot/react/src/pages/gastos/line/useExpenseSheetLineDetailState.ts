@@ -22,7 +22,7 @@ import { hasAssignedVoucher, parseExpenseDate, safeText, toIsoDate } from "../ut
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 import { resolveExpenseSheetDetailPolicy } from "../detail/expenseSheetDetailPolicy.ts";
-import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
+import { isManagingOtherExpenseRecord, isSameExpenseUser } from "../utils/expenseManagedUserScope.ts";
 import {
   DEFAULT_LINE_REIMBURSABLE_EXPENSE,
   normalizeExpenseLineReimbursableExpense,
@@ -417,7 +417,7 @@ export const useExpenseSheetLineDetailState = ({
           currentAxUserId,
           currentCrmUserId,
           selectedManagedUserId,
-          recordOwnerUserId: mappedHeader.userId,
+          recordOwnerUserId: mappedHeader.ownerAxUserId || mappedHeader.userId,
           isCreateMode,
         });
         const loadedPolicy = resolveExpenseSheetDetailPolicy({
@@ -582,12 +582,17 @@ export const useExpenseSheetLineDetailState = ({
   const isSheetPaidByStatus = statusCode === EXPENSE_STATUS_PAID;
   const isSheetPaidByVoucher = hasAssignedVoucher(header?.voucher);
   const isSheetPaid = isSheetPaidByStatus || isSheetPaidByVoucher;
+  const expenseOwnerUserId = safeText(header?.ownerAxUserId || header?.userId);
+  const isCurrentUserExpenseOwner =
+    !!expenseOwnerUserId &&
+    (isSameExpenseUser(expenseOwnerUserId, currentAxUserId) ||
+      isSameExpenseUser(expenseOwnerUserId, currentCrmUserId));
   const isManagingOtherUser = isManagingOtherExpenseRecord({
     canManageOtherUsers,
     currentAxUserId,
     currentCrmUserId,
     selectedManagedUserId,
-    recordOwnerUserId: header?.userId,
+    recordOwnerUserId: expenseOwnerUserId,
     isCreateMode,
   });
   const detailPolicy = useMemo(() => {
@@ -718,6 +723,8 @@ export const useExpenseSheetLineDetailState = ({
     fuelPriceMessage,
     fuelPriceMessageIsError,
     isSheetPaid,
+    isManagingOtherUser,
+    isCurrentUserExpenseOwner,
     isSheetLocked,
     isLineEditLocked,
     isLineDeleteLocked,

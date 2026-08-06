@@ -6,6 +6,7 @@ import { normalizeHelpResponseLocale } from "./helpLocale.ts";
 import HomeHelpMessageFooter from "./HomeHelpMessageFooter.tsx";
 import HomeHelpModuleSelector from "./HomeHelpModuleSelector.tsx";
 import { useHomeHelpAssistant } from "./useHomeHelpAssistant.ts";
+import { useHomeHelpDesktopWindow } from "./useHomeHelpDesktopWindow.ts";
 import { useHomeHelpModuleCatalog } from "./useHomeHelpModuleCatalog.ts";
 
 type HomeHelpAssistantProps = {
@@ -51,6 +52,12 @@ const HomeHelpAssistant = ({
     resetConversation,
     handleDraftKeyDown,
   } = useHomeHelpAssistant({ isOpen, responseLocale, selectedModule, onClose });
+  const desktopWindow = useHomeHelpDesktopWindow({
+    isOpen,
+    dialogRef,
+    moveAriaLabel: indT("HomeHelp_MoveWindow", "Move CRM help window"),
+    resizeAriaLabel: indT("HomeHelp_ResizeWindow", "Resize CRM help window"),
+  });
 
   const selectModule = useCallback((moduleId: string) => {
     setSelectedModuleId(moduleId);
@@ -94,11 +101,12 @@ const HomeHelpAssistant = ({
         ? indT("HomeHelp_EmptyTitle", "Hello! What do you need help with?")
         : indT("HomeHelp_ModuleSelectionTitle", "Which section do you need help with?")}
       emptyStateBody={selectedModule
-        ? indT("HomeHelp_EmptyBody", "Ask your question naturally and I will help you with the CRM.")
+        ? ""
         : indT("HomeHelp_ModuleSelectionBody", "Select a section to enable the question box.")}
       noContextTitle={indT("HomeHelp_NoContextTitle", "Help is unavailable")}
       noContextBody={indT("HomeHelp_NoContextBody", "The CRM guide could not be loaded.")}
       noContextMessage={indT("HomeHelp_NoContextMessage", "Reload the page and try again.")}
+      desktopWindow={desktopWindow}
       botImageSrc={BOT_IMAGE_SRC}
       launcherImageSources={launcherImageSources}
       contextNotice={null}

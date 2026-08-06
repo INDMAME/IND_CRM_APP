@@ -1663,7 +1663,7 @@
     <value>El asistente no está disponible ahora mismo.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RateLimit" xml:space="preserve">
-    <value>Demasiadas solicitudes al asistente.</value>
+    <value>Se ha superado el límite de consultas. Por favor, vuelva a intentarlo dentro de 15 minutos.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RetryAfter" xml:space="preserve">
     <value>Reintenta después de {0}.</value>
@@ -1786,6 +1786,8 @@
   <data name="HomeHelp_ChatLoading" xml:space="preserve"><value>Abriendo la ayuda del CRM…</value></data>
   <data name="HomeHelp_RenderError" xml:space="preserve"><value>No se pudo mostrar la ayuda del CRM.</value></data>
   <data name="HomeHelp_PanelTitle" xml:space="preserve"><value>Ayuda del CRM</value></data>
+  <data name="HomeHelp_MoveWindow" xml:space="preserve"><value>Mover la ventana de ayuda del CRM</value></data>
+  <data name="HomeHelp_ResizeWindow" xml:space="preserve"><value>Redimensionar la ventana de ayuda del CRM</value></data>
   <data name="HomeHelp_Send" xml:space="preserve"><value>Enviar pregunta</value></data>
   <data name="HomeHelp_Sending" xml:space="preserve"><value>Enviando</value></data>
   <data name="HomeHelp_Retry" xml:space="preserve"><value>Volver a intentar</value></data>
@@ -1806,7 +1808,7 @@
   <data name="HomeHelp_ModuleSelectionLocked" xml:space="preserve"><value>Sección de la conversación: {0}</value></data>
   <data name="HomeHelp_ChangeModule" xml:space="preserve"><value>Volver a seleccionar sección</value></data>
   <data name="HomeHelp_Loading" xml:space="preserve"><value>Buscando en la guía del CRM…</value></data>
-  <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>Hay demasiadas solicitudes. Espera un momento e inténtalo de nuevo.</value></data>
+  <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>Se ha superado el límite de consultas. Por favor, vuelva a intentarlo dentro de 15 minutos.</value></data>
   <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>El asistente no está disponible en este momento.</value></data>
   <data name="HomeHelp_NeedsSelection" xml:space="preserve"><value>Elige el tema más cercano para que pueda responder con precisión.</value></data>
   <data name="HomeHelp_NotDocumented" xml:space="preserve"><value>Esta información todavía no está documentada.</value></data>

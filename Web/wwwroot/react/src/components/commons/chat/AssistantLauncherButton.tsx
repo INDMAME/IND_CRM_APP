@@ -66,7 +66,7 @@ const AssistantLauncherButton = ({
       type="button"
       data-ind-assistant-launcher="true"
       className={classNames(
-        "group flex items-center rounded-[var(--radius-xl)] bg-transparent p-0 text-left shadow-none transition duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus:outline-hidden focus:ring-4 focus:ring-primary/20",
+        "group flex items-center rounded-[var(--radius-xl)] bg-transparent p-0 text-left shadow-none transition duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/25",
         LAYOUT_VARIANT_CLASS_NAMES[layoutVariant],
         layoutVariant === "floating" ? DESKTOP_PLACEMENT_CLASS_NAMES[desktopPlacement] : "",
         className

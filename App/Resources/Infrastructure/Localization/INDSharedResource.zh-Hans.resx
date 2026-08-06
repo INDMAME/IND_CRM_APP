@@ -1663,7 +1663,7 @@
     <value>助手当前不可用。</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RateLimit" xml:space="preserve">
-    <value>助手请求过多。</value>
+    <value>已超过查询次数限制。请在 15 分钟后重试。</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RetryAfter" xml:space="preserve">
     <value>请在 {0} 后重试。</value>
@@ -1786,6 +1786,8 @@
   <data name="HomeHelp_ChatLoading" xml:space="preserve"><value>正在打开 CRM 帮助…</value></data>
   <data name="HomeHelp_RenderError" xml:space="preserve"><value>无法显示 CRM 帮助。</value></data>
   <data name="HomeHelp_PanelTitle" xml:space="preserve"><value>CRM 帮助</value></data>
+  <data name="HomeHelp_MoveWindow" xml:space="preserve"><value>移动 CRM 帮助窗口</value></data>
+  <data name="HomeHelp_ResizeWindow" xml:space="preserve"><value>调整 CRM 帮助窗口大小</value></data>
   <data name="HomeHelp_Send" xml:space="preserve"><value>发送问题</value></data>
   <data name="HomeHelp_Sending" xml:space="preserve"><value>正在发送</value></data>
   <data name="HomeHelp_Retry" xml:space="preserve"><value>重试</value></data>
@@ -1806,7 +1808,7 @@
   <data name="HomeHelp_ModuleSelectionLocked" xml:space="preserve"><value>对话部分：{0}</value></data>
   <data name="HomeHelp_ChangeModule" xml:space="preserve"><value>返回选择其他部分</value></data>
   <data name="HomeHelp_Loading" xml:space="preserve"><value>正在搜索 CRM 指南…</value></data>
-  <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>请求过多。请稍候再试。</value></data>
+  <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>已超过查询次数限制。请在 15 分钟后重试。</value></data>
   <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>助手当前不可用。</value></data>
   <data name="HomeHelp_NeedsSelection" xml:space="preserve"><value>请选择最接近的主题，以便我准确回答。</value></data>
   <data name="HomeHelp_NotDocumented" xml:space="preserve"><value>此信息尚未记录。</value></data>
