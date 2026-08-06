@@ -1,0 +1,475 @@
+{
+  "schemaVersion": "1.0",
+  "locale": "eu-ES",
+  "status": "machine-draft",
+  "title": "CRM aplikazioaren laguntza",
+  "imageReferenceLabel": "Erreferentziako pantaila-argazkia",
+  "modules": [
+    {
+      "id": "introduction",
+      "title": "Lehen urratsak",
+      "description": "CRMaren helburua, irismena, oinarrizko kontzeptuak eta erabilera segurua."
+    },
+    {
+      "id": "access",
+      "title": "CRMra sartzea",
+      "description": "CRM irekitzea, identifikatzea, gogokoetan gordetzea eta saioa ixtea."
+    },
+    {
+      "id": "common-ui",
+      "title": "Pantaila",
+      "description": "Kontrol komunak, enpresa aktiboa, hizkuntza eta erabiltzaile-baimenak."
+    },
+    {
+      "id": "visits",
+      "title": "Bisitak",
+      "description": "Bisitak kontsultatu, sortu, editatu eta ezabatzeko jarraibideak."
+    },
+    {
+      "id": "expenses",
+      "title": "Gastu-orriak",
+      "description": "Gastu-orriak eta haien lerroak sortu eta mantentzeko jarraibideak."
+    },
+    {
+      "id": "tickets",
+      "title": "Tiketak",
+      "description": "Gastu-egiaztagiriak kontsultatu, sortu eta haien egoera ulertzea."
+    },
+    {
+      "id": "expense-approval",
+      "title": "Gastuen onarpena",
+      "description": "Gastu-orrietako egoerak, arduradunak eta onarpen-ekintzak."
+    },
+    {
+      "id": "axapta",
+      "title": "Axapta",
+      "description": "Gastu-fluxuak Axaptan duen lotura eta jarraipena."
+    },
+    {
+      "id": "troubleshooting",
+      "title": "Ohiko arazoak",
+      "description": "Ohiko egiaztapenak eta laguntza-zerbitzura bidali beharreko datuak."
+    },
+    {
+      "id": "glossary",
+      "title": "Glosarioa",
+      "description": "Eskuliburuan erabiltzen diren oinarrizko terminoen definizioak."
+    }
+  ],
+  "topics": [
+    {
+      "id": "introduction.objetivo-y-personas-destinatarias",
+      "title": "Helburua eta hartzaileak",
+      "summary": "CRMra sartzea eta Bisitak, Gastu-orriak eta Tiketak erabiltzea azaltzen du.",
+      "quickAnswers": []
+    },
+    {
+      "id": "introduction.contexto-del-nuevo-flujo-de-gastos",
+      "title": "Gastu-fluxu berriaren testuingurua",
+      "summary": "Gastu-orriak digitalizatzeak eta onarpen-ardurak nola eguneratzen diren azaltzen du.",
+      "quickAnswers": []
+    },
+    {
+      "id": "introduction.antecedentes-del-proceso",
+      "title": "Prozesuaren aurrekariak",
+      "summary": "Paperezko gastu-orrien aurreko sorkuntza, onarpen, ordainketa eta kontabilitate-prozesua.",
+      "quickAnswers": []
+    },
+    {
+      "id": "introduction.alcance-del-flujo-de-gastos",
+      "title": "Gastu-fluxuaren irismena",
+      "summary": "CRM web-aplikazioko fluxua eta Axaptan jarraitzen duten kontabilitate- eta ordainketa-lanak.",
+      "quickAnswers": []
+    },
+    {
+      "id": "introduction.como-utilizar-este-manual",
+      "title": "Eskuliburu hau nola erabili",
+      "summary": "Eskuliburuko ekintza-hitzak eta urratsak segurtasunez jarraitzeko gomendioak.",
+      "quickAnswers": []
+    },
+    {
+      "id": "introduction.que-necesita",
+      "title": "Zer behar duzun",
+      "summary": "CRMra sartzeko behar diren gailua, konexioa, kontua eta nabigatzailea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "introduction.partes-basicas-del-navegador",
+      "title": "Nabigatzailearen oinarrizko atalak",
+      "summary": "Helbide-barra aurkitu eta CRMaren helbide osoa nabigatzailean irekitzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "introduction.uso-seguro",
+      "title": "Erabilera segurua",
+      "summary": "Pasahitzak, sarbidea, partekatutako ekipoak eta datu sentikorrak babesteko arauak.",
+      "quickAnswers": []
+    },
+    {
+      "id": "access.abrir-el-crm",
+      "title": "CRM irekitzea",
+      "summary": "Nabigatzailetik CRMaren sarbide korporatiboa ireki eta identifikazio-pantaila kargatzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "access.identificarse",
+      "title": "Saioa hastea",
+      "summary": "Microsoft kontu korporatiboarekin identifikatzea eta egiaztapena amaitzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "access.guardar-la-direccion-como-favorito",
+      "title": "Helbidea gogokoetan gordetzea",
+      "summary": "CRMaren helbidea nabigatzaileko Gogokoak atalean gordetzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "access.cerrar-la-sesion",
+      "title": "Saioa ixtea",
+      "summary": "Erabiltzaile-menutik CRMko saioa segurtasunez ixtea.",
+      "quickAnswers": [
+        {
+          "id": "access.cerrar-la-sesion.quick-01",
+          "question": "Nola ixten dut CRMko saioa?",
+          "answer": "1. Ireki ezkerreko alboko menua. 2. Sakatu zure erabiltzaile-izena beheko aldean. 3. Sakatu Itxi saioa eta itxaron sarbide-pantailara itzuli arte."
+        }
+      ]
+    },
+    {
+      "id": "common-ui.elementos-comunes-de-la-pantalla",
+      "title": "Pantailaren elementu komunak",
+      "summary": "Alboko menua, goiko barra, eduki-eremua, botoiak eta aplikazioaren mezuak.",
+      "quickAnswers": []
+    },
+    {
+      "id": "common-ui.editar-guardar-y-cancelar",
+      "title": "Editatu, gorde eta utzi",
+      "summary": "Xehetasunak editatu, gorde edo utzi, eta gorde gabeko aldaketen abisuak kudeatzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "common-ui.que-significa-empresa-activa",
+      "title": "Enpresa aktiboa zer den",
+      "summary": "Enpresa aktiboak ikusgai dauden datuetan duen eragina eta hura nola aldatu.",
+      "quickAnswers": []
+    },
+    {
+      "id": "common-ui.cambiar-el-idioma",
+      "title": "Hizkuntza aldatzea",
+      "summary": "Erabiltzaile-menutik CRMaren hizkuntza hautatu eta pantaila berriro kargatzea.",
+      "quickAnswers": [
+        {
+          "id": "common-ui.cambiar-el-idioma.quick-01",
+          "question": "Nola aldatzen dut CRMaren hizkuntza?",
+          "answer": "1. Ireki alboko menua eta sakatu zure erabiltzaile-izena. 2. Sakatu Hizkuntzak eta hautatu erabili nahi duzun hizkuntza. 3. Itxaron pantaila berriro kargatu arte."
+        }
+      ]
+    },
+    {
+      "id": "common-ui.permisos",
+      "title": "Baimenak",
+      "summary": "Baimenek erabilgarri dauden menuak, datuak eta ekintzak nola mugatzen dituzten.",
+      "quickAnswers": []
+    },
+    {
+      "id": "common-ui.perfiles-del-flujo-de-gastos",
+      "title": "Gastuen lan-fluxuko profilak",
+      "summary": "Gastu-fluxuko erabiltzaile estandarraren, onartzailearen eta ordaintzailearen rolak.",
+      "quickAnswers": []
+    },
+    {
+      "id": "visits.modulo-visitas",
+      "title": "Bisitak modulua",
+      "summary": "Bisitak moduluko kontsulta, sorkuntza, edizio eta ezabatze aukerak.",
+      "quickAnswers": []
+    },
+    {
+      "id": "visits.abrir-el-historial-de-visitas",
+      "title": "Bisiten historia irekitzea",
+      "summary": "Bisiten historia ireki eta emaitza-txarteletan agertzen diren datuak ulertzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "visits.filtrar-el-historial",
+      "title": "Historia iragaztea",
+      "summary": "Bisiten historia aldiaren, kontuaren edo jabearen arabera iragaztea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "visits.crear-una-visita-paso-1-cuenta-y-contactos",
+      "title": "Bisita sortzea: 1. urratsa, kontua eta kontaktuak",
+      "summary": "Bisita berri baterako kontua bilatu eta aukerako kontaktuak hautatzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "visits.crear-una-visita-paso-2-datos-de-la-visita",
+      "title": "Bisita sortzea: 2. urratsa, bisitaren datuak",
+      "summary": "Bisitaren nahitaezko datuak bete, berrikusi eta sorkuntza berrestea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "visits.editor-de-texto-y-dictado",
+      "title": "Testu-editorea eta diktaketa",
+      "summary": "Bisitaren testu luzeak editatu edo diktatu, emaitza berrikusi eta gordetzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "visits.consultar-editar-o-eliminar-una-visita",
+      "title": "Bisita kontsultatu, editatu edo ezabatzea",
+      "summary": "Bisita baten xehetasuna kontsultatu eta baimendutako aldaketak edo ezabatzea egitea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.modulo-hojas-de-gastos",
+      "title": "Gastu-orriak modulua",
+      "summary": "Zenbatekoak, lerroak eta tiketak gastu-orri batean nola biltzen diren.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.flujo-general-de-una-hoja-de-gastos",
+      "title": "Gastu-orri baten fluxu orokorra",
+      "summary": "Gastu-orriaren sorkuntza, onarpena eta ordainketa osatzen duten oinarrizko fluxua.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.abrir-la-lista-de-hojas",
+      "title": "Gastu-orrien zerrenda irekitzea",
+      "summary": "Gastu-orrien zerrenda ireki eta txarteletako datu nagusiak irakurtzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.buscar-y-filtrar-hojas",
+      "title": "Gastu-orriak bilatu eta iragaztea",
+      "summary": "Gastu-orriak data, erabiltzaile, orri, proiektu, dibisa edo egoeraren arabera bilatzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.utilizar-el-asistente-de-gastos",
+      "title": "Gastuen laguntzailea erabiltzea",
+      "summary": "Kargatutako gastu-orriak laguntzailearekin aztertu eta emaitzak arduraz egiaztatzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.crear-la-cabecera-de-una-hoja",
+      "title": "Gastu-orriaren goiburua sortzea",
+      "summary": "Gastu-orri berri baten deskribapena, proiektua eta itzulgarritasuna gordetzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.comprender-el-detalle-de-la-hoja",
+      "title": "Gastu-orriaren xehetasuna ulertzea",
+      "summary": "Gastu-orriaren goiburuko datuak, lerroak eta erabilgarri dauden ekintza azkarrak.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.anadir-una-linea-manual",
+      "title": "Gastu-lerro bat eskuz gehitzea",
+      "summary": "Data, kategoria, deskribapena, zenbatekoak eta dibisa dituen lerro bat sortzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.divisas-e-importes-de-una-linea",
+      "title": "Gastu-lerro baten dibisak eta zenbatekoak",
+      "summary": "Gastuaren eta itzulketaren dibisak, zenbatekoak eta kanbio-tasa ulertzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.crear-un-ticket-desde-una-hoja",
+      "title": "Gastu-orri batetik tiketa sortzea",
+      "summary": "Egiaztagiri baten irudia prozesatu, datuak berrikusi eta tiketa orriari lotzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.vincular-tickets-existentes",
+      "title": "Lehendik dauden tiketak lotzea",
+      "summary": "Erabilgarri dauden tiket bat edo batzuk gastu-orri editagarri bati lotzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.editar-la-cabecera-y-las-lineas",
+      "title": "Goiburua eta lerroak editatzea",
+      "summary": "Orri editagarri baten deskribapena, proiektua, itzulgarritasuna eta lerroak aldatzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "tickets.modulo-tickets",
+      "title": "Tiketak modulua",
+      "summary": "Gastu-egiaztagiriak sortu, berrikusi eta gastu-orri editagarriei lotzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "tickets.abrir-y-filtrar-tickets",
+      "title": "Tiketak ireki eta iragaztea",
+      "summary": "Tiket-zerrenda ireki, hainbat irizpideren arabera iragazi eta xehetasuna kontsultatzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "tickets.crear-un-ticket-desde-el-modulo-tickets",
+      "title": "Tiketak modulutik tiketa sortzea",
+      "summary": "Kameratik edo gordetako iruditik tiketa sortu, berrikusi eta gordetzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "tickets.estado-del-ticket",
+      "title": "Tiketaren egoera",
+      "summary": "Pendiente eta Asignado egoerek gastu-orriarekiko loturari buruz zer adierazten duten.",
+      "quickAnswers": [
+        {
+          "id": "tickets.estado-del-ticket.quick-01",
+          "question": "Zer esan nahi dute tiket baten Pendiente eta Asignado egoerek?",
+          "answer": "Pendiente egoeran dagoen tiketa ez dago oraindik orri bati esleituta. Asignado egoeran dagoena gastu-orri bati lotuta dago. Lotura aldatzeko, une honetan tiketa ezabatu, sistemara berriro kargatu eta dagokion gastu-orriari berriz lotu behar zaio."
+        }
+      ]
+    },
+    {
+      "id": "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos",
+      "title": "Gastu-orri baten egoerak eta onarpena",
+      "summary": "Egoerak eta baimenek gastu-orri batean erabilgarri dauden ekintzak nola zehazten dituzten.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expense-approval.flujo-general-de-estados",
+      "title": "Egoeren fluxu orokorra",
+      "summary": "Borrador, onarpen, baztertze eta ordainketa egoeren arteko trantsizioak.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expense-approval.estados-de-la-hoja-de-gastos",
+      "title": "Gastu-orriaren egoerak",
+      "summary": "Gastu-orriaren egoera bakoitza eta jabearentzat duen irakurketa edo edizio-eragina.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expense-approval.acciones-del-propietario",
+      "title": "Jabearen ekintzak",
+      "summary": "Jabeak onarpena eskatu, eskaera desegin edo orria aurreko egoerara itzultzeko aukerak.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expense-approval.acciones-del-responsable",
+      "title": "Arduradunaren ekintzak",
+      "summary": "Arduradunak mendeko baten orria onartu, baztertu edo erabakia lehengoratzeko aukerak.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expense-approval.enlaces-recibidos-por-correo",
+      "title": "Posta elektronikoz jasotako estekak",
+      "summary": "Posta-esteka batetik baimendutako gastu-orria enpresa egokian segurtasunez irekitzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "axapta.relacion-entre-crm-y-axapta",
+      "title": "CRMren eta Axaptaren arteko lotura",
+      "summary": "CRMko gastu-orriak Axaptarekin nola integratzen diren eta noiz blokeatzen diren.",
+      "quickAnswers": []
+    },
+    {
+      "id": "axapta.gestion-del-flujo-en-axapta",
+      "title": "Axaptako fluxuaren kudeaketa",
+      "summary": "Gastu-orrien fluxua Axaptan kudeatzeko dauden bi bideen sarrera.",
+      "quickAnswers": []
+    },
+    {
+      "id": "axapta.hoja-de-gastos-crm-usuarios-hoja-de-gastos",
+      "title": "Gastu-orria: CRM / Usuarios / Hoja de gastos",
+      "summary": "Axaptako gastu-orriaren ohiko inprimakitik erabilgarri dauden ekintzak irekitzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "axapta.gestion-de-hojas-de-gastos",
+      "title": "Gastu-orrien kudeaketa",
+      "summary": "Axaptako kudeaketa-inprimakian erabiltzaileak, gastu-orriak eta egoerak kontsultatzea.",
+      "quickAnswers": []
+    },
+    {
+      "id": "axapta.estados-visibles-en-axapta",
+      "title": "Axaptan ikusgai dauden egoerak",
+      "summary": "Axaptan ikusgai dauden Borrador, onarpen, baztertze eta ordainketa egoeren esanahia.",
+      "quickAnswers": []
+    },
+    {
+      "id": "axapta.acciones-disponibles-en-axapta",
+      "title": "Axaptan erabilgarri dauden ekintzak",
+      "summary": "Axaptan orriaren egoeraren eta erabiltzaile-baimenen arabera dauden fluxu-ekintzak.",
+      "quickAnswers": []
+    },
+    {
+      "id": "troubleshooting.la-pagina-no-abre",
+      "title": "Orria ez da irekitzen",
+      "summary": "Konexioa eta CRMaren helbidea egiaztatu, eguneratu eta arazoa jakinaraztea.",
+      "quickAnswers": [
+        {
+          "id": "troubleshooting.la-pagina-no-abre.quick-01",
+          "question": "Zer egin behar dut CRMaren orria irekitzen ez bada?",
+          "answer": "1. Egiaztatu gailuak konexioa duela. 2. Egiaztatu helbidea (https://crm.insertec.biz:7702/) osorik dagoela eta zuriunerik ez duela. 3. Sakatu Eguneratu behin eta itxaron. 4. Arazoak jarraitzen badu, itxi nabigatzailea, ireki berriro eta saiatu. 5. Beste orriak badabiltza baina CRM ez, jakinarazi ordua, helbidea eta mezua."
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting.la-identificacion-se-repite",
+      "title": "Identifikazioa errepikatzen da",
+      "summary": "Kontu korporatiboa eta sarbide ofiziala egiaztatzea identifikazioa errepikatzen bada.",
+      "quickAnswers": [
+        {
+          "id": "troubleshooting.la-identificacion-se-repite.quick-01",
+          "question": "Zer egin behar dut identifikazioa errepikatzen bada?",
+          "answer": "Itxi CRMaren fitxa guztiak, egiaztatu kontu korporatibo zuzena erabiltzen ari zarela eta sartu berriro sarbide ofizialetik. Ez probatu pasahitzak behin eta berriz. Kontua blokeatuta badago edo egiaztapenak huts egiten badu, jarri harremanetan laguntza-zerbitzuarekin."
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting.no-aparece-un-menu-boton-o-usuario",
+      "title": "Menu, botoi edo erabiltzaile bat ez da agertzen",
+      "summary": "Enpresa aktiboa, baimenak eta kudeaketa-hierarkia egiaztatzea aukera bat falta bada.",
+      "quickAnswers": [
+        {
+          "id": "troubleshooting.no-aparece-un-menu-boton-o-usuario.quick-01",
+          "question": "Zergatik ez da menu, botoi edo erabiltzaile bat agertzen?",
+          "answer": "Egiaztatu enpresa aktiboa eta eguneratu pantaila. Aukerak agertzen jarraitzen ez badu, baimenengatik edo kudeaketa-hierarkiagatik izan daiteke. Ez erabili beste pertsona baten saioa."
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting.no-se-puede-guardar",
+      "title": "Ezin da gorde",
+      "summary": "Nahitaezko eremuak, zenbatekoak, egoera eta baimenak berrikustea gordetzerik ez badago.",
+      "quickAnswers": [
+        {
+          "id": "troubleshooting.no-se-puede-guardar.quick-01",
+          "question": "Zer berrikusi behar dut gorde ezin badut?",
+          "answer": "Berrikusi nahitaezko eremuak eta gorrizko mezuak. Bisitak atalean, egiaztatu Kontua, Bisita mota, Deskribapena eta Iruzkinak. Orri berri batean, egiaztatu Deskribapena; enpresak ematen du Itzulketaren dibisa. Lerro edo tiket batean, berrikusi Data, Kategoria, zenbatekoak eta dibisa. Botoia blokeatuta badago, erregistroa irakurtzeko soilik egon daiteke egoeragatik, ordainketagatik edo baimenengatik."
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting.la-imagen-del-ticket-no-se-procesa",
+      "title": "Tiketaren irudia ez da prozesatzen",
+      "summary": "Irudiaren formatua, tamaina, kameraren baimena eta argazkiaren kalitatea egiaztatzea.",
+      "quickAnswers": [
+        {
+          "id": "troubleshooting.la-imagen-del-ticket-no-se-procesa.quick-01",
+          "question": "Zer egin behar dut tiketaren irudia prozesatzen ez bada?",
+          "answer": "1. Egiaztatu formatua onartuta dagoela eta irudiak ez duela muga gainditzen. 2. Kamera erabiltzean, eman baimena nabigatzaileak CRMrako eskatzen duenean bakarrik. 3. Atera beste argazki bat argi uniformearekin, datuak moztu gabe eta islarik gabe. 4. Berriz saiatu kargatzen agertzen bada, erabili behin eta itxaron. 5. Tiket partziala sortu bada, idatzi identifikatzailea mezua itxi aurretik."
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting.que-informacion-enviar-a-soporte",
+      "title": "Laguntza-zerbitzura bidali beharreko informazioa",
+      "summary": "Arazo bat ikertzeko laguntza-zerbitzuak behar dituen datuak, mezua eta pantaila-argazkia.",
+      "quickAnswers": [
+        {
+          "id": "troubleshooting.que-informacion-enviar-a-soporte.quick-01",
+          "question": "Zer informazio bidali behar diot laguntza-zerbitzuari?",
+          "answer": "Bidali erabiltzaile-izen korporatiboa, pasahitzik gabe; enpresa aktiboa; modulua eta ekintza; bisitaren, orriaren edo tiketaren identifikatzailea; gutxi gorabeherako data eta ordua; errore-mezu osoa; eta pasahitzik, sarbide-koderik edo beharrezkoa ez den daturik erakusten ez duen pantaila-argazkia."
+        }
+      ]
+    },
+    {
+      "id": "glossary.glosario-basico",
+      "title": "Oinarrizko glosarioa",
+      "summary": "CRMaren pantailan, bisitetan eta gastu-fluxuan erabiltzen diren 23 oinarrizko terminoak.",
+      "quickAnswers": []
+    }
+  ]
+}

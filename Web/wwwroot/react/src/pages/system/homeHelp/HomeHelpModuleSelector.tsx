@@ -1,4 +1,5 @@
 import React from "react";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import type { HelpModule } from "./helpTypes.ts";
 import type { HomeHelpCatalogState } from "./useHomeHelpModuleCatalog.ts";
 
@@ -11,12 +12,15 @@ type HomeHelpModuleChoicesProps = {
   loadingLabel: string;
   errorLabel: string;
   emptyLabel: string;
+  firstOptionRef: React.RefObject<HTMLButtonElement | null>;
   onSelect: (moduleId: string) => void;
 };
 
 type HomeHelpModuleSummaryProps = {
   variant: "summary";
   label: string;
+  backAriaLabel: string;
+  onBack: () => void;
 };
 
 type HomeHelpModuleSelectorProps = HomeHelpModuleChoicesProps | HomeHelpModuleSummaryProps;
@@ -24,7 +28,20 @@ type HomeHelpModuleSelectorProps = HomeHelpModuleChoicesProps | HomeHelpModuleSu
 // Renders either the global module choices or the locked conversation module summary.
 const HomeHelpModuleSelector = (props: HomeHelpModuleSelectorProps) => {
   if (props.variant === "summary") {
-    return <p className="text-[11px] font-semibold leading-4 text-primary">{props.label}</p>;
+    return (
+      <div className="flex items-center justify-between gap-2">
+        <p className="min-w-0 flex-1 text-[11px] font-semibold leading-4 text-primary">{props.label}</p>
+        <button
+          type="button"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-xl)] border border-primary/15 bg-white text-primary transition hover:border-primary/30 hover:bg-primary/5 focus:outline-hidden focus:ring-2 focus:ring-primary/25"
+          aria-label={props.backAriaLabel}
+          title={props.backAriaLabel}
+          onClick={props.onBack}
+        >
+          <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+    );
   }
 
   if (props.catalogState === "loading" || props.catalogState === "idle") {
@@ -49,11 +66,12 @@ const HomeHelpModuleSelector = (props: HomeHelpModuleSelectorProps) => {
 
   return (
     <div className="w-full space-y-1.5" role="group" aria-label={props.ariaLabel}>
-      {props.modules.map((module) => {
+      {props.modules.map((module, index) => {
         const selected = module.id === props.selectedModuleId;
         return (
           <button
             key={module.id}
+            ref={index === 0 ? props.firstOptionRef : undefined}
             type="button"
             aria-pressed={selected}
             className={`block w-full rounded-[var(--radius-xl)] border px-3 py-2 text-left text-[11px] font-semibold leading-4 transition focus:outline-hidden focus:ring-2 focus:ring-primary/20 ${

@@ -1,5 +1,5 @@
 {
-    "schemaVersion":  "1.0",
+    "schemaVersion":  "1.1",
     "valid":  true,
     "errors":  [
 
@@ -13,8 +13,11 @@
                    "publishedTopics":  60,
                    "chunks":  60,
                    "quickAnswers":  9,
-                   "assets":  54
+                   "assets":  54,
+                   "locales":  6,
+                   "localizedTopics":  360,
+                   "localizedChunks":  360
                },
-    "knowledgeHash":  "3747E5698E3C39CF78798278FD1A493447F0E6E6C433677DFD511CCA8DCF30DA",
-    "bundleSha256":  null
+    "knowledgeHash":  "15D5280AAC798833050CD542BFF5AB1BF3186B87D6C7F8C21F67E287EEE65CCE",
+    "bundleSha256":  "FCBDF79D086A14708CE8B3EC05A47F30675D5C06EBA869D8F4A9D890492F5A8D"
 }

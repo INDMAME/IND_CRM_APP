@@ -1804,6 +1804,7 @@
   <data name="HomeHelp_ModuleSelectionTitle" xml:space="preserve"><value>您需要哪个部分的帮助？</value></data>
   <data name="HomeHelp_ModuleSelectionBody" xml:space="preserve"><value>选择一个部分后即可输入问题。</value></data>
   <data name="HomeHelp_ModuleSelectionLocked" xml:space="preserve"><value>对话部分：{0}</value></data>
+  <data name="HomeHelp_ChangeModule" xml:space="preserve"><value>返回选择其他部分</value></data>
   <data name="HomeHelp_Loading" xml:space="preserve"><value>正在搜索 CRM 指南…</value></data>
   <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>请求过多。请稍候再试。</value></data>
   <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>助手当前不可用。</value></data>

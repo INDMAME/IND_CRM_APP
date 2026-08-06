@@ -12,6 +12,7 @@ Set-StrictMode -Version Latest
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 $ValidationErrors = New-Object Collections.Generic.List[string]
 $ValidationWarnings = New-Object Collections.Generic.List[string]
+$ExpectedSupportedLocales = @("es-ES", "eu-ES", "en", "pt", "it", "zh-Hans")
 
 function Write-Utf8File {
     param(
@@ -92,11 +93,14 @@ function Get-CanonicalHash {
 }
 
 function Get-ModelMarkdown {
-    param([Parameter(Mandatory = $true)][string]$Markdown)
+    param(
+        [Parameter(Mandatory = $true)][string]$Markdown,
+        [string]$ImageReferenceLabel = "Captura de referencia"
+    )
 
     $value = [regex]::Replace($Markdown, "(?m)^#\s+.+?\r?$", "")
     $value = [regex]::Replace($value, "<!--.*?-->", "", [Text.RegularExpressions.RegexOptions]::Singleline)
-    $value = [regex]::Replace($value, "!\[(?<alt>[^\]]*)\]\([^)]+\)", "[Captura de referencia: `${alt}]")
+    $value = [regex]::Replace($value, "!\[(?<alt>[^\]]*)\]\([^)]+\)", "[${ImageReferenceLabel}: `${alt}]")
     return $value.Trim()
 }
 
@@ -129,6 +133,7 @@ function New-TopicChunks {
         [Parameter(Mandatory = $true)][string]$Markdown,
         [Parameter(Mandatory = $true)][string]$ContentPath,
         [Parameter(Mandatory = $true)]$AssetByAbsolutePath,
+        [string]$ImageReferenceLabel = "Captura de referencia",
         [int]$MaximumCharacters = 6000
     )
 
@@ -147,7 +152,7 @@ function New-TopicChunks {
         if ($currentBlocks.Count -eq 0) { return }
         $chunkIndex++
         $chunkMarkdown = (($currentBlocks -join "`n`n").Trim())
-        $chunkBody = Get-ModelMarkdown $chunkMarkdown
+        $chunkBody = Get-ModelMarkdown -Markdown $chunkMarkdown -ImageReferenceLabel $ImageReferenceLabel
         $assetIds = Get-ImageReferences -Markdown $chunkMarkdown -ContentPath $ContentPath -AssetByAbsolutePath $AssetByAbsolutePath
         $chunks.Add([ordered]@{
             id = "$($Topic.id)--{0:D2}" -f $chunkIndex
@@ -200,6 +205,7 @@ $knowledgePath = Join-Path $RootPath "knowledge.json"
 $knowledge = Read-JsonFile $knowledgePath
 $navigation = if ($knowledge) { Read-JsonFile (Join-Path $RootPath ([string]$knowledge.navigationPath)) } else { $null }
 $assetManifest = if ($knowledge) { Read-JsonFile (Join-Path $RootPath ([string]$knowledge.assetManifestPath)) } else { $null }
+$supportedLocales = if ($knowledge) { Get-StringArray $knowledge.supportedResponseLocales } else { @() }
 
 $canonicalFiles = New-Object Collections.Generic.List[string]
 if (Test-Path -LiteralPath $knowledgePath) { $canonicalFiles.Add($knowledgePath) }
@@ -211,11 +217,66 @@ $topicById = @{}
 $topicSourceById = @{}
 $assetById = @{}
 $assetByAbsolutePath = @{}
+$localizationByLocale = @{}
+$localizedModuleByLocale = @{}
+$localizedTopicByLocale = @{}
 
 if ($knowledge) {
-    if ([string]$knowledge.schemaVersion -ne "1.0") { Add-ValidationError "knowledge.json schemaVersion must be '1.0'." }
+    if ([string]$knowledge.schemaVersion -ne "1.1") { Add-ValidationError "knowledge.json schemaVersion must be '1.1'." }
     if ([string]::IsNullOrWhiteSpace([string]$knowledge.knowledgeVersion)) { Add-ValidationError "knowledge.json knowledgeVersion is required." }
     if ([string]::IsNullOrWhiteSpace([string]$knowledge.defaultLocale)) { Add-ValidationError "knowledge.json defaultLocale is required." }
+    if ([string]$knowledge.defaultLocale -ne "es-ES") { Add-ValidationError "knowledge.json defaultLocale must be 'es-ES'." }
+    if ($supportedLocales -notcontains [string]$knowledge.defaultLocale) { Add-ValidationError "knowledge.json defaultLocale must be supported." }
+    if ($supportedLocales.Count -ne $ExpectedSupportedLocales.Count -or @(Compare-Object -ReferenceObject $ExpectedSupportedLocales -DifferenceObject $supportedLocales).Count -ne 0) {
+        Add-ValidationError "knowledge.json supportedResponseLocales must contain exactly: $($ExpectedSupportedLocales -join ', ')."
+    }
+
+    $localizationPathsProperty = $knowledge.PSObject.Properties["localizationMetadataPaths"]
+    if ($null -eq $localizationPathsProperty) {
+        Add-ValidationError "knowledge.json localizationMetadataPaths is required."
+    }
+    else {
+        foreach ($locale in $supportedLocales) {
+            $pathProperty = $knowledge.localizationMetadataPaths.PSObject.Properties[$locale]
+            if ($null -eq $pathProperty -or [string]::IsNullOrWhiteSpace([string]$pathProperty.Value)) {
+                Add-ValidationError "knowledge.json has no localization metadata path for locale '$locale'."
+                continue
+            }
+
+            $localizationPath = Join-Path $RootPath ([string]$pathProperty.Value).Replace("/", "\")
+            $localization = Read-JsonFile $localizationPath
+            if (-not $localization) { continue }
+            $canonicalFiles.Add($localizationPath)
+
+            if ([string]$localization.schemaVersion -ne "1.0") { Add-ValidationError "Localization '$locale' schemaVersion must be '1.0'." }
+            if ([string]$localization.locale -ne $locale) { Add-ValidationError "Localization '$localizationPath' declares locale '$($localization.locale)' instead of '$locale'." }
+            if ([string]$localization.status -notin @("source", "machine-draft", "reviewed")) { Add-ValidationError "Localization '$locale' has invalid status '$($localization.status)'." }
+            if ([string]::IsNullOrWhiteSpace([string]$localization.title)) { Add-ValidationError "Localization '$locale' has no Manual title." }
+            if ($locale -eq [string]$knowledge.defaultLocale -and [string]$localization.title -ne [string]$knowledge.title) {
+                Add-ValidationError "Default-locale Manual title differs from knowledge.json."
+            }
+
+            $moduleMap = @{}
+            foreach ($localizedModule in @($localization.modules)) {
+                $localizedModuleId = [string]$localizedModule.id
+                if ([string]::IsNullOrWhiteSpace($localizedModuleId)) { Add-ValidationError "Localization '$locale' contains a module without id."; continue }
+                if ($moduleMap.ContainsKey($localizedModuleId)) { Add-ValidationError "Localization '$locale' repeats module '$localizedModuleId'."; continue }
+                $moduleMap[$localizedModuleId] = $localizedModule
+            }
+
+            $topicMap = @{}
+            foreach ($localizedTopic in @($localization.topics)) {
+                $localizedTopicId = [string]$localizedTopic.id
+                if ([string]::IsNullOrWhiteSpace($localizedTopicId)) { Add-ValidationError "Localization '$locale' contains a topic without id."; continue }
+                if ($topicMap.ContainsKey($localizedTopicId)) { Add-ValidationError "Localization '$locale' repeats topic '$localizedTopicId'."; continue }
+                $topicMap[$localizedTopicId] = $localizedTopic
+            }
+
+            $localizationByLocale[$locale] = $localization
+            $localizedModuleByLocale[$locale] = $moduleMap
+            $localizedTopicByLocale[$locale] = $topicMap
+        }
+    }
 
     $sourcePath = Join-Path $repoRoot ([string]$knowledge.source.path).Replace("/", "\")
     if (-not (Test-Path -LiteralPath $sourcePath -PathType Leaf)) {
@@ -293,7 +354,6 @@ foreach ($topicFile in $allTopicFiles) {
     $topicSourceById[$topicId] = $topicFile.FullName
 }
 
-$supportedLocales = if ($knowledge) { Get-StringArray $knowledge.supportedResponseLocales } else { @() }
 $allowedRouteKeys = if ($navigation) { Get-StringArray $navigation.allowedRouteKeys } else { @() }
 $orderedTopicIds = New-Object Collections.Generic.List[string]
 $orderedModuleIds = New-Object Collections.Generic.List[string]
@@ -324,6 +384,35 @@ foreach ($topicId in $topicById.Keys) {
 }
 foreach ($topicId in $orderedTopicIds) {
     if (-not $topicById.ContainsKey($topicId)) { Add-ValidationError "navigation.json references unknown topic '$topicId'." }
+}
+
+foreach ($locale in $supportedLocales) {
+    if (-not $localizedModuleByLocale.ContainsKey($locale) -or -not $localizedTopicByLocale.ContainsKey($locale)) {
+        continue
+    }
+
+    $localizedModules = $localizedModuleByLocale[$locale]
+    $localizedTopics = $localizedTopicByLocale[$locale]
+    $localizedModuleIds = @($localizationByLocale[$locale].modules | ForEach-Object { [string]$_.id })
+    $localizedTopicIds = @($localizationByLocale[$locale].topics | ForEach-Object { [string]$_.id })
+    if (($localizedModuleIds -join "|") -ne (@($orderedModuleIds) -join "|")) {
+        Add-ValidationError "Localization '$locale' module order differs from navigation.json."
+    }
+    if (($localizedTopicIds -join "|") -ne (@($orderedTopicIds) -join "|")) {
+        Add-ValidationError "Localization '$locale' topic order differs from navigation.json."
+    }
+    foreach ($moduleId in $moduleById.Keys) {
+        if (-not $localizedModules.ContainsKey($moduleId)) { Add-ValidationError "Localization '$locale' has no module '$moduleId'." }
+    }
+    foreach ($moduleId in $localizedModules.Keys) {
+        if (-not $moduleById.ContainsKey($moduleId)) { Add-ValidationError "Localization '$locale' references unknown module '$moduleId'." }
+    }
+    foreach ($topicId in $topicById.Keys) {
+        if (-not $localizedTopics.ContainsKey($topicId)) { Add-ValidationError "Localization '$locale' has no topic '$topicId'." }
+    }
+    foreach ($topicId in $localizedTopics.Keys) {
+        if (-not $topicById.ContainsKey($topicId)) { Add-ValidationError "Localization '$locale' references unknown topic '$topicId'." }
+    }
 }
 
 $bundleTopics = New-Object Collections.Generic.List[object]
@@ -361,7 +450,7 @@ foreach ($topicId in $orderedTopicIds) {
         if (-not $assetById.ContainsKey($assetId)) { Add-ValidationError "Topic '$topicId' references unknown asset '$assetId'." }
     }
 
-    $chunks = New-TopicChunks -Topic $topic -Markdown $markdown -ContentPath $contentPath -AssetByAbsolutePath $assetByAbsolutePath
+    $chunks = @(New-TopicChunks -Topic $topic -Markdown $markdown -ContentPath $contentPath -AssetByAbsolutePath $assetByAbsolutePath)
     if ([string]$topic.status -eq "published" -and $chunks.Count -eq 0) { Add-ValidationError "Published topic '$topicId' generated no chunks." }
     $chunkIds = @($chunks | ForEach-Object { [string]$_.id })
     foreach ($quickAnswer in @($topic.quickAnswers)) {
@@ -370,6 +459,106 @@ foreach ($topicId in $orderedTopicIds) {
         }
         foreach ($chunkId in Get-StringArray $quickAnswer.sourceChunkIds) {
             if ($chunkIds -notcontains $chunkId) { Add-ValidationError "Quick answer '$($quickAnswer.id)' references unknown chunk '$chunkId'." }
+        }
+    }
+
+    $topicLocalizations = [ordered]@{}
+    foreach ($locale in $supportedLocales) {
+        if (-not $localizedTopicByLocale.ContainsKey($locale) -or -not $localizedTopicByLocale[$locale].ContainsKey($topicId)) {
+            continue
+        }
+
+        $localizedTopic = $localizedTopicByLocale[$locale][$topicId]
+        $localizedTitle = [string]$localizedTopic.title
+        $localizedSummary = [string]$localizedTopic.summary
+        if ([string]::IsNullOrWhiteSpace($localizedTitle)) { Add-ValidationError "Topic '$topicId' has no title for locale '$locale'." }
+        if ([string]::IsNullOrWhiteSpace($localizedSummary)) { Add-ValidationError "Topic '$topicId' has no short description for locale '$locale'." }
+        if ($localizedSummary.Length -gt 120) { Add-ValidationError "Topic '$topicId' short description for locale '$locale' exceeds 120 characters." }
+        if ($locale -eq [string]$knowledge.defaultLocale) {
+            if ($localizedTitle -ne [string]$topic.title) { Add-ValidationError "Topic '$topicId' default-locale title differs from topic.json." }
+        }
+
+        $localizedContentPath = Join-Path (Split-Path -Parent $topicPath) "content.$locale.md"
+        if (-not (Test-Path -LiteralPath $localizedContentPath -PathType Leaf)) {
+            Add-ValidationError "Topic '$topicId' is missing content.$locale.md."
+            continue
+        }
+        if ($localizedContentPath -ne $contentPath) { $canonicalFiles.Add($localizedContentPath) }
+        $localizedMarkdown = [IO.File]::ReadAllText($localizedContentPath, $Utf8NoBom)
+        $localizedHeadingMatch = [regex]::Match($localizedMarkdown, "(?m)^#\s+(?<title>.+?)\s*$")
+        if (-not $localizedHeadingMatch.Success) {
+            Add-ValidationError "Topic '$topicId' content for locale '$locale' has no level-one title."
+        }
+        elseif ($localizedHeadingMatch.Groups["title"].Value.Trim() -ne $localizedTitle) {
+            Add-ValidationError "Topic '$topicId' level-one title differs from locale '$locale' metadata."
+        }
+        $imageReferenceLabel = [string]$localizationByLocale[$locale].imageReferenceLabel
+        if ([string]::IsNullOrWhiteSpace($imageReferenceLabel)) { Add-ValidationError "Localization '$locale' has no imageReferenceLabel." }
+        $localizedUsefulText = [regex]::Replace((Get-ModelMarkdown -Markdown $localizedMarkdown -ImageReferenceLabel $imageReferenceLabel), "\[[^\]]+:[^\]]*\]", "").Trim()
+        # CJK text conveys the same meaning with fewer characters than Latin-script renditions.
+        $minimumUsefulCharacters = if ($locale -eq "zh-Hans") { 12 } else { 40 }
+        if ([string]$topic.status -eq "published" -and $localizedUsefulText.Length -lt $minimumUsefulCharacters) {
+            Add-ValidationError "Published topic '$topicId' has no useful content for locale '$locale'."
+        }
+
+        $localizedTopicIdentity = [pscustomobject]@{ id = $topicId; title = $localizedTitle }
+        $localizedChunks = @(New-TopicChunks -Topic $localizedTopicIdentity -Markdown $localizedMarkdown -ContentPath $localizedContentPath -AssetByAbsolutePath $assetByAbsolutePath -ImageReferenceLabel $imageReferenceLabel)
+        $localizedChunkIds = @($localizedChunks | ForEach-Object { [string]$_.id })
+        if (($localizedChunkIds -join "|") -ne ($chunkIds -join "|")) {
+            Add-ValidationError "Topic '$topicId' locale '$locale' generates different chunk ids from the source locale."
+        }
+        for ($chunkIndex = 0; $chunkIndex -lt [Math]::Min($chunks.Count, $localizedChunks.Count); $chunkIndex++) {
+            $sourceImageRefs = @(Get-StringArray $chunks[$chunkIndex].imageRefs)
+            $localizedImageRefs = @(Get-StringArray $localizedChunks[$chunkIndex].imageRefs)
+            if (($sourceImageRefs -join "|") -ne ($localizedImageRefs -join "|")) {
+                Add-ValidationError "Topic '$topicId' locale '$locale' does not preserve the source image references."
+            }
+        }
+
+        $localizedQuickAnswerById = @{}
+        foreach ($localizedQuickAnswer in @($localizedTopic.quickAnswers)) {
+            $localizedQuickAnswerId = [string]$localizedQuickAnswer.id
+            if ([string]::IsNullOrWhiteSpace($localizedQuickAnswerId)) { Add-ValidationError "Topic '$topicId' locale '$locale' has a quick answer without id."; continue }
+            if ($localizedQuickAnswerById.ContainsKey($localizedQuickAnswerId)) { Add-ValidationError "Topic '$topicId' locale '$locale' repeats quick answer '$localizedQuickAnswerId'."; continue }
+            $localizedQuickAnswerById[$localizedQuickAnswerId] = $localizedQuickAnswer
+        }
+
+        $localizedQuickAnswers = New-Object Collections.Generic.List[object]
+        foreach ($quickAnswer in @($topic.quickAnswers)) {
+            $quickAnswerId = [string]$quickAnswer.id
+            if (-not $localizedQuickAnswerById.ContainsKey($quickAnswerId)) {
+                Add-ValidationError "Topic '$topicId' locale '$locale' has no quick answer '$quickAnswerId'."
+                continue
+            }
+            $localizedQuickAnswer = $localizedQuickAnswerById[$quickAnswerId]
+            if ([string]::IsNullOrWhiteSpace([string]$localizedQuickAnswer.question) -or [string]::IsNullOrWhiteSpace([string]$localizedQuickAnswer.answer)) {
+                Add-ValidationError "Quick answer '$quickAnswerId' is empty for locale '$locale'."
+            }
+            if ($locale -eq [string]$knowledge.defaultLocale -and
+                ([string]$localizedQuickAnswer.question -ne [string]$quickAnswer.question -or
+                 [string]$localizedQuickAnswer.answer -ne [string]$quickAnswer.answer)) {
+                Add-ValidationError "Quick answer '$quickAnswerId' default-locale text differs from topic.json."
+            }
+            $localizedQuickAnswers.Add([ordered]@{
+                id = $quickAnswerId
+                question = [string]$localizedQuickAnswer.question
+                answer = [string]$localizedQuickAnswer.answer
+                sourceChunkIds = [string[]]@(Get-StringArray $quickAnswer.sourceChunkIds)
+            })
+        }
+        foreach ($localizedQuickAnswerId in $localizedQuickAnswerById.Keys) {
+            if (@($topic.quickAnswers | ForEach-Object { [string]$_.id }) -notcontains $localizedQuickAnswerId) {
+                Add-ValidationError "Topic '$topicId' locale '$locale' references unknown quick answer '$localizedQuickAnswerId'."
+            }
+        }
+
+        $topicLocalizations[$locale] = [ordered]@{
+            title = $localizedTitle
+            summary = $localizedSummary
+            status = [string]$localizationByLocale[$locale].status
+            contentHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $localizedContentPath).Hash
+            quickAnswers = [object[]]@($localizedQuickAnswers | ForEach-Object { $_ })
+            chunks = [object[]]@($localizedChunks)
         }
     }
 
@@ -392,6 +581,7 @@ foreach ($topicId in $orderedTopicIds) {
         source = $topic.source
         quickAnswers = [object[]]@($topic.quickAnswers)
         chunks = [object[]]@($chunks)
+        localizations = $topicLocalizations
     })
 }
 
@@ -457,6 +647,23 @@ $knowledgeHash = if ($canonicalFiles.Count -gt 0) { Get-CanonicalHash -Root $Roo
 $bundleModules = @($orderedModuleIds | ForEach-Object {
     if (-not $moduleById.ContainsKey($_)) { return }
     $module = $moduleById[$_]
+    $moduleLocalizations = [ordered]@{}
+    foreach ($locale in $supportedLocales) {
+        if (-not $localizedModuleByLocale.ContainsKey($locale) -or -not $localizedModuleByLocale[$locale].ContainsKey([string]$module.id)) {
+            continue
+        }
+        $localizedModule = $localizedModuleByLocale[$locale][[string]$module.id]
+        if ([string]::IsNullOrWhiteSpace([string]$localizedModule.title)) { Add-ValidationError "Module '$($module.id)' has no title for locale '$locale'." }
+        if ([string]::IsNullOrWhiteSpace([string]$localizedModule.description)) { Add-ValidationError "Module '$($module.id)' has no description for locale '$locale'." }
+        if ($locale -eq [string]$knowledge.defaultLocale) {
+            if ([string]$localizedModule.title -ne [string]$module.title) { Add-ValidationError "Module '$($module.id)' default-locale title differs from module.json." }
+            if ([string]$localizedModule.description -ne [string]$module.description) { Add-ValidationError "Module '$($module.id)' default-locale description differs from module.json." }
+        }
+        $moduleLocalizations[$locale] = [ordered]@{
+            title = [string]$localizedModule.title
+            description = [string]$localizedModule.description
+        }
+    }
     [ordered]@{
         id = [string]$module.id
         title = [string]$module.title
@@ -464,6 +671,7 @@ $bundleModules = @($orderedModuleIds | ForEach-Object {
         order = [int]$module.order
         aliases = $module.aliases
         topicIds = [string[]]@(Get-StringArray $module.topicIds)
+        localizations = $moduleLocalizations
     }
 })
 $bundleAssets = @($assetById.Values | Sort-Object { [string]$_.id } | ForEach-Object {
@@ -477,12 +685,20 @@ $bundleAssets = @($assetById.Values | Sort-Object { [string]$_.id } | ForEach-Ob
     }
 })
 
+$titleLocalizations = [ordered]@{}
+foreach ($locale in $supportedLocales) {
+    if ($localizationByLocale.ContainsKey($locale)) {
+        $titleLocalizations[$locale] = [string]$localizationByLocale[$locale].title
+    }
+}
+
 $bundle = if ($knowledge) {
     [ordered]@{
-        schemaVersion = "1.0"
+        schemaVersion = "1.1"
         knowledgeVersion = [string]$knowledge.knowledgeVersion
         knowledgeHash = $knowledgeHash
         title = [string]$knowledge.title
+        titleLocalizations = $titleLocalizations
         defaultLocale = [string]$knowledge.defaultLocale
         supportedResponseLocales = [string[]]$supportedLocales
         source = $knowledge.source
@@ -500,7 +716,7 @@ if ($ValidationErrors.Count -eq 0 -and -not $ValidateOnly) {
 }
 
 $report = [ordered]@{
-    schemaVersion = "1.0"
+    schemaVersion = "1.1"
     valid = ($ValidationErrors.Count -eq 0)
     errors = @($ValidationErrors | ForEach-Object { $_ })
     warnings = @($ValidationWarnings | ForEach-Object { $_ })
@@ -511,6 +727,9 @@ $report = [ordered]@{
         chunks = @($bundleTopics | ForEach-Object { @($_.chunks).Count } | Measure-Object -Sum).Sum
         quickAnswers = @($topicById.Values | ForEach-Object { @($_.quickAnswers).Count } | Measure-Object -Sum).Sum
         assets = $assetById.Count
+        locales = $localizationByLocale.Count
+        localizedTopics = @($bundleTopics | ForEach-Object { $_.localizations.Keys.Count } | Measure-Object -Sum).Sum
+        localizedChunks = @($bundleTopics | ForEach-Object { $_.localizations.Values | ForEach-Object { @($_.chunks).Count } } | Measure-Object -Sum).Sum
     }
     knowledgeHash = $knowledgeHash
     bundleSha256 = $bundleHash

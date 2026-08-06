@@ -18,12 +18,9 @@
         || environmentName.Equals("Development", StringComparison.OrdinalIgnoreCase)
         || environmentName.StartsWith("DEV-", StringComparison.OrdinalIgnoreCase)
         || environmentName.StartsWith("DEV_", StringComparison.OrdinalIgnoreCase);
-    var homePageSpacingClass = helpAssistantEnabled
-        ? "pt-4 pb-[calc(7rem+env(safe-area-inset-bottom,0px))] md:pt-8"
-        : "py-4 md:py-8";
 }
 
-<div class="relative isolate flex flex-1 items-stretch @homePageSpacingClass">
+<div class="relative isolate flex flex-1 items-stretch py-4 md:py-8">
     @if (helpAssistantEnabled)
     {
         <div id="home-help-assistant-root"
@@ -97,6 +94,7 @@
             HomeHelp_ModuleSelectionTitle = SR["HomeHelp_ModuleSelectionTitle"].Value,
             HomeHelp_ModuleSelectionBody = SR["HomeHelp_ModuleSelectionBody"].Value,
             HomeHelp_ModuleSelectionLocked = SR["HomeHelp_ModuleSelectionLocked"].Value,
+            HomeHelp_ChangeModule = SR["HomeHelp_ChangeModule"].Value,
             HomeHelp_TopicQuestionTemplate = SR["HomeHelp_TopicQuestionTemplate"].Value,
             HomeHelp_Loading = SR["HomeHelp_Loading"].Value,
             HomeHelp_ErrorRateLimit = SR["HomeHelp_ErrorRateLimit"].Value,

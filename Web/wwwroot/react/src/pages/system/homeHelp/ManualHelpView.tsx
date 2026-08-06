@@ -1,6 +1,5 @@
-import { BookOpenIcon } from "@heroicons/react/24/outline";
-import { useRef } from "react";
-import { indFormat, indT } from "../../../utils/indI18n.ts";
+import { useEffect, useRef } from "react";
+import { indT } from "../../../utils/indI18n.ts";
 import HomeHelpTopicBrowser from "./HomeHelpTopicBrowser.tsx";
 import ManualHelpTopicContent from "./ManualHelpTopicContent.tsx";
 import type { HelpResponseLocale } from "./helpTypes.ts";
@@ -12,7 +11,8 @@ type ManualHelpViewProps = {
 
 // Composes the Manual topic index and its inline document reader.
 const ManualHelpView = ({ responseLocale }: ManualHelpViewProps) => {
-  const topicRegionRef = useRef<HTMLDivElement | null>(null);
+  const topicContentRef = useRef<HTMLElement | null>(null);
+  const pendingFocusTopicIdRef = useRef("");
   const {
     catalog,
     catalogLoading,
@@ -24,22 +24,22 @@ const ManualHelpView = ({ responseLocale }: ManualHelpViewProps) => {
     selectTopic,
   } = useManualHelpCatalog(responseLocale);
 
+  useEffect(() => {
+    if (!topic?.id || pendingFocusTopicIdRef.current !== topic.id) {
+      return;
+    }
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      topicContentRef.current?.focus({ preventScroll: true });
+      topicContentRef.current?.scrollIntoView({ block: "start" });
+      pendingFocusTopicIdRef.current = "";
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [topic?.id]);
+
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5">
-      <header className="text-center">
-        <span className="mx-auto inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-xl)] bg-primary/10 text-primary">
-          <BookOpenIcon className="h-6 w-6" aria-hidden="true" />
-        </span>
-        <h1 className="mt-3 text-balance text-2xl font-semibold text-primary">
-          {indT("Nav_Manual", "Manual")}
-        </h1>
-        {catalog?.knowledgeVersion ? (
-          <p className="mt-1 text-xs font-medium text-sky-800">
-            {indFormat("HomeHelp_KnowledgeVersion", "Guide version {0}", catalog.knowledgeVersion)}
-          </p>
-        ) : null}
-      </header>
-
       <section
         aria-labelledby="manual-help-catalog-title"
         className="rounded-[var(--radius-xl)] border border-slate-200 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-5"
@@ -69,15 +69,16 @@ const ManualHelpView = ({ responseLocale }: ManualHelpViewProps) => {
             searchLabel={indT("HomeHelp_CatalogSearchLabel", "Search help topics")}
             searchPlaceholder={indT("HomeHelp_CatalogSearchPlaceholder", "Search topics…")}
             emptyLabel={indT("HomeHelp_CatalogEmpty", "No matching topics.")}
+            detailRegionId="manual-help-topic-detail"
             onSelect={(nextTopic) => {
+              pendingFocusTopicIdRef.current = nextTopic.id;
               void selectTopic(nextTopic);
-              window.requestAnimationFrame(() => topicRegionRef.current?.scrollIntoView({ block: "start" }));
             }}
           />
         )}
       </section>
 
-      <div ref={topicRegionRef} className="scroll-mt-4">
+      <div id="manual-help-topic-detail" aria-busy={topicLoading}>
         {topicLoading ? (
           <p
             className="rounded-[var(--radius-xl)] border border-sky-100 bg-sky-50 px-4 py-4 text-center text-sm text-sky-900"
@@ -94,7 +95,7 @@ const ManualHelpView = ({ responseLocale }: ManualHelpViewProps) => {
           </p>
         ) : null}
 
-        {topic ? <ManualHelpTopicContent topic={topic} /> : null}
+        {topic ? <ManualHelpTopicContent articleRef={topicContentRef} topic={topic} /> : null}
       </div>
     </div>
   );

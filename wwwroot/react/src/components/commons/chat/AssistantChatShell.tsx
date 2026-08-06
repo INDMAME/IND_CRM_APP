@@ -74,10 +74,13 @@ const GLOBAL_CHAT_RADIUS_CLASS = "rounded-[var(--radius-xl)]";
 const DEFAULT_PANEL_HEIGHT_CLASS =
   "h-[69vh] max-h-[69vh] lg:h-[min(640px,calc(100vh-8rem))] lg:max-h-[640px]";
 const EXPANDED_PANEL_HEIGHT_CLASS =
-  "h-[80vh] max-h-[80vh] lg:h-[min(760px,calc(100vh-5.5rem))] lg:max-h-[760px]";
+  "h-[84dvh] max-h-[calc(100dvh-1rem)] lg:h-[min(800px,calc(100dvh-4rem))] lg:max-h-[800px]";
 const LARGE_CARTESIAN_VISUAL_THRESHOLD = 8;
 const LARGE_PIE_VISUAL_THRESHOLD = 6;
 const LARGE_TABLE_VISUAL_THRESHOLD = 8;
+const LARGE_MARKDOWN_CONTENT_THRESHOLD = 360;
+const LARGE_MARKDOWN_LINE_THRESHOLD = 6;
+const LARGE_CONVERSATION_MESSAGE_THRESHOLD = 4;
 
 const DESKTOP_PLACEMENT_CLASS_NAMES: Record<
   AssistantChatDesktopPlacement,
@@ -111,6 +114,34 @@ const shouldUseExpandedVisualLayout = (message: AssistantChatMessage["message"])
     default:
       return false;
   }
+};
+
+// Expands the drawer when accumulated text, message count, or visual data needs more room.
+const shouldUseExpandedContentLayout = (messages: AssistantChatMessage[]): boolean => {
+  let markdownCharacterCount = 0;
+  let markdownLineCount = 0;
+  let settledMessageCount = 0;
+
+  for (const message of messages) {
+    if (message.state === "loading") {
+      continue;
+    }
+
+    settledMessageCount += 1;
+    if (shouldUseExpandedVisualLayout(message.message)) {
+      return true;
+    }
+
+    if (message.message.type === "markdown") {
+      const markdown = message.message.markdown.trim();
+      markdownCharacterCount += markdown.length;
+      markdownLineCount += markdown.split(/\r?\n/u).filter((line) => line.trim().length > 0).length;
+    }
+  }
+
+  return settledMessageCount >= LARGE_CONVERSATION_MESSAGE_THRESHOLD
+    || markdownCharacterCount >= LARGE_MARKDOWN_CONTENT_THRESHOLD
+    || markdownLineCount >= LARGE_MARKDOWN_LINE_THRESHOLD;
 };
 
 type AssistantChatMessageBubbleProps = {
@@ -384,9 +415,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
   const composerDisabled = !hasContext || isSending || composerState === "blocked";
   const sendDisabled = composerDisabled || !toText(draftValue);
   const hasAssistantResponse = messages.some((message) => message.role === "assistant" && message.state !== "loading");
-  const shouldExpandForVisuals = messages.some(
-    (message) => message.role === "assistant" && message.state !== "loading" && shouldUseExpandedVisualLayout(message.message)
-  );
+  const shouldExpandForContent = shouldUseExpandedContentLayout(messages);
   const desktopPlacementClassNames = DESKTOP_PLACEMENT_CLASS_NAMES[desktopPlacement];
   const assistantFloatingStyle = {
     ["--assistant-page-inset" as "--assistant-page-inset"]: ASSISTANT_PAGE_INSET,
@@ -430,7 +459,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
           className={classNames(
             "absolute flex flex-col overflow-hidden rounded-[var(--radius-xl)] border border-slate-200 bg-white/96 text-[12px] shadow-[0_28px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl transition-transform duration-300 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)] [right:var(--assistant-page-inset)] lg:w-[368px]",
             desktopPlacementClassNames.panel,
-            shouldExpandForVisuals ? EXPANDED_PANEL_HEIGHT_CLASS : DEFAULT_PANEL_HEIGHT_CLASS,
+            shouldExpandForContent ? EXPANDED_PANEL_HEIGHT_CLASS : DEFAULT_PANEL_HEIGHT_CLASS,
             isOpen
               ? "translate-y-0 lg:translate-x-0"
               : classNames("translate-y-full lg:translate-y-0", desktopPlacementClassNames.closedPanel)

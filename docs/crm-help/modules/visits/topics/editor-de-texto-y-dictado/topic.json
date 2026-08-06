@@ -68,7 +68,7 @@
                         ],
     "routeKey":  "visits.history",
     "status":  "published",
-    "contentVersion":  "1.5.0",
+    "contentVersion":  "1.6.0",
     "contentHash":  "F8263DD9CD46E302FC93331AE80BF08074C0F2D59B037C7355B10E4016EEBCF5",
     "assets":  [
                    "manual-1.5.image17",

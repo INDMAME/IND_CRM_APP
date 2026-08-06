@@ -1,0 +1,577 @@
+{
+    "schemaVersion":  "1.0",
+    "locale":  "es-ES",
+    "status":  "source",
+    "title":  "Ayuda de la aplicación CRM",
+    "imageReferenceLabel":  "Captura de referencia",
+    "modules":  [
+                    {
+                        "id":  "introduction",
+                        "title":  "Primeros pasos",
+                        "description":  "Objetivo, alcance, conceptos básicos y uso seguro del CRM."
+                    },
+                    {
+                        "id":  "access",
+                        "title":  "Acceso al CRM",
+                        "description":  "Apertura, identificación, favoritos y cierre de sesión."
+                    },
+                    {
+                        "id":  "common-ui",
+                        "title":  "Pantalla, empresa y permisos",
+                        "description":  "Controles comunes, empresa activa, idioma y permisos."
+                    },
+                    {
+                        "id":  "visits",
+                        "title":  "Visitas",
+                        "description":  "Consulta, creación, edición y eliminación de visitas."
+                    },
+                    {
+                        "id":  "expenses",
+                        "title":  "Hojas de gastos",
+                        "description":  "Creación y mantenimiento de hojas y líneas de gasto."
+                    },
+                    {
+                        "id":  "tickets",
+                        "title":  "Tickets",
+                        "description":  "Consulta, creación y estado de justificantes de gasto."
+                    },
+                    {
+                        "id":  "expense-approval",
+                        "title":  "Aprobación de gastos",
+                        "description":  "Estados, responsables y acciones de aprobación."
+                    },
+                    {
+                        "id":  "axapta",
+                        "title":  "Continuidad en Axapta",
+                        "description":  "Relación y continuidad del flujo de gastos en Axapta."
+                    },
+                    {
+                        "id":  "troubleshooting",
+                        "title":  "Problemas frecuentes",
+                        "description":  "Comprobaciones y datos que deben enviarse a soporte."
+                    },
+                    {
+                        "id":  "glossary",
+                        "title":  "Glosario",
+                        "description":  "Definiciones básicas utilizadas en el manual."
+                    }
+                ],
+    "topics":  [
+                   {
+                       "id":  "introduction.objetivo-y-personas-destinatarias",
+                       "title":  "Objetivo y personas destinatarias",
+                       "summary":  "Conoce el propósito del manual y a quién va dirigido.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "introduction.contexto-del-nuevo-flujo-de-gastos",
+                       "title":  "Contexto del nuevo flujo de gastos",
+                       "summary":  "Entiende por qué se digitalizó la gestión de hojas de gastos.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "introduction.antecedentes-del-proceso",
+                       "title":  "Antecedentes del proceso",
+                       "summary":  "Repasa cómo se gestionaban antes las hojas de gastos.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "introduction.alcance-del-flujo-de-gastos",
+                       "title":  "Alcance del flujo de gastos",
+                       "summary":  "Consulta a quién se aplica el flujo y qué tareas continúan en Axapta.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "introduction.como-utilizar-este-manual",
+                       "title":  "Cómo utilizar este manual",
+                       "summary":  "Aprende la terminología y la forma de seguir los pasos del manual.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "introduction.que-necesita",
+                       "title":  "Qué necesita",
+                       "summary":  "Comprueba el dispositivo, la cuenta y los datos necesarios para usar el CRM.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "introduction.partes-basicas-del-navegador",
+                       "title":  "Partes básicas del navegador",
+                       "summary":  "Identifica la barra de direcciones, las pestañas y otros controles del navegador.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "introduction.uso-seguro",
+                       "title":  "Uso seguro",
+                       "summary":  "Revisa las pautas básicas para utilizar el CRM de forma segura.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "access.abrir-el-crm",
+                       "title":  "Abrir el CRM",
+                       "summary":  "Sigue los pasos para abrir el CRM desde un navegador.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "access.identificarse",
+                       "title":  "Identificarse",
+                       "summary":  "Accede al CRM con tu cuenta corporativa de Microsoft.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "access.guardar-la-direccion-como-favorito",
+                       "title":  "Guardar la dirección como favorito",
+                       "summary":  "Guarda el CRM en Favoritos para abrirlo más rápido.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "access.cerrar-la-sesion",
+                       "title":  "Cerrar la sesión",
+                       "summary":  "Cierra correctamente la sesión del CRM.",
+                       "quickAnswers":  [
+                                            {
+                                                "id":  "access.cerrar-la-sesion.quick-01",
+                                                "question":  "¿Cómo cierro la sesión del CRM?",
+                                                "answer":  "1. Abra el menú lateral izquierdo. 2. Pulse su nombre de usuario en la parte inferior. 3. Pulse Cerrar sesión y espere hasta regresar a la pantalla de acceso."
+                                            }
+                                        ]
+                   },
+                   {
+                       "id":  "common-ui.elementos-comunes-de-la-pantalla",
+                       "title":  "Elementos comunes de la pantalla",
+                       "summary":  "Reconoce los controles y mensajes que se repiten en toda la aplicación.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "common-ui.editar-guardar-y-cancelar",
+                       "title":  "Editar, guardar y cancelar",
+                       "summary":  "Aprende cuándo editar, guardar o cancelar cambios.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "common-ui.que-significa-empresa-activa",
+                       "title":  "Qué significa empresa activa",
+                       "summary":  "Entiende cómo la empresa activa determina los datos disponibles.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "common-ui.cambiar-el-idioma",
+                       "title":  "Cambiar el idioma",
+                       "summary":  "Cambia el idioma de la aplicación desde tu perfil.",
+                       "quickAnswers":  [
+                                            {
+                                                "id":  "common-ui.cambiar-el-idioma.quick-01",
+                                                "question":  "¿Cómo cambio el idioma del CRM?",
+                                                "answer":  "1. Abra el menú lateral y pulse su nombre de usuario. 2. Pulse Idiomas y elija el idioma que desea utilizar. 3. Espere a que la pantalla vuelva a cargarse."
+                                            }
+                                        ]
+                   },
+                   {
+                       "id":  "common-ui.permisos",
+                       "title":  "Permisos",
+                       "summary":  "Comprende cómo los permisos afectan a menús, datos y acciones.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "common-ui.perfiles-del-flujo-de-gastos",
+                       "title":  "Perfiles del flujo de gastos",
+                       "summary":  "Distingue los perfiles que intervienen en el flujo de gastos.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "visits.modulo-visitas",
+                       "title":  "Módulo Visitas",
+                       "summary":  "Descubre qué permite consultar y gestionar el módulo Visitas.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "visits.abrir-el-historial-de-visitas",
+                       "title":  "Abrir el historial de visitas",
+                       "summary":  "Accede a la lista con el historial de visitas.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "visits.filtrar-el-historial",
+                       "title":  "Filtrar el historial",
+                       "summary":  "Busca visitas aplicando los filtros del historial.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "visits.crear-una-visita-paso-1-cuenta-y-contactos",
+                       "title":  "Crear una visita: paso 1, cuenta y contactos",
+                       "summary":  "Selecciona la cuenta y los contactos de una nueva visita.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "visits.crear-una-visita-paso-2-datos-de-la-visita",
+                       "title":  "Crear una visita: paso 2, datos de la visita",
+                       "summary":  "Completa y confirma los datos de una nueva visita.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "visits.editor-de-texto-y-dictado",
+                       "title":  "Editor de texto y dictado",
+                       "summary":  "Escribe o dicta comentarios, antecedentes y conclusiones.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "visits.consultar-editar-o-eliminar-una-visita",
+                       "title":  "Consultar, editar o eliminar una visita",
+                       "summary":  "Abre una visita para consultar, editar o eliminar sus datos.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expenses.modulo-hojas-de-gastos",
+                       "title":  "Módulo Hojas de gastos",
+                       "summary":  "Descubre cómo se organizan las hojas y sus líneas de gasto.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expenses.flujo-general-de-una-hoja-de-gastos",
+                       "title":  "Flujo general de una hoja de gastos",
+                       "summary":  "Conoce las etapas principales de una hoja de gastos.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expenses.abrir-la-lista-de-hojas",
+                       "title":  "Abrir la lista de hojas",
+                       "summary":  "Accede a la lista de hojas de gastos.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expenses.buscar-y-filtrar-hojas",
+                       "title":  "Buscar y filtrar hojas",
+                       "summary":  "Encuentra hojas de gastos mediante búsqueda y filtros.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expenses.utilizar-el-asistente-de-gastos",
+                       "title":  "Utilizar el Asistente de gastos",
+                       "summary":  "Consulta hojas cargadas con ayuda del Asistente de gastos.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expenses.crear-la-cabecera-de-una-hoja",
+                       "title":  "Crear la cabecera de una hoja",
+                       "summary":  "Crea los datos generales de una nueva hoja de gastos.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expenses.comprender-el-detalle-de-la-hoja",
+                       "title":  "Comprender el detalle de la hoja",
+                       "summary":  "Identifica los datos generales, líneas y acciones del detalle.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expenses.anadir-una-linea-manual",
+                       "title":  "Añadir una línea manual",
+                       "summary":  "Añade y completa una línea de gasto manual.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expenses.divisas-e-importes-de-una-linea",
+                       "title":  "Divisas e importes de una línea",
+                       "summary":  "Entiende las divisas, el tipo de cambio y los importes de una línea.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expenses.crear-un-ticket-desde-una-hoja",
+                       "title":  "Crear un ticket desde una hoja",
+                       "summary":  "Crea un ticket nuevo y vincúlalo a una hoja editable.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expenses.vincular-tickets-existentes",
+                       "title":  "Vincular tickets existentes",
+                       "summary":  "Selecciona y vincula tickets existentes a una hoja editable.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expenses.editar-la-cabecera-y-las-lineas",
+                       "title":  "Editar la cabecera y las líneas",
+                       "summary":  "Modifica la cabecera o las líneas de una hoja editable.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "tickets.modulo-tickets",
+                       "title":  "Módulo Tickets",
+                       "summary":  "Descubre qué contiene un ticket y cómo se relaciona con una hoja.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "tickets.abrir-y-filtrar-tickets",
+                       "title":  "Abrir y filtrar tickets",
+                       "summary":  "Accede a la lista de tickets y aplica filtros.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "tickets.crear-un-ticket-desde-el-modulo-tickets",
+                       "title":  "Crear un ticket desde el módulo Tickets",
+                       "summary":  "Crea un justificante desde el módulo Tickets.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "tickets.estado-del-ticket",
+                       "title":  "Estado del ticket",
+                       "summary":  "Distingue cuándo un ticket está pendiente o asignado.",
+                       "quickAnswers":  [
+                                            {
+                                                "id":  "tickets.estado-del-ticket.quick-01",
+                                                "question":  "¿Qué significan los estados Pendiente y Asignado de un ticket?",
+                                                "answer":  "Un ticket Pendiente todavía no está asignado a una hoja. Un ticket Asignado ya se encuentra relacionado con una hoja de gastos. Si necesita cambiar esa relación, ahora mismo para poder desvincular un ticket solo se podría eliminar este y volver a cargar en el sistema, para luego vincularlo nuevamente a la hoja de gasto que corresponda."
+                                            }
+                                        ]
+                   },
+                   {
+                       "id":  "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos",
+                       "title":  "Estados y aprobación de una hoja de gastos",
+                       "summary":  "Entiende cómo el estado condiciona las acciones de aprobación.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expense-approval.flujo-general-de-estados",
+                       "title":  "Flujo general de estados",
+                       "summary":  "Consulta las transiciones posibles entre estados.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expense-approval.estados-de-la-hoja-de-gastos",
+                       "title":  "Estados de la hoja de gastos",
+                       "summary":  "Conoce el significado y las acciones de cada estado de la hoja.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expense-approval.acciones-del-propietario",
+                       "title":  "Acciones del propietario",
+                       "summary":  "Consulta las acciones disponibles para el propietario de una hoja.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expense-approval.acciones-del-responsable",
+                       "title":  "Acciones del responsable",
+                       "summary":  "Consulta cómo puede aprobar, rechazar o revertir un responsable.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "expense-approval.enlaces-recibidos-por-correo",
+                       "title":  "Enlaces recibidos por correo",
+                       "summary":  "Abre de forma segura una hoja desde un enlace de correo.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "axapta.relacion-entre-crm-y-axapta",
+                       "title":  "Relación entre CRM y Axapta",
+                       "summary":  "Entiende cómo se comparten hojas y líneas entre el CRM y Axapta.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "axapta.gestion-del-flujo-en-axapta",
+                       "title":  "Gestión del flujo en Axapta",
+                       "summary":  "Conoce las dos vías disponibles para gestionar el flujo en Axapta.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "axapta.hoja-de-gastos-crm-usuarios-hoja-de-gastos",
+                       "title":  "Hoja de gastos: CRM / Usuarios / Hoja de gastos",
+                       "summary":  "Gestiona una hoja desde el formulario tradicional de Axapta.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "axapta.gestion-de-hojas-de-gastos",
+                       "title":  "Gestión de hojas de gastos",
+                       "summary":  "Usa la pantalla de gestión de hojas de gastos en Axapta.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "axapta.estados-visibles-en-axapta",
+                       "title":  "Estados visibles en Axapta",
+                       "summary":  "Consulta el significado de los estados mostrados en Axapta.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "axapta.acciones-disponibles-en-axapta",
+                       "title":  "Acciones disponibles en Axapta",
+                       "summary":  "Comprueba qué acciones ofrece Axapta según el estado y los permisos.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "troubleshooting.la-pagina-no-abre",
+                       "title":  "La página no abre",
+                       "summary":  "Comprueba conexión, dirección y navegador si una página no abre.",
+                       "quickAnswers":  [
+                                            {
+                                                "id":  "troubleshooting.la-pagina-no-abre.quick-01",
+                                                "question":  "¿Qué hago si la página del CRM no abre?",
+                                                "answer":  "1. Compruebe que el dispositivo tiene conexión. 2. Revise que la dirección (https://crm.insertec.biz:7702/) esté completa y no contenga espacios. 3. Pulse Actualizar una sola vez y espere. 4. Si el problema continúa, cierre el navegador, vuelva a abrirlo y pruebe de nuevo. 5. Si otras páginas funcionan pero el CRM no, comunique la hora, la dirección y el mensaje mostrado."
+                                            }
+                                        ]
+                   },
+                   {
+                       "id":  "troubleshooting.la-identificacion-se-repite",
+                       "title":  "La identificación se repite",
+                       "summary":  "Soluciona accesos repetidos o bloqueados con la cuenta corporativa.",
+                       "quickAnswers":  [
+                                            {
+                                                "id":  "troubleshooting.la-identificacion-se-repite.quick-01",
+                                                "question":  "¿Qué hago si la identificación se repite?",
+                                                "answer":  "Cierre todas las pestañas del CRM, compruebe que utiliza la cuenta corporativa correcta y vuelva a entrar desde el acceso oficial. No pruebe contraseñas repetidamente. Si la cuenta está bloqueada o la verificación falla, contacte con soporte."
+                                            }
+                                        ]
+                   },
+                   {
+                       "id":  "troubleshooting.no-aparece-un-menu-boton-o-usuario",
+                       "title":  "No aparece un menú, botón o usuario",
+                       "summary":  "Comprueba empresa, permisos y jerarquía si falta una opción.",
+                       "quickAnswers":  [
+                                            {
+                                                "id":  "troubleshooting.no-aparece-un-menu-boton-o-usuario.quick-01",
+                                                "question":  "¿Por qué no aparece un menú, botón o usuario?",
+                                                "answer":  "Compruebe la empresa activa y actualice la pantalla. Si la opción sigue sin aparecer, puede deberse a permisos o a la jerarquía de gestión. No utilice la sesión de otra persona."
+                                            }
+                                        ]
+                   },
+                   {
+                       "id":  "troubleshooting.no-se-puede-guardar",
+                       "title":  "No se puede guardar",
+                       "summary":  "Revisa campos obligatorios y mensajes cuando no puedas guardar.",
+                       "quickAnswers":  [
+                                            {
+                                                "id":  "troubleshooting.no-se-puede-guardar.quick-01",
+                                                "question":  "¿Qué debo revisar si no puedo guardar?",
+                                                "answer":  "Revise los campos marcados como obligatorios y los mensajes en rojo. En Visitas, compruebe Cuenta, Tipo de visita, Descripción y Comentarios. En una hoja nueva, compruebe Descripción. Divisa Reembolso la proporciona la empresa. En una línea o ticket, revise Fecha, Categoría, importes y divisa. Si el botón está bloqueado, el registro puede estar en solo lectura por su estado, por pago o por permisos."
+                                            }
+                                        ]
+                   },
+                   {
+                       "id":  "troubleshooting.la-imagen-del-ticket-no-se-procesa",
+                       "title":  "La imagen del ticket no se procesa",
+                       "summary":  "Comprueba el formato y tamaño si no se procesa la imagen.",
+                       "quickAnswers":  [
+                                            {
+                                                "id":  "troubleshooting.la-imagen-del-ticket-no-se-procesa.quick-01",
+                                                "question":  "¿Qué hago si la imagen del ticket no se procesa?",
+                                                "answer":  "1. Compruebe que la imagen corresponde a un formato admitido y que no supera el límite indicado por la aplicación. 2. Si usa cámara, conceda permiso solo cuando el navegador lo solicite para el CRM. 3. Tome una nueva fotografía con luz uniforme, sin recortar datos y evitando reflejos. 4. Si aparece Reintentar carga, utilícelo una sola vez y espere. 5. Si se creó un ticket parcial, anote su identificador antes de cerrar el mensaje."
+                                            }
+                                        ]
+                   },
+                   {
+                       "id":  "troubleshooting.que-informacion-enviar-a-soporte",
+                       "title":  "Qué información enviar a soporte",
+                       "summary":  "Prepara los datos útiles que soporte necesita para investigar.",
+                       "quickAnswers":  [
+                                            {
+                                                "id":  "troubleshooting.que-informacion-enviar-a-soporte.quick-01",
+                                                "question":  "¿Qué información debo enviar a soporte?",
+                                                "answer":  "Su nombre de usuario corporativo, sin contraseña. Empresa activa. Módulo y acción que estaba realizando. Identificador de la visita, hoja o ticket cuando exista. Fecha y hora aproximadas. Texto completo del mensaje de error. Captura que no muestre contraseñas, códigos de acceso ni datos innecesarios."
+                                            }
+                                        ]
+                   },
+                   {
+                       "id":  "glossary.glosario-basico",
+                       "title":  "Glosario básico",
+                       "summary":  "Consulta las definiciones de los términos utilizados en el CRM.",
+                       "quickAnswers":  [
+
+                                        ]
+                   }
+               ]
+}

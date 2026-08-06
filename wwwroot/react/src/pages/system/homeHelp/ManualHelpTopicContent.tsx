@@ -1,7 +1,9 @@
 import ReactMarkdown, { type Components } from "react-markdown";
+import type { Ref } from "react";
 import type { HelpTopic } from "./helpTypes.ts";
 
 type ManualHelpTopicContentProps = {
+  articleRef?: Ref<HTMLElement>;
   topic: HelpTopic;
 };
 
@@ -19,11 +21,13 @@ const MANUAL_MARKDOWN_COMPONENTS: Components = {
 };
 
 // Renders one documented topic as a readable Manual article.
-const ManualHelpTopicContent = ({ topic }: ManualHelpTopicContentProps) => {
+const ManualHelpTopicContent = ({ articleRef, topic }: ManualHelpTopicContentProps) => {
   return (
     <article
+      ref={articleRef}
+      tabIndex={-1}
       aria-labelledby="manual-help-topic-title"
-      className="scroll-mt-6 break-words rounded-[var(--radius-xl)] border border-slate-200 bg-white px-5 py-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:px-7"
+      className="scroll-mt-20 break-words rounded-[var(--radius-xl)] border border-slate-200 bg-white px-5 py-5 shadow-[0_14px_34px_rgba(15,23,42,0.06)] focus:outline-hidden focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 sm:px-7"
     >
       <header className="border-b border-slate-100 pb-4">
         <h2 id="manual-help-topic-title" className="text-balance text-xl font-semibold text-primary">

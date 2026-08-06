@@ -68,7 +68,7 @@
                         ],
     "routeKey":  "expenses.sheets",
     "status":  "published",
-    "contentVersion":  "1.5.0",
+    "contentVersion":  "1.6.0",
     "contentHash":  "F64C34BEB21D6C4D8D51818FD6EC396D9736DBE401A5CB2A35321EFAAAEFEA8E",
     "assets":  [
                    "manual-1.5.image32",

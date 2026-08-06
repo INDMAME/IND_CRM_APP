@@ -1,0 +1,475 @@
+{
+  "schemaVersion": "1.0",
+  "locale": "pt",
+  "status": "machine-draft",
+  "title": "Ajuda da aplicação CRM",
+  "imageReferenceLabel": "Captura de referência",
+  "modules": [
+    {
+      "id": "introduction",
+      "title": "Primeiros passos",
+      "description": "Objetivo, âmbito, conceitos básicos e utilização segura do CRM."
+    },
+    {
+      "id": "access",
+      "title": "Acesso ao CRM",
+      "description": "Abertura, identificação, favoritos e encerramento da sessão."
+    },
+    {
+      "id": "common-ui",
+      "title": "Ecrã",
+      "description": "Controlos comuns, empresa ativa, idioma e permissões."
+    },
+    {
+      "id": "visits",
+      "title": "Visitas",
+      "description": "Consulta, criação, edição e eliminação de visitas."
+    },
+    {
+      "id": "expenses",
+      "title": "Folhas de despesas",
+      "description": "Criação e manutenção de folhas e linhas de despesas."
+    },
+    {
+      "id": "tickets",
+      "title": "Tickets",
+      "description": "Consulta, criação e estado dos comprovativos de despesa."
+    },
+    {
+      "id": "expense-approval",
+      "title": "Aprovação de despesas",
+      "description": "Estados, responsáveis e ações de aprovação."
+    },
+    {
+      "id": "axapta",
+      "title": "Axapta",
+      "description": "Relação e continuidade do fluxo de despesas no Axapta."
+    },
+    {
+      "id": "troubleshooting",
+      "title": "Problemas frequentes",
+      "description": "Verificações e dados que devem ser enviados ao suporte."
+    },
+    {
+      "id": "glossary",
+      "title": "Glossário",
+      "description": "Definições básicas utilizadas no manual."
+    }
+  ],
+  "topics": [
+    {
+      "id": "introduction.objetivo-y-personas-destinatarias",
+      "title": "Objetivo e destinatários",
+      "summary": "Objetivo, destinatários, permissões visíveis e precauções essenciais do manual.",
+      "quickAnswers": []
+    },
+    {
+      "id": "introduction.contexto-del-nuevo-flujo-de-gastos",
+      "title": "Contexto do novo fluxo de despesas",
+      "summary": "Digitalização das folhas de despesas e nova hierarquia de aprovação.",
+      "quickAnswers": []
+    },
+    {
+      "id": "introduction.antecedentes-del-proceso",
+      "title": "Processo anterior",
+      "summary": "Processo anterior em papel, desde a criação até ao pagamento e contabilização.",
+      "quickAnswers": []
+    },
+    {
+      "id": "introduction.alcance-del-flujo-de-gastos",
+      "title": "Âmbito do fluxo de despesas",
+      "summary": "Utilizadores abrangidos e tarefas que continuam a ser realizadas no Axapta.",
+      "quickAnswers": []
+    },
+    {
+      "id": "introduction.como-utilizar-este-manual",
+      "title": "Como utilizar este manual",
+      "summary": "Significado das instruções básicas e cuidados ao seguir cada passo.",
+      "quickAnswers": []
+    },
+    {
+      "id": "introduction.que-necesita",
+      "title": "O que é necessário",
+      "summary": "Dispositivos, ligação, conta empresarial e navegador necessários para aceder.",
+      "quickAnswers": []
+    },
+    {
+      "id": "introduction.partes-basicas-del-navegador",
+      "title": "Elementos básicos do navegador",
+      "summary": "Onde encontrar a barra de endereços e como abrir o endereço oficial do CRM.",
+      "quickAnswers": []
+    },
+    {
+      "id": "introduction.uso-seguro",
+      "title": "Utilização segura",
+      "summary": "Boas práticas para proteger credenciais, equipamentos partilhados e dados.",
+      "quickAnswers": []
+    },
+    {
+      "id": "access.abrir-el-crm",
+      "title": "Abrir o CRM",
+      "summary": "Passos para abrir o endereço empresarial e aguardar pelo ecrã de acesso.",
+      "quickAnswers": []
+    },
+    {
+      "id": "access.identificarse",
+      "title": "Iniciar sessão",
+      "summary": "Entrada com a conta Microsoft empresarial e verificação adicional segura.",
+      "quickAnswers": []
+    },
+    {
+      "id": "access.guardar-la-direccion-como-favorito",
+      "title": "Guardar o endereço como favorito",
+      "summary": "Como guardar o acesso oficial nos Favoritos para utilizações posteriores.",
+      "quickAnswers": []
+    },
+    {
+      "id": "access.cerrar-la-sesion",
+      "title": "Terminar sessão",
+      "summary": "Como terminar corretamente a sessão a partir do menu do utilizador.",
+      "quickAnswers": [
+        {
+          "id": "access.cerrar-la-sesion.quick-01",
+          "question": "Como termino a sessão do CRM?",
+          "answer": "1. Abra o menu lateral esquerdo. 2. Prima o seu nome de utilizador na parte inferior. 3. Prima Terminar sessão e aguarde até regressar ao ecrã de acesso."
+        }
+      ]
+    },
+    {
+      "id": "common-ui.elementos-comunes-de-la-pantalla",
+      "title": "Elementos comuns do ecrã",
+      "summary": "Menus, barras, áreas, botões e mensagens que se repetem na aplicação.",
+      "quickAnswers": []
+    },
+    {
+      "id": "common-ui.editar-guardar-y-cancelar",
+      "title": "Editar, guardar e cancelar",
+      "summary": "Como editar com segurança e responder aos avisos de alterações não guardadas.",
+      "quickAnswers": []
+    },
+    {
+      "id": "common-ui.que-significa-empresa-activa",
+      "title": "O que significa empresa ativa",
+      "summary": "Efeito da empresa ativa nos dados e passos para mudar para a empresa correta.",
+      "quickAnswers": []
+    },
+    {
+      "id": "common-ui.cambiar-el-idioma",
+      "title": "Alterar o idioma",
+      "summary": "Como escolher outro idioma no menu do utilizador e recarregar o ecrã.",
+      "quickAnswers": [
+        {
+          "id": "common-ui.cambiar-el-idioma.quick-01",
+          "question": "Como altero o idioma do CRM?",
+          "answer": "1. Abra o menu lateral e prima o seu nome de utilizador. 2. Prima Idiomas e escolha o idioma que pretende utilizar. 3. Aguarde até que o ecrã volte a carregar."
+        }
+      ]
+    },
+    {
+      "id": "common-ui.permisos",
+      "title": "Permissões",
+      "summary": "Como as permissões limitam menus, dados e ações, e o que fazer se faltar uma opção.",
+      "quickAnswers": []
+    },
+    {
+      "id": "common-ui.perfiles-del-flujo-de-gastos",
+      "title": "Perfis do fluxo de despesas",
+      "summary": "Funções dos utilizadores padrão, aprovador e pagador no fluxo de despesas.",
+      "quickAnswers": []
+    },
+    {
+      "id": "visits.modulo-visitas",
+      "title": "Módulo Visitas",
+      "summary": "Finalidade do módulo e ações disponíveis conforme as permissões.",
+      "quickAnswers": []
+    },
+    {
+      "id": "visits.abrir-el-historial-de-visitas",
+      "title": "Abrir o histórico de visitas",
+      "summary": "Acesso ao histórico e informação apresentada nos cartões de visita.",
+      "quickAnswers": []
+    },
+    {
+      "id": "visits.filtrar-el-historial",
+      "title": "Filtrar o histórico de visitas",
+      "summary": "Filtros por período, conta e proprietário, com conservação da navegação.",
+      "quickAnswers": []
+    },
+    {
+      "id": "visits.crear-una-visita-paso-1-cuenta-y-contactos",
+      "title": "Criar uma visita: passo 1, conta e contactos",
+      "summary": "Pesquisa da conta, seleção opcional de contactos e avanço para os dados da visita.",
+      "quickAnswers": []
+    },
+    {
+      "id": "visits.crear-una-visita-paso-2-datos-de-la-visita",
+      "title": "Criar uma visita: passo 2, dados da visita",
+      "summary": "Preenchimento dos dados obrigatórios, revisão e confirmação da nova visita.",
+      "quickAnswers": []
+    },
+    {
+      "id": "visits.editor-de-texto-y-dictado",
+      "title": "Editor de texto e ditado",
+      "summary": "Utilização do editor em ecrã inteiro e revisão do texto obtido por ditado.",
+      "quickAnswers": []
+    },
+    {
+      "id": "visits.consultar-editar-o-eliminar-una-visita",
+      "title": "Consultar, editar ou eliminar uma visita",
+      "summary": "Consulta do detalhe e precauções ao editar, eliminar ou corrigir a conta.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.modulo-hojas-de-gastos",
+      "title": "Módulo Folhas de despesas",
+      "summary": "Finalidade das folhas e formas de adicionar linhas e comprovativos.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.flujo-general-de-una-hoja-de-gastos",
+      "title": "Fluxo geral de uma folha de despesas",
+      "summary": "Etapas básicas de criação, aprovação e pagamento de uma folha.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.abrir-la-lista-de-hojas",
+      "title": "Abrir a lista de folhas de despesas",
+      "summary": "Acesso à lista e dados que podem aparecer em cada cartão de folha.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.buscar-y-filtrar-hojas",
+      "title": "Pesquisar e filtrar folhas de despesas",
+      "summary": "Critérios disponíveis para localizar folhas e limpar uma pesquisa.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.utilizar-el-asistente-de-gastos",
+      "title": "Utilizar o Assistente de despesas",
+      "summary": "Análise das folhas carregadas com IA e verificações humanas necessárias.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.crear-la-cabecera-de-una-hoja",
+      "title": "Criar o cabeçalho de uma folha de despesas",
+      "summary": "Dados iniciais, moeda de reembolso e ordem correta para criar uma folha.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.comprender-el-detalle-de-la-hoja",
+      "title": "Compreender o detalhe da folha de despesas",
+      "summary": "Dados do cabeçalho, linhas de despesa e ações rápidas disponíveis.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.anadir-una-linea-manual",
+      "title": "Adicionar uma linha manual",
+      "summary": "Campos, montantes e validações necessários para criar uma linha manual.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.divisas-e-importes-de-una-linea",
+      "title": "Moedas e montantes de uma linha",
+      "summary": "Diferença entre moedas, taxa de câmbio e montante de reembolso.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.crear-un-ticket-desde-una-hoja",
+      "title": "Criar um ticket a partir de uma folha de despesas",
+      "summary": "Captura, processamento, revisão e armazenamento de um ticket ligado à folha.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.vincular-tickets-existentes",
+      "title": "Associar tickets existentes",
+      "summary": "Seleção, associação em lote e correção de tickets com erros.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expenses.editar-la-cabecera-y-las-lineas",
+      "title": "Editar o cabeçalho e as linhas",
+      "summary": "Alteração do projeto e reembolso, propagação às linhas e campos bloqueados.",
+      "quickAnswers": []
+    },
+    {
+      "id": "tickets.modulo-tickets",
+      "title": "Módulo Tickets",
+      "summary": "Finalidade dos tickets e formas de os criar e associar a uma folha.",
+      "quickAnswers": []
+    },
+    {
+      "id": "tickets.abrir-y-filtrar-tickets",
+      "title": "Abrir e filtrar tickets",
+      "summary": "Acesso aos tickets, filtros disponíveis e abertura do detalhe.",
+      "quickAnswers": []
+    },
+    {
+      "id": "tickets.crear-un-ticket-desde-el-modulo-tickets",
+      "title": "Criar um ticket a partir do módulo Tickets",
+      "summary": "Captura, processamento e revisão obrigatória antes de guardar um ticket.",
+      "quickAnswers": []
+    },
+    {
+      "id": "tickets.estado-del-ticket",
+      "title": "Estado do ticket",
+      "summary": "Diferença entre tickets Pendentes e Atribuídos e como mudar a associação.",
+      "quickAnswers": [
+        {
+          "id": "tickets.estado-del-ticket.quick-01",
+          "question": "O que significam os estados Pendente e Atribuído de um ticket?",
+          "answer": "Um ticket Pendente ainda não está atribuído a uma folha. Um ticket Atribuído já está associado a uma folha de despesas. Se precisar de alterar essa associação, atualmente a única forma de desassociar um ticket consiste em eliminá-lo e voltar a carregá-lo no sistema, para depois o associar novamente à folha de despesas correspondente."
+        }
+      ]
+    },
+    {
+      "id": "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos",
+      "title": "Estados e aprovação de uma folha de despesas",
+      "summary": "Como o estado, o proprietário e as permissões determinam as ações disponíveis.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expense-approval.flujo-general-de-estados",
+      "title": "Fluxo geral dos estados",
+      "summary": "Transições possíveis entre Rascunho, Aprovação, Aprovada, Rejeitada e Paga.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expense-approval.estados-de-la-hoja-de-gastos",
+      "title": "Estados da folha de despesas",
+      "summary": "Significado e nível de edição permitido em cada estado da folha.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expense-approval.acciones-del-propietario",
+      "title": "Ações do proprietário",
+      "summary": "Ações disponíveis ao proprietário com e sem autoaprovação.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expense-approval.acciones-del-responsable",
+      "title": "Ações do responsável",
+      "summary": "Aprovação, rejeição, reversões, comentários e bloqueios contabilísticos.",
+      "quickAnswers": []
+    },
+    {
+      "id": "expense-approval.enlaces-recibidos-por-correo",
+      "title": "Ligações recebidas por correio eletrónico",
+      "summary": "Abertura segura de ligações de aprovação sem conceder permissões adicionais.",
+      "quickAnswers": []
+    },
+    {
+      "id": "axapta.relacion-entre-crm-y-axapta",
+      "title": "Relação entre CRM e Axapta",
+      "summary": "Integração das folhas, divisão de tarefas e atualização do estado Pago.",
+      "quickAnswers": []
+    },
+    {
+      "id": "axapta.gestion-del-flujo-en-axapta",
+      "title": "Gestão do fluxo no Axapta",
+      "summary": "Introdução às duas formas disponíveis para gerir o fluxo no Axapta.",
+      "quickAnswers": []
+    },
+    {
+      "id": "axapta.hoja-de-gastos-crm-usuarios-hoja-de-gastos",
+      "title": "Folha de despesas: CRM / Utilizadores / Folha de despesas",
+      "summary": "Ações do formulário tradicional de folha através do botão Funções.",
+      "quickAnswers": []
+    },
+    {
+      "id": "axapta.gestion-de-hojas-de-gastos",
+      "title": "Gestão de folhas de despesas",
+      "summary": "Menu, utilizadores visíveis, folhas apresentadas e filtro de estado no Axapta.",
+      "quickAnswers": []
+    },
+    {
+      "id": "axapta.estados-visibles-en-axapta",
+      "title": "Estados visíveis no Axapta",
+      "summary": "Significado de cada estado da folha durante a gestão no Axapta.",
+      "quickAnswers": []
+    },
+    {
+      "id": "axapta.acciones-disponibles-en-axapta",
+      "title": "Ações disponíveis no Axapta",
+      "summary": "Ações de pedido, aprovação, rejeição e reversão conforme estado e permissões.",
+      "quickAnswers": []
+    },
+    {
+      "id": "troubleshooting.la-pagina-no-abre",
+      "title": "A página não abre",
+      "summary": "Verificações de ligação, endereço e navegador quando o CRM não abre.",
+      "quickAnswers": [
+        {
+          "id": "troubleshooting.la-pagina-no-abre.quick-01",
+          "question": "O que faço se a página do CRM não abrir?",
+          "answer": "1. Verifique se o dispositivo tem ligação. 2. Confirme se o endereço (https://crm.insertec.biz:7702/) está completo e não contém espaços. 3. Prima Atualizar uma única vez e aguarde. 4. Se o problema persistir, feche o navegador, volte a abri-lo e tente novamente. 5. Se outras páginas funcionarem, mas o CRM não, comunique a hora, o endereço e a mensagem apresentada."
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting.la-identificacion-se-repite",
+      "title": "A identificação repete-se",
+      "summary": "Como corrigir pedidos repetidos de identificação sem bloquear a conta.",
+      "quickAnswers": [
+        {
+          "id": "troubleshooting.la-identificacion-se-repite.quick-01",
+          "question": "O que faço se a identificação se repetir?",
+          "answer": "Feche todos os separadores do CRM, verifique se está a utilizar a conta empresarial correta e volte a entrar através do acesso oficial. Não experimente repetidamente palavras-passe. Se a conta estiver bloqueada ou a verificação falhar, contacte o suporte."
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting.no-aparece-un-menu-boton-o-usuario",
+      "title": "Não aparece um menu, botão ou utilizador",
+      "summary": "Verificação da empresa, permissões e hierarquia quando uma opção não aparece.",
+      "quickAnswers": [
+        {
+          "id": "troubleshooting.no-aparece-un-menu-boton-o-usuario.quick-01",
+          "question": "Por que motivo não aparece um menu, botão ou utilizador?",
+          "answer": "Verifique a empresa ativa e atualize o ecrã. Se a opção continuar sem aparecer, pode dever-se às permissões ou à hierarquia de gestão. Não utilize a sessão de outra pessoa."
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting.no-se-puede-guardar",
+      "title": "Não é possível guardar",
+      "summary": "Campos e bloqueios que devem ser revistos quando não é possível guardar.",
+      "quickAnswers": [
+        {
+          "id": "troubleshooting.no-se-puede-guardar.quick-01",
+          "question": "O que devo rever se não conseguir guardar?",
+          "answer": "Reveja os campos assinalados como obrigatórios e as mensagens a vermelho. Em Visitas, verifique Conta, Tipo de visita, Descrição e Comentários. Numa folha nova, verifique a Descrição. A Moeda de reembolso é fornecida pela empresa. Numa linha ou num ticket, reveja a Data, a Categoria, os montantes e a moeda. Se o botão estiver bloqueado, o registo pode ser só de leitura devido ao seu estado, ao pagamento ou às permissões."
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting.la-imagen-del-ticket-no-se-procesa",
+      "title": "A imagem do ticket não é processada",
+      "summary": "Formato, câmara e nova captura quando o processamento da imagem falha.",
+      "quickAnswers": [
+        {
+          "id": "troubleshooting.la-imagen-del-ticket-no-se-procesa.quick-01",
+          "question": "O que faço se a imagem do ticket não for processada?",
+          "answer": "1. Verifique se a imagem corresponde a um formato suportado e se não ultrapassa o limite indicado pela aplicação. 2. Se utilizar a câmara, conceda permissão apenas quando o navegador a solicitar para o CRM. 3. Tire uma nova fotografia com luz uniforme, sem cortar dados e evitando reflexos. 4. Se aparecer Repetir carregamento, utilize essa opção uma única vez e aguarde. 5. Se tiver sido criado um ticket parcial, anote o respetivo identificador antes de fechar a mensagem."
+        }
+      ]
+    },
+    {
+      "id": "troubleshooting.que-informacion-enviar-a-soporte",
+      "title": "Informação a enviar ao suporte",
+      "summary": "Dados úteis e seguros que permitem ao suporte analisar um problema.",
+      "quickAnswers": [
+        {
+          "id": "troubleshooting.que-informacion-enviar-a-soporte.quick-01",
+          "question": "Que informação devo enviar ao suporte?",
+          "answer": "O seu nome de utilizador empresarial, sem a palavra-passe. Empresa ativa. Módulo e ação que estava a realizar. Identificador da visita, folha ou ticket, quando exista. Data e hora aproximadas. Texto completo da mensagem de erro. Captura que não mostre palavras-passe, códigos de acesso nem dados desnecessários."
+        }
+      ]
+    },
+    {
+      "id": "glossary.glosario-basico",
+      "title": "Glossário básico",
+      "summary": "Definições dos 23 termos essenciais utilizados em todo o manual.",
+      "quickAnswers": []
+    }
+  ]
+}

@@ -68,7 +68,7 @@
                         ],
     "routeKey":  "expenses.tickets",
     "status":  "published",
-    "contentVersion":  "1.5.0",
+    "contentVersion":  "1.6.0",
     "contentHash":  "B5BA26A161A155B4674469EC319CDA0A0A779F36810AC5922607EC506709EE56",
     "assets":  [
                    "manual-1.5.image46",

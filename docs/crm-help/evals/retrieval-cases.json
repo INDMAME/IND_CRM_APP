@@ -1200,6 +1200,46 @@
                              ]
     },
     {
+        "id":  "route-060-eu",
+        "question":  "Oinarrizko glosarioa gaiari buruzko laguntza behar dut.",
+        "responseLocale":  "eu-ES",
+        "selectedTopicId":  null,
+        "expectedResolution":  "answered",
+        "expectedTopicIds":  [
+                                 "glossary.glosario-basico"
+                             ]
+    },
+    {
+        "id":  "route-060-pt",
+        "question":  "Onde encontro as definições do glossário básico?",
+        "responseLocale":  "pt",
+        "selectedTopicId":  null,
+        "expectedResolution":  "answered",
+        "expectedTopicIds":  [
+                                 "glossary.glosario-basico"
+                             ]
+    },
+    {
+        "id":  "route-060-it",
+        "question":  "Dove trovo le definizioni del glossario di base?",
+        "responseLocale":  "it",
+        "selectedTopicId":  null,
+        "expectedResolution":  "answered",
+        "expectedTopicIds":  [
+                                 "glossary.glosario-basico"
+                             ]
+    },
+    {
+        "id":  "route-060-zh",
+        "question":  "在哪里可以查看基本术语表的定义？",
+        "responseLocale":  "zh-Hans",
+        "selectedTopicId":  null,
+        "expectedResolution":  "answered",
+        "expectedTopicIds":  [
+                                 "glossary.glosario-basico"
+                             ]
+    },
+    {
         "id":  "route-ambiguous-expenses",
         "question":  "Necesito ayuda con gastos",
         "responseLocale":  "es-ES",

@@ -1804,6 +1804,7 @@
   <data name="HomeHelp_ModuleSelectionTitle" xml:space="preserve"><value>Per quale sezione ti serve aiuto?</value></data>
   <data name="HomeHelp_ModuleSelectionBody" xml:space="preserve"><value>Seleziona una sezione per abilitare il campo della domanda.</value></data>
   <data name="HomeHelp_ModuleSelectionLocked" xml:space="preserve"><value>Sezione della conversazione: {0}</value></data>
+  <data name="HomeHelp_ChangeModule" xml:space="preserve"><value>Torna alla selezione della sezione</value></data>
   <data name="HomeHelp_CatalogToggle" xml:space="preserve"><value>Esplora gli argomenti della guida</value></data>
   <data name="HomeHelp_CatalogSearchLabel" xml:space="preserve"><value>Cerca negli argomenti della guida</value></data>
   <data name="HomeHelp_CatalogSearchPlaceholder" xml:space="preserve"><value>Cerca argomenti…</value></data>

@@ -41,6 +41,7 @@ type UseHomeHelpAssistantResult = {
   submitDraftQuestion: () => Promise<void>;
   retryQuestion: (question: string, assistantMessageId: string) => Promise<void>;
   selectCandidate: (question: string, topicId: string, assistantMessageId: string) => Promise<void>;
+  resetConversation: () => void;
   handleDraftKeyDown: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void;
 };
 
@@ -198,7 +199,10 @@ export const useHomeHelpAssistant = ({
     const frameId = window.requestAnimationFrame(() => {
       const container = messagesContainerRef.current;
       if (container) {
-        container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+        container.scrollTo({
+          top: messages.length === 0 ? 0 : container.scrollHeight,
+          behavior: messages.length === 0 ? "auto" : "smooth",
+        });
       }
     });
     return () => window.cancelAnimationFrame(frameId);
@@ -258,6 +262,10 @@ export const useHomeHelpAssistant = ({
           history,
           clientInteractionId: createMessageId(),
         }, controller.signal);
+        if (askControllerRef.current !== controller) {
+          return;
+        }
+
         const fallbackAnswer = getHelpResolutionFallback(responseLocale, response.resolution);
         const completedMessage: AssistantChatMessage = {
           id: assistantMessageId,
@@ -277,6 +285,10 @@ export const useHomeHelpAssistant = ({
         retryTopicByMessageIdRef.current.delete(assistantMessageId);
         setDraftQuestion((current) => (current.trim() === question ? "" : current));
       } catch (error) {
+        if (askControllerRef.current !== controller) {
+          return;
+        }
+
         if (error instanceof DOMException && error.name === "AbortError") {
           setMessages((current) => reusableTurn
             ? current.map((message) =>
@@ -301,11 +313,12 @@ export const useHomeHelpAssistant = ({
           current.map((message) => (message.id === assistantMessageId ? failedMessage : message))
         );
       } finally {
-        if (askControllerRef.current === controller) {
+        const ownsActiveRequest = askControllerRef.current === controller;
+        if (ownsActiveRequest) {
           askControllerRef.current = null;
+          askInFlightRef.current = false;
         }
-        askInFlightRef.current = false;
-        setIsSending(false);
+        setIsSending((current) => ownsActiveRequest ? false : current);
       }
     },
     [messages, responseLocale, selectedModule]
@@ -345,6 +358,19 @@ export const useHomeHelpAssistant = ({
     [isSending, submitDraftQuestion]
   );
 
+  // Cancels the active request and restores a clean conversation for another section.
+  const resetConversation = useCallback(() => {
+    const controller = askControllerRef.current;
+    askControllerRef.current = null;
+    askInFlightRef.current = false;
+    controller?.abort();
+    retryTopicByMessageIdRef.current.clear();
+    setIsSending(false);
+    setDraftQuestion("");
+    setMessages([]);
+    setAnswerDetailsByMessageId({});
+  }, []);
+
   return {
     isSending,
     draftQuestion,
@@ -357,6 +383,7 @@ export const useHomeHelpAssistant = ({
     submitDraftQuestion,
     retryQuestion,
     selectCandidate,
+    resetConversation,
     handleDraftKeyDown,
   };
 };

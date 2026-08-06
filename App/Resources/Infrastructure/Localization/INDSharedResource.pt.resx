@@ -1804,6 +1804,7 @@
   <data name="HomeHelp_ModuleSelectionTitle" xml:space="preserve"><value>Em que secção precisa de ajuda?</value></data>
   <data name="HomeHelp_ModuleSelectionBody" xml:space="preserve"><value>Selecione uma secção para ativar a caixa de perguntas.</value></data>
   <data name="HomeHelp_ModuleSelectionLocked" xml:space="preserve"><value>Secção da conversa: {0}</value></data>
+  <data name="HomeHelp_ChangeModule" xml:space="preserve"><value>Voltar a selecionar a secção</value></data>
   <data name="HomeHelp_CatalogToggle" xml:space="preserve"><value>Explorar temas de ajuda</value></data>
   <data name="HomeHelp_CatalogSearchLabel" xml:space="preserve"><value>Pesquisar temas de ajuda</value></data>
   <data name="HomeHelp_CatalogSearchPlaceholder" xml:space="preserve"><value>Pesquisar temas…</value></data>

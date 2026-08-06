@@ -1804,6 +1804,7 @@
   <data name="HomeHelp_ModuleSelectionTitle" xml:space="preserve"><value>¿Sobre qué sección necesitas ayuda?</value></data>
   <data name="HomeHelp_ModuleSelectionBody" xml:space="preserve"><value>Selecciona una sección para habilitar el cuadro de pregunta.</value></data>
   <data name="HomeHelp_ModuleSelectionLocked" xml:space="preserve"><value>Sección de la conversación: {0}</value></data>
+  <data name="HomeHelp_ChangeModule" xml:space="preserve"><value>Volver a seleccionar sección</value></data>
   <data name="HomeHelp_Loading" xml:space="preserve"><value>Buscando en la guía del CRM…</value></data>
   <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>Hay demasiadas solicitudes. Espera un momento e inténtalo de nuevo.</value></data>
   <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>El asistente no está disponible en este momento.</value></data>

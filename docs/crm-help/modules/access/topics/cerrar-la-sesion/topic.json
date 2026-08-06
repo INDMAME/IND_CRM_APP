@@ -68,7 +68,7 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.5.0",
+    "contentVersion":  "1.6.0",
     "contentHash":  "10DBBB2409B72EF9AB84C1F0B772C646E6EB1124383D85171E0F1645E13491A8",
     "assets":  [
                    "manual-1.5.image3",

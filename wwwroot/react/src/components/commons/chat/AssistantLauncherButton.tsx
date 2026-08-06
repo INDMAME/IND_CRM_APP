@@ -7,6 +7,7 @@ import React, {
 import { classNames } from "../../../utils/classNames.ts";
 
 export type AssistantLauncherDesktopPlacement = "content-frame" | "viewport-start";
+export type AssistantLauncherLayoutVariant = "floating" | "inline";
 
 export type AssistantLauncherImageSources = {
   animatedWebp: string;
@@ -19,6 +20,7 @@ type AssistantLauncherButtonProps = Omit<
   "children" | "type"
 > & {
   imageSources: AssistantLauncherImageSources;
+  layoutVariant?: AssistantLauncherLayoutVariant;
   desktopPlacement?: AssistantLauncherDesktopPlacement;
   bottomInset?: string;
   buttonRef?: RefObject<HTMLButtonElement | null>;
@@ -32,10 +34,15 @@ const DESKTOP_PLACEMENT_CLASS_NAMES: Record<AssistantLauncherDesktopPlacement, s
   "content-frame": "",
   "viewport-start": "lg:left-4",
 };
+const LAYOUT_VARIANT_CLASS_NAMES: Record<AssistantLauncherLayoutVariant, string> = {
+  floating: "fixed z-[1850] [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)]",
+  inline: "relative z-20 flex-col-reverse gap-2 self-center",
+};
 
-// Renders the standard floating assistant launcher and optional composed content.
+// Renders the standard assistant launcher in floating or inline layouts.
 const AssistantLauncherButton = ({
   imageSources,
+  layoutVariant = "floating",
   desktopPlacement = "content-frame",
   bottomInset = ASSISTANT_BOTTOM_INSET,
   buttonRef,
@@ -44,11 +51,13 @@ const AssistantLauncherButton = ({
   style,
   ...buttonProps
 }: AssistantLauncherButtonProps) => {
-  const launcherStyle = {
-    ...style,
-    ["--assistant-page-inset" as "--assistant-page-inset"]: ASSISTANT_PAGE_INSET,
-    ["--assistant-bottom-inset" as "--assistant-bottom-inset"]: bottomInset,
-  } as CSSProperties;
+  const launcherStyle = layoutVariant === "floating"
+    ? {
+        ...style,
+        ["--assistant-page-inset" as "--assistant-page-inset"]: ASSISTANT_PAGE_INSET,
+        ["--assistant-bottom-inset" as "--assistant-bottom-inset"]: bottomInset,
+      } as CSSProperties
+    : style;
 
   return (
     <button
@@ -57,8 +66,9 @@ const AssistantLauncherButton = ({
       type="button"
       data-ind-assistant-launcher="true"
       className={classNames(
-        "group fixed z-[1850] flex items-center rounded-[var(--radius-xl)] bg-transparent p-0 text-left shadow-none transition duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus:outline-hidden focus:ring-4 focus:ring-primary/20 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)]",
-        DESKTOP_PLACEMENT_CLASS_NAMES[desktopPlacement],
+        "group flex items-center rounded-[var(--radius-xl)] bg-transparent p-0 text-left shadow-none transition duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus:outline-hidden focus:ring-4 focus:ring-primary/20",
+        LAYOUT_VARIANT_CLASS_NAMES[layoutVariant],
+        layoutVariant === "floating" ? DESKTOP_PLACEMENT_CLASS_NAMES[desktopPlacement] : "",
         className
       )}
       style={launcherStyle}

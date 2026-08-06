@@ -1804,6 +1804,7 @@
   <data name="HomeHelp_ModuleSelectionTitle" xml:space="preserve"><value>Which section do you need help with?</value></data>
   <data name="HomeHelp_ModuleSelectionBody" xml:space="preserve"><value>Select a section to enable the question box.</value></data>
   <data name="HomeHelp_ModuleSelectionLocked" xml:space="preserve"><value>Conversation section: {0}</value></data>
+  <data name="HomeHelp_ChangeModule" xml:space="preserve"><value>Choose another section</value></data>
   <data name="HomeHelp_Loading" xml:space="preserve"><value>Searching the CRM guide…</value></data>
   <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>Too many requests. Please wait and try again.</value></data>
   <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>The assistant is not available right now.</value></data>

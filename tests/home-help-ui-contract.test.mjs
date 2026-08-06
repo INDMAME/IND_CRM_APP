@@ -16,6 +16,20 @@ const localeBundle = await build({
 });
 const localeModuleUrl = `data:text/javascript;base64,${Buffer.from(localeBundle.outputFiles[0]?.text || "").toString("base64")}`;
 const { normalizeHelpResponseLocale } = await import(localeModuleUrl);
+const localizedResourceSources = await Promise.all(
+  [
+    "INDSharedResource.resx",
+    "INDSharedResource.es-ES.resx",
+    "INDSharedResource.en.resx",
+    "INDSharedResource.eu-ES.resx",
+    "INDSharedResource.pt.resx",
+    "INDSharedResource.it.resx",
+    "INDSharedResource.zh-Hans.resx",
+  ].map((fileName) => readFile(
+    path.join(repoRoot, "App", "Resources", "Infrastructure", "Localization", fileName),
+    "utf8"
+  ))
+);
 
 const [
   assistantSource,
@@ -78,7 +92,8 @@ test("chat requires one global module and manual input before enabling its compo
   assert.match(assistantSource, /normalizeHelpResponseLocale\(initialLocale\)/u);
   assert.match(assistantSource, /<HomeHelpModuleSelector[\s\S]*variant="choices"/u);
   assert.match(assistantSource, /composerState=\{selectedModule \? "enabled" : "blocked"\}/u);
-  assert.match(assistantSource, /conversationStarted && selectedModule/u);
+  assert.match(assistantSource, /emptyStateContent=\{!selectedModule \?/u);
+  assert.match(assistantSource, /messagesHeaderContent=\{selectedModule \?/u);
   assert.doesNotMatch(assistantSource, /quickActions=|quickActionsLayout=|onQuickAction=/u);
   assert.doesNotMatch(assistantSource, /textareaRef\.current\?\.focus/u);
   assert.match(shellSource, /composerState = "enabled"/u);
@@ -94,6 +109,61 @@ test("chat requires one global module and manual input before enabling its compo
   assert.match(moduleSelectorSource, /\{module\.title\}/u);
   assert.doesNotMatch(moduleSelectorSource, /module\.description|module\.topics/u);
   assert.doesNotMatch(assistantSource, /HomeHelpLocaleSelect|HomeHelpTopicBrowser|catalogOpen/u);
+});
+
+test("Home hides getting started and lets the selected section return to a clean selector", () => {
+  assert.match(assistantSource, /const HIDDEN_HOME_HELP_MODULE_ID = "introduction"/u);
+  assert.match(assistantSource, /selectableModules = modules\.filter\([\s\S]*HIDDEN_HOME_HELP_MODULE_ID/u);
+  assert.match(assistantSource, /modules=\{selectableModules\}/u);
+  assert.match(assistantSource, /backAriaLabel=\{indT\("HomeHelp_ChangeModule"/u);
+  assert.match(assistantSource, /onBack=\{returnToModuleSelection\}/u);
+  assert.match(assistantSource, /firstOptionRef=\{firstModuleButtonRef\}/u);
+  assert.match(moduleSelectorSource, /ChevronLeftIcon/u);
+  assert.match(moduleSelectorSource, /aria-label=\{props\.backAriaLabel\}/u);
+  assert.match(moduleSelectorSource, /onClick=\{props\.onBack\}/u);
+  assert.match(moduleSelectorSource, /ref=\{index === 0 \? props\.firstOptionRef : undefined\}/u);
+  assert.match(homeViewSource, /HomeHelp_ChangeModule = SR\["HomeHelp_ChangeModule"\]\.Value/u);
+  localizedResourceSources.forEach((resourceSource) => {
+    assert.match(resourceSource, /<data name="HomeHelp_ChangeModule"/u);
+  });
+
+  const returnStart = assistantSource.indexOf("const returnToModuleSelection");
+  const returnEnd = assistantSource.indexOf("\n\n  if (!isOpen)", returnStart);
+  const returnBlock = assistantSource.slice(returnStart, returnEnd);
+  assert.ok(returnStart >= 0 && returnEnd > returnStart);
+  assert.ok(returnBlock.indexOf("resetConversation();") < returnBlock.indexOf('setSelectedModuleId("");'));
+  assert.match(returnBlock, /dialogRef\.current\?\.focus\(\{ preventScroll: true \}\)/u);
+  assert.match(returnBlock, /requestAnimationFrame\([\s\S]*firstModuleButtonRef\.current\?\.focus/u);
+  assert.doesNotMatch(returnBlock, /onClose|textareaRef/u);
+});
+
+test("Home conversation reset invalidates stale requests and clears all topic state", () => {
+  const resetStart = assistantHookSource.indexOf("const resetConversation");
+  const resetEnd = assistantHookSource.indexOf("\n\n  return {", resetStart);
+  const resetBlock = assistantHookSource.slice(resetStart, resetEnd);
+  assert.ok(resetStart >= 0 && resetEnd > resetStart);
+  assert.ok(resetBlock.indexOf("askControllerRef.current = null") < resetBlock.indexOf("controller?.abort()"));
+  assert.match(resetBlock, /askInFlightRef\.current = false/u);
+  assert.match(resetBlock, /retryTopicByMessageIdRef\.current\.clear\(\)/u);
+  assert.match(resetBlock, /setIsSending\(false\)/u);
+  assert.match(resetBlock, /setDraftQuestion\(""\)/u);
+  assert.match(resetBlock, /setMessages\(\[\]\)/u);
+  assert.match(resetBlock, /setAnswerDetailsByMessageId\(\{\}\)/u);
+  assert.ok((assistantHookSource.match(/askControllerRef\.current !== controller/gu) || []).length >= 2);
+  assert.match(assistantHookSource, /finally \{\s*const ownsActiveRequest = askControllerRef\.current === controller;\s*if \(ownsActiveRequest\) \{\s*askControllerRef\.current = null;\s*askInFlightRef\.current = false;\s*\}\s*setIsSending\(\(current\) => ownsActiveRequest \? false : current\);/u);
+  assert.match(assistantHookSource, /top: messages\.length === 0 \? 0 : container\.scrollHeight/u);
+  assert.match(assistantHookSource, /behavior: messages\.length === 0 \? "auto" : "smooth"/u);
+});
+
+test("shared chat grows for long text or accumulated messages", () => {
+  assert.match(shellSource, /LARGE_MARKDOWN_CONTENT_THRESHOLD = 360/u);
+  assert.match(shellSource, /LARGE_MARKDOWN_LINE_THRESHOLD = 6/u);
+  assert.match(shellSource, /LARGE_CONVERSATION_MESSAGE_THRESHOLD = 4/u);
+  assert.match(shellSource, /shouldUseExpandedContentLayout\(messages\)/u);
+  assert.match(shellSource, /markdownCharacterCount >= LARGE_MARKDOWN_CONTENT_THRESHOLD/u);
+  assert.match(shellSource, /markdownLineCount >= LARGE_MARKDOWN_LINE_THRESHOLD/u);
+  assert.match(shellSource, /h-\[84dvh\]/u);
+  assert.match(shellSource, /lg:h-\[min\(800px,calc\(100dvh-4rem\)\)\]/u);
 });
 
 test("Home sends the selected module while keeping answer instructions server-owned", () => {
@@ -119,26 +189,42 @@ test("Home owns technical details and no longer renders welcome or suggestion co
   assert.doesNotMatch(homeViewSource, /Home_Welcome|Home_SelectLeftMenu/u);
 });
 
-test("Home stretches the assistant card while reserving the floating launcher area", () => {
-  assert.match(homeViewSource, /homePageSpacingClass = helpAssistantEnabled/u);
-  assert.match(homeViewSource, /pb-\[calc\(7rem\+env\(safe-area-inset-bottom,0px\)\)\]/u);
-  assert.match(homeViewSource, /: "py-4 md:py-8"/u);
-  assert.match(homeViewSource, /items-stretch @homePageSpacingClass/u);
+test("Home stretches the assistant card into the former launcher clearance", () => {
+  assert.doesNotMatch(homeViewSource, /pb-\[calc\(7rem\+env\(safe-area-inset-bottom,0px\)\)\]/u);
+  assert.match(homeViewSource, /items-stretch py-4 md:py-8/u);
   assert.match(homeViewSource, /class="relative z-10 flex min-h-0 w-full"/u);
   assert.match(cardSource, /relative flex min-h-0 w-full flex-1 flex-col/u);
   assert.match(cardSource, /overflow-x-hidden overflow-y-auto/u);
   assert.match(cardSource, /relative z-10 flex flex-1/u);
+  assert.match(cardSource, /justify-evenly gap-5/u);
+  assert.match(cardSource, /\{children \? \(/u);
   assert.match(cardSource, /relative z-10 shrink-0/u);
 });
 
-test("Home reuses the compact left assistant launcher and keeps its rotating callout", () => {
+test("Home composes one inline launcher with a two-line callout inside its card", () => {
+  const cardStart = assistantPageSource.indexOf("<HomeHelpCard");
+  const callout = assistantPageSource.indexOf("<HomeHelpBotCallout");
+  const cardEnd = assistantPageSource.indexOf("</HomeHelpCard>");
+
+  assert.ok(cardStart >= 0 && callout > cardStart && cardEnd > callout);
+  assert.equal((assistantPageSource.match(/<HomeHelpBotCallout\b/gu) || []).length, 1);
   assert.match(calloutSource, /<AssistantLauncherButton/u);
   assert.match(calloutSource, /imageSources=\{launcherImageSources\}/u);
-  assert.match(calloutSource, /desktopPlacement="viewport-start"/u);
+  assert.match(calloutSource, /layoutVariant="inline"/u);
+  assert.doesNotMatch(calloutSource, /desktopPlacement=|bottomInset=|FLOATING_BOTTOM_INSET/u);
   assert.match(calloutSource, /currentMessage/u);
+  assert.match(calloutSource, /line-clamp-2/u);
+  assert.match(calloutSource, /-bottom-2 left-1\/2/u);
+  assert.match(calloutSource, /aria-haspopup="dialog"/u);
+  assert.match(calloutSource, /aria-controls="home-help-assistant-dialog"/u);
+  assert.match(calloutSource, /aria-expanded=\{chatOpen\}/u);
   assert.doesNotMatch(calloutSource, /kaloria_horno|172px|188px/u);
-  assert.doesNotMatch(cardSource, /HomeHelpBotCallout/u);
   assert.match(shellSource, /<AssistantLauncherButton/u);
+  assert.match(launcherSource, /AssistantLauncherLayoutVariant = "floating" \| "inline"/u);
+  assert.match(launcherSource, /layoutVariant = "floating"/u);
+  assert.match(launcherSource, /floating: "fixed[^\n]*\[bottom:var\(--assistant-bottom-inset\)\][^\n]*\[left:var\(--assistant-page-inset\)\]/u);
+  assert.match(launcherSource, /inline: "relative z-20 flex-col-reverse/u);
+  assert.match(launcherSource, /layoutVariant === "floating" \? DESKTOP_PLACEMENT_CLASS_NAMES\[desktopPlacement\] : ""/u);
   assert.match(launcherSource, /h-\[60px\] w-\[60px\]/u);
   assert.match(launcherSource, /h-\[54px\] w-\[54px\]/u);
 });
@@ -147,6 +233,7 @@ test("Manual reuses the topic browser and is linked after the expense section", 
   assert.match(manualSource, /<HomeHelpTopicBrowser/u);
   assert.match(manualSource, /<ManualHelpTopicContent/u);
   assert.match(manualSource, /ManualHelp_TopicLoading/u);
+  assert.doesNotMatch(manualSource, /BookOpenIcon|HomeHelp_KnowledgeVersion|<header className="text-center"/u);
   const expenseIndex = sidebarSource.indexOf('SR["Nav_Expenses"]');
   const manualIndex = sidebarSource.indexOf('asp-action="Manual"');
   assert.ok(expenseIndex >= 0 && manualIndex > expenseIndex);

@@ -1804,6 +1804,7 @@
   <data name="HomeHelp_ModuleSelectionTitle" xml:space="preserve"><value>Zein atali buruz behar duzu laguntza?</value></data>
   <data name="HomeHelp_ModuleSelectionBody" xml:space="preserve"><value>Hautatu atal bat galdera-koadroa gaitzeko.</value></data>
   <data name="HomeHelp_ModuleSelectionLocked" xml:space="preserve"><value>Elkarrizketaren atala: {0}</value></data>
+  <data name="HomeHelp_ChangeModule" xml:space="preserve"><value>Itzuli atala hautatzera</value></data>
   <data name="HomeHelp_CatalogToggle" xml:space="preserve"><value>Arakatu laguntza-gaiak</value></data>
   <data name="HomeHelp_CatalogSearchLabel" xml:space="preserve"><value>Bilatu laguntza-gaietan</value></data>
   <data name="HomeHelp_CatalogSearchPlaceholder" xml:space="preserve"><value>Bilatu gaiak…</value></data>

@@ -11,10 +11,11 @@ docs/crm-help/
 ├── knowledge.json                 # Versión, culturas y procedencia
 ├── navigation.json                # Orden y routeKey permitidos
 ├── assets/manual-1.5/             # Capturas copiadas sin transformación
+├── localizations/{locale}.json    # Títulos, descripciones breves y respuestas rápidas
 ├── modules/{module}/module.json
 ├── modules/{module}/topics/{topic}/
 │   ├── topic.json                 # Metadatos, aliases, relaciones y FAQ
-│   └── content.es-ES.md           # Contenido canónico en español
+│   └── content.{locale}.md        # Manual completo para cada cultura admitida
 ├── evals/                          # Casos de recuperación y respuesta
 └── generated/                      # Bundle y reporte derivados
 ```
@@ -23,43 +24,44 @@ Los identificadores de módulo, tema, chunk, respuesta rápida y activo son esta
 
 ## Flujo de mantenimiento
 
-1. Edite el `content.es-ES.md` del tema existente o cree un tema completo con `topic.json`.
-2. Actualice título, resumen, aliases, preguntas de ejemplo, relaciones y respuestas rápidas cuando corresponda. No copie una respuesta generada por IA sin revisión editorial.
-3. Actualice los hashes de contenido:
+1. Edite el `content.es-ES.md` canónico del tema existente o cree un tema completo con `topic.json`.
+2. Actualice título, resumen, aliases, preguntas de ejemplo, relaciones y respuestas rápidas cuando corresponda. La descripción del menú debe explicar el contenido en un máximo de 120 caracteres.
+3. Sincronice `localizations/{locale}.json` y `content.{locale}.md` para las seis culturas. Conserve los IDs, rutas de imágenes y hechos del original; no marque una traducción como revisada sin validación humana.
+4. Actualice los hashes de contenido:
 
    ```powershell
    powershell -NoProfile -ExecutionPolicy Bypass -File scripts/crm-help/Update-CrmHelpContentHashes.ps1
    ```
 
-4. Añada o ajuste casos realistas en `evals/retrieval-cases.json` y `evals/answer-cases.json`.
-5. Valide sin producir un nuevo bundle:
+5. Añada o ajuste casos realistas en `evals/retrieval-cases.json` y `evals/answer-cases.json`.
+6. Valide sin producir un nuevo bundle:
 
    ```powershell
    powershell -NoProfile -ExecutionPolicy Bypass -File scripts/crm-help/Build-CrmHelpKnowledge.ps1 -ValidateOnly
    ```
 
-6. Compile el bundle determinista:
+7. Compile el bundle determinista:
 
    ```powershell
    powershell -NoProfile -ExecutionPolicy Bypass -File scripts/crm-help/Build-CrmHelpKnowledge.ps1
    ```
 
-7. Para una publicación conjunta, genere directamente la copia que consume la API mediante el parámetro `-OutputPath`; no mantenga una segunda fuente editable:
+8. Para una publicación conjunta, genere directamente la copia que consume la API mediante el parámetro `-OutputPath`; no mantenga una segunda fuente editable:
 
    ```powershell
    powershell -NoProfile -ExecutionPolicy Bypass -File scripts/crm-help/Build-CrmHelpKnowledge.ps1 `
      -OutputPath C:\INDProjects\IND_CRM_API\Knowledge\crm-help.bundle.json
    ```
 
-8. Ejecute el runner de recuperación de la API y revise Top-1, Recall@5, ambigüedades y consultas no documentadas antes de publicar.
+9. Ejecute el runner de recuperación de la API y revise Top-1, Recall@5, ambigüedades y consultas no documentadas antes de publicar.
 
 `generated/crm-help.bundle.json` y `generated/validation-report.json` son derivados. No se editan a mano y deben corresponder al mismo cambio de las fuentes canónicas.
 
 ## Reglas editoriales
 
-- El contenido de procedimiento se mantiene únicamente en `es-ES`. `responseLocale` determina el idioma de la respuesta, pero no crea una segunda fuente de verdad.
-- Los aliases y preguntas de búsqueda de `eu-ES`, `en`, `pt`, `it` y `zh-Hans` están marcados como `machine-draft` hasta revisión humana. Traducen intención y títulos, no el procedimiento.
-- Una respuesta rápida debe ser breve, estar revisada y declarar `sourceChunkIds`. Si la cultura solicitada no es español, la API debe traducirla dentro del flujo fundamentado; no debe devolver automáticamente el texto español como si estuviera localizado.
+- `es-ES` sigue siendo la fuente factual canónica. Las otras culturas contienen una versión completa y estática para lectura, pero no deben introducir permisos, estados, rutas, límites ni resultados que no existan en español.
+- Los metadatos, contenidos y respuestas rápidas de `eu-ES`, `en`, `pt`, `it` y `zh-Hans` se mantienen como `machine-draft` hasta revisión lingüística humana. La API debe proyectar la cultura solicitada de forma completa o usar el fallback español, nunca mezclar idiomas dentro de un tema.
+- Una respuesta rápida debe ser breve, declarar `sourceChunkIds` estables y conservar el significado de la fuente española en cada cultura.
 - No se inventan permisos, estados, rutas, límites ni resultados. Si la documentación no responde una pregunta, el resultado esperado es `notDocumented`.
 - Un tema `published` debe producir al menos un chunk textual útil. Un encabezado de navegación sin cuerpo pertenece al módulo, no al catálogo de temas.
 - Las capturas importadas conservan los bytes del DOCX. Para sustituir una imagen, cree un activo versionado, añada descripción funcional revisada y actualice su SHA-256; no recomprima el original.
@@ -77,7 +79,7 @@ La APP resuelve estas claves a rutas autorizadas. El compilador falla si un tema
 
 ## Traducciones y búsqueda
 
-La migración reproducible guarda los títulos de búsqueda traducidos en `scripts/crm-help/resources/topic-search-overrides.json`. `Import-CrmHelpManualV15.ps1` es una herramienta de migración de una sola versión, protegida por el SHA-256 del DOCX. No debe ejecutarse durante el mantenimiento normal porque `-Force` vuelve a generar los temas 1.5 y puede reemplazar cambios editoriales.
+La migración reproducible guarda los títulos de búsqueda traducidos en `scripts/crm-help/resources/topic-search-overrides.json`. Las localizaciones de presentación y lectura se versionan en `localizations/{locale}.json` y `content.{locale}.md`. `Import-CrmHelpManualV15.ps1` es una herramienta de migración de una sola versión, protegida por el SHA-256 del DOCX. No debe ejecutarse durante el mantenimiento normal porque `-Force` vuelve a generar los temas 1.5 y puede reemplazar cambios editoriales.
 
 Las nuevas consultas reales deben incorporarse como aliases o casos de evaluación únicamente después de redacción y revisión humana. Las métricas agregadas orientan la prioridad editorial, pero nunca modifican automáticamente la documentación.
 
@@ -122,7 +124,8 @@ El compilador comprueba, entre otros puntos:
 
 - hash y presencia del DOCX de migración, contenidos y activos;
 - JSON válido, IDs únicos y orden coherente entre módulos y navegación;
-- temas publicados con contenido, chunks y culturas declaradas;
+- temas publicados con título, descripción breve, contenido completo, respuestas rápidas y chunks en todas las culturas;
+- correspondencia de IDs y referencias de imagen entre la fuente española y cada localización;
 - referencias de temas, activos, respuestas rápidas y casos de evaluación;
 - `routeKey` incluido en el registro permitido;
 - arrays JSON estables aun cuando tengan cero o un elemento;

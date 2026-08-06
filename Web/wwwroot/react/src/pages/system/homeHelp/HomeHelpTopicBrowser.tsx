@@ -8,6 +8,7 @@ type HomeHelpTopicBrowserProps = {
   searchLabel: string;
   searchPlaceholder: string;
   emptyLabel: string;
+  detailRegionId?: string;
   readOnly?: boolean;
   onSelect: (topic: HelpTopicSummary) => void;
 };
@@ -46,6 +47,7 @@ const HomeHelpTopicBrowser = ({
   searchLabel,
   searchPlaceholder,
   emptyLabel,
+  detailRegionId,
   readOnly = false,
   onSelect,
 }: HomeHelpTopicBrowserProps) => {
@@ -123,6 +125,7 @@ const HomeHelpTopicBrowser = ({
                         key={topic.id}
                         type="button"
                         disabled={readOnly}
+                        aria-controls={detailRegionId}
                         aria-pressed={selected}
                         className={`block w-full rounded-[var(--radius-xl)] border px-2.5 py-2 text-left text-sm font-semibold transition-colors focus:outline-hidden focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 ${
                           selected
