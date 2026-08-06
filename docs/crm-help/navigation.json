@@ -8,28 +8,6 @@
                          ],
     "modules":  [
                     {
-                        "moduleId":  "introduction",
-                        "topicIds":  [
-                                         "introduction.objetivo-y-personas-destinatarias",
-                                         "introduction.contexto-del-nuevo-flujo-de-gastos",
-                                         "introduction.antecedentes-del-proceso",
-                                         "introduction.alcance-del-flujo-de-gastos",
-                                         "introduction.como-utilizar-este-manual",
-                                         "introduction.que-necesita",
-                                         "introduction.partes-basicas-del-navegador",
-                                         "introduction.uso-seguro"
-                                     ]
-                    },
-                    {
-                        "moduleId":  "access",
-                        "topicIds":  [
-                                         "access.abrir-el-crm",
-                                         "access.identificarse",
-                                         "access.guardar-la-direccion-como-favorito",
-                                         "access.cerrar-la-sesion"
-                                     ]
-                    },
-                    {
                         "moduleId":  "common-ui",
                         "topicIds":  [
                                          "common-ui.elementos-comunes-de-la-pantalla",
@@ -103,8 +81,6 @@
                     {
                         "moduleId":  "troubleshooting",
                         "topicIds":  [
-                                         "troubleshooting.la-pagina-no-abre",
-                                         "troubleshooting.la-identificacion-se-repite",
                                          "troubleshooting.no-aparece-un-menu-boton-o-usuario",
                                          "troubleshooting.no-se-puede-guardar",
                                          "troubleshooting.la-imagen-del-ticket-no-se-procesa",

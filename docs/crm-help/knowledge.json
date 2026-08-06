@@ -1,6 +1,6 @@
 {
     "schemaVersion":  "1.1",
-    "knowledgeVersion":  "1.7.0",
+    "knowledgeVersion":  "1.8.0",
     "title":  "Ayuda de la aplicación CRM",
     "defaultLocale":  "es-ES",
     "supportedResponseLocales":  [
@@ -15,8 +15,6 @@
                    "role":  "migration-input"
                },
     "modulePaths":  [
-                        "modules/introduction/module.json",
-                        "modules/access/module.json",
                         "modules/common-ui/module.json",
                         "modules/visits/module.json",
                         "modules/expenses/module.json",

@@ -8,16 +8,16 @@
 
                  ],
     "counts":  {
-                   "modules":  10,
-                   "topics":  60,
-                   "publishedTopics":  60,
-                   "chunks":  60,
-                   "quickAnswers":  9,
-                   "assets":  54,
+                   "modules":  8,
+                   "topics":  46,
+                   "publishedTopics":  46,
+                   "chunks":  46,
+                   "quickAnswers":  6,
+                   "assets":  50,
                    "locales":  1,
-                   "localizedTopics":  60,
-                   "localizedChunks":  60
+                   "localizedTopics":  46,
+                   "localizedChunks":  46
                },
-    "knowledgeHash":  "C262F59072C46705E3C597DA0C692C0724C1BD0D374EAEA1CFB3CB00F50A14DC",
-    "bundleSha256":  null
+    "knowledgeHash":  "5E56FF242ECD18C3999D0DAF071C3DC2E96479CEBE43A80007729229703FF5E3",
+    "bundleSha256":  "D2908F32774CBBD36AF7A16896544F82FF2E2A79012E966AD64ECC35F07339E9"
 }

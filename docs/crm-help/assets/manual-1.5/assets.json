@@ -3,50 +3,6 @@
     "sourceSha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
     "assets":  [
                    {
-                       "id":  "manual-1.5.image1",
-                       "path":  "assets/manual-1.5/image1.png",
-                       "mimeType":  "image/png",
-                       "sha256":  "B0AEC57940A7840CBB68B219F62D92DEFFD1D725E9FA593C50F96800541FB55B",
-                       "sourcePart":  "word/media/image1.png",
-                       "altText":  "Imagen procedente del Manual App CRM 1.5; consulte el tema asociado para su contexto funcional.",
-                       "usedByTopicIds":  [
-
-                                          ]
-                   },
-                   {
-                       "id":  "manual-1.5.image2",
-                       "path":  "assets/manual-1.5/image2.png",
-                       "mimeType":  "image/png",
-                       "sha256":  "B338645DF02E0A270955E444369F16E42E92C840B0D5E5BD8609C6F78E3CD027",
-                       "sourcePart":  "word/media/image2.png",
-                       "altText":  "Captura de «Identificarse» relacionada con: 1. En la pantalla Bienvenido, pulse Entrar con Microsoft.",
-                       "usedByTopicIds":  [
-
-                                          ]
-                   },
-                   {
-                       "id":  "manual-1.5.image3",
-                       "path":  "assets/manual-1.5/image3.png",
-                       "mimeType":  "image/png",
-                       "sha256":  "EB0CFE9DF16A289192C384AEB9E387FFA77CA324AEF9B5A8A2788EAD1DD0504C",
-                       "sourcePart":  "word/media/image3.png",
-                       "altText":  "Captura de «Cerrar la sesión» relacionada con: 3. Pulse Cerrar sesión y espere hasta regresar a la pantalla de acceso.",
-                       "usedByTopicIds":  [
-
-                                          ]
-                   },
-                   {
-                       "id":  "manual-1.5.image4",
-                       "path":  "assets/manual-1.5/image4.png",
-                       "mimeType":  "image/png",
-                       "sha256":  "E5038E3DF2C59F8067AE08FD40E52052BFEA6362AB7DE3402ED416DD03F0BD7F",
-                       "sourcePart":  "word/media/image4.png",
-                       "altText":  "Captura de «Cerrar la sesión» relacionada con: 3. Pulse Cerrar sesión y espere hasta regresar a la pantalla de acceso.",
-                       "usedByTopicIds":  [
-
-                                          ]
-                   },
-                   {
                        "id":  "manual-1.5.image5",
                        "path":  "assets/manual-1.5/image5.png",
                        "mimeType":  "image/png",

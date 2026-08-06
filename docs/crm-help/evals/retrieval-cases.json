@@ -1,125 +1,5 @@
 [
     {
-        "id":  "route-001-es",
-        "question":  "¿Dónde encuentro información sobre objetivo y personas destinatarias?",
-        "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.objetivo-y-personas-destinatarias"
-                             ]
-    },
-    {
-        "id":  "route-002-es",
-        "question":  "¿Dónde encuentro información sobre contexto del nuevo flujo de gastos?",
-        "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.contexto-del-nuevo-flujo-de-gastos"
-                             ]
-    },
-    {
-        "id":  "route-003-es",
-        "question":  "¿Dónde encuentro información sobre antecedentes del proceso?",
-        "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.antecedentes-del-proceso"
-                             ]
-    },
-    {
-        "id":  "route-004-es",
-        "question":  "¿Dónde encuentro información sobre alcance del flujo de gastos?",
-        "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.alcance-del-flujo-de-gastos"
-                             ]
-    },
-    {
-        "id":  "route-005-es",
-        "question":  "¿Dónde encuentro información sobre cómo utilizar este manual?",
-        "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.como-utilizar-este-manual"
-                             ]
-    },
-    {
-        "id":  "route-006-es",
-        "question":  "¿Dónde encuentro información sobre qué necesita?",
-        "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.que-necesita"
-                             ]
-    },
-    {
-        "id":  "route-007-es",
-        "question":  "¿Dónde encuentro información sobre partes básicas del navegador?",
-        "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.partes-basicas-del-navegador"
-                             ]
-    },
-    {
-        "id":  "route-008-es",
-        "question":  "¿Dónde encuentro información sobre uso seguro?",
-        "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.uso-seguro"
-                             ]
-    },
-    {
-        "id":  "route-009-es",
-        "question":  "¿Dónde encuentro información sobre abrir el crm?",
-        "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "access.abrir-el-crm"
-                             ]
-    },
-    {
-        "id":  "route-010-es",
-        "question":  "¿Dónde encuentro información sobre identificarse?",
-        "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "access.identificarse"
-                             ]
-    },
-    {
-        "id":  "route-011-es",
-        "question":  "¿Dónde encuentro información sobre guardar la dirección como favorito?",
-        "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "access.guardar-la-direccion-como-favorito"
-                             ]
-    },
-    {
-        "id":  "route-012-es",
-        "question":  "¿Dónde encuentro información sobre cerrar la sesión?",
-        "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "access.cerrar-la-sesion"
-                             ]
-    },
-    {
         "id":  "route-013-es",
         "question":  "¿Dónde encuentro información sobre elementos comunes de la pantalla?",
         "responseLocale":  "es-ES",
@@ -530,26 +410,6 @@
                              ]
     },
     {
-        "id":  "route-054-es",
-        "question":  "¿Dónde encuentro información sobre la página no abre?",
-        "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "troubleshooting.la-pagina-no-abre"
-                             ]
-    },
-    {
-        "id":  "route-055-es",
-        "question":  "¿Dónde encuentro información sobre la identificación se repite?",
-        "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "troubleshooting.la-identificacion-se-repite"
-                             ]
-    },
-    {
         "id":  "route-056-es",
         "question":  "¿Dónde encuentro información sobre no aparece un menú, botón o usuario?",
         "responseLocale":  "es-ES",
@@ -611,6 +471,16 @@
                                  "expenses.abrir-la-lista-de-hojas",
                                  "expenses.buscar-y-filtrar-hojas",
                                  "expenses.utilizar-el-asistente-de-gastos"
+                             ]
+    },
+    {
+        "id":  "route-out-of-scope-sign-in",
+        "question":  "¿Cómo entro o inicio sesión en el CRM?",
+        "responseLocale":  "es-ES",
+        "selectedTopicId":  null,
+        "expectedResolution":  "notDocumented",
+        "expectedTopicIds":  [
+
                              ]
     },
     {

@@ -1,30 +1,5 @@
 [
     {
-        "id":  "answer-access.cerrar-la-sesion",
-        "question":  "¿Cómo cierro la sesión del CRM?",
-        "responseLocale":  "es-ES",
-        "expectedResolution":  "answered",
-        "expectedTopicId":  "access.cerrar-la-sesion",
-        "expectedTopicIds":  [
-                                 "access.cerrar-la-sesion"
-                             ],
-        "sourceChunkIds":  [
-                               "access.cerrar-la-sesion--01"
-                           ],
-        "requiredSourceChunkIds":  [
-                                       "access.cerrar-la-sesion--01"
-                                   ],
-        "requiredFacts":  [
-                              "Debe abrirse el menú lateral izquierdo.",
-                              "Debe pulsarse el nombre de usuario situado en la parte inferior.",
-                              "Debe pulsarse Cerrar sesión y esperarse hasta volver a la pantalla de acceso."
-                          ],
-        "forbiddenClaims":  [
-                                "El asistente ya ha cerrado la sesión por el usuario.",
-                                "Cerrar la pestaña equivale siempre a cerrar la sesión."
-                            ]
-    },
-    {
         "id":  "answer-common-ui.cambiar-el-idioma",
         "question":  "¿Cómo cambio el idioma del CRM?",
         "responseLocale":  "es-ES",
@@ -73,56 +48,6 @@
         "forbiddenClaims":  [
                                 "Existe un botón documentado para desvincular directamente el ticket.",
                                 "El asistente ya ha cambiado la relación del ticket."
-                            ]
-    },
-    {
-        "id":  "answer-troubleshooting.la-pagina-no-abre",
-        "question":  "¿Qué hago si la página del CRM no abre?",
-        "responseLocale":  "es-ES",
-        "expectedResolution":  "answered",
-        "expectedTopicId":  "troubleshooting.la-pagina-no-abre",
-        "expectedTopicIds":  [
-                                 "troubleshooting.la-pagina-no-abre"
-                             ],
-        "sourceChunkIds":  [
-                               "troubleshooting.la-pagina-no-abre--01"
-                           ],
-        "requiredSourceChunkIds":  [
-                                       "troubleshooting.la-pagina-no-abre--01"
-                                   ],
-        "requiredFacts":  [
-                              "Debe comprobarse la conexión y que la dirección esté completa y sin espacios.",
-                              "Debe pulsarse Actualizar una sola vez y esperar.",
-                              "Si persiste, debe reabrirse el navegador y comunicar hora, dirección y mensaje cuando otras páginas sí funcionan."
-                          ],
-        "forbiddenClaims":  [
-                                "Debe actualizarse repetidamente la página.",
-                                "El asistente ha reparado el acceso."
-                            ]
-    },
-    {
-        "id":  "answer-troubleshooting.la-identificacion-se-repite",
-        "question":  "¿Qué hago si la identificación se repite?",
-        "responseLocale":  "es-ES",
-        "expectedResolution":  "answered",
-        "expectedTopicId":  "troubleshooting.la-identificacion-se-repite",
-        "expectedTopicIds":  [
-                                 "troubleshooting.la-identificacion-se-repite"
-                             ],
-        "sourceChunkIds":  [
-                               "troubleshooting.la-identificacion-se-repite--01"
-                           ],
-        "requiredSourceChunkIds":  [
-                                       "troubleshooting.la-identificacion-se-repite--01"
-                                   ],
-        "requiredFacts":  [
-                              "Deben cerrarse todas las pestañas del CRM y comprobarse la cuenta corporativa.",
-                              "Debe volverse a entrar desde el acceso oficial sin probar contraseñas repetidamente.",
-                              "Si la cuenta está bloqueada o falla la verificación, debe contactarse con soporte."
-                          ],
-        "forbiddenClaims":  [
-                                "Debe probarse la contraseña repetidamente.",
-                                "El asistente puede desbloquear la cuenta."
                             ]
     },
     {
@@ -223,6 +148,29 @@
         "forbiddenClaims":  [
                                 "Debe enviarse la contraseña a soporte.",
                                 "La captura debe incluir códigos de acceso."
+                            ]
+    },
+    {
+        "id":  "answer-not-documented-sign-in",
+        "question":  "¿Cómo entro o inicio sesión en el CRM?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "notDocumented",
+        "expectedTopicId":  null,
+        "expectedTopicIds":  [
+
+                             ],
+        "sourceChunkIds":  [
+
+                           ],
+        "requiredSourceChunkIds":  [
+
+                                   ],
+        "requiredFacts":  [
+                              "Debe indicarse que el acceso y el inicio de sesión no están documentados en esta base de ayuda."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe proporcionarse un procedimiento para abrir o iniciar sesión en el CRM.",
+                                "El asistente ha iniciado la sesión por el usuario."
                             ]
     },
     {

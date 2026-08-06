@@ -2,7 +2,7 @@
 
 Esta carpeta es la fuente canónica mantenible del asistente de ayuda. El archivo `docs/exports/Manual App CRM 1.5.docx` se conserva intacto como entrada histórica de la migración; la aplicación no debe leer ni indexar el DOCX en tiempo de ejecución.
 
-La migración 1.5 comprobó 65 secciones lógicas. Se publican 60 temas con contenido útil. Los encabezados 3, 4, 6, 11 y 12 no tenían cuerpo propio y se mantienen únicamente como agrupación, evitando temas seleccionables vacíos.
+La migración 1.5 comprobó 65 secciones lógicas. Se publican 46 temas con contenido útil. Los contenidos introductorios y de acceso se retiraron porque el Manual se consulta desde una sesión ya iniciada. Los encabezados 3, 4, 6, 11 y 12 no tenían cuerpo propio y se mantienen únicamente como agrupación, evitando temas seleccionables vacíos.
 
 ## Estructura
 
@@ -91,7 +91,7 @@ Debe ejecutarse este corpus después de la evaluación de recuperación y antes 
 
 Todos los casos publicados utilizan `responseLocale: es-ES`. La definición reproducible se conserva en `scripts/crm-help/resources/answer-cases.json`; el importador 1.5 la valida y la copia sin generar hechos nuevos.
 
-El runner pre-release de la API exige un origen explícito, el corpus y un directorio de salida. Antes de utilizar credenciales, valide offline los parámetros y los 10 casos; `-ValidateOnly` no lee el token ni realiza peticiones de red:
+El runner pre-release de la API exige un origen explícito, el corpus y un directorio de salida. Antes de utilizar credenciales, valide offline los parámetros y los 8 casos; `-ValidateOnly` no lee el token ni realiza peticiones de red:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass `

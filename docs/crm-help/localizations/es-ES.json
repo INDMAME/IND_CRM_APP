@@ -5,16 +5,6 @@
     "title":  "Ayuda de la aplicación CRM",
     "modules":  [
                     {
-                        "id":  "introduction",
-                        "title":  "Primeros pasos",
-                        "description":  "Objetivo, alcance, conceptos básicos y uso seguro del CRM."
-                    },
-                    {
-                        "id":  "access",
-                        "title":  "Acceso al CRM",
-                        "description":  "Apertura, identificación, favoritos y cierre de sesión."
-                    },
-                    {
                         "id":  "common-ui",
                         "title":  "Pantalla, empresa y permisos",
                         "description":  "Controles comunes, empresa activa, idioma y permisos."
@@ -56,106 +46,6 @@
                     }
                 ],
     "topics":  [
-                   {
-                       "id":  "introduction.objetivo-y-personas-destinatarias",
-                       "title":  "Objetivo y personas destinatarias",
-                       "summary":  "Conoce el propósito del manual y a quién va dirigido.",
-                       "quickAnswers":  [
-
-                                        ]
-                   },
-                   {
-                       "id":  "introduction.contexto-del-nuevo-flujo-de-gastos",
-                       "title":  "Contexto del nuevo flujo de gastos",
-                       "summary":  "Entiende por qué se digitalizó la gestión de hojas de gastos.",
-                       "quickAnswers":  [
-
-                                        ]
-                   },
-                   {
-                       "id":  "introduction.antecedentes-del-proceso",
-                       "title":  "Antecedentes del proceso",
-                       "summary":  "Repasa cómo se gestionaban antes las hojas de gastos.",
-                       "quickAnswers":  [
-
-                                        ]
-                   },
-                   {
-                       "id":  "introduction.alcance-del-flujo-de-gastos",
-                       "title":  "Alcance del flujo de gastos",
-                       "summary":  "Consulta a quién se aplica el flujo y qué tareas continúan en Axapta.",
-                       "quickAnswers":  [
-
-                                        ]
-                   },
-                   {
-                       "id":  "introduction.como-utilizar-este-manual",
-                       "title":  "Cómo utilizar este manual",
-                       "summary":  "Aprende la terminología y la forma de seguir los pasos del manual.",
-                       "quickAnswers":  [
-
-                                        ]
-                   },
-                   {
-                       "id":  "introduction.que-necesita",
-                       "title":  "Qué necesita",
-                       "summary":  "Indica el dispositivo, la conexión, la cuenta y el navegador necesarios para usar el CRM.",
-                       "quickAnswers":  [
-
-                                        ]
-                   },
-                   {
-                       "id":  "introduction.partes-basicas-del-navegador",
-                       "title":  "Partes básicas del navegador",
-                       "summary":  "Explica la barra de direcciones y cómo distinguirla del buscador de una página.",
-                       "quickAnswers":  [
-
-                                        ]
-                   },
-                   {
-                       "id":  "introduction.uso-seguro",
-                       "title":  "Uso seguro",
-                       "summary":  "Revisa las pautas básicas para utilizar el CRM de forma segura.",
-                       "quickAnswers":  [
-
-                                        ]
-                   },
-                   {
-                       "id":  "access.abrir-el-crm",
-                       "title":  "Abrir el CRM",
-                       "summary":  "Sigue los pasos para abrir el CRM desde un navegador.",
-                       "quickAnswers":  [
-
-                                        ]
-                   },
-                   {
-                       "id":  "access.identificarse",
-                       "title":  "Identificarse",
-                       "summary":  "Accede al CRM con tu cuenta corporativa de Microsoft.",
-                       "quickAnswers":  [
-
-                                        ]
-                   },
-                   {
-                       "id":  "access.guardar-la-direccion-como-favorito",
-                       "title":  "Guardar la dirección como favorito",
-                       "summary":  "Guarda el CRM en Favoritos para abrirlo más rápido.",
-                       "quickAnswers":  [
-
-                                        ]
-                   },
-                   {
-                       "id":  "access.cerrar-la-sesion",
-                       "title":  "Cerrar la sesión",
-                       "summary":  "Cierra correctamente la sesión del CRM.",
-                       "quickAnswers":  [
-                                            {
-                                                "id":  "access.cerrar-la-sesion.quick-01",
-                                                "question":  "¿Cómo cierro la sesión del CRM?",
-                                                "answer":  "1. Abra el menú lateral izquierdo. 2. Pulse su nombre de usuario en la parte inferior. 3. Pulse Cerrar sesión y espere hasta regresar a la pantalla de acceso."
-                                            }
-                                        ]
-                   },
                    {
                        "id":  "common-ui.elementos-comunes-de-la-pantalla",
                        "title":  "Elementos comunes de la pantalla",
@@ -490,30 +380,6 @@
                        "summary":  "Comprueba qué acciones ofrece Axapta según el estado y los permisos.",
                        "quickAnswers":  [
 
-                                        ]
-                   },
-                   {
-                       "id":  "troubleshooting.la-pagina-no-abre",
-                       "title":  "La página no abre",
-                       "summary":  "Comprueba conexión, dirección y navegador si una página no abre.",
-                       "quickAnswers":  [
-                                            {
-                                                "id":  "troubleshooting.la-pagina-no-abre.quick-01",
-                                                "question":  "¿Qué hago si la página del CRM no abre?",
-                                                "answer":  "1. Compruebe que el dispositivo tiene conexión. 2. Revise que la dirección (https://crm.insertec.biz:7702/) esté completa y no contenga espacios. 3. Pulse Actualizar una sola vez y espere. 4. Si el problema continúa, cierre el navegador, vuelva a abrirlo y pruebe de nuevo. 5. Si otras páginas funcionan pero el CRM no, comunique la hora, la dirección y el mensaje mostrado."
-                                            }
-                                        ]
-                   },
-                   {
-                       "id":  "troubleshooting.la-identificacion-se-repite",
-                       "title":  "La identificación se repite",
-                       "summary":  "Indica qué revisar cuando el CRM solicita identificarse varias veces.",
-                       "quickAnswers":  [
-                                            {
-                                                "id":  "troubleshooting.la-identificacion-se-repite.quick-01",
-                                                "question":  "¿Qué hago si la identificación se repite?",
-                                                "answer":  "Cierre todas las pestañas del CRM, compruebe que utiliza la cuenta corporativa correcta y vuelva a entrar desde el acceso oficial. No pruebe contraseñas repetidamente. Si la cuenta está bloqueada o la verificación falla, contacte con soporte."
-                                            }
                                         ]
                    },
                    {
