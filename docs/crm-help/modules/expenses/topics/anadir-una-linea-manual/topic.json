@@ -8,13 +8,20 @@
     "aliases":  {
                     "es-ES":  [
                                   "Añadir una línea manual",
+                                  "meter un gasto",
+                                  "imputar un gasto",
+                                  "registrar un gasto",
+                                  "introducir un gasto",
                                   "hojas de gastos",
                                   "gastos"
                               ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre añadir una línea manual?"
+                                          "¿Dónde encuentro información sobre añadir una línea manual?",
+                                          "¿Cómo debo meter un gasto?",
+                                          "¿Cómo debo imputar un gasto en una hoja?",
+                                          "¿Cómo registro un gasto manual?"
                                       ]
                         },
     "audiences":  [
@@ -28,7 +35,7 @@
                         ],
     "routeKey":  "expenses.sheets",
     "status":  "published",
-    "contentVersion":  "1.7.0",
+    "contentVersion":  "1.7.1",
     "contentHash":  "DDF0CA4D343846348A1868BB0A27D70907C9EAFF2C59AE25FC623521E5C9F87D",
     "assets":  [
 

@@ -644,6 +644,50 @@
                              ]
     },
     {
+        "id":  "route-real-es-015-module-meter-expense",
+        "question":  "¿Cómo debo meter un gasto?",
+        "responseLocale":  "es-ES",
+        "selectedTopicId":  null,
+        "selectedModuleId":  "expenses",
+        "expectedResolution":  "answered",
+        "expectedTopicIds":  [
+                                 "expenses.anadir-una-linea-manual"
+                             ]
+    },
+    {
+        "id":  "route-real-es-016-module-impute-expense",
+        "question":  "¿Cómo debo imputar un gasto en una hoja?",
+        "responseLocale":  "es-ES",
+        "selectedTopicId":  null,
+        "selectedModuleId":  "expenses",
+        "expectedResolution":  "answered",
+        "expectedTopicIds":  [
+                                 "expenses.anadir-una-linea-manual"
+                             ]
+    },
+    {
+        "id":  "route-real-es-017-module-register-expense",
+        "question":  "Quiero registrar un gasto manual",
+        "responseLocale":  "es-ES",
+        "selectedTopicId":  null,
+        "selectedModuleId":  "expenses",
+        "expectedResolution":  "answered",
+        "expectedTopicIds":  [
+                                 "expenses.anadir-una-linea-manual"
+                             ]
+    },
+    {
+        "id":  "route-real-es-018-module-hour-or-sheet",
+        "question":  "¿Cómo imputo una hora de gasto?",
+        "responseLocale":  "es-ES",
+        "selectedTopicId":  null,
+        "selectedModuleId":  "expenses",
+        "expectedResolution":  "answered",
+        "expectedTopicIds":  [
+                                 "expenses.anadir-una-linea-manual"
+                             ]
+    },
+    {
         "id":  "route-ambiguous-tickets",
         "question":  "Ayuda con un ticket",
         "responseLocale":  "es-ES",

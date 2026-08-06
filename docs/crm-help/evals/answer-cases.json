@@ -151,6 +151,82 @@
                             ]
     },
     {
+        "id":  "answer-expenses-add-manual-line-colloquial",
+        "question":  "¿Cómo debo meter un gasto?",
+        "responseLocale":  "es-ES",
+        "selectedModuleId":  "expenses",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "expenses.anadir-una-linea-manual",
+        "expectedTopicIds":  [
+                                 "expenses.anadir-una-linea-manual"
+                             ],
+        "sourceChunkIds":  [
+                               "expenses.anadir-una-linea-manual--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "expenses.anadir-una-linea-manual--01"
+                                   ],
+        "requiredFacts":  [
+                              "Debe abrirse una hoja editable y pulsarse Nueva línea desde Acciones rápidas.",
+                              "Deben completarse la fecha, categoría, descripción, precio, cantidad y los demás campos aplicables.",
+                              "Debe pulsarse Guardar y confirmar; descripción y categoría son obligatorias, y precio y cantidad deben ser mayores que cero."
+                          ],
+        "forbiddenClaims":  [
+                                "El asistente ya ha creado el gasto por el usuario.",
+                                "Es obligatorio crear primero un ticket para añadir cualquier gasto."
+                            ]
+    },
+    {
+        "id":  "answer-expenses-ambiguous-hour-or-sheet",
+        "question":  "¿Cómo imputo una hora de gasto?",
+        "responseLocale":  "es-ES",
+        "selectedModuleId":  "expenses",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "expenses.anadir-una-linea-manual",
+        "expectedTopicIds":  [
+                                 "expenses.anadir-una-linea-manual"
+                             ],
+        "sourceChunkIds":  [
+                               "expenses.anadir-una-linea-manual--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "expenses.anadir-una-linea-manual--01"
+                                   ],
+        "requiredFacts":  [
+                              "Debe distinguirse prudentemente entre imputar horas y añadir un gasto a una hoja.",
+                              "Si el usuario se refiere a añadir un gasto, debe proponerse Nueva línea desde Acciones rápidas en una hoja editable.",
+                              "La base de ayuda no documenta un procedimiento específico para imputar horas."
+                          ],
+        "forbiddenClaims":  [
+                                "El manual documenta pasos específicos para imputar horas.",
+                                "Debe darse por seguro que hora significa hoja sin explicárselo al usuario."
+                            ]
+    },
+    {
+        "id":  "answer-expenses-module-not-documented-password",
+        "question":  "¿Cómo restablezco mi contraseña corporativa?",
+        "responseLocale":  "es-ES",
+        "selectedModuleId":  "expenses",
+        "expectedResolution":  "notDocumented",
+        "expectedTopicId":  null,
+        "expectedTopicIds":  [
+
+                             ],
+        "sourceChunkIds":  [
+
+                           ],
+        "requiredSourceChunkIds":  [
+
+                                   ],
+        "requiredFacts":  [
+                              "Debe indicarse que el procedimiento de restablecimiento de contraseña no está documentado en el módulo de ayuda seleccionado."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe proporcionarse un procedimiento de restablecimiento no presente en la documentación.",
+                                "Debe citarse una sección de gastos como si documentara contraseñas."
+                            ]
+    },
+    {
         "id":  "answer-not-documented-sign-in",
         "question":  "¿Cómo entro o inicio sesión en el CRM?",
         "responseLocale":  "es-ES",
