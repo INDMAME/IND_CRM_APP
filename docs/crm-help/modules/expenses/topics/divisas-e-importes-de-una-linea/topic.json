@@ -4,58 +4,18 @@
     "moduleId":  "expenses",
     "sectionNumber":  "8.7",
     "title":  "Divisas e importes de una línea",
-    "summary":  "Divisa gasto es la moneda en la que se pagó el importe. Divisa Reembolso pertenece a la hoja y depende de la empresa. Imp. divisa representa el gasto original e Importe reembolso representa el valor que se llevará a la hoja.",
+    "summary":  "Entiende las divisas, el tipo de cambio y los importes de una línea.",
     "aliases":  {
                     "es-ES":  [
                                   "Divisas e importes de una línea",
                                   "hojas de gastos",
                                   "gastos"
-                              ],
-                    "eu-ES":  [
-                                  "Gastu-lerro baten dibisak eta zenbatekoak",
-                                  "gastu-orriak",
-                                  "gastuak"
-                              ],
-                    "en":  [
-                               "Currencies and line amounts",
-                               "expense sheets",
-                               "expenses"
-                           ],
-                    "pt":  [
-                               "Moedas e montantes de uma linha de despesa",
-                               "folhas de despesas",
-                               "despesas"
-                           ],
-                    "it":  [
-                               "Valute e importi di una riga di spesa",
-                               "note spese",
-                               "spese"
-                           ],
-                    "zh-Hans":  [
-                                    "费用行的币种和金额",
-                                    "费用单",
-                                    "费用"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre divisas e importes de una línea?"
-                                      ],
-                            "eu-ES":  [
-                                          "Gastu-lerro baten dibisak eta zenbatekoak gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about currencies and line amounts?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Moedas e montantes de uma linha de despesa."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Valute e importi di una riga di spesa."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于费用行的币种和金额的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,22 +28,16 @@
                         ],
     "routeKey":  "expenses.sheets",
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "CEE7FF98A466C0CF816D47AD661EC432D1228B9D038A0EEC1B05B65341F0E2F0",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "CCF90B2ED726B0FDF4E6170B9CFA33EECA8C6FCD413AEA9D315FD2BE1B1719BF",
     "assets":  [
-                   "manual-1.5.image35",
-                   "manual-1.5.image36"
+
                ],
     "quickAnswers":  [
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

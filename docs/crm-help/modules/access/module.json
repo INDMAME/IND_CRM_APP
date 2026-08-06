@@ -8,27 +8,7 @@
                     "es-ES":  [
                                   "acceso al CRM",
                                   "iniciar sesión"
-                              ],
-                    "eu-ES":  [
-                                  "CRMra sartzea",
-                                  "saioa hasi"
-                              ],
-                    "en":  [
-                               "CRM access",
-                               "sign in"
-                           ],
-                    "pt":  [
-                               "acesso ao CRM",
-                               "iniciar sessão"
-                           ],
-                    "it":  [
-                               "accesso al CRM",
-                               "accedere"
-                           ],
-                    "zh-Hans":  [
-                                    "访问 CRM",
-                                    "登录"
-                                ]
+                              ]
                 },
     "topicIds":  [
                      "access.abrir-el-crm",

@@ -4,58 +4,19 @@
     "moduleId":  "visits",
     "sectionNumber":  "7.5",
     "title":  "Editor de texto y dictado",
-    "summary":  "Al pulsar Comentarios, Antecedentes o Conclusiones se abre un editor a pantalla completa. Escriba el texto y pulse Guardar para devolverlo al formulario. Cuando el micrófono esté disponible en modo edición, puede dictar. Una nueva transcripción sustituye el contenido completo...",
+    "summary":  "Escribe o dicta comentarios, antecedentes y conclusiones.",
     "aliases":  {
                     "es-ES":  [
                                   "Editor de texto y dictado",
                                   "visitas",
                                   "historial de visitas"
-                              ],
-                    "eu-ES":  [
-                                  "Testu-editorea eta diktaketa",
-                                  "bisitak",
-                                  "bisiten historia"
-                              ],
-                    "en":  [
-                               "Text editor and dictation",
-                               "visits",
-                               "visit history"
-                           ],
-                    "pt":  [
-                               "Editor de texto e ditado",
-                               "visitas",
-                               "histórico de visitas"
-                           ],
-                    "it":  [
-                               "Editor di testo e dettatura",
-                               "visite",
-                               "cronologia visite"
-                           ],
-                    "zh-Hans":  [
-                                    "文本编辑器和语音听写",
-                                    "拜访",
-                                    "拜访记录"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre editor de texto y dictado?"
-                                      ],
-                            "eu-ES":  [
-                                          "Testu-editorea eta diktaketa gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about text editor and dictation?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Editor de texto e ditado."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Editor di testo e dettatura."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于文本编辑器和语音听写的帮助。"
-                                        ]
+                                          "¿Dónde encuentro información sobre editor de texto y dictado?",
+                                          "Quiero dictar los comentarios de una visita con el micrófono"
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,23 +29,16 @@
                         ],
     "routeKey":  "visits.history",
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "F8263DD9CD46E302FC93331AE80BF08074C0F2D59B037C7355B10E4016EEBCF5",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "7D7C6CD850AC08E873B520953C5B7554C9C87A10F853F1E3F1E8EA343D15A43A",
     "assets":  [
-                   "manual-1.5.image17",
-                   "manual-1.5.image18",
-                   "manual-1.5.image19"
+
                ],
     "quickAnswers":  [
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

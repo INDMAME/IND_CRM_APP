@@ -4,58 +4,18 @@
     "moduleId":  "axapta",
     "sectionNumber":  "11.2",
     "title":  "Gestión del flujo en Axapta",
-    "summary":  "Existen dos vías para gestionar el flujo en Axapta:",
+    "summary":  "Conoce las dos vías disponibles para gestionar el flujo en Axapta.",
     "aliases":  {
                     "es-ES":  [
                                   "Gestión del flujo en Axapta",
                                   "Axapta",
                                   "gastos en Axapta"
-                              ],
-                    "eu-ES":  [
-                                  "Axaptako fluxuaren kudeaketa",
-                                  "Axapta",
-                                  "gastuak Axaptan"
-                              ],
-                    "en":  [
-                               "Workflow management in Axapta",
-                               "Axapta",
-                               "expenses in Axapta"
-                           ],
-                    "pt":  [
-                               "Gestão do fluxo no Axapta",
-                               "Axapta",
-                               "despesas no Axapta"
-                           ],
-                    "it":  [
-                               "Gestione del flusso in Axapta",
-                               "Axapta",
-                               "spese in Axapta"
-                           ],
-                    "zh-Hans":  [
-                                    "Axapta 中的流程管理",
-                                    "Axapta",
-                                    "Axapta 费用"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre gestión del flujo en axapta?"
-                                      ],
-                            "eu-ES":  [
-                                          "Axaptako fluxuaren kudeaketa gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about workflow management in axapta?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Gestão do fluxo no Axapta."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Gestione del flusso in Axapta."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于Axapta 中的流程管理的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -71,8 +31,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "3C8A05287DC8F4E357533659F71C18274766F97FC1A1D2DA27EEF9256E7011FB",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "17AF2101E90C6FB8A501E5FE6ED9E9A0052DE6541995A14926791F76B59FBFDC",
     "assets":  [
 
                ],
@@ -80,12 +40,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

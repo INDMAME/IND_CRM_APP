@@ -2,10 +2,8 @@
 
 <!-- Fuente: Manual App CRM 1.5.docx, sección 3.2. -->
 
-La barra de direcciones se encuentra normalmente en la parte superior del navegador. Es el espacio largo donde se escribe la dirección de una página. No debe confundirse con un buscador situado dentro de una página.
+La barra de direcciones se encuentra normalmente en la parte superior de Microsoft Edge o Google Chrome. Es el espacio largo donde aparece la dirección de la página abierta.
 
-1. Abra Microsoft Edge o Google Chrome.
+Para entrar en el CRM, pulse una vez en esa barra, escriba o pegue la dirección corporativa completa y pulse Enter. No la confunda con el buscador que puede aparecer dentro de una página, porque ese campo solo busca contenido en el sitio actual.
 
-2. Pulse una vez dentro de la barra de direcciones.
-
-3. Escriba o pegue la dirección completa (https://crm.insertec.biz:7702/) y pulse la tecla Enter.
+Antes de identificarse, compruebe que la dirección coincide con el acceso proporcionado por la empresa. Si recibe una dirección distinta por correo o mensajería, no introduzca sus credenciales hasta confirmar que es legítima.

@@ -165,30 +165,17 @@ if ((Test-Path -LiteralPath $OutputRoot) -and -not $Force) {
 }
 
 $moduleDefinitions = @(
-    [ordered]@{ id = "introduction"; title = "Primeros pasos"; description = "Objetivo, alcance, conceptos básicos y uso seguro del CRM."; aliases = [ordered]@{ "es-ES" = @("primeros pasos", "manual CRM"); "eu-ES" = @("lehen urratsak", "CRM eskuliburua"); en = @("getting started", "CRM manual"); pt = @("primeiros passos", "manual CRM"); it = @("primi passi", "manuale CRM"); "zh-Hans" = @("入门", "CRM 手册") } },
-    [ordered]@{ id = "access"; title = "Acceso al CRM"; description = "Apertura, identificación, favoritos y cierre de sesión."; aliases = [ordered]@{ "es-ES" = @("acceso al CRM", "iniciar sesión"); "eu-ES" = @("CRMra sartzea", "saioa hasi"); en = @("CRM access", "sign in"); pt = @("acesso ao CRM", "iniciar sessão"); it = @("accesso al CRM", "accedere"); "zh-Hans" = @("访问 CRM", "登录") } },
-    [ordered]@{ id = "common-ui"; title = "Pantalla, empresa y permisos"; description = "Controles comunes, empresa activa, idioma y permisos."; aliases = [ordered]@{ "es-ES" = @("pantalla", "empresa activa", "permisos"); "eu-ES" = @("pantaila", "enpresa aktiboa", "baimenak"); en = @("screen", "active company", "permissions"); pt = @("ecrã", "empresa ativa", "permissões"); it = @("schermata", "azienda attiva", "permessi"); "zh-Hans" = @("界面", "当前公司", "权限") } },
-    [ordered]@{ id = "visits"; title = "Visitas"; description = "Consulta, creación, edición y eliminación de visitas."; aliases = [ordered]@{ "es-ES" = @("visitas", "historial de visitas"); "eu-ES" = @("bisitak", "bisiten historia"); en = @("visits", "visit history"); pt = @("visitas", "histórico de visitas"); it = @("visite", "cronologia visite"); "zh-Hans" = @("拜访", "拜访记录") } },
-    [ordered]@{ id = "expenses"; title = "Hojas de gastos"; description = "Creación y mantenimiento de hojas y líneas de gasto."; aliases = [ordered]@{ "es-ES" = @("hojas de gastos", "gastos"); "eu-ES" = @("gastu-orriak", "gastuak"); en = @("expense sheets", "expenses"); pt = @("folhas de despesas", "despesas"); it = @("note spese", "spese"); "zh-Hans" = @("费用单", "费用") } },
-    [ordered]@{ id = "tickets"; title = "Tickets"; description = "Consulta, creación y estado de justificantes de gasto."; aliases = [ordered]@{ "es-ES" = @("tickets", "justificantes"); "eu-ES" = @("tiketa", "gastuen frogagiriak"); en = @("tickets", "expense receipts"); pt = @("tickets", "comprovativos de despesa"); it = @("ticket", "giustificativi di spesa"); "zh-Hans" = @("票据", "费用凭证") } },
-    [ordered]@{ id = "expense-approval"; title = "Aprobación de gastos"; description = "Estados, responsables y acciones de aprobación."; aliases = [ordered]@{ "es-ES" = @("aprobación de gastos", "estados de hoja"); "eu-ES" = @("gastuen onarpena", "orriaren egoerak"); en = @("expense approval", "sheet status"); pt = @("aprovação de despesas", "estado da folha"); it = @("approvazione spese", "stato nota spese"); "zh-Hans" = @("费用审批", "费用单状态") } },
-    [ordered]@{ id = "axapta"; title = "Continuidad en Axapta"; description = "Relación y continuidad del flujo de gastos en Axapta."; aliases = [ordered]@{ "es-ES" = @("Axapta", "gastos en Axapta"); "eu-ES" = @("Axapta", "gastuak Axaptan"); en = @("Axapta", "expenses in Axapta"); pt = @("Axapta", "despesas no Axapta"); it = @("Axapta", "spese in Axapta"); "zh-Hans" = @("Axapta", "Axapta 费用") } },
-    [ordered]@{ id = "troubleshooting"; title = "Problemas frecuentes"; description = "Comprobaciones y datos que deben enviarse a soporte."; aliases = [ordered]@{ "es-ES" = @("problemas frecuentes", "soporte"); "eu-ES" = @("ohiko arazoak", "laguntza"); en = @("common problems", "support"); pt = @("problemas frequentes", "suporte"); it = @("problemi frequenti", "assistenza"); "zh-Hans" = @("常见问题", "技术支持") } },
-    [ordered]@{ id = "glossary"; title = "Glosario"; description = "Definiciones básicas utilizadas en el manual."; aliases = [ordered]@{ "es-ES" = @("glosario", "definiciones"); "eu-ES" = @("glosarioa", "definizioak"); en = @("glossary", "definitions"); pt = @("glossário", "definições"); it = @("glossario", "definizioni"); "zh-Hans" = @("术语表", "定义") } }
+    [ordered]@{ id = "introduction"; title = "Primeros pasos"; description = "Objetivo, alcance, conceptos básicos y uso seguro del CRM."; aliases = [ordered]@{ "es-ES" = @("primeros pasos", "manual CRM") } },
+    [ordered]@{ id = "access"; title = "Acceso al CRM"; description = "Apertura, identificación, favoritos y cierre de sesión."; aliases = [ordered]@{ "es-ES" = @("acceso al CRM", "iniciar sesión") } },
+    [ordered]@{ id = "common-ui"; title = "Pantalla, empresa y permisos"; description = "Controles comunes, empresa activa, idioma y permisos."; aliases = [ordered]@{ "es-ES" = @("pantalla", "empresa activa", "permisos") } },
+    [ordered]@{ id = "visits"; title = "Visitas"; description = "Consulta, creación, edición y eliminación de visitas."; aliases = [ordered]@{ "es-ES" = @("visitas", "historial de visitas") } },
+    [ordered]@{ id = "expenses"; title = "Hojas de gastos"; description = "Creación y mantenimiento de hojas y líneas de gasto."; aliases = [ordered]@{ "es-ES" = @("hojas de gastos", "gastos") } },
+    [ordered]@{ id = "tickets"; title = "Tickets"; description = "Consulta, creación y estado de justificantes de gasto."; aliases = [ordered]@{ "es-ES" = @("tickets", "justificantes") } },
+    [ordered]@{ id = "expense-approval"; title = "Aprobación de gastos"; description = "Estados, responsables y acciones de aprobación."; aliases = [ordered]@{ "es-ES" = @("aprobación de gastos", "estados de hoja") } },
+    [ordered]@{ id = "axapta"; title = "Continuidad en Axapta"; description = "Relación y continuidad del flujo de gastos en Axapta."; aliases = [ordered]@{ "es-ES" = @("Axapta", "gastos en Axapta") } },
+    [ordered]@{ id = "troubleshooting"; title = "Problemas frecuentes"; description = "Comprobaciones y datos que deben enviarse a soporte."; aliases = [ordered]@{ "es-ES" = @("problemas frecuentes", "soporte") } },
+    [ordered]@{ id = "glossary"; title = "Glosario"; description = "Definiciones básicas utilizadas en el manual."; aliases = [ordered]@{ "es-ES" = @("glosario", "definiciones") } }
 )
-
-$englishTitles = @{
-    "1" = "Purpose and audience"; "1.1" = "Context of the new expense workflow"; "1.2" = "Previous process"; "1.3" = "Scope of the expense workflow";
-    "2" = "How to use this manual"; "3" = "Basic concepts before starting"; "3.1" = "What you need"; "3.2" = "Basic browser elements"; "3.3" = "Safe use";
-    "4" = "How to access the application"; "4.1" = "Open the CRM"; "4.2" = "Sign in"; "4.3" = "Save the address as a favorite"; "4.4" = "Sign out";
-    "5" = "Common screen elements"; "5.1" = "Edit, save, and cancel"; "6" = "Active company and permissions"; "6.1" = "What active company means"; "6.2" = "Change the language"; "6.3" = "Permissions"; "6.4" = "Expense workflow roles";
-    "7" = "Visits module"; "7.1" = "Open visit history"; "7.2" = "Filter visit history"; "7.3" = "Create a visit: step 1, account and contacts"; "7.4" = "Create a visit: step 2, visit details"; "7.5" = "Text editor and dictation"; "7.6" = "View, edit, or delete a visit";
-    "8" = "Expense sheets module"; "8.1" = "General expense sheet flow"; "8.2" = "Open the expense sheet list"; "8.3" = "Search and filter expense sheets"; "8.3.1" = "Use the Expense Assistant"; "8.4" = "Create an expense sheet header"; "8.5" = "Understand expense sheet details"; "8.6" = "Add a manual expense line"; "8.7" = "Currencies and line amounts"; "8.8" = "Create a ticket from an expense sheet"; "8.9" = "Link existing tickets"; "8.10" = "Edit the header and lines";
-    "9" = "Tickets module"; "9.1" = "Open and filter tickets"; "9.2" = "Create a ticket from the Tickets module"; "9.3" = "Ticket status";
-    "10" = "Expense sheet status and approval"; "10.1" = "General status flow"; "10.2" = "Expense sheet statuses"; "10.3" = "Owner actions"; "10.4" = "Manager actions"; "10.5" = "Links received by email";
-    "11" = "Relationship between expense sheets and Axapta"; "11.1" = "Relationship between CRM and Axapta"; "11.2" = "Workflow management in Axapta"; "11.2.1" = "Expense sheet: CRM / Users / Expense sheet"; "11.2.2" = "Expense sheet management"; "11.2.3" = "Statuses visible in Axapta"; "11.2.4" = "Actions available in Axapta";
-    "12" = "Common problems and what to do"; "12.1" = "The page does not open"; "12.2" = "Sign-in repeats"; "12.3" = "A menu, button, or user is missing"; "12.4" = "Unable to save"; "12.5" = "The ticket image is not processed"; "12.6" = "Information to send to support"; "13" = "Basic glossary"
-}
 
 $quickQuestions = @{
     "4.4" = "¿Cómo cierro la sesión del CRM?"
@@ -204,21 +191,12 @@ $quickQuestions = @{
 
 $visualDescriptions = @{
     "10.1" = @(
-        "El diagrama indica que las transiciones disponibles dependen de la configuración, el perfil y la acción.",
+        "Las transiciones disponibles dependen de la configuración, el perfil y la acción.",
         "Desde Borrador, Solicitar aprobación lleva a Aprobación solicitada; cuando no se requiere aprobación, Aprobar lleva a Aprobada.",
         "Desde Aprobación solicitada, Deshacer solicitud devuelve a Borrador, Aprobar lleva a Aprobada y Rechazar lleva a Rechazada.",
         "Desde Aprobada, Deshacer aprobación devuelve a Aprobación solicitada y Contabilizar en Axapta lleva a Pagada.",
         "Desde Rechazada, Pasar a Borrador devuelve a Borrador y Deshacer rechazo devuelve a Aprobación solicitada."
     )
-}
-
-$searchOverridesPath = Join-Path $PSScriptRoot "resources\topic-search-overrides.json"
-if (-not (Test-Path -LiteralPath $searchOverridesPath -PathType Leaf)) {
-    throw "Missing localized search overrides: '$searchOverridesPath'."
-}
-$searchOverrides = [IO.File]::ReadAllText($searchOverridesPath, $Utf8NoBom) | ConvertFrom-Json
-if ([string]$searchOverrides.schemaVersion -ne "1.0") {
-    throw "Localized search overrides must use schemaVersion '1.0'."
 }
 
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ("crm-help-manual-v15-" + [Guid]::NewGuid().ToString("N"))
@@ -369,12 +347,9 @@ try {
         $markdownLines.Add("")
 
         $lastContext = ""
-        $topicAssetIds = New-Object Collections.Generic.List[string]
         $plainParagraphs = New-Object Collections.Generic.List[string]
         if ($visualDescriptions.ContainsKey($candidate.Number)) {
-            $markdownLines.Add("<!-- Descripción funcional revisada a partir de la captura de esta sección. -->")
-            $markdownLines.Add("")
-            $markdownLines.Add("**Descripción funcional del diagrama:**")
+            $markdownLines.Add("**Transiciones disponibles:**")
             $markdownLines.Add("")
             foreach ($descriptionLine in $visualDescriptions[$candidate.Number]) {
                 $markdownLines.Add("- $descriptionLine")
@@ -400,20 +375,7 @@ try {
                 if (-not $assetByTarget.ContainsKey($target)) {
                     throw "Image relationship '$relationshipId' targets '$target', which is not in the asset manifest."
                 }
-                $asset = $assetByTarget[$target]
-                $alt = Get-ImageAltText -TopicTitle $candidate.Title -Context $lastContext
-                $relativeAssetPath = "../../../../$($asset.path)"
-                $markdownLines.Add("![$alt]($relativeAssetPath)")
-                $markdownLines.Add("")
-                if (-not $topicAssetIds.Contains($asset.id)) {
-                    $topicAssetIds.Add($asset.id)
-                }
-                if ($asset.usedByTopicIds -notcontains $candidate.Id) {
-                    $asset.usedByTopicIds += $candidate.Id
-                }
-                if ($asset.altText -like "Imagen procedente*") {
-                    $asset.altText = $alt
-                }
+                # Keep imported images historical; published topics do not surface or associate them.
             }
         }
 
@@ -424,13 +386,7 @@ try {
             $summary = $summary.Substring(0, 277).TrimEnd() + "..."
         }
 
-        $englishTitle = [string]$englishTitles[$candidate.Number]
         $module = $moduleDefinitions | Where-Object { $_.id -eq $candidate.ModuleId } | Select-Object -First 1
-        $overrideProperty = $searchOverrides.topics.PSObject.Properties[$candidate.Number]
-        if ($null -eq $overrideProperty) {
-            throw "Section '$($candidate.Number)' has no localized search override."
-        }
-        $localized = $overrideProperty.Value
         $spanishAliases = @($candidate.Title)
         if ($candidate.Title -match "^Módulo\s+(?<short>.+)$") {
             $spanishAliases += $Matches.short
@@ -438,19 +394,9 @@ try {
         $spanishAliases += @($module.aliases["es-ES"])
         $aliases = [ordered]@{
             "es-ES" = @($spanishAliases | Where-Object { $_ } | Select-Object -Unique)
-            "eu-ES" = @(@([string]$localized."eu-ES") + @($module.aliases["eu-ES"]) | Where-Object { $_ } | Select-Object -Unique)
-            en = @(@($englishTitle) + @($module.aliases.en) | Where-Object { $_ } | Select-Object -Unique)
-            pt = @(@([string]$localized.pt) + @($module.aliases.pt) | Where-Object { $_ } | Select-Object -Unique)
-            it = @(@([string]$localized.it) + @($module.aliases.it) | Where-Object { $_ } | Select-Object -Unique)
-            "zh-Hans" = @(@([string]$localized."zh-Hans") + @($module.aliases["zh-Hans"]) | Where-Object { $_ } | Select-Object -Unique)
         }
         $sampleQuestions = [ordered]@{
             "es-ES" = @("¿Dónde encuentro información sobre $($candidate.Title.ToLowerInvariant())?")
-            "eu-ES" = @("$([string]$localized.'eu-ES') gaiari buruzko laguntza behar dut.")
-            en = @("Where can I find information about $($englishTitle.ToLowerInvariant())?")
-            pt = @("Preciso de ajuda com $([string]$localized.pt).")
-            it = @("Ho bisogno di aiuto con $([string]$localized.it).")
-            "zh-Hans" = @("我需要关于$([string]$localized.'zh-Hans')的帮助。")
         }
 
         $quickAnswers = @()
@@ -493,9 +439,9 @@ try {
             status = "published"
             contentVersion = $KnowledgeVersion
             contentHash = $contentHash
-            assets = @($topicAssetIds)
+            assets = @()
             quickAnswers = $quickAnswers
-            translationCoverage = [ordered]@{ "es-ES" = "source"; "eu-ES" = "machine-draft"; en = "machine-draft"; pt = "machine-draft"; it = "machine-draft"; "zh-Hans" = "machine-draft" }
+            translationCoverage = [ordered]@{ "es-ES" = "source" }
             source = [ordered]@{ path = "docs/exports/Manual App CRM 1.5.docx"; sha256 = $sourceHash; sectionNumber = $candidate.Number; pageFromTableOfContents = $candidate.Page }
         }
         Write-JsonFile -Path (Join-Path $topicFolder "topic.json") -Value $topicMetadata
@@ -566,7 +512,7 @@ try {
         knowledgeVersion = $KnowledgeVersion
         title = "Ayuda de la aplicación CRM"
         defaultLocale = "es-ES"
-        supportedResponseLocales = @("es-ES", "eu-ES", "en", "pt", "it", "zh-Hans")
+        supportedResponseLocales = @("es-ES")
         source = [ordered]@{
             path = "docs/exports/Manual App CRM 1.5.docx"
             sha256 = $sourceHash
@@ -586,14 +532,6 @@ try {
             id = "route-{0:D3}-es" -f $caseNumber
             question = [string]$published.Metadata.sampleQuestions["es-ES"][0]
             responseLocale = "es-ES"
-            selectedTopicId = $null
-            expectedResolution = "answered"
-            expectedTopicIds = @($published.Metadata.id)
-        })
-        $retrievalCases.Add([ordered]@{
-            id = "route-{0:D3}-en" -f $caseNumber
-            question = [string]$published.Metadata.sampleQuestions.en[0]
-            responseLocale = "en"
             selectedTopicId = $null
             expectedResolution = "answered"
             expectedTopicIds = @($published.Metadata.id)
@@ -623,7 +561,7 @@ try {
 
     $answerCasesPath = Join-Path $PSScriptRoot "resources\answer-cases.json"
     $answerCases = [IO.File]::ReadAllText($answerCasesPath, $Utf8NoBom) | ConvertFrom-Json
-    $supportedLocales = @("es-ES", "eu-ES", "en", "pt", "it", "zh-Hans")
+    $supportedLocales = @("es-ES")
     $duplicateAnswerCaseIds = @($answerCases | Group-Object id | Where-Object Count -gt 1)
     if ($duplicateAnswerCaseIds.Count -gt 0) {
         throw "Duplicate answer case IDs: $($duplicateAnswerCaseIds.Name -join ', ')."

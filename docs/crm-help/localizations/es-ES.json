@@ -3,7 +3,6 @@
     "locale":  "es-ES",
     "status":  "source",
     "title":  "Ayuda de la aplicación CRM",
-    "imageReferenceLabel":  "Captura de referencia",
     "modules":  [
                     {
                         "id":  "introduction",
@@ -100,7 +99,7 @@
                    {
                        "id":  "introduction.que-necesita",
                        "title":  "Qué necesita",
-                       "summary":  "Comprueba el dispositivo, la cuenta y los datos necesarios para usar el CRM.",
+                       "summary":  "Indica el dispositivo, la conexión, la cuenta y el navegador necesarios para usar el CRM.",
                        "quickAnswers":  [
 
                                         ]
@@ -108,7 +107,7 @@
                    {
                        "id":  "introduction.partes-basicas-del-navegador",
                        "title":  "Partes básicas del navegador",
-                       "summary":  "Identifica la barra de direcciones, las pestañas y otros controles del navegador.",
+                       "summary":  "Explica la barra de direcciones y cómo distinguirla del buscador de una página.",
                        "quickAnswers":  [
 
                                         ]
@@ -393,7 +392,7 @@
                                             {
                                                 "id":  "tickets.estado-del-ticket.quick-01",
                                                 "question":  "¿Qué significan los estados Pendiente y Asignado de un ticket?",
-                                                "answer":  "Un ticket Pendiente todavía no está asignado a una hoja. Un ticket Asignado ya se encuentra relacionado con una hoja de gastos. Si necesita cambiar esa relación, ahora mismo para poder desvincular un ticket solo se podría eliminar este y volver a cargar en el sistema, para luego vincularlo nuevamente a la hoja de gasto que corresponda."
+                                                "answer":  "Pendiente significa que el ticket todavía no está asignado a una hoja. Asignado significa que ya se encuentra relacionado con una hoja de gastos. No existe una opción directa para cambiar esa relación: el procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta."
                                             }
                                         ]
                    },
@@ -508,7 +507,7 @@
                    {
                        "id":  "troubleshooting.la-identificacion-se-repite",
                        "title":  "La identificación se repite",
-                       "summary":  "Soluciona accesos repetidos o bloqueados con la cuenta corporativa.",
+                       "summary":  "Indica qué revisar cuando el CRM solicita identificarse varias veces.",
                        "quickAnswers":  [
                                             {
                                                 "id":  "troubleshooting.la-identificacion-se-repite.quick-01",

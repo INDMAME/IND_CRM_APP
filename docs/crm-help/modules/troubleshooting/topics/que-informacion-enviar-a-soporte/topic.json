@@ -4,58 +4,18 @@
     "moduleId":  "troubleshooting",
     "sectionNumber":  "12.6",
     "title":  "Qué información enviar a soporte",
-    "summary":  "• Su nombre de usuario corporativo, sin contraseña.",
+    "summary":  "Prepara los datos útiles que soporte necesita para investigar.",
     "aliases":  {
                     "es-ES":  [
                                   "Qué información enviar a soporte",
                                   "problemas frecuentes",
                                   "soporte"
-                              ],
-                    "eu-ES":  [
-                                  "Laguntzara bidali beharreko informazioa",
-                                  "ohiko arazoak",
-                                  "laguntza"
-                              ],
-                    "en":  [
-                               "Information to send to support",
-                               "common problems",
-                               "support"
-                           ],
-                    "pt":  [
-                               "Informação a enviar ao suporte",
-                               "problemas frequentes",
-                               "suporte"
-                           ],
-                    "it":  [
-                               "Informazioni da inviare all\u0027assistenza",
-                               "problemi frequenti",
-                               "assistenza"
-                           ],
-                    "zh-Hans":  [
-                                    "发送给技术支持的信息",
-                                    "常见问题",
-                                    "技术支持"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre qué información enviar a soporte?"
-                                      ],
-                            "eu-ES":  [
-                                          "Laguntzara bidali beharreko informazioa gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about information to send to support?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Informação a enviar ao suporte."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Informazioni da inviare all\u0027assistenza."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于发送给技术支持的信息的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,7 +28,7 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
+    "contentVersion":  "1.7.0",
     "contentHash":  "0044C90D96A92A9E063C271EC19117614160D654300AABB71EFFB4B95AE252B3",
     "assets":  [
 
@@ -84,12 +44,7 @@
                          }
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

@@ -4,58 +4,18 @@
     "moduleId":  "access",
     "sectionNumber":  "4.3",
     "title":  "Guardar la dirección como favorito",
-    "summary":  "Este paso es opcional. Cuando el CRM esté abierto, pulse la estrella situada al final de la barra de direcciones, escriba un nombre como CRM Insertec y confirme. En accesos posteriores podrá abrirlo desde Favoritos sin volver a escribir la dirección.",
+    "summary":  "Guarda el CRM en Favoritos para abrirlo más rápido.",
     "aliases":  {
                     "es-ES":  [
                                   "Guardar la dirección como favorito",
                                   "acceso al CRM",
                                   "iniciar sesión"
-                              ],
-                    "eu-ES":  [
-                                  "Helbidea gogokoetan gordetzea",
-                                  "CRMra sartzea",
-                                  "saioa hasi"
-                              ],
-                    "en":  [
-                               "Save the address as a favorite",
-                               "CRM access",
-                               "sign in"
-                           ],
-                    "pt":  [
-                               "Guardar o endereço como favorito",
-                               "acesso ao CRM",
-                               "iniciar sessão"
-                           ],
-                    "it":  [
-                               "Salvare l\u0027indirizzo nei preferiti",
-                               "accesso al CRM",
-                               "accedere"
-                           ],
-                    "zh-Hans":  [
-                                    "将地址保存为收藏",
-                                    "访问 CRM",
-                                    "登录"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre guardar la dirección como favorito?"
-                                      ],
-                            "eu-ES":  [
-                                          "Helbidea gogokoetan gordetzea gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about save the address as a favorite?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Guardar o endereço como favorito."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Salvare l\u0027indirizzo nei preferiti."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于将地址保存为收藏的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,7 +28,7 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
+    "contentVersion":  "1.7.0",
     "contentHash":  "7D4C6387AAB15006AF4A6342B60D5003B07E99760E20226D5DC6F4DB905C1E8E",
     "assets":  [
 
@@ -77,12 +37,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

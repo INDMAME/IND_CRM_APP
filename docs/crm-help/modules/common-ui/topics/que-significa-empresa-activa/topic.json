@@ -4,64 +4,19 @@
     "moduleId":  "common-ui",
     "sectionNumber":  "6.1",
     "title":  "Qué significa empresa activa",
-    "summary":  "La empresa activa determina los clientes, proyectos, divisas, visitas, hojas de gastos y tickets que puede consultar. Antes de crear o buscar información, compruebe que está trabajando en la empresa correcta.",
+    "summary":  "Entiende cómo la empresa activa determina los datos disponibles.",
     "aliases":  {
                     "es-ES":  [
                                   "Qué significa empresa activa",
                                   "pantalla",
                                   "empresa activa",
                                   "permisos"
-                              ],
-                    "eu-ES":  [
-                                  "Enpresa aktiboa zer den",
-                                  "pantaila",
-                                  "enpresa aktiboa",
-                                  "baimenak"
-                              ],
-                    "en":  [
-                               "What active company means",
-                               "screen",
-                               "active company",
-                               "permissions"
-                           ],
-                    "pt":  [
-                               "O que significa empresa ativa",
-                               "ecrã",
-                               "empresa ativa",
-                               "permissões"
-                           ],
-                    "it":  [
-                               "Cosa significa azienda attiva",
-                               "schermata",
-                               "azienda attiva",
-                               "permessi"
-                           ],
-                    "zh-Hans":  [
-                                    "当前公司的含义",
-                                    "界面",
-                                    "当前公司",
-                                    "权限"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre qué significa empresa activa?"
-                                      ],
-                            "eu-ES":  [
-                                          "Enpresa aktiboa zer den gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about what active company means?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com O que significa empresa ativa."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Cosa significa azienda attiva."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于当前公司的含义的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -74,21 +29,16 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "E47FE9BFAA15730C1BE9D8288BE4E0EEF54D0FACA99E18B46FC65B9B509DB27B",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "3F681A1711E3E236E41BA4AC52B155D230E7502548446F0D927B7D0B164F19C0",
     "assets":  [
-                   "manual-1.5.image8"
+
                ],
     "quickAnswers":  [
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

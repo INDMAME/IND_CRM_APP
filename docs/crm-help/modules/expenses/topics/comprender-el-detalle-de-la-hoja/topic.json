@@ -4,58 +4,18 @@
     "moduleId":  "expenses",
     "sectionNumber":  "8.5",
     "title":  "Comprender el detalle de la hoja",
-    "summary":  "La parte superior contiene los datos generales: Descripción, Importe reembolso, Divisa Reembolso, Estado, Identificador, Reembolsable, Proyecto, Propietario cuando corresponda y Comentario estado si existe. La parte inferior muestra las líneas de gasto.",
+    "summary":  "Identifica los datos generales, líneas y acciones del detalle.",
     "aliases":  {
                     "es-ES":  [
                                   "Comprender el detalle de la hoja",
                                   "hojas de gastos",
                                   "gastos"
-                              ],
-                    "eu-ES":  [
-                                  "Gastu-orriaren xehetasuna ulertzea",
-                                  "gastu-orriak",
-                                  "gastuak"
-                              ],
-                    "en":  [
-                               "Understand expense sheet details",
-                               "expense sheets",
-                               "expenses"
-                           ],
-                    "pt":  [
-                               "Compreender o detalhe da folha de despesas",
-                               "folhas de despesas",
-                               "despesas"
-                           ],
-                    "it":  [
-                               "Comprendere il dettaglio della nota spese",
-                               "note spese",
-                               "spese"
-                           ],
-                    "zh-Hans":  [
-                                    "了解费用单明细",
-                                    "费用单",
-                                    "费用"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre comprender el detalle de la hoja?"
-                                      ],
-                            "eu-ES":  [
-                                          "Gastu-orriaren xehetasuna ulertzea gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about understand expense sheet details?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Compreender o detalhe da folha de despesas."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Comprendere il dettaglio della nota spese."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于了解费用单明细的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,22 +28,16 @@
                         ],
     "routeKey":  "expenses.sheets",
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "7C038087BA024A5D01F5C8825E8697DA5700A38802A1C7136BD5A6C4CF306DFE",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "C00971481568876C802C0C9E3637D50901049F1E83E31F13D0C9B6C8B5C8B062",
     "assets":  [
-                   "manual-1.5.image30",
-                   "manual-1.5.image31"
+
                ],
     "quickAnswers":  [
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

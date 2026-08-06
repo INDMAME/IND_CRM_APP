@@ -4,58 +4,18 @@
     "moduleId":  "introduction",
     "sectionNumber":  "1.3",
     "title":  "Alcance del flujo de gastos",
-    "summary":  "Este flujo de trabajo se aplica a los usuarios que tienen activa la aplicación web del CRM. Las tareas contables y de pago que correspondan continúan realizándose en Axapta según el perfil y el procedimiento interno de cada compañía del grupo.",
+    "summary":  "Consulta a quién se aplica el flujo y qué tareas continúan en Axapta.",
     "aliases":  {
                     "es-ES":  [
                                   "Alcance del flujo de gastos",
                                   "primeros pasos",
                                   "manual CRM"
-                              ],
-                    "eu-ES":  [
-                                  "Gastuen lan-fluxuaren irismena",
-                                  "lehen urratsak",
-                                  "CRM eskuliburua"
-                              ],
-                    "en":  [
-                               "Scope of the expense workflow",
-                               "getting started",
-                               "CRM manual"
-                           ],
-                    "pt":  [
-                               "Âmbito do fluxo de despesas",
-                               "primeiros passos",
-                               "manual CRM"
-                           ],
-                    "it":  [
-                               "Ambito del flusso spese",
-                               "primi passi",
-                               "manuale CRM"
-                           ],
-                    "zh-Hans":  [
-                                    "费用流程的范围",
-                                    "入门",
-                                    "CRM 手册"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre alcance del flujo de gastos?"
-                                      ],
-                            "eu-ES":  [
-                                          "Gastuen lan-fluxuaren irismena gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about scope of the expense workflow?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Âmbito do fluxo de despesas."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Ambito del flusso spese."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于费用流程的范围的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,8 +28,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "7192EC5EF515B75ABF0F56C27C153BF457F191B5761780A2DF880A03FCC93C30",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "DE049368DFCC790D0963955312301236CA58E74415E851AFADF601BC9B220E0C",
     "assets":  [
 
                ],
@@ -77,12 +37,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

@@ -4,59 +4,19 @@
     "moduleId":  "tickets",
     "sectionNumber":  "9",
     "title":  "Módulo Tickets",
-    "summary":  "Un ticket es la imagen y los datos de un justificante de gasto. Puede crearse desde una hoja o desde el menú Tickets. Después puede vincularse a una hoja editable.",
+    "summary":  "Descubre qué contiene un ticket y cómo se relaciona con una hoja.",
     "aliases":  {
                     "es-ES":  [
                                   "Módulo Tickets",
                                   "Tickets",
                                   "tickets",
                                   "justificantes"
-                              ],
-                    "eu-ES":  [
-                                  "Tiketak modulua",
-                                  "tiketa",
-                                  "gastuen frogagiriak"
-                              ],
-                    "en":  [
-                               "Tickets module",
-                               "tickets",
-                               "expense receipts"
-                           ],
-                    "pt":  [
-                               "Módulo Tickets",
-                               "tickets",
-                               "comprovativos de despesa"
-                           ],
-                    "it":  [
-                               "Modulo Ticket",
-                               "ticket",
-                               "giustificativi di spesa"
-                           ],
-                    "zh-Hans":  [
-                                    "票据模块",
-                                    "票据",
-                                    "费用凭证"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre módulo tickets?"
-                                      ],
-                            "eu-ES":  [
-                                          "Tiketak modulua gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about tickets module?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Módulo Tickets."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Modulo Ticket."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于票据模块的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -71,8 +31,8 @@
                         ],
     "routeKey":  "expenses.tickets",
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "F5F372EB4279727642789F6803A681587B8F5489D0C72BFA9CE0DFF194933AF7",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "FB15CD9F9029A19E134590C616564B75C91145CB69F2E2B22D1BE2D618234C4B",
     "assets":  [
 
                ],
@@ -80,12 +40,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

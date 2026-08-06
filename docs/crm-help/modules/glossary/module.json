@@ -8,27 +8,7 @@
                     "es-ES":  [
                                   "glosario",
                                   "definiciones"
-                              ],
-                    "eu-ES":  [
-                                  "glosarioa",
-                                  "definizioak"
-                              ],
-                    "en":  [
-                               "glossary",
-                               "definitions"
-                           ],
-                    "pt":  [
-                               "glossário",
-                               "definições"
-                           ],
-                    "it":  [
-                               "glossario",
-                               "definizioni"
-                           ],
-                    "zh-Hans":  [
-                                    "术语表",
-                                    "定义"
-                                ]
+                              ]
                 },
     "topicIds":  [
                      "glossary.glosario-basico"

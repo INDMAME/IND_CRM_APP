@@ -4,58 +4,18 @@
     "moduleId":  "introduction",
     "sectionNumber":  "1.1",
     "title":  "Contexto del nuevo flujo de gastos",
-    "summary":  "Dentro del desarrollo de la aplicación web móvil del CRM (https://crm.insertec.biz:7702), se ha definido y desarrollado un nuevo flujo de trabajo para la gestión de las hojas de gastos. En primer lugar, supone una digitalización integral del proceso, ya que desaparecen las hoj...",
+    "summary":  "Entiende por qué se digitalizó la gestión de hojas de gastos.",
     "aliases":  {
                     "es-ES":  [
                                   "Contexto del nuevo flujo de gastos",
                                   "primeros pasos",
                                   "manual CRM"
-                              ],
-                    "eu-ES":  [
-                                  "Gastuen lan-fluxu berriaren testuingurua",
-                                  "lehen urratsak",
-                                  "CRM eskuliburua"
-                              ],
-                    "en":  [
-                               "Context of the new expense workflow",
-                               "getting started",
-                               "CRM manual"
-                           ],
-                    "pt":  [
-                               "Contexto do novo fluxo de despesas",
-                               "primeiros passos",
-                               "manual CRM"
-                           ],
-                    "it":  [
-                               "Contesto del nuovo flusso spese",
-                               "primi passi",
-                               "manuale CRM"
-                           ],
-                    "zh-Hans":  [
-                                    "新费用流程的背景",
-                                    "入门",
-                                    "CRM 手册"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre contexto del nuevo flujo de gastos?"
-                                      ],
-                            "eu-ES":  [
-                                          "Gastuen lan-fluxu berriaren testuingurua gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about context of the new expense workflow?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Contexto do novo fluxo de despesas."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Contesto del nuovo flusso spese."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于新费用流程的背景的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,8 +28,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "143D09FD118EEA5B6AF3B71789AEE86D245BDBC965DD7CEBBE326651244A91AA",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "98EE3BF36EE4234E6CBF9A4D850CEC3490C40BC92C7F0BB89DE1D3DAC5347F5C",
     "assets":  [
 
                ],
@@ -77,12 +37,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

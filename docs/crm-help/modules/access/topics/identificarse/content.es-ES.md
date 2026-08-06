@@ -4,7 +4,6 @@
 
 1. En la pantalla Bienvenido, pulse Entrar con Microsoft.
 
-![Captura de «Identificarse» relacionada con: 1. En la pantalla Bienvenido, pulse Entrar con Microsoft.](../../../../assets/manual-1.5/image2.png)
 
 2. Si aparece una lista de cuentas, seleccione su cuenta corporativa.
 
@@ -14,4 +13,4 @@
 
 5. Espere a que se muestre la página principal del CRM.
 
-> **SEGURIDAD:** Nunca incluya en una captura de este manual una contraseña, un código de verificación, un número de teléfono personal ni información confidencial.
+> **SEGURIDAD:** No comparta su contraseña, códigos de verificación, números de teléfono personales ni otra información confidencial. El soporte nunca necesita esos datos para revisar un problema de acceso.

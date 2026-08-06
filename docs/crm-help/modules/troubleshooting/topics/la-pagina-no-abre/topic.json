@@ -4,58 +4,18 @@
     "moduleId":  "troubleshooting",
     "sectionNumber":  "12.1",
     "title":  "La página no abre",
-    "summary":  "1. Compruebe que el dispositivo tiene conexión.",
+    "summary":  "Comprueba conexión, dirección y navegador si una página no abre.",
     "aliases":  {
                     "es-ES":  [
                                   "La página no abre",
                                   "problemas frecuentes",
                                   "soporte"
-                              ],
-                    "eu-ES":  [
-                                  "Orria ez da irekitzen",
-                                  "ohiko arazoak",
-                                  "laguntza"
-                              ],
-                    "en":  [
-                               "The page does not open",
-                               "common problems",
-                               "support"
-                           ],
-                    "pt":  [
-                               "A página não abre",
-                               "problemas frequentes",
-                               "suporte"
-                           ],
-                    "it":  [
-                               "La pagina non si apre",
-                               "problemi frequenti",
-                               "assistenza"
-                           ],
-                    "zh-Hans":  [
-                                    "页面无法打开",
-                                    "常见问题",
-                                    "技术支持"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre la página no abre?"
-                                      ],
-                            "eu-ES":  [
-                                          "Orria ez da irekitzen gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about the page does not open?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com A página não abre."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con La pagina non si apre."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于页面无法打开的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,7 +28,7 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
+    "contentVersion":  "1.7.0",
     "contentHash":  "FA51C2DF8F7200A28506F8C843C3C8F6C690A48B9F40D4593FD978A4090C3D1D",
     "assets":  [
 
@@ -84,12 +44,7 @@
                          }
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

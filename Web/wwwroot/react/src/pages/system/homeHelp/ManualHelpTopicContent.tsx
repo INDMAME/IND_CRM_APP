@@ -33,7 +33,6 @@ const ManualHelpTopicContent = ({ articleRef, topic }: ManualHelpTopicContentPro
         <h2 id="manual-help-topic-title" className="text-balance text-xl font-semibold text-primary">
           {topic.title}
         </h2>
-        {topic.summary ? <p className="mt-2 text-sm leading-6 text-slate-600">{topic.summary}</p> : null}
       </header>
 
       <div className="mt-5 space-y-6">

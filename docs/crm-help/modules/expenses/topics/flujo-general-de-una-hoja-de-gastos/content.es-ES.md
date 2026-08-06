@@ -2,10 +2,12 @@
 
 <!-- Fuente: Manual App CRM 1.5.docx, sección 8.1. -->
 
-Las funcionalidades básicas del flujo de trabajo son tres:
+El recorrido habitual de una hoja de gastos tiene tres etapas:
 
-- Creación de la hoja de gastos.
+1. **Preparación:** cree la cabecera, añada líneas manuales o tickets y revise los importes mientras la hoja esté en Borrador.
 
-- Aprobación de la hoja de gastos.
+2. **Aprobación:** cuando la información esté completa, solicite la aprobación. El responsable autorizado puede aprobar o rechazar la hoja; si existe autoaprobación, las acciones pueden variar.
 
-- Pago de la hoja de gastos.
+3. **Pago:** después de la aprobación, el área correspondiente continúa el proceso en Axapta. Cuando la hoja pasa a Pagado, queda en modo de solo lectura en el CRM.
+
+No cree una hoja nueva para corregir un cambio de estado. Abra la existente y utilice únicamente las acciones que muestre la aplicación.

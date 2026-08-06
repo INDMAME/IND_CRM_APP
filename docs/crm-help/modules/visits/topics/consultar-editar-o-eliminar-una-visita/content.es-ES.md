@@ -11,7 +11,3 @@
 4. Si aparece Eliminar y está completamente seguro, púlselo y lea la advertencia. La eliminación no debe utilizarse para corregir una duda menor; cancele y consulte antes si no está seguro.
 
 La cuenta y los contactos utilizados durante la creación no son campos editables en el detalle actual. Si la visita se creó para una cuenta equivocada, no cambie otros datos para simular otra cuenta; siga el procedimiento interno de corrección.
-
-![Captura de «Consultar, editar o eliminar una visita» relacionada con: La cuenta y los contactos utilizados durante la creación no son campos editables en el detalle actual. Si la visita se creó para una cuenta equivocada, no ca...](../../../../assets/manual-1.5/image20.png)
-
-![Captura de «Consultar, editar o eliminar una visita» relacionada con: La cuenta y los contactos utilizados durante la creación no son campos editables en el detalle actual. Si la visita se creó para una cuenta equivocada, no ca...](../../../../assets/manual-1.5/image21.png)

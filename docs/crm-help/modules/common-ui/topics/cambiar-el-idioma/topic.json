@@ -4,64 +4,19 @@
     "moduleId":  "common-ui",
     "sectionNumber":  "6.2",
     "title":  "Cambiar el idioma",
-    "summary":  "1. Abra el menú lateral y pulse su nombre de usuario.",
+    "summary":  "Cambia el idioma de la aplicación desde tu perfil.",
     "aliases":  {
                     "es-ES":  [
                                   "Cambiar el idioma",
                                   "pantalla",
                                   "empresa activa",
                                   "permisos"
-                              ],
-                    "eu-ES":  [
-                                  "Hizkuntza aldatzea",
-                                  "pantaila",
-                                  "enpresa aktiboa",
-                                  "baimenak"
-                              ],
-                    "en":  [
-                               "Change the language",
-                               "screen",
-                               "active company",
-                               "permissions"
-                           ],
-                    "pt":  [
-                               "Alterar o idioma",
-                               "ecrã",
-                               "empresa ativa",
-                               "permissões"
-                           ],
-                    "it":  [
-                               "Cambiare la lingua",
-                               "schermata",
-                               "azienda attiva",
-                               "permessi"
-                           ],
-                    "zh-Hans":  [
-                                    "更改语言",
-                                    "界面",
-                                    "当前公司",
-                                    "权限"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre cambiar el idioma?"
-                                      ],
-                            "eu-ES":  [
-                                          "Hizkuntza aldatzea gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about change the language?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Alterar o idioma."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Cambiare la lingua."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于更改语言的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -74,7 +29,7 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
+    "contentVersion":  "1.7.0",
     "contentHash":  "C6F45E49B12D974394AF1483554F63E7EE4825C7785CF61AE7664EC46DC905E1",
     "assets":  [
 
@@ -90,12 +45,7 @@
                          }
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

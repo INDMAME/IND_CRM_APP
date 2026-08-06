@@ -4,57 +4,18 @@
     "moduleId":  "expense-approval",
     "sectionNumber":  "10.2",
     "title":  "Estados de la hoja de gastos",
-    "summary":  "• Borrador: la hoja propia puede editarse, añadir líneas o tickets y eliminarse, siempre que el usuario tenga permiso.",
+    "summary":  "Conoce el significado y las acciones de cada estado de la hoja.",
     "aliases":  {
                     "es-ES":  [
                                   "Estados de la hoja de gastos",
                                   "aprobación de gastos",
                                   "estados de hoja"
-                              ],
-                    "eu-ES":  [
-                                  "Gastu-orriaren egoerak",
-                                  "gastuen onarpena",
-                                  "orriaren egoerak"
-                              ],
-                    "en":  [
-                               "Expense sheet statuses",
-                               "expense approval",
-                               "sheet status"
-                           ],
-                    "pt":  [
-                               "Estados da folha de despesas",
-                               "aprovação de despesas",
-                               "estado da folha"
-                           ],
-                    "it":  [
-                               "Stati della nota spese",
-                               "approvazione spese",
-                               "stato nota spese"
-                           ],
-                    "zh-Hans":  [
-                                    "费用单状态",
-                                    "费用审批"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre estados de la hoja de gastos?"
-                                      ],
-                            "eu-ES":  [
-                                          "Gastu-orriaren egoerak gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about expense sheet statuses?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Estados da folha de despesas."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Stati della nota spese."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于费用单状态的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -67,7 +28,7 @@
                         ],
     "routeKey":  "expenses.sheets",
     "status":  "published",
-    "contentVersion":  "1.6.0",
+    "contentVersion":  "1.7.0",
     "contentHash":  "4286B36042B1A87FEB62C6270C0C6DCAB2183A98A9D773AF7745267017BC7AFE",
     "assets":  [
 
@@ -76,12 +37,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

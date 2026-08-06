@@ -4,63 +4,19 @@
     "moduleId":  "common-ui",
     "sectionNumber":  "6.3",
     "title":  "Permisos",
-    "summary":  "Los permisos controlan qué menús, datos y botones puede usar. Un responsable puede ver hojas de gastos de personas a su cargo y disponer de acciones de aprobación. Un usuario sin esos permisos verá únicamente las opciones que le correspondan.",
+    "summary":  "Comprende cómo los permisos afectan a menús, datos y acciones.",
     "aliases":  {
                     "es-ES":  [
                                   "Permisos",
                                   "pantalla",
                                   "empresa activa",
                                   "permisos"
-                              ],
-                    "eu-ES":  [
-                                  "Baimenak",
-                                  "pantaila",
-                                  "enpresa aktiboa",
-                                  "baimenak"
-                              ],
-                    "en":  [
-                               "Permissions",
-                               "screen",
-                               "active company",
-                               "permissions"
-                           ],
-                    "pt":  [
-                               "Permissões",
-                               "ecrã",
-                               "empresa ativa",
-                               "permissões"
-                           ],
-                    "it":  [
-                               "Permessi",
-                               "schermata",
-                               "azienda attiva",
-                               "permessi"
-                           ],
-                    "zh-Hans":  [
-                                    "权限",
-                                    "界面",
-                                    "当前公司"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre permisos?"
-                                      ],
-                            "eu-ES":  [
-                                          "Baimenak gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about permissions?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Permissões."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Permessi."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于权限的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -73,7 +29,7 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
+    "contentVersion":  "1.7.0",
     "contentHash":  "CE56E21F593B595637B5C9624C32C603CF34D0C7E8A1BE466B99617E9FA625EC",
     "assets":  [
 
@@ -82,12 +38,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

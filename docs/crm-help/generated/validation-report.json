@@ -14,10 +14,10 @@
                    "chunks":  60,
                    "quickAnswers":  9,
                    "assets":  54,
-                   "locales":  6,
-                   "localizedTopics":  360,
-                   "localizedChunks":  360
+                   "locales":  1,
+                   "localizedTopics":  60,
+                   "localizedChunks":  60
                },
-    "knowledgeHash":  "15D5280AAC798833050CD542BFF5AB1BF3186B87D6C7F8C21F67E287EEE65CCE",
-    "bundleSha256":  "FCBDF79D086A14708CE8B3EC05A47F30675D5C06EBA869D8F4A9D890492F5A8D"
+    "knowledgeHash":  "C262F59072C46705E3C597DA0C692C0724C1BD0D374EAEA1CFB3CB00F50A14DC",
+    "bundleSha256":  null
 }

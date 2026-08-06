@@ -4,58 +4,18 @@
     "moduleId":  "expenses",
     "sectionNumber":  "8.3",
     "title":  "Buscar y filtrar hojas",
-    "summary":  "1. Pulse Filtro.",
+    "summary":  "Encuentra hojas de gastos mediante búsqueda y filtros.",
     "aliases":  {
                     "es-ES":  [
                                   "Buscar y filtrar hojas",
                                   "hojas de gastos",
                                   "gastos"
-                              ],
-                    "eu-ES":  [
-                                  "Gastu-orriak bilatu eta iragaztea",
-                                  "gastu-orriak",
-                                  "gastuak"
-                              ],
-                    "en":  [
-                               "Search and filter expense sheets",
-                               "expense sheets",
-                               "expenses"
-                           ],
-                    "pt":  [
-                               "Pesquisar e filtrar folhas de despesas",
-                               "folhas de despesas",
-                               "despesas"
-                           ],
-                    "it":  [
-                               "Cercare e filtrare le note spese",
-                               "note spese",
-                               "spese"
-                           ],
-                    "zh-Hans":  [
-                                    "搜索和筛选费用单",
-                                    "费用单",
-                                    "费用"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre buscar y filtrar hojas?"
-                                      ],
-                            "eu-ES":  [
-                                          "Gastu-orriak bilatu eta iragaztea gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about search and filter expense sheets?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Pesquisar e filtrar folhas de despesas."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Cercare e filtrare le note spese."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于搜索和筛选费用单的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -69,23 +29,16 @@
                         ],
     "routeKey":  "expenses.sheets",
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "864BDB1A5AAF2B5764B3C77F7EC348978A05D9F914EE4563104EEC96518437F8",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "34B0A7B6F45A92EEA6D6D6216F0FB38E3859D8F8817CD294773B6D985B223C92",
     "assets":  [
-                   "manual-1.5.image25",
-                   "manual-1.5.image26",
-                   "manual-1.5.image27"
+
                ],
     "quickAnswers":  [
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

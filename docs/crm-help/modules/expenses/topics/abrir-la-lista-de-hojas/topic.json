@@ -4,58 +4,18 @@
     "moduleId":  "expenses",
     "sectionNumber":  "8.2",
     "title":  "Abrir la lista de hojas",
-    "summary":  "1. Abra el menú lateral.",
+    "summary":  "Accede a la lista de hojas de gastos.",
     "aliases":  {
                     "es-ES":  [
                                   "Abrir la lista de hojas",
                                   "hojas de gastos",
                                   "gastos"
-                              ],
-                    "eu-ES":  [
-                                  "Gastu-orrien zerrenda irekitzea",
-                                  "gastu-orriak",
-                                  "gastuak"
-                              ],
-                    "en":  [
-                               "Open the expense sheet list",
-                               "expense sheets",
-                               "expenses"
-                           ],
-                    "pt":  [
-                               "Abrir a lista de folhas de despesas",
-                               "folhas de despesas",
-                               "despesas"
-                           ],
-                    "it":  [
-                               "Aprire l\u0027elenco delle note spese",
-                               "note spese",
-                               "spese"
-                           ],
-                    "zh-Hans":  [
-                                    "打开费用单列表",
-                                    "费用单",
-                                    "费用"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre abrir la lista de hojas?"
-                                      ],
-                            "eu-ES":  [
-                                          "Gastu-orrien zerrenda irekitzea gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about open the expense sheet list?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Abrir a lista de folhas de despesas."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Aprire l\u0027elenco delle note spese."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于打开费用单列表的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,23 +28,16 @@
                         ],
     "routeKey":  "expenses.sheets",
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "7225E110996FBE6174DFF6E96C2C0A2569CD632921E909740D57F8EE07D03AC5",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "15ADA05E5EB4F35B249E98788627BD2630ACA0A38EEF4132D4D122F856B49E7B",
     "assets":  [
-                   "manual-1.5.image22",
-                   "manual-1.5.image23",
-                   "manual-1.5.image24"
+
                ],
     "quickAnswers":  [
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

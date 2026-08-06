@@ -76,7 +76,7 @@ const HomeHelpTopicBrowser = ({
   };
 
   return (
-    <div className="w-full">
+    <div className="flex min-h-0 w-full flex-1 flex-col">
       <label className="relative block">
         <span className="sr-only">{searchLabel}</span>
         <MagnifyingGlassIcon className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" aria-hidden="true" />
@@ -93,12 +93,13 @@ const HomeHelpTopicBrowser = ({
         />
       </label>
 
-      <div className="mt-3 max-h-[min(65vh,36rem)] space-y-2 overflow-y-auto overscroll-contain pr-1">
+      <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1">
         {filteredModules.length === 0 ? (
           <p className="px-2 py-3 text-center text-[11px] text-slate-500">{emptyLabel}</p>
         ) : (
           filteredModules.map((module) => {
             const open = Boolean(normalizedQuery) || openModuleIds.has(module.id);
+            const moduleDescriptionId = module.description ? `manual-help-module-description-${module.id}` : undefined;
             return (
               <details
                 key={module.id}
@@ -112,33 +113,59 @@ const HomeHelpTopicBrowser = ({
                   handleModuleToggle(module.id, event.currentTarget.open);
                 }}
               >
-                <summary className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2.5 text-sm font-semibold text-primary focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-primary/20">
+                <summary
+                  aria-describedby={moduleDescriptionId}
+                  className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2.5 text-sm font-semibold text-primary focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-primary/20"
+                >
                   <span className="min-w-0 flex-1 break-words">{module.title}</span>
                   <span className="text-slate-400">{module.topics.length}</span>
                   <ChevronDownIcon className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
                 </summary>
-                <div className="space-y-1 border-t border-slate-100 p-1.5">
-                  {module.topics.map((topic) => {
-                    const selected = topic.id === selectedTopicId;
-                    return (
-                      <button
-                        key={topic.id}
-                        type="button"
-                        disabled={readOnly}
-                        aria-controls={detailRegionId}
-                        aria-pressed={selected}
-                        className={`block w-full rounded-[var(--radius-xl)] border px-2.5 py-2 text-left text-sm font-semibold transition-colors focus:outline-hidden focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 ${
-                          selected
-                            ? "border-primary/20 bg-primary/10 text-primary"
-                            : "border-transparent text-primary hover:bg-primary/5"
-                        }`}
-                        onClick={() => onSelect(topic)}
-                      >
-                        <span className="block break-words">{topic.title}</span>
-                        {topic.summary ? <span className="mt-0.5 block break-words text-xs font-normal leading-5 text-slate-500">{topic.summary}</span> : null}
-                      </button>
-                    );
-                  })}
+                <div className="border-t border-slate-100 p-1.5">
+                  {module.description ? (
+                    <p
+                      id={moduleDescriptionId}
+                      className="m-1 mb-2 rounded-[var(--radius-xl)] bg-slate-100 px-2.5 py-2 text-xs font-normal leading-5 text-slate-600"
+                    >
+                      {module.description}
+                    </p>
+                  ) : null}
+                  <div className="space-y-1">
+                    {module.topics.map((topic) => {
+                      const selected = topic.id === selectedTopicId;
+                      const topicSummaryId = topic.summary ? `manual-help-topic-summary-${topic.id}` : undefined;
+                      return (
+                        <div
+                          key={topic.id}
+                          className={`rounded-[var(--radius-xl)] border ${
+                            selected ? "border-primary/20 bg-primary/5" : "border-transparent"
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            disabled={readOnly}
+                            aria-controls={detailRegionId}
+                            aria-describedby={topicSummaryId}
+                            aria-pressed={selected}
+                            className={`block w-full rounded-[var(--radius-xl)] px-2.5 py-2 text-left text-sm font-semibold text-primary transition-colors focus:outline-hidden focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 ${
+                              selected ? "bg-primary/10" : "hover:bg-primary/5"
+                            }`}
+                            onClick={() => onSelect(topic)}
+                          >
+                            <span className="block break-words">{topic.title}</span>
+                          </button>
+                          {topic.summary ? (
+                            <p
+                              id={topicSummaryId}
+                              className="mx-2.5 mb-2 rounded-[var(--radius-xl)] bg-slate-100 px-2.5 py-2 text-xs font-normal leading-5 text-slate-600"
+                            >
+                              {topic.summary}
+                            </p>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </details>
             );

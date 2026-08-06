@@ -17,7 +17,3 @@
 7. Pulse Crear o Guardar en la barra superior.
 
 8. En Confirmar creación, revise la pregunta y pulse Aceptar para crear la visita o Cancelar para volver al formulario.
-
-![Captura de «Crear una visita: paso 2, datos de la visita» relacionada con: 8. En Confirmar creación, revise la pregunta y pulse Aceptar para crear la visita o Cancelar para volver al formulario.](../../../../assets/manual-1.5/image15.png)
-
-![Captura de «Crear una visita: paso 2, datos de la visita» relacionada con: 8. En Confirmar creación, revise la pregunta y pulse Aceptar para crear la visita o Cancelar para volver al formulario.](../../../../assets/manual-1.5/image16.png)

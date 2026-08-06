@@ -4,58 +4,18 @@
     "moduleId":  "troubleshooting",
     "sectionNumber":  "12.4",
     "title":  "No se puede guardar",
-    "summary":  "• Revise los campos marcados como obligatorios y los mensajes en rojo.",
+    "summary":  "Revisa campos obligatorios y mensajes cuando no puedas guardar.",
     "aliases":  {
                     "es-ES":  [
                                   "No se puede guardar",
                                   "problemas frecuentes",
                                   "soporte"
-                              ],
-                    "eu-ES":  [
-                                  "Ezin da gorde",
-                                  "ohiko arazoak",
-                                  "laguntza"
-                              ],
-                    "en":  [
-                               "Unable to save",
-                               "common problems",
-                               "support"
-                           ],
-                    "pt":  [
-                               "Não é possível guardar",
-                               "problemas frequentes",
-                               "suporte"
-                           ],
-                    "it":  [
-                               "Impossibile salvare",
-                               "problemi frequenti",
-                               "assistenza"
-                           ],
-                    "zh-Hans":  [
-                                    "无法保存",
-                                    "常见问题",
-                                    "技术支持"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre no se puede guardar?"
-                                      ],
-                            "eu-ES":  [
-                                          "Ezin da gorde gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about unable to save?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Não é possível guardar."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Impossibile salvare."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于无法保存的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,7 +28,7 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
+    "contentVersion":  "1.7.0",
     "contentHash":  "1B5E38E3E42EC90A636DEBC6AFE12171631BC0252170E6B006A48E45FCC77F80",
     "assets":  [
 
@@ -84,12 +44,7 @@
                          }
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

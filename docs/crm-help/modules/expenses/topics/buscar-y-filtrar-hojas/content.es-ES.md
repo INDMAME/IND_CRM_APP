@@ -9,9 +9,3 @@
 3. Pulse Aplicar.
 
 4. Pulse Borrar para retirar todos los criterios.
-
-![Captura de «Buscar y filtrar hojas» relacionada con: 4. Pulse Borrar para retirar todos los criterios.](../../../../assets/manual-1.5/image25.png)
-
-![Captura de «Buscar y filtrar hojas» relacionada con: 4. Pulse Borrar para retirar todos los criterios.](../../../../assets/manual-1.5/image26.png)
-
-![Captura de «Buscar y filtrar hojas» relacionada con: 4. Pulse Borrar para retirar todos los criterios.](../../../../assets/manual-1.5/image27.png)

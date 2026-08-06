@@ -8,27 +8,7 @@
                     "es-ES":  [
                                   "hojas de gastos",
                                   "gastos"
-                              ],
-                    "eu-ES":  [
-                                  "gastu-orriak",
-                                  "gastuak"
-                              ],
-                    "en":  [
-                               "expense sheets",
-                               "expenses"
-                           ],
-                    "pt":  [
-                               "folhas de despesas",
-                               "despesas"
-                           ],
-                    "it":  [
-                               "note spese",
-                               "spese"
-                           ],
-                    "zh-Hans":  [
-                                    "费用单",
-                                    "费用"
-                                ]
+                              ]
                 },
     "topicIds":  [
                      "expenses.modulo-hojas-de-gastos",

@@ -18,10 +18,7 @@
 
 8. Pulse Guardar y confirme.
 
-![Captura de «Añadir una línea manual» relacionada con: 8. Pulse Guardar y confirme.](../../../../assets/manual-1.5/image32.png)
 
-![Captura de «Añadir una línea manual» relacionada con: 8. Pulse Guardar y confirme.](../../../../assets/manual-1.5/image33.png)
 
-![Captura de «Añadir una línea manual» relacionada con: 8. Pulse Guardar y confirme.](../../../../assets/manual-1.5/image34.png)
 
 CAMPOS OBLIGATORIOS: La descripción y la categoría deben estar informadas. Precio y Cantidad deben ser mayores que cero. En la categoría Km, el precio puede calcularse desde la configuración establecida en la compañía y aparecer bloqueado.

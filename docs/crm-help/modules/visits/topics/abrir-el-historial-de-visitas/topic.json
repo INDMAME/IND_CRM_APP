@@ -4,58 +4,18 @@
     "moduleId":  "visits",
     "sectionNumber":  "7.1",
     "title":  "Abrir el historial de visitas",
-    "summary":  "1. Abra el menú lateral.",
+    "summary":  "Accede a la lista con el historial de visitas.",
     "aliases":  {
                     "es-ES":  [
                                   "Abrir el historial de visitas",
                                   "visitas",
                                   "historial de visitas"
-                              ],
-                    "eu-ES":  [
-                                  "Bisiten historia irekitzea",
-                                  "bisitak",
-                                  "bisiten historia"
-                              ],
-                    "en":  [
-                               "Open visit history",
-                               "visits",
-                               "visit history"
-                           ],
-                    "pt":  [
-                               "Abrir o histórico de visitas",
-                               "visitas",
-                               "histórico de visitas"
-                           ],
-                    "it":  [
-                               "Aprire la cronologia delle visite",
-                               "visite",
-                               "cronologia visite"
-                           ],
-                    "zh-Hans":  [
-                                    "打开拜访记录",
-                                    "拜访",
-                                    "拜访记录"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre abrir el historial de visitas?"
-                                      ],
-                            "eu-ES":  [
-                                          "Bisiten historia irekitzea gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about open visit history?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Abrir o histórico de visitas."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Aprire la cronologia delle visite."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于打开拜访记录的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,7 +28,7 @@
                         ],
     "routeKey":  "visits.history",
     "status":  "published",
-    "contentVersion":  "1.6.0",
+    "contentVersion":  "1.7.0",
     "contentHash":  "7A3DF42DAAA4AB8F1FF972D0DA14ECB40F04ED42D86E604FC0524C2E3D2075A7",
     "assets":  [
 
@@ -77,12 +37,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

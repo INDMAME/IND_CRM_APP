@@ -2,9 +2,8 @@
 
 <!-- Fuente: Manual App CRM 1.5.docx, sección 8.3.1. -->
 
-La lista puede mostrar un botón para abrir el Asistente de gastos en la sección inferior izquierda del formulario. Este asistente analiza únicamente las hojas que se han cargado en la consulta actual. Primero aplique los filtros y espere a que termine la carga; después abra el asistente.
+La lista puede mostrar un botón flotante para abrir el Asistente de gastos en la parte inferior de la pantalla. Este asistente analiza únicamente las hojas que se han cargado en la consulta actual. Primero aplique los filtros y espere a que termine la carga; después abra el asistente.
 
-![Captura de «Utilizar el Asistente de gastos» relacionada con: La lista puede mostrar un botón para abrir el Asistente de gastos en la sección inferior izquierda del formulario. Este asistente analiza únicamente las hoja...](../../../../assets/manual-1.5/image28.png)
 
 Puede pulsar Resumen, Analítica o Anomalías, o escribir una pregunta sobre las hojas cargadas y pulsar Enviar.
 

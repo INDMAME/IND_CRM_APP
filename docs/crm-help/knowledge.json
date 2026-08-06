@@ -1,23 +1,13 @@
 {
     "schemaVersion":  "1.1",
-    "knowledgeVersion":  "1.6.0",
+    "knowledgeVersion":  "1.7.0",
     "title":  "Ayuda de la aplicación CRM",
     "defaultLocale":  "es-ES",
     "supportedResponseLocales":  [
-                                     "es-ES",
-                                     "eu-ES",
-                                     "en",
-                                     "pt",
-                                     "it",
-                                     "zh-Hans"
+                                     "es-ES"
                                  ],
     "localizationMetadataPaths":  {
-                                             "es-ES":  "localizations/es-ES.json",
-                                             "eu-ES":  "localizations/eu-ES.json",
-                                             "en":  "localizations/en.json",
-                                             "pt":  "localizations/pt.json",
-                                             "it":  "localizations/it.json",
-                                             "zh-Hans":  "localizations/zh-Hans.json"
+                                             "es-ES":  "localizations/es-ES.json"
                                          },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

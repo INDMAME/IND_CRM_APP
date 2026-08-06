@@ -11,11 +11,4 @@
 4. Pulse Vincular ticket(s) y confirme.
 
 5. Lea el resultado. La aplicación indica cuántos fueron solicitados, vinculados, omitidos o fallidos. Si alguno falla, anote el motivo antes de cerrar.
-
-![Captura de «Vincular tickets existentes» relacionada con: 5. Lea el resultado. La aplicación indica cuántos fueron solicitados, vinculados, omitidos o fallidos. Si alguno falla, anote el motivo antes de cerrar.](../../../../assets/manual-1.5/image41.png)
-
-![Captura de «Vincular tickets existentes» relacionada con: 5. Lea el resultado. La aplicación indica cuántos fueron solicitados, vinculados, omitidos o fallidos. Si alguno falla, anote el motivo antes de cerrar.](../../../../assets/manual-1.5/image42.png)
-
-![Captura de «Vincular tickets existentes» relacionada con: 5. Lea el resultado. La aplicación indica cuántos fueron solicitados, vinculados, omitidos o fallidos. Si alguno falla, anote el motivo antes de cerrar.](../../../../assets/manual-1.5/image43.png)
-
-ERRORES: Hemos habilitado la opción para modificar el ticket que pueda presentar problemas al vincular este a la hoja de gastos, lea atentamente el mensaje de error, corrija el ticket y repita el proceso de vinculación. Si el ticket cumple con todo lo necesario, este quedará vinculado.
+> **SI UN TICKET FALLA:** Lea el motivo que muestra la aplicación y abra el ticket para corregir los datos indicados. Guárdelo y repita la vinculación. El ticket solo quedará asociado cuando cumpla las validaciones y el resultado lo confirme como vinculado.

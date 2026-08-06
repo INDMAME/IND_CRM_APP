@@ -8,27 +8,7 @@
                     "es-ES":  [
                                   "tickets",
                                   "justificantes"
-                              ],
-                    "eu-ES":  [
-                                  "tiketa",
-                                  "gastuen frogagiriak"
-                              ],
-                    "en":  [
-                               "tickets",
-                               "expense receipts"
-                           ],
-                    "pt":  [
-                               "tickets",
-                               "comprovativos de despesa"
-                           ],
-                    "it":  [
-                               "ticket",
-                               "giustificativi di spesa"
-                           ],
-                    "zh-Hans":  [
-                                    "票据",
-                                    "费用凭证"
-                                ]
+                              ]
                 },
     "topicIds":  [
                      "tickets.modulo-tickets",

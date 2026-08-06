@@ -4,58 +4,19 @@
     "moduleId":  "visits",
     "sectionNumber":  "7.2",
     "title":  "Filtrar el historial",
-    "summary":  "1. Pulse Filtro en la barra superior.",
+    "summary":  "Busca visitas aplicando los filtros del historial.",
     "aliases":  {
                     "es-ES":  [
                                   "Filtrar el historial",
                                   "visitas",
                                   "historial de visitas"
-                              ],
-                    "eu-ES":  [
-                                  "Bisiten historia iragaztea",
-                                  "bisitak",
-                                  "bisiten historia"
-                              ],
-                    "en":  [
-                               "Filter visit history",
-                               "visits",
-                               "visit history"
-                           ],
-                    "pt":  [
-                               "Filtrar o histórico de visitas",
-                               "visitas",
-                               "histórico de visitas"
-                           ],
-                    "it":  [
-                               "Filtrare la cronologia delle visite",
-                               "visite",
-                               "cronologia visite"
-                           ],
-                    "zh-Hans":  [
-                                    "筛选拜访记录",
-                                    "拜访",
-                                    "拜访记录"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre filtrar el historial?"
-                                      ],
-                            "eu-ES":  [
-                                          "Bisiten historia iragaztea gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about filter visit history?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Filtrar o histórico de visitas."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Filtrare la cronologia delle visite."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于筛选拜访记录的帮助。"
-                                        ]
+                                          "¿Dónde encuentro información sobre filtrar el historial?",
+                                          "¿Puedo filtrar el historial de visitas por cliente y fecha?"
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,21 +29,16 @@
                         ],
     "routeKey":  "visits.history",
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "04A8FA5624CB164AC19CBD0E41F607E19B462626589B13867375817EFA938223",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "DBBF689D922263B14893B7B257A888A26C674E6148921D4A28669846483F5866",
     "assets":  [
-                   "manual-1.5.image11"
+
                ],
     "quickAnswers":  [
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

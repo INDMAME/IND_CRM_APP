@@ -8,27 +8,7 @@
                     "es-ES":  [
                                   "primeros pasos",
                                   "manual CRM"
-                              ],
-                    "eu-ES":  [
-                                  "lehen urratsak",
-                                  "CRM eskuliburua"
-                              ],
-                    "en":  [
-                               "getting started",
-                               "CRM manual"
-                           ],
-                    "pt":  [
-                               "primeiros passos",
-                               "manual CRM"
-                           ],
-                    "it":  [
-                               "primi passi",
-                               "manuale CRM"
-                           ],
-                    "zh-Hans":  [
-                                    "入门",
-                                    "CRM 手册"
-                                ]
+                              ]
                 },
     "topicIds":  [
                      "introduction.objetivo-y-personas-destinatarias",

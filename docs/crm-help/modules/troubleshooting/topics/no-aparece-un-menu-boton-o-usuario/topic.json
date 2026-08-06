@@ -4,58 +4,18 @@
     "moduleId":  "troubleshooting",
     "sectionNumber":  "12.3",
     "title":  "No aparece un menú, botón o usuario",
-    "summary":  "Compruebe la empresa activa y actualice la pantalla. Si la opción sigue sin aparecer, puede deberse a permisos o a la jerarquía de gestión. No utilice la sesión de otra persona.",
+    "summary":  "Comprueba empresa, permisos y jerarquía si falta una opción.",
     "aliases":  {
                     "es-ES":  [
                                   "No aparece un menú, botón o usuario",
                                   "problemas frecuentes",
                                   "soporte"
-                              ],
-                    "eu-ES":  [
-                                  "Menu, botoi edo erabiltzaile bat ez da agertzen",
-                                  "ohiko arazoak",
-                                  "laguntza"
-                              ],
-                    "en":  [
-                               "A menu, button, or user is missing",
-                               "common problems",
-                               "support"
-                           ],
-                    "pt":  [
-                               "Não aparece um menu, botão ou utilizador",
-                               "problemas frequentes",
-                               "suporte"
-                           ],
-                    "it":  [
-                               "Non appare un menu, un pulsante o un utente",
-                               "problemi frequenti",
-                               "assistenza"
-                           ],
-                    "zh-Hans":  [
-                                    "菜单、按钮或用户未显示",
-                                    "常见问题",
-                                    "技术支持"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre no aparece un menú, botón o usuario?"
-                                      ],
-                            "eu-ES":  [
-                                          "Menu, botoi edo erabiltzaile bat ez da agertzen gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about a menu, button, or user is missing?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Não aparece um menu, botão ou utilizador."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Non appare un menu, un pulsante o un utente."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于菜单、按钮或用户未显示的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,8 +28,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "92D3803D89E9BDE2E67F4C0F502E247A9E460D7AE6B01F77FAF9772896FAF934",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "F197C6AF49079A4F2CF7CF9371B5C9C28D9628B6C4FA5F5D0E8FFE00688B0EBC",
     "assets":  [
 
                ],
@@ -84,12 +44,7 @@
                          }
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

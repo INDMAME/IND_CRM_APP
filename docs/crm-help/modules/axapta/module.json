@@ -8,27 +8,7 @@
                     "es-ES":  [
                                   "Axapta",
                                   "gastos en Axapta"
-                              ],
-                    "eu-ES":  [
-                                  "Axapta",
-                                  "gastuak Axaptan"
-                              ],
-                    "en":  [
-                               "Axapta",
-                               "expenses in Axapta"
-                           ],
-                    "pt":  [
-                               "Axapta",
-                               "despesas no Axapta"
-                           ],
-                    "it":  [
-                               "Axapta",
-                               "spese in Axapta"
-                           ],
-                    "zh-Hans":  [
-                                    "Axapta",
-                                    "Axapta 费用"
-                                ]
+                              ]
                 },
     "topicIds":  [
                      "axapta.relacion-entre-crm-y-axapta",

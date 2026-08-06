@@ -8,27 +8,7 @@
                     "es-ES":  [
                                   "aprobación de gastos",
                                   "estados de hoja"
-                              ],
-                    "eu-ES":  [
-                                  "gastuen onarpena",
-                                  "orriaren egoerak"
-                              ],
-                    "en":  [
-                               "expense approval",
-                               "sheet status"
-                           ],
-                    "pt":  [
-                               "aprovação de despesas",
-                               "estado da folha"
-                           ],
-                    "it":  [
-                               "approvazione spese",
-                               "stato nota spese"
-                           ],
-                    "zh-Hans":  [
-                                    "费用审批",
-                                    "费用单状态"
-                                ]
+                              ]
                 },
     "topicIds":  [
                      "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos",

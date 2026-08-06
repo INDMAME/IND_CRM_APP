@@ -2,7 +2,6 @@
 
 <!-- Fuente: Manual App CRM 1.5.docx, sección 7.2. -->
 
-![Captura de la sección «Filtrar el historial» del manual CRM.](../../../../assets/manual-1.5/image11.png)
 
 1. Pulse Filtro en la barra superior.
 

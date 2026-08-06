@@ -4,58 +4,18 @@
     "moduleId":  "expenses",
     "sectionNumber":  "8.10",
     "title":  "Editar la cabecera y las líneas",
-    "summary":  "Mientras la hoja permanezca editable, pulse Editar para modificar la Descripción, Proyecto o Reembolsable. Si cambia Proyecto o Reembolsable y ya existen líneas, la aplicación puede preguntar si desea actualizar todas las líneas. Lea la pregunta y confirme solo si quiere aplic...",
+    "summary":  "Modifica la cabecera o las líneas de una hoja editable.",
     "aliases":  {
                     "es-ES":  [
                                   "Editar la cabecera y las líneas",
                                   "hojas de gastos",
                                   "gastos"
-                              ],
-                    "eu-ES":  [
-                                  "Goiburua eta lerroak editatzea",
-                                  "gastu-orriak",
-                                  "gastuak"
-                              ],
-                    "en":  [
-                               "Edit the header and lines",
-                               "expense sheets",
-                               "expenses"
-                           ],
-                    "pt":  [
-                               "Editar o cabeçalho e as linhas",
-                               "folhas de despesas",
-                               "despesas"
-                           ],
-                    "it":  [
-                               "Modificare l\u0027intestazione e le righe",
-                               "note spese",
-                               "spese"
-                           ],
-                    "zh-Hans":  [
-                                    "编辑表头和费用行",
-                                    "费用单",
-                                    "费用"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre editar la cabecera y las líneas?"
-                                      ],
-                            "eu-ES":  [
-                                          "Goiburua eta lerroak editatzea gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about edit the header and lines?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Editar o cabeçalho e as linhas."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Modificare l\u0027intestazione e le righe."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于编辑表头和费用行的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,8 +28,8 @@
                         ],
     "routeKey":  "expenses.sheets",
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "01E2EAAE6701860E89AE4BDBC72A267BC083CAFAD306384173E89D3715DF75B2",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "FF7D2D657A85B2578A5EB3E84F3C028754D79F99830385D7E18FCA6C0F0C0B5D",
     "assets":  [
 
                ],
@@ -77,12 +37,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

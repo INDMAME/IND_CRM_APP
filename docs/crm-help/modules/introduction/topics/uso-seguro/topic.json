@@ -4,58 +4,18 @@
     "moduleId":  "introduction",
     "sectionNumber":  "3.3",
     "title":  "Uso seguro",
-    "summary":  "• No comparta su contraseña ni los códigos de verificación.",
+    "summary":  "Revisa las pautas básicas para utilizar el CRM de forma segura.",
     "aliases":  {
                     "es-ES":  [
                                   "Uso seguro",
                                   "primeros pasos",
                                   "manual CRM"
-                              ],
-                    "eu-ES":  [
-                                  "Erabilera segurua",
-                                  "lehen urratsak",
-                                  "CRM eskuliburua"
-                              ],
-                    "en":  [
-                               "Safe use",
-                               "getting started",
-                               "CRM manual"
-                           ],
-                    "pt":  [
-                               "Utilização segura",
-                               "primeiros passos",
-                               "manual CRM"
-                           ],
-                    "it":  [
-                               "Uso sicuro",
-                               "primi passi",
-                               "manuale CRM"
-                           ],
-                    "zh-Hans":  [
-                                    "安全使用",
-                                    "入门",
-                                    "CRM 手册"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre uso seguro?"
-                                      ],
-                            "eu-ES":  [
-                                          "Erabilera segurua gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about safe use?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Utilização segura."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Uso sicuro."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于安全使用的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,7 +28,7 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
+    "contentVersion":  "1.7.0",
     "contentHash":  "CFCCAF9801FA18BC8ACBB821FD978CEF42C569DBF85890FFE29E145E42EE3685",
     "assets":  [
 
@@ -77,12 +37,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

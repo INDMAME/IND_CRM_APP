@@ -10,29 +10,9 @@
                              ]
     },
     {
-        "id":  "route-001-en",
-        "question":  "Where can I find information about purpose and audience?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.objetivo-y-personas-destinatarias"
-                             ]
-    },
-    {
         "id":  "route-002-es",
         "question":  "¿Dónde encuentro información sobre contexto del nuevo flujo de gastos?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.contexto-del-nuevo-flujo-de-gastos"
-                             ]
-    },
-    {
-        "id":  "route-002-en",
-        "question":  "Where can I find information about context of the new expense workflow?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -50,29 +30,9 @@
                              ]
     },
     {
-        "id":  "route-003-en",
-        "question":  "Where can I find information about previous process?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.antecedentes-del-proceso"
-                             ]
-    },
-    {
         "id":  "route-004-es",
         "question":  "¿Dónde encuentro información sobre alcance del flujo de gastos?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.alcance-del-flujo-de-gastos"
-                             ]
-    },
-    {
-        "id":  "route-004-en",
-        "question":  "Where can I find information about scope of the expense workflow?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -90,29 +50,9 @@
                              ]
     },
     {
-        "id":  "route-005-en",
-        "question":  "Where can I find information about how to use this manual?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.como-utilizar-este-manual"
-                             ]
-    },
-    {
         "id":  "route-006-es",
         "question":  "¿Dónde encuentro información sobre qué necesita?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.que-necesita"
-                             ]
-    },
-    {
-        "id":  "route-006-en",
-        "question":  "Where can I find information about what you need?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -130,29 +70,9 @@
                              ]
     },
     {
-        "id":  "route-007-en",
-        "question":  "Where can I find information about basic browser elements?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.partes-basicas-del-navegador"
-                             ]
-    },
-    {
         "id":  "route-008-es",
         "question":  "¿Dónde encuentro información sobre uso seguro?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "introduction.uso-seguro"
-                             ]
-    },
-    {
-        "id":  "route-008-en",
-        "question":  "Where can I find information about safe use?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -170,29 +90,9 @@
                              ]
     },
     {
-        "id":  "route-009-en",
-        "question":  "Where can I find information about open the crm?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "access.abrir-el-crm"
-                             ]
-    },
-    {
         "id":  "route-010-es",
         "question":  "¿Dónde encuentro información sobre identificarse?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "access.identificarse"
-                             ]
-    },
-    {
-        "id":  "route-010-en",
-        "question":  "Where can I find information about sign in?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -210,29 +110,9 @@
                              ]
     },
     {
-        "id":  "route-011-en",
-        "question":  "Where can I find information about save the address as a favorite?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "access.guardar-la-direccion-como-favorito"
-                             ]
-    },
-    {
         "id":  "route-012-es",
         "question":  "¿Dónde encuentro información sobre cerrar la sesión?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "access.cerrar-la-sesion"
-                             ]
-    },
-    {
-        "id":  "route-012-en",
-        "question":  "Where can I find information about sign out?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -250,29 +130,9 @@
                              ]
     },
     {
-        "id":  "route-013-en",
-        "question":  "Where can I find information about common screen elements?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "common-ui.elementos-comunes-de-la-pantalla"
-                             ]
-    },
-    {
         "id":  "route-014-es",
         "question":  "¿Dónde encuentro información sobre editar, guardar y cancelar?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "common-ui.editar-guardar-y-cancelar"
-                             ]
-    },
-    {
-        "id":  "route-014-en",
-        "question":  "Where can I find information about edit, save, and cancel?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -290,29 +150,9 @@
                              ]
     },
     {
-        "id":  "route-015-en",
-        "question":  "Where can I find information about what active company means?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "common-ui.que-significa-empresa-activa"
-                             ]
-    },
-    {
         "id":  "route-016-es",
         "question":  "¿Dónde encuentro información sobre cambiar el idioma?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "common-ui.cambiar-el-idioma"
-                             ]
-    },
-    {
-        "id":  "route-016-en",
-        "question":  "Where can I find information about change the language?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -330,29 +170,9 @@
                              ]
     },
     {
-        "id":  "route-017-en",
-        "question":  "Where can I find information about permissions?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "common-ui.permisos"
-                             ]
-    },
-    {
         "id":  "route-018-es",
         "question":  "¿Dónde encuentro información sobre perfiles del flujo de gastos?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "common-ui.perfiles-del-flujo-de-gastos"
-                             ]
-    },
-    {
-        "id":  "route-018-en",
-        "question":  "Where can I find information about expense workflow roles?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -370,29 +190,9 @@
                              ]
     },
     {
-        "id":  "route-019-en",
-        "question":  "Where can I find information about visits module?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "visits.modulo-visitas"
-                             ]
-    },
-    {
         "id":  "route-020-es",
         "question":  "¿Dónde encuentro información sobre abrir el historial de visitas?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "visits.abrir-el-historial-de-visitas"
-                             ]
-    },
-    {
-        "id":  "route-020-en",
-        "question":  "Where can I find information about open visit history?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -410,29 +210,9 @@
                              ]
     },
     {
-        "id":  "route-021-en",
-        "question":  "Where can I find information about filter visit history?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "visits.filtrar-el-historial"
-                             ]
-    },
-    {
         "id":  "route-022-es",
         "question":  "¿Dónde encuentro información sobre crear una visita: paso 1, cuenta y contactos?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "visits.crear-una-visita-paso-1-cuenta-y-contactos"
-                             ]
-    },
-    {
-        "id":  "route-022-en",
-        "question":  "Where can I find information about create a visit: step 1, account and contacts?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -450,29 +230,9 @@
                              ]
     },
     {
-        "id":  "route-023-en",
-        "question":  "Where can I find information about create a visit: step 2, visit details?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "visits.crear-una-visita-paso-2-datos-de-la-visita"
-                             ]
-    },
-    {
         "id":  "route-024-es",
         "question":  "¿Dónde encuentro información sobre editor de texto y dictado?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "visits.editor-de-texto-y-dictado"
-                             ]
-    },
-    {
-        "id":  "route-024-en",
-        "question":  "Where can I find information about text editor and dictation?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -490,29 +250,9 @@
                              ]
     },
     {
-        "id":  "route-025-en",
-        "question":  "Where can I find information about view, edit, or delete a visit?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "visits.consultar-editar-o-eliminar-una-visita"
-                             ]
-    },
-    {
         "id":  "route-026-es",
         "question":  "¿Dónde encuentro información sobre módulo hojas de gastos?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.modulo-hojas-de-gastos"
-                             ]
-    },
-    {
-        "id":  "route-026-en",
-        "question":  "Where can I find information about expense sheets module?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -530,29 +270,9 @@
                              ]
     },
     {
-        "id":  "route-027-en",
-        "question":  "Where can I find information about general expense sheet flow?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.flujo-general-de-una-hoja-de-gastos"
-                             ]
-    },
-    {
         "id":  "route-028-es",
         "question":  "¿Dónde encuentro información sobre abrir la lista de hojas?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.abrir-la-lista-de-hojas"
-                             ]
-    },
-    {
-        "id":  "route-028-en",
-        "question":  "Where can I find information about open the expense sheet list?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -570,29 +290,9 @@
                              ]
     },
     {
-        "id":  "route-029-en",
-        "question":  "Where can I find information about search and filter expense sheets?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.buscar-y-filtrar-hojas"
-                             ]
-    },
-    {
         "id":  "route-030-es",
         "question":  "¿Dónde encuentro información sobre utilizar el asistente de gastos?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.utilizar-el-asistente-de-gastos"
-                             ]
-    },
-    {
-        "id":  "route-030-en",
-        "question":  "Where can I find information about use the expense assistant?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -610,29 +310,9 @@
                              ]
     },
     {
-        "id":  "route-031-en",
-        "question":  "Where can I find information about create an expense sheet header?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.crear-la-cabecera-de-una-hoja"
-                             ]
-    },
-    {
         "id":  "route-032-es",
         "question":  "¿Dónde encuentro información sobre comprender el detalle de la hoja?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.comprender-el-detalle-de-la-hoja"
-                             ]
-    },
-    {
-        "id":  "route-032-en",
-        "question":  "Where can I find information about understand expense sheet details?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -650,29 +330,9 @@
                              ]
     },
     {
-        "id":  "route-033-en",
-        "question":  "Where can I find information about add a manual expense line?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.anadir-una-linea-manual"
-                             ]
-    },
-    {
         "id":  "route-034-es",
         "question":  "¿Dónde encuentro información sobre divisas e importes de una línea?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.divisas-e-importes-de-una-linea"
-                             ]
-    },
-    {
-        "id":  "route-034-en",
-        "question":  "Where can I find information about currencies and line amounts?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -690,29 +350,9 @@
                              ]
     },
     {
-        "id":  "route-035-en",
-        "question":  "Where can I find information about create a ticket from an expense sheet?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.crear-un-ticket-desde-una-hoja"
-                             ]
-    },
-    {
         "id":  "route-036-es",
         "question":  "¿Dónde encuentro información sobre vincular tickets existentes?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.vincular-tickets-existentes"
-                             ]
-    },
-    {
-        "id":  "route-036-en",
-        "question":  "Where can I find information about link existing tickets?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -730,29 +370,9 @@
                              ]
     },
     {
-        "id":  "route-037-en",
-        "question":  "Where can I find information about edit the header and lines?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.editar-la-cabecera-y-las-lineas"
-                             ]
-    },
-    {
         "id":  "route-038-es",
         "question":  "¿Dónde encuentro información sobre módulo tickets?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "tickets.modulo-tickets"
-                             ]
-    },
-    {
-        "id":  "route-038-en",
-        "question":  "Where can I find information about tickets module?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -770,29 +390,9 @@
                              ]
     },
     {
-        "id":  "route-039-en",
-        "question":  "Where can I find information about open and filter tickets?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "tickets.abrir-y-filtrar-tickets"
-                             ]
-    },
-    {
         "id":  "route-040-es",
         "question":  "¿Dónde encuentro información sobre crear un ticket desde el módulo tickets?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "tickets.crear-un-ticket-desde-el-modulo-tickets"
-                             ]
-    },
-    {
-        "id":  "route-040-en",
-        "question":  "Where can I find information about create a ticket from the tickets module?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -810,29 +410,9 @@
                              ]
     },
     {
-        "id":  "route-041-en",
-        "question":  "Where can I find information about ticket status?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "tickets.estado-del-ticket"
-                             ]
-    },
-    {
         "id":  "route-042-es",
         "question":  "¿Dónde encuentro información sobre estados y aprobación de una hoja de gastos?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos"
-                             ]
-    },
-    {
-        "id":  "route-042-en",
-        "question":  "Where can I find information about expense sheet status and approval?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -850,29 +430,9 @@
                              ]
     },
     {
-        "id":  "route-043-en",
-        "question":  "Where can I find information about general status flow?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expense-approval.flujo-general-de-estados"
-                             ]
-    },
-    {
         "id":  "route-044-es",
         "question":  "¿Dónde encuentro información sobre estados de la hoja de gastos?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expense-approval.estados-de-la-hoja-de-gastos"
-                             ]
-    },
-    {
-        "id":  "route-044-en",
-        "question":  "Where can I find information about expense sheet statuses?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -890,29 +450,9 @@
                              ]
     },
     {
-        "id":  "route-045-en",
-        "question":  "Where can I find information about owner actions?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expense-approval.acciones-del-propietario"
-                             ]
-    },
-    {
         "id":  "route-046-es",
         "question":  "¿Dónde encuentro información sobre acciones del responsable?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expense-approval.acciones-del-responsable"
-                             ]
-    },
-    {
-        "id":  "route-046-en",
-        "question":  "Where can I find information about manager actions?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -930,29 +470,9 @@
                              ]
     },
     {
-        "id":  "route-047-en",
-        "question":  "Where can I find information about links received by email?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expense-approval.enlaces-recibidos-por-correo"
-                             ]
-    },
-    {
         "id":  "route-048-es",
         "question":  "¿Dónde encuentro información sobre relación entre crm y axapta?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "axapta.relacion-entre-crm-y-axapta"
-                             ]
-    },
-    {
-        "id":  "route-048-en",
-        "question":  "Where can I find information about relationship between crm and axapta?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -970,29 +490,9 @@
                              ]
     },
     {
-        "id":  "route-049-en",
-        "question":  "Where can I find information about workflow management in axapta?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "axapta.gestion-del-flujo-en-axapta"
-                             ]
-    },
-    {
         "id":  "route-050-es",
         "question":  "¿Dónde encuentro información sobre hoja de gastos: crm / usuarios / hoja de gastos?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "axapta.hoja-de-gastos-crm-usuarios-hoja-de-gastos"
-                             ]
-    },
-    {
-        "id":  "route-050-en",
-        "question":  "Where can I find information about expense sheet: crm / users / expense sheet?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -1010,29 +510,9 @@
                              ]
     },
     {
-        "id":  "route-051-en",
-        "question":  "Where can I find information about expense sheet management?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "axapta.gestion-de-hojas-de-gastos"
-                             ]
-    },
-    {
         "id":  "route-052-es",
         "question":  "¿Dónde encuentro información sobre estados visibles en axapta?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "axapta.estados-visibles-en-axapta"
-                             ]
-    },
-    {
-        "id":  "route-052-en",
-        "question":  "Where can I find information about statuses visible in axapta?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -1050,29 +530,9 @@
                              ]
     },
     {
-        "id":  "route-053-en",
-        "question":  "Where can I find information about actions available in axapta?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "axapta.acciones-disponibles-en-axapta"
-                             ]
-    },
-    {
         "id":  "route-054-es",
         "question":  "¿Dónde encuentro información sobre la página no abre?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "troubleshooting.la-pagina-no-abre"
-                             ]
-    },
-    {
-        "id":  "route-054-en",
-        "question":  "Where can I find information about the page does not open?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -1090,29 +550,9 @@
                              ]
     },
     {
-        "id":  "route-055-en",
-        "question":  "Where can I find information about sign-in repeats?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "troubleshooting.la-identificacion-se-repite"
-                             ]
-    },
-    {
         "id":  "route-056-es",
         "question":  "¿Dónde encuentro información sobre no aparece un menú, botón o usuario?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "troubleshooting.no-aparece-un-menu-boton-o-usuario"
-                             ]
-    },
-    {
-        "id":  "route-056-en",
-        "question":  "Where can I find information about a menu, button, or user is missing?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -1130,29 +570,9 @@
                              ]
     },
     {
-        "id":  "route-057-en",
-        "question":  "Where can I find information about unable to save?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "troubleshooting.no-se-puede-guardar"
-                             ]
-    },
-    {
         "id":  "route-058-es",
         "question":  "¿Dónde encuentro información sobre la imagen del ticket no se procesa?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "troubleshooting.la-imagen-del-ticket-no-se-procesa"
-                             ]
-    },
-    {
-        "id":  "route-058-en",
-        "question":  "Where can I find information about the ticket image is not processed?",
-        "responseLocale":  "en",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -1170,69 +590,9 @@
                              ]
     },
     {
-        "id":  "route-059-en",
-        "question":  "Where can I find information about information to send to support?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "troubleshooting.que-informacion-enviar-a-soporte"
-                             ]
-    },
-    {
         "id":  "route-060-es",
         "question":  "¿Dónde encuentro información sobre glosario básico?",
         "responseLocale":  "es-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "glossary.glosario-basico"
-                             ]
-    },
-    {
-        "id":  "route-060-en",
-        "question":  "Where can I find information about basic glossary?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "glossary.glosario-basico"
-                             ]
-    },
-    {
-        "id":  "route-060-eu",
-        "question":  "Oinarrizko glosarioa gaiari buruzko laguntza behar dut.",
-        "responseLocale":  "eu-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "glossary.glosario-basico"
-                             ]
-    },
-    {
-        "id":  "route-060-pt",
-        "question":  "Onde encontro as definições do glossário básico?",
-        "responseLocale":  "pt",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "glossary.glosario-basico"
-                             ]
-    },
-    {
-        "id":  "route-060-it",
-        "question":  "Dove trovo le definizioni del glossario di base?",
-        "responseLocale":  "it",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "glossary.glosario-basico"
-                             ]
-    },
-    {
-        "id":  "route-060-zh",
-        "question":  "在哪里可以查看基本术语表的定义？",
-        "responseLocale":  "zh-Hans",
         "selectedTopicId":  null,
         "expectedResolution":  "answered",
         "expectedTopicIds":  [
@@ -1414,182 +774,13 @@
                              ]
     },
     {
-        "id":  "route-real-en-001",
-        "question":  "How do I sign out of the CRM?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "access.cerrar-la-sesion"
-                             ]
-    },
-    {
-        "id":  "route-real-en-002",
-        "question":  "The receipt image AI read the date incorrectly",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "tickets.crear-un-ticket-desde-el-modulo-tickets"
-                             ]
-    },
-    {
-        "id":  "route-real-en-003",
-        "question":  "What does active company mean?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "common-ui.que-significa-empresa-activa"
-                             ]
-    },
-    {
-        "id":  "route-real-en-004",
-        "question":  "Can a manager undo a rejection?",
-        "responseLocale":  "en",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expense-approval.acciones-del-responsable"
-                             ]
-    },
-    {
-        "id":  "route-real-pt-001",
-        "question":  "Como filtrar folhas de despesas?",
-        "responseLocale":  "pt",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.buscar-y-filtrar-hojas"
-                             ]
-    },
-    {
-        "id":  "route-real-pt-002",
-        "question":  "Preciso de adicionar uma linha de despesa manualmente",
-        "responseLocale":  "pt",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.anadir-una-linea-manual"
-                             ]
-    },
-    {
-        "id":  "route-real-pt-003",
-        "question":  "A página do CRM não abre",
-        "responseLocale":  "pt",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "troubleshooting.la-pagina-no-abre"
-                             ]
-    },
-    {
-        "id":  "route-real-it-001",
-        "question":  "Come creo una visita con account e contatti?",
-        "responseLocale":  "it",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "visits.crear-una-visita-paso-1-cuenta-y-contactos"
-                             ]
-    },
-    {
-        "id":  "route-real-it-002",
-        "question":  "Voglio collegare ticket esistenti a una nota spese",
-        "responseLocale":  "it",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expenses.vincular-tickets-existentes"
-                             ]
-    },
-    {
-        "id":  "route-real-it-003",
-        "question":  "Come posso cambiare la lingua?",
-        "responseLocale":  "it",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "common-ui.cambiar-el-idioma"
-                             ]
-    },
-    {
-        "id":  "route-real-eu-001",
-        "question":  "Nola ireki bisiten historia?",
-        "responseLocale":  "eu-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "visits.abrir-el-historial-de-visitas"
-                             ]
-    },
-    {
-        "id":  "route-real-eu-002",
-        "question":  "Arduradunaren ekintzak gastu-orri bat onartzeko",
-        "responseLocale":  "eu-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expense-approval.acciones-del-responsable"
-                             ]
-    },
-    {
-        "id":  "route-real-eu-003",
-        "question":  "Nola itxi saioa CRMn?",
-        "responseLocale":  "eu-ES",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "access.cerrar-la-sesion"
-                             ]
-    },
-    {
-        "id":  "route-real-zh-001",
-        "question":  "如何筛选票据？",
-        "responseLocale":  "zh-Hans",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "tickets.abrir-y-filtrar-tickets"
-                             ]
-    },
-    {
-        "id":  "route-real-zh-002",
-        "question":  "费用单有哪些状态？",
-        "responseLocale":  "zh-Hans",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "expense-approval.estados-de-la-hoja-de-gastos"
-                             ]
-    },
-    {
-        "id":  "route-real-zh-003",
-        "question":  "CRM 页面打不开",
-        "responseLocale":  "zh-Hans",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "troubleshooting.la-pagina-no-abre"
-                             ]
-    },
-    {
-        "id":  "route-real-zh-004",
-        "question":  "如何更改语言？",
-        "responseLocale":  "zh-Hans",
-        "selectedTopicId":  null,
-        "expectedResolution":  "answered",
-        "expectedTopicIds":  [
-                                 "common-ui.cambiar-el-idioma"
-                             ]
-    },
-    {
         "id":  "route-ambiguous-tickets",
         "question":  "Ayuda con un ticket",
         "responseLocale":  "es-ES",
         "selectedTopicId":  null,
         "expectedResolution":  "needsSelection",
         "expectedTopicIds":  [
+                                 "tickets.modulo-tickets",
                                  "tickets.abrir-y-filtrar-tickets",
                                  "tickets.crear-un-ticket-desde-el-modulo-tickets",
                                  "tickets.estado-del-ticket"
@@ -1602,9 +793,11 @@
         "selectedTopicId":  null,
         "expectedResolution":  "needsSelection",
         "expectedTopicIds":  [
+                                 "visits.modulo-visitas",
                                  "visits.abrir-el-historial-de-visitas",
+                                 "visits.filtrar-el-historial",
                                  "visits.crear-una-visita-paso-1-cuenta-y-contactos",
-                                 "visits.consultar-editar-o-eliminar-una-visita"
+                                 "visits.crear-una-visita-paso-2-datos-de-la-visita"
                              ]
     },
     {

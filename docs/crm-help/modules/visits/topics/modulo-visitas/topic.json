@@ -4,59 +4,19 @@
     "moduleId":  "visits",
     "sectionNumber":  "7",
     "title":  "Módulo Visitas",
-    "summary":  "El módulo Visitas permite consultar actividades realizadas con cuentas, crear nuevas visitas y, cuando los permisos lo permiten, modificar o eliminar actividades existentes.",
+    "summary":  "Descubre qué permite consultar y gestionar el módulo Visitas.",
     "aliases":  {
                     "es-ES":  [
                                   "Módulo Visitas",
                                   "Visitas",
                                   "visitas",
                                   "historial de visitas"
-                              ],
-                    "eu-ES":  [
-                                  "Bisitak modulua",
-                                  "bisitak",
-                                  "bisiten historia"
-                              ],
-                    "en":  [
-                               "Visits module",
-                               "visits",
-                               "visit history"
-                           ],
-                    "pt":  [
-                               "Módulo Visitas",
-                               "visitas",
-                               "histórico de visitas"
-                           ],
-                    "it":  [
-                               "Modulo Visite",
-                               "visite",
-                               "cronologia visite"
-                           ],
-                    "zh-Hans":  [
-                                    "拜访模块",
-                                    "拜访",
-                                    "拜访记录"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre módulo visitas?"
-                                      ],
-                            "eu-ES":  [
-                                          "Bisitak modulua gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about visits module?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Módulo Visitas."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Modulo Visite."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于拜访模块的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -74,8 +34,8 @@
                         ],
     "routeKey":  "visits.history",
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "4F76B8858596C3A37BBFF2DEE69CD20F249DDCBA3219AC83684488172C5461AD",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "4F730397BEA22E67F1161E3C46B7407EE7B7D66E5472A2D398B9E81B53234060",
     "assets":  [
 
                ],
@@ -83,12 +43,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

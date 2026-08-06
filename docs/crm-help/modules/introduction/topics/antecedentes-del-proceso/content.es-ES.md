@@ -2,20 +2,16 @@
 
 <!-- Fuente: Manual App CRM 1.5.docx, sección 1.2. -->
 
-El flujo de trabajo anterior era el siguiente:
+Antes de utilizar el CRM, el proceso dependía de documentos impresos y entregas manuales:
 
-- Usuario crea hoja de gastos.
+1. La persona preparaba e imprimía la hoja de gastos.
 
-- Usuario imprime físicamente la hoja de gastos y le adjunta los tickets/extracto cuenta/factura a modo justificante.
+2. Adjuntaba los tickets, el extracto de cuenta o las facturas que servían como justificante.
 
-- Usuario entrega hoja física a su aprobador.
+3. Entregaba la documentación a su responsable, que la revisaba y firmaba su conformidad.
 
-- Aprobador valida la hoja de gastos y firma en la hoja su visto bueno.
+4. El personal administrativo recopilaba las hojas aprobadas, comprobaba los datos y gestionaba el pago.
 
-- Administrativo recopila hojas de gastos con visto bueno (generalmente todos los viernes)
+5. Finalmente, se realizaba en Axapta la contabilización que correspondiera.
 
-- Administrativo comprueba que todo esté en orden y procede al pago en la plataforma online del banco
-
-- Administrativo contabiliza el diario de gasto en Axapta a la cuenta del usuario y gestiona la contabilización de un diario de facturas de compra en caso necesario.
-
-Existen pequeñas variantes en función del tipo de gasto, por ejemplo, en las hojas de gastos correspondientes a una tarjeta de empresa.
+El flujo digital sustituye la impresión, la entrega y la firma física por estados y acciones registradas en la aplicación. Algunos pasos contables pueden variar según el tipo de gasto o el procedimiento de la compañía.

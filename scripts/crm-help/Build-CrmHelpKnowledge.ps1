@@ -12,7 +12,7 @@ Set-StrictMode -Version Latest
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 $ValidationErrors = New-Object Collections.Generic.List[string]
 $ValidationWarnings = New-Object Collections.Generic.List[string]
-$ExpectedSupportedLocales = @("es-ES", "eu-ES", "en", "pt", "it", "zh-Hans")
+$ExpectedSupportedLocales = @("es-ES")
 
 function Write-Utf8File {
     param(
@@ -93,14 +93,12 @@ function Get-CanonicalHash {
 }
 
 function Get-ModelMarkdown {
-    param(
-        [Parameter(Mandatory = $true)][string]$Markdown,
-        [string]$ImageReferenceLabel = "Captura de referencia"
-    )
+    param([Parameter(Mandatory = $true)][string]$Markdown)
 
     $value = [regex]::Replace($Markdown, "(?m)^#\s+.+?\r?$", "")
     $value = [regex]::Replace($value, "<!--.*?-->", "", [Text.RegularExpressions.RegexOptions]::Singleline)
-    $value = [regex]::Replace($value, "!\[(?<alt>[^\]]*)\]\([^)]+\)", "[${ImageReferenceLabel}: `${alt}]")
+    # Keeps image metadata out of the reader text while assets remain separately traceable.
+    $value = [regex]::Replace($value, "!\[[^\]]*\]\([^)]+\)", "")
     return $value.Trim()
 }
 
@@ -133,7 +131,6 @@ function New-TopicChunks {
         [Parameter(Mandatory = $true)][string]$Markdown,
         [Parameter(Mandatory = $true)][string]$ContentPath,
         [Parameter(Mandatory = $true)]$AssetByAbsolutePath,
-        [string]$ImageReferenceLabel = "Captura de referencia",
         [int]$MaximumCharacters = 6000
     )
 
@@ -152,7 +149,7 @@ function New-TopicChunks {
         if ($currentBlocks.Count -eq 0) { return }
         $chunkIndex++
         $chunkMarkdown = (($currentBlocks -join "`n`n").Trim())
-        $chunkBody = Get-ModelMarkdown -Markdown $chunkMarkdown -ImageReferenceLabel $ImageReferenceLabel
+        $chunkBody = Get-ModelMarkdown -Markdown $chunkMarkdown
         $assetIds = Get-ImageReferences -Markdown $chunkMarkdown -ContentPath $ContentPath -AssetByAbsolutePath $AssetByAbsolutePath
         $chunks.Add([ordered]@{
             id = "$($Topic.id)--{0:D2}" -f $chunkIndex
@@ -205,7 +202,7 @@ $knowledgePath = Join-Path $RootPath "knowledge.json"
 $knowledge = Read-JsonFile $knowledgePath
 $navigation = if ($knowledge) { Read-JsonFile (Join-Path $RootPath ([string]$knowledge.navigationPath)) } else { $null }
 $assetManifest = if ($knowledge) { Read-JsonFile (Join-Path $RootPath ([string]$knowledge.assetManifestPath)) } else { $null }
-$supportedLocales = if ($knowledge) { Get-StringArray $knowledge.supportedResponseLocales } else { @() }
+$supportedLocales = @(if ($knowledge) { Get-StringArray $knowledge.supportedResponseLocales } else { @() })
 
 $canonicalFiles = New-Object Collections.Generic.List[string]
 if (Test-Path -LiteralPath $knowledgePath) { $canonicalFiles.Add($knowledgePath) }
@@ -427,7 +424,7 @@ foreach ($topicId in $orderedTopicIds) {
     }
     $canonicalFiles.Add($contentPath)
     $markdown = [IO.File]::ReadAllText($contentPath, $Utf8NoBom)
-    $usefulText = [regex]::Replace((Get-ModelMarkdown $markdown), "\[Captura de referencia:[^\]]*\]", "").Trim()
+    $usefulText = (Get-ModelMarkdown $markdown).Trim()
     if ([string]$topic.status -eq "published" -and $usefulText.Length -lt 40) {
         Add-ValidationError "Published topic '$topicId' has no useful text chunk. Navigation-only headings must not be published topics."
     }
@@ -492,17 +489,14 @@ foreach ($topicId in $orderedTopicIds) {
         elseif ($localizedHeadingMatch.Groups["title"].Value.Trim() -ne $localizedTitle) {
             Add-ValidationError "Topic '$topicId' level-one title differs from locale '$locale' metadata."
         }
-        $imageReferenceLabel = [string]$localizationByLocale[$locale].imageReferenceLabel
-        if ([string]::IsNullOrWhiteSpace($imageReferenceLabel)) { Add-ValidationError "Localization '$locale' has no imageReferenceLabel." }
-        $localizedUsefulText = [regex]::Replace((Get-ModelMarkdown -Markdown $localizedMarkdown -ImageReferenceLabel $imageReferenceLabel), "\[[^\]]+:[^\]]*\]", "").Trim()
-        # CJK text conveys the same meaning with fewer characters than Latin-script renditions.
-        $minimumUsefulCharacters = if ($locale -eq "zh-Hans") { 12 } else { 40 }
+        $localizedUsefulText = (Get-ModelMarkdown -Markdown $localizedMarkdown).Trim()
+        $minimumUsefulCharacters = 40
         if ([string]$topic.status -eq "published" -and $localizedUsefulText.Length -lt $minimumUsefulCharacters) {
             Add-ValidationError "Published topic '$topicId' has no useful content for locale '$locale'."
         }
 
         $localizedTopicIdentity = [pscustomobject]@{ id = $topicId; title = $localizedTitle }
-        $localizedChunks = @(New-TopicChunks -Topic $localizedTopicIdentity -Markdown $localizedMarkdown -ContentPath $localizedContentPath -AssetByAbsolutePath $assetByAbsolutePath -ImageReferenceLabel $imageReferenceLabel)
+        $localizedChunks = @(New-TopicChunks -Topic $localizedTopicIdentity -Markdown $localizedMarkdown -ContentPath $localizedContentPath -AssetByAbsolutePath $assetByAbsolutePath)
         $localizedChunkIds = @($localizedChunks | ForEach-Object { [string]$_.id })
         if (($localizedChunkIds -join "|") -ne ($chunkIds -join "|")) {
             Add-ValidationError "Topic '$topicId' locale '$locale' generates different chunk ids from the source locale."

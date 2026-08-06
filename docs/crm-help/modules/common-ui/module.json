@@ -9,32 +9,7 @@
                                   "pantalla",
                                   "empresa activa",
                                   "permisos"
-                              ],
-                    "eu-ES":  [
-                                  "pantaila",
-                                  "enpresa aktiboa",
-                                  "baimenak"
-                              ],
-                    "en":  [
-                               "screen",
-                               "active company",
-                               "permissions"
-                           ],
-                    "pt":  [
-                               "ecrã",
-                               "empresa ativa",
-                               "permissões"
-                           ],
-                    "it":  [
-                               "schermata",
-                               "azienda attiva",
-                               "permessi"
-                           ],
-                    "zh-Hans":  [
-                                    "界面",
-                                    "当前公司",
-                                    "权限"
-                                ]
+                              ]
                 },
     "topicIds":  [
                      "common-ui.elementos-comunes-de-la-pantalla",

@@ -4,58 +4,18 @@
     "moduleId":  "tickets",
     "sectionNumber":  "9.2",
     "title":  "Crear un ticket desde el módulo Tickets",
-    "summary":  "1. Pulse el botón Crear o el botón redondo con el signo más.",
+    "summary":  "Crea un justificante desde el módulo Tickets.",
     "aliases":  {
                     "es-ES":  [
                                   "Crear un ticket desde el módulo Tickets",
                                   "tickets",
                                   "justificantes"
-                              ],
-                    "eu-ES":  [
-                                  "Tiketak modulutik tiketa sortzea",
-                                  "tiketa",
-                                  "gastuen frogagiriak"
-                              ],
-                    "en":  [
-                               "Create a ticket from the Tickets module",
-                               "tickets",
-                               "expense receipts"
-                           ],
-                    "pt":  [
-                               "Criar um ticket no módulo Tickets",
-                               "tickets",
-                               "comprovativos de despesa"
-                           ],
-                    "it":  [
-                               "Creare un ticket dal modulo Ticket",
-                               "ticket",
-                               "giustificativi di spesa"
-                           ],
-                    "zh-Hans":  [
-                                    "从票据模块创建票据",
-                                    "票据",
-                                    "费用凭证"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre crear un ticket desde el módulo tickets?"
-                                      ],
-                            "eu-ES":  [
-                                          "Tiketak modulutik tiketa sortzea gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about create a ticket from the tickets module?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Criar um ticket no módulo Tickets."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Creare un ticket dal modulo Ticket."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于从票据模块创建票据的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,7 +28,7 @@
                         ],
     "routeKey":  "expenses.tickets",
     "status":  "published",
-    "contentVersion":  "1.6.0",
+    "contentVersion":  "1.7.0",
     "contentHash":  "B066B341610345F5F29FD54E46678F1EA8D7B21A5B9725572D26A7E0D3127B4B",
     "assets":  [
 
@@ -77,12 +37,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

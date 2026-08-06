@@ -4,58 +4,18 @@
     "moduleId":  "expenses",
     "sectionNumber":  "8.8",
     "title":  "Crear un ticket desde una hoja",
-    "summary":  "1. En una hoja editable, abra Acciones rápidas y pulse Nuevo ticket.",
+    "summary":  "Crea un ticket nuevo y vincúlalo a una hoja editable.",
     "aliases":  {
                     "es-ES":  [
                                   "Crear un ticket desde una hoja",
                                   "hojas de gastos",
                                   "gastos"
-                              ],
-                    "eu-ES":  [
-                                  "Gastu-orri batetik tiketa sortzea",
-                                  "gastu-orriak",
-                                  "gastuak"
-                              ],
-                    "en":  [
-                               "Create a ticket from an expense sheet",
-                               "expense sheets",
-                               "expenses"
-                           ],
-                    "pt":  [
-                               "Criar um ticket a partir de uma folha de despesas",
-                               "folhas de despesas",
-                               "despesas"
-                           ],
-                    "it":  [
-                               "Creare un ticket da una nota spese",
-                               "note spese",
-                               "spese"
-                           ],
-                    "zh-Hans":  [
-                                    "从费用单创建票据",
-                                    "费用单",
-                                    "费用"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre crear un ticket desde una hoja?"
-                                      ],
-                            "eu-ES":  [
-                                          "Gastu-orri batetik tiketa sortzea gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about create a ticket from an expense sheet?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Criar um ticket a partir de uma folha de despesas."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Creare un ticket da una nota spese."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于从费用单创建票据的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,23 +28,16 @@
                         ],
     "routeKey":  "expenses.sheets",
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "964705CC46CAFB8A031C48A9DAA0B26E31B16729F26054B44BE631851451E546",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "F5FDF8C86BF7A0BF818F7C7E26EC63570C902EE689A309B4DE30EAC5EE2D04B7",
     "assets":  [
-                   "manual-1.5.image37",
-                   "manual-1.5.image38",
-                   "manual-1.5.image39"
+
                ],
     "quickAnswers":  [
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

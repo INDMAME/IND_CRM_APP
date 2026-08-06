@@ -4,58 +4,18 @@
     "moduleId":  "expense-approval",
     "sectionNumber":  "10.5",
     "title":  "Enlaces recibidos por correo",
-    "summary":  "Un correo de aprobación puede incluir un enlace directo a la hoja. Pulse el enlace, identifíquese si se solicita y espere. La aplicación puede cambiar a la empresa correcta antes de abrir el detalle. El enlace no concede permisos adicionales: solo podrá ver o actuar sobre la h...",
+    "summary":  "Abre de forma segura una hoja desde un enlace de correo.",
     "aliases":  {
                     "es-ES":  [
                                   "Enlaces recibidos por correo",
                                   "aprobación de gastos",
                                   "estados de hoja"
-                              ],
-                    "eu-ES":  [
-                                  "Posta elektronikoz jasotako estekak",
-                                  "gastuen onarpena",
-                                  "orriaren egoerak"
-                              ],
-                    "en":  [
-                               "Links received by email",
-                               "expense approval",
-                               "sheet status"
-                           ],
-                    "pt":  [
-                               "Ligações recebidas por correio eletrónico",
-                               "aprovação de despesas",
-                               "estado da folha"
-                           ],
-                    "it":  [
-                               "Collegamenti ricevuti via e-mail",
-                               "approvazione spese",
-                               "stato nota spese"
-                           ],
-                    "zh-Hans":  [
-                                    "通过电子邮件收到的链接",
-                                    "费用审批",
-                                    "费用单状态"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre enlaces recibidos por correo?"
-                                      ],
-                            "eu-ES":  [
-                                          "Posta elektronikoz jasotako estekak gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about links received by email?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Ligações recebidas por correio eletrónico."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Collegamenti ricevuti via e-mail."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于通过电子邮件收到的链接的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,21 +28,16 @@
                         ],
     "routeKey":  "expenses.sheets",
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "D4EF791391DC477F73EFBF7DA969F0D5D4D9B316DF1B0BB42B6CD55E158BB935",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "48A4CACDDC64F71220EAA09EA340909269B07C31AD7C86FA7B3983079001F2B7",
     "assets":  [
-                   "manual-1.5.image50"
+
                ],
     "quickAnswers":  [
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

@@ -4,58 +4,18 @@
     "moduleId":  "introduction",
     "sectionNumber":  "1.2",
     "title":  "Antecedentes del proceso",
-    "summary":  "El flujo de trabajo anterior era el siguiente:",
+    "summary":  "Repasa cómo se gestionaban antes las hojas de gastos.",
     "aliases":  {
                     "es-ES":  [
                                   "Antecedentes del proceso",
                                   "primeros pasos",
                                   "manual CRM"
-                              ],
-                    "eu-ES":  [
-                                  "Aurreko prozesua",
-                                  "lehen urratsak",
-                                  "CRM eskuliburua"
-                              ],
-                    "en":  [
-                               "Previous process",
-                               "getting started",
-                               "CRM manual"
-                           ],
-                    "pt":  [
-                               "Processo anterior",
-                               "primeiros passos",
-                               "manual CRM"
-                           ],
-                    "it":  [
-                               "Processo precedente",
-                               "primi passi",
-                               "manuale CRM"
-                           ],
-                    "zh-Hans":  [
-                                    "原有流程",
-                                    "入门",
-                                    "CRM 手册"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre antecedentes del proceso?"
-                                      ],
-                            "eu-ES":  [
-                                          "Aurreko prozesua gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about previous process?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Processo anterior."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Processo precedente."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于原有流程的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,8 +28,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "6C25D430C85960F637AC1CA1A94FC36BAADE74F0F077ED3DCEB286648E9077A7",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "D2DFA64E24C8F964072A3C1B2C5B92078394A25EB3294BCAA326BBF40E81CDA6",
     "assets":  [
 
                ],
@@ -77,12 +37,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

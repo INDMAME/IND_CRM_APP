@@ -4,58 +4,18 @@
     "moduleId":  "expenses",
     "sectionNumber":  "8.6",
     "title":  "Añadir una línea manual",
-    "summary":  "1. En una hoja editable, abra Acciones rápidas y pulse Nueva línea.",
+    "summary":  "Añade y completa una línea de gasto manual.",
     "aliases":  {
                     "es-ES":  [
                                   "Añadir una línea manual",
                                   "hojas de gastos",
                                   "gastos"
-                              ],
-                    "eu-ES":  [
-                                  "Gastu-lerro bat eskuz gehitzea",
-                                  "gastu-orriak",
-                                  "gastuak"
-                              ],
-                    "en":  [
-                               "Add a manual expense line",
-                               "expense sheets",
-                               "expenses"
-                           ],
-                    "pt":  [
-                               "Adicionar uma linha de despesa manualmente",
-                               "folhas de despesas",
-                               "despesas"
-                           ],
-                    "it":  [
-                               "Aggiungere manualmente una riga di spesa",
-                               "note spese",
-                               "spese"
-                           ],
-                    "zh-Hans":  [
-                                    "手动添加费用行",
-                                    "费用单",
-                                    "费用"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre añadir una línea manual?"
-                                      ],
-                            "eu-ES":  [
-                                          "Gastu-lerro bat eskuz gehitzea gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about add a manual expense line?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Adicionar uma linha de despesa manualmente."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Aggiungere manualmente una riga di spesa."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于手动添加费用行的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,23 +28,16 @@
                         ],
     "routeKey":  "expenses.sheets",
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "F64C34BEB21D6C4D8D51818FD6EC396D9736DBE401A5CB2A35321EFAAAEFEA8E",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "DDF0CA4D343846348A1868BB0A27D70907C9EAFF2C59AE25FC623521E5C9F87D",
     "assets":  [
-                   "manual-1.5.image32",
-                   "manual-1.5.image33",
-                   "manual-1.5.image34"
+
                ],
     "quickAnswers":  [
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

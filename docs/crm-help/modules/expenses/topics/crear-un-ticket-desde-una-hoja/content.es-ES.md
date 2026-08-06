@@ -12,10 +12,7 @@
 
 5. Pulse Guardar. El ticket queda vinculado a la hoja solo al completar correctamente este guardado. No cierre ni vuelva atrás antes de guardarlo y asegurarse de que los datos estén correctos.
 
-![Captura de «Crear un ticket desde una hoja» relacionada con: 5. Pulse Guardar. El ticket queda vinculado a la hoja solo al completar correctamente este guardado. No cierre ni vuelva atrás antes de guardarlo y asegurars...](../../../../assets/manual-1.5/image37.png)
 
-![Captura de «Crear un ticket desde una hoja» relacionada con: 5. Pulse Guardar. El ticket queda vinculado a la hoja solo al completar correctamente este guardado. No cierre ni vuelva atrás antes de guardarlo y asegurars...](../../../../assets/manual-1.5/image38.png)
 
-![Captura de «Crear un ticket desde una hoja» relacionada con: 5. Pulse Guardar. El ticket queda vinculado a la hoja solo al completar correctamente este guardado. No cierre ni vuelva atrás antes de guardarlo y asegurars...](../../../../assets/manual-1.5/image39.png)
 
 NO ABANDONAR: Crear la imagen no completa por sí solo el proceso desde una hoja. El ticket se abre para revisión y debe guardarse. Si sale sin guardar, puede quedar pendiente y no aparecer vinculado a la hoja. Se admiten JPG, JPEG, PNG y WEBP de hasta 50 MB.

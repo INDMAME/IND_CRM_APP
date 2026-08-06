@@ -4,58 +4,18 @@
     "moduleId":  "introduction",
     "sectionNumber":  "1",
     "title":  "Objetivo y personas destinatarias",
-    "summary":  "Este manual explica cómo entrar en la aplicación web CRM y cómo utilizar sus funciones de Visitas, Hojas de gastos y Tickets. Está redactado para personas con poca experiencia tecnológica y describe también acciones básicas como abrir un navegador, pulsar un botón, escribir en...",
+    "summary":  "Conoce el propósito del manual y a quién va dirigido.",
     "aliases":  {
                     "es-ES":  [
                                   "Objetivo y personas destinatarias",
                                   "primeros pasos",
                                   "manual CRM"
-                              ],
-                    "eu-ES":  [
-                                  "Helburua eta hartzaileak",
-                                  "lehen urratsak",
-                                  "CRM eskuliburua"
-                              ],
-                    "en":  [
-                               "Purpose and audience",
-                               "getting started",
-                               "CRM manual"
-                           ],
-                    "pt":  [
-                               "Objetivo e destinatários",
-                               "primeiros passos",
-                               "manual CRM"
-                           ],
-                    "it":  [
-                               "Obiettivo e destinatari",
-                               "primi passi",
-                               "manuale CRM"
-                           ],
-                    "zh-Hans":  [
-                                    "目标和适用人群",
-                                    "入门",
-                                    "CRM 手册"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre objetivo y personas destinatarias?"
-                                      ],
-                            "eu-ES":  [
-                                          "Helburua eta hartzaileak gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about purpose and audience?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Objetivo e destinatários."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Obiettivo e destinatari."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于目标和适用人群的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -70,7 +30,7 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
+    "contentVersion":  "1.7.0",
     "contentHash":  "27EB2E1AF7146465C7A11FD761E09576B5CE9B86375ACC3FB2F29FA2FA7A107D",
     "assets":  [
 
@@ -79,12 +39,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

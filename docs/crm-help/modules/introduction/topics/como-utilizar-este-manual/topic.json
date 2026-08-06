@@ -4,58 +4,18 @@
     "moduleId":  "introduction",
     "sectionNumber":  "2",
     "title":  "Cómo utilizar este manual",
-    "summary":  "En este documento se emplean las siguientes palabras:",
+    "summary":  "Aprende la terminología y la forma de seguir los pasos del manual.",
     "aliases":  {
                     "es-ES":  [
                                   "Cómo utilizar este manual",
                                   "primeros pasos",
                                   "manual CRM"
-                              ],
-                    "eu-ES":  [
-                                  "Eskuliburu hau nola erabili",
-                                  "lehen urratsak",
-                                  "CRM eskuliburua"
-                              ],
-                    "en":  [
-                               "How to use this manual",
-                               "getting started",
-                               "CRM manual"
-                           ],
-                    "pt":  [
-                               "Como utilizar este manual",
-                               "primeiros passos",
-                               "manual CRM"
-                           ],
-                    "it":  [
-                               "Come utilizzare questo manuale",
-                               "primi passi",
-                               "manuale CRM"
-                           ],
-                    "zh-Hans":  [
-                                    "如何使用本手册",
-                                    "入门",
-                                    "CRM 手册"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre cómo utilizar este manual?"
-                                      ],
-                            "eu-ES":  [
-                                          "Eskuliburu hau nola erabili gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about how to use this manual?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Como utilizar este manual."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Come utilizzare questo manuale."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于如何使用本手册的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,7 +28,7 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
+    "contentVersion":  "1.7.0",
     "contentHash":  "426350FA6D851FB065DABB4C632FA4046524C07952FB8464ECA181BD4963F49D",
     "assets":  [
 
@@ -77,12 +37,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

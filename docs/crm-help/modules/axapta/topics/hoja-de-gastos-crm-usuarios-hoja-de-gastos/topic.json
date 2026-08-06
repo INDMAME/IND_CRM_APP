@@ -4,58 +4,18 @@
     "moduleId":  "axapta",
     "sectionNumber":  "11.2.1",
     "title":  "Hoja de gastos: CRM / Usuarios / Hoja de gastos",
-    "summary":  "Se puede realizar una acción directamente sobre el formulario tradicional de la hoja de gastos. En la botonera de la parte derecha, pulse Funciones para mostrar las opciones disponibles.",
+    "summary":  "Gestiona una hoja desde el formulario tradicional de Axapta.",
     "aliases":  {
                     "es-ES":  [
                                   "Hoja de gastos: CRM / Usuarios / Hoja de gastos",
                                   "Axapta",
                                   "gastos en Axapta"
-                              ],
-                    "eu-ES":  [
-                                  "Gastu-orria: CRM / Erabiltzaileak / Gastu-orria",
-                                  "Axapta",
-                                  "gastuak Axaptan"
-                              ],
-                    "en":  [
-                               "Expense sheet: CRM / Users / Expense sheet",
-                               "Axapta",
-                               "expenses in Axapta"
-                           ],
-                    "pt":  [
-                               "Folha de despesas: CRM / Utilizadores / Folha de despesas",
-                               "Axapta",
-                               "despesas no Axapta"
-                           ],
-                    "it":  [
-                               "Nota spese: CRM / Utenti / Nota spese",
-                               "Axapta",
-                               "spese in Axapta"
-                           ],
-                    "zh-Hans":  [
-                                    "费用单：CRM / 用户 / 费用单",
-                                    "Axapta",
-                                    "Axapta 费用"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre hoja de gastos: crm / usuarios / hoja de gastos?"
-                                      ],
-                            "eu-ES":  [
-                                          "Gastu-orria: CRM / Erabiltzaileak / Gastu-orria gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about expense sheet: crm / users / expense sheet?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Folha de despesas: CRM / Utilizadores / Folha de despesas."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Nota spese: CRM / Utenti / Nota spese."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于费用单：CRM / 用户 / 费用单的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,21 +28,16 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "50D18F989917C3E01C92A787D6D99D07FE3C9728E111927E929583544B3B16B1",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "E827443F37171651DEB26A3A91BA9105E8439BC9BC95F8BBAB80D02F3EB416C9",
     "assets":  [
-                   "manual-1.5.image51"
+
                ],
     "quickAnswers":  [
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

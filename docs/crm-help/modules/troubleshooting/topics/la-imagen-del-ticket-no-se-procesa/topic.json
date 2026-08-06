@@ -4,58 +4,18 @@
     "moduleId":  "troubleshooting",
     "sectionNumber":  "12.5",
     "title":  "La imagen del ticket no se procesa",
-    "summary":  "1. Compruebe que la imagen corresponde a un formato admitido y que no supera el límite indicado por la aplicación.",
+    "summary":  "Comprueba el formato y tamaño si no se procesa la imagen.",
     "aliases":  {
                     "es-ES":  [
                                   "La imagen del ticket no se procesa",
                                   "problemas frecuentes",
                                   "soporte"
-                              ],
-                    "eu-ES":  [
-                                  "Tiketaren irudia ez da prozesatzen",
-                                  "ohiko arazoak",
-                                  "laguntza"
-                              ],
-                    "en":  [
-                               "The ticket image is not processed",
-                               "common problems",
-                               "support"
-                           ],
-                    "pt":  [
-                               "A imagem do ticket não é processada",
-                               "problemas frequentes",
-                               "suporte"
-                           ],
-                    "it":  [
-                               "L\u0027immagine del ticket non viene elaborata",
-                               "problemi frequenti",
-                               "assistenza"
-                           ],
-                    "zh-Hans":  [
-                                    "票据图片未被处理",
-                                    "常见问题",
-                                    "技术支持"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre la imagen del ticket no se procesa?"
-                                      ],
-                            "eu-ES":  [
-                                          "Tiketaren irudia ez da prozesatzen gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about the ticket image is not processed?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com A imagem do ticket não é processada."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con L\u0027immagine del ticket non viene elaborata."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于票据图片未被处理的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,7 +28,7 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
+    "contentVersion":  "1.7.0",
     "contentHash":  "1AED7D5350307584F4A053B863C795B6E9EC047AAA07B7598F80786C68D3C22A",
     "assets":  [
 
@@ -84,12 +44,7 @@
                          }
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

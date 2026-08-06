@@ -2,10 +2,10 @@
 
 <!-- Fuente: Manual App CRM 1.5.docx, sección 9.3. -->
 
-Un ticket Pendiente todavía no está asignado a una hoja. Un ticket Asignado ya se encuentra relacionado con una hoja de gastos. Si necesita cambiar esa relación, ahora mismo para poder desvincular un ticket solo se podría eliminar este y volver a cargar en el sistema, para luego vincularlo nuevamente a la hoja de gasto que corresponda.
+Un ticket puede mostrar uno de estos estados:
 
-![Captura de «Estado del ticket» relacionada con: Un ticket Pendiente todavía no está asignado a una hoja. Un ticket Asignado ya se encuentra relacionado con una hoja de gastos. Si necesita cambiar esa relac...](../../../../assets/manual-1.5/image46.png)
+- **Pendiente:** todavía no está asignado a una hoja de gastos y puede seleccionarse desde la opción Vincular ticket.
 
-![Captura de «Estado del ticket» relacionada con: Un ticket Pendiente todavía no está asignado a una hoja. Un ticket Asignado ya se encuentra relacionado con una hoja de gastos. Si necesita cambiar esa relac...](../../../../assets/manual-1.5/image47.png)
+- **Asignado:** ya se encuentra relacionado con una hoja de gastos y no debe volver a vincularse como si fuera un justificante nuevo.
 
-![Captura de «Estado del ticket» relacionada con: Un ticket Pendiente todavía no está asignado a una hoja. Un ticket Asignado ya se encuentra relacionado con una hoja de gastos. Si necesita cambiar esa relac...](../../../../assets/manual-1.5/image48.png)
+La aplicación no ofrece una opción directa para cambiar la hoja de un ticket asignado. El procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta. Antes de hacerlo, compruebe el identificador del ticket y consulte el procedimiento interno si la hoja ya no es editable.

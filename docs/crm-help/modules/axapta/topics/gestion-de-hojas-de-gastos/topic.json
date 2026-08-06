@@ -4,58 +4,18 @@
     "moduleId":  "axapta",
     "sectionNumber":  "11.2.2",
     "title":  "Gestión de hojas de gastos",
-    "summary":  "Esta nueva opción está disponible en el menú: CRM / Asuntos / Hojas de Gastos / Gestión de Hojas de Gastos.",
+    "summary":  "Usa la pantalla de gestión de hojas de gastos en Axapta.",
     "aliases":  {
                     "es-ES":  [
                                   "Gestión de hojas de gastos",
                                   "Axapta",
                                   "gastos en Axapta"
-                              ],
-                    "eu-ES":  [
-                                  "Gastu-orrien kudeaketa",
-                                  "Axapta",
-                                  "gastuak Axaptan"
-                              ],
-                    "en":  [
-                               "Expense sheet management",
-                               "Axapta",
-                               "expenses in Axapta"
-                           ],
-                    "pt":  [
-                               "Gestão de folhas de despesas",
-                               "Axapta",
-                               "despesas no Axapta"
-                           ],
-                    "it":  [
-                               "Gestione delle note spese",
-                               "Axapta",
-                               "spese in Axapta"
-                           ],
-                    "zh-Hans":  [
-                                    "费用单管理",
-                                    "Axapta",
-                                    "Axapta 费用"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre gestión de hojas de gastos?"
-                                      ],
-                            "eu-ES":  [
-                                          "Gastu-orrien kudeaketa gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about expense sheet management?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Gestão de folhas de despesas."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Gestione delle note spese."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于费用单管理的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,23 +28,16 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "C6D4358A9C00CCB06B41C8F7C2713A9400A67A9EE03FEFD4AFF805990F82E3AC",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "43205CAB656A0C1C57373AD9453E921A6EEEEE64168EBD307D536F038C6DB3DA",
     "assets":  [
-                   "manual-1.5.image52",
-                   "manual-1.5.image53",
-                   "manual-1.5.image54"
+
                ],
     "quickAnswers":  [
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

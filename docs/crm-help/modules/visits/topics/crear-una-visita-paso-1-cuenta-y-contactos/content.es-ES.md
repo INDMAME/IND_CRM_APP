@@ -12,10 +12,7 @@
 
 5. Pulse Avanzar.
 
-![Captura de «Crear una visita: paso 1, cuenta y contactos» relacionada con: 5. Pulse Avanzar.](../../../../assets/manual-1.5/image12.png)
 
-![Captura de «Crear una visita: paso 1, cuenta y contactos» relacionada con: 5. Pulse Avanzar.](../../../../assets/manual-1.5/image13.png)
 
-![Captura de «Crear una visita: paso 1, cuenta y contactos» relacionada con: 5. Pulse Avanzar.](../../../../assets/manual-1.5/image14.png)
 
 CAMBIO DE CUENTA: Si cambia la cuenta después de avanzar, la aplicación limpia los contactos y los datos de la visita para evitar relacionar información con el cliente equivocado. Revise el formulario de nuevo.

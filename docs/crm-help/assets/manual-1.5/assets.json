@@ -21,7 +21,7 @@
                        "sourcePart":  "word/media/image2.png",
                        "altText":  "Captura de «Identificarse» relacionada con: 1. En la pantalla Bienvenido, pulse Entrar con Microsoft.",
                        "usedByTopicIds":  [
-                                              "access.identificarse"
+
                                           ]
                    },
                    {
@@ -32,7 +32,7 @@
                        "sourcePart":  "word/media/image3.png",
                        "altText":  "Captura de «Cerrar la sesión» relacionada con: 3. Pulse Cerrar sesión y espere hasta regresar a la pantalla de acceso.",
                        "usedByTopicIds":  [
-                                              "access.cerrar-la-sesion"
+
                                           ]
                    },
                    {
@@ -43,7 +43,7 @@
                        "sourcePart":  "word/media/image4.png",
                        "altText":  "Captura de «Cerrar la sesión» relacionada con: 3. Pulse Cerrar sesión y espere hasta regresar a la pantalla de acceso.",
                        "usedByTopicIds":  [
-                                              "access.cerrar-la-sesion"
+
                                           ]
                    },
                    {
@@ -54,7 +54,7 @@
                        "sourcePart":  "word/media/image5.png",
                        "altText":  "Captura de «Elementos comunes de la pantalla» relacionada con: • Mensajes de error o permiso: explican por qué una acción no se ha podido realizar. Deben leerse antes de reintentar.",
                        "usedByTopicIds":  [
-                                              "common-ui.elementos-comunes-de-la-pantalla"
+
                                           ]
                    },
                    {
@@ -65,7 +65,7 @@
                        "sourcePart":  "word/media/image6.png",
                        "altText":  "Captura de «Elementos comunes de la pantalla» relacionada con: • Mensajes de error o permiso: explican por qué una acción no se ha podido realizar. Deben leerse antes de reintentar.",
                        "usedByTopicIds":  [
-                                              "common-ui.elementos-comunes-de-la-pantalla"
+
                                           ]
                    },
                    {
@@ -76,7 +76,7 @@
                        "sourcePart":  "word/media/image7.png",
                        "altText":  "Captura de «Elementos comunes de la pantalla» relacionada con: • Mensajes de error o permiso: explican por qué una acción no se ha podido realizar. Deben leerse antes de reintentar.",
                        "usedByTopicIds":  [
-                                              "common-ui.elementos-comunes-de-la-pantalla"
+
                                           ]
                    },
                    {
@@ -87,7 +87,7 @@
                        "sourcePart":  "word/media/image8.png",
                        "altText":  "Captura de «Qué significa empresa activa» relacionada con: La empresa activa determina los clientes, proyectos, divisas, visitas, hojas de gastos y tickets que puede consultar. Antes de crear o buscar información, co...",
                        "usedByTopicIds":  [
-                                              "common-ui.que-significa-empresa-activa"
+
                                           ]
                    },
                    {
@@ -120,7 +120,7 @@
                        "sourcePart":  "word/media/image11.png",
                        "altText":  "Captura de la sección «Filtrar el historial» del manual CRM.",
                        "usedByTopicIds":  [
-                                              "visits.filtrar-el-historial"
+
                                           ]
                    },
                    {
@@ -131,7 +131,7 @@
                        "sourcePart":  "word/media/image12.png",
                        "altText":  "Captura de «Crear una visita: paso 1, cuenta y contactos» relacionada con: 5. Pulse Avanzar.",
                        "usedByTopicIds":  [
-                                              "visits.crear-una-visita-paso-1-cuenta-y-contactos"
+
                                           ]
                    },
                    {
@@ -142,7 +142,7 @@
                        "sourcePart":  "word/media/image13.png",
                        "altText":  "Captura de «Crear una visita: paso 1, cuenta y contactos» relacionada con: 5. Pulse Avanzar.",
                        "usedByTopicIds":  [
-                                              "visits.crear-una-visita-paso-1-cuenta-y-contactos"
+
                                           ]
                    },
                    {
@@ -153,7 +153,7 @@
                        "sourcePart":  "word/media/image14.png",
                        "altText":  "Captura de «Crear una visita: paso 1, cuenta y contactos» relacionada con: 5. Pulse Avanzar.",
                        "usedByTopicIds":  [
-                                              "visits.crear-una-visita-paso-1-cuenta-y-contactos"
+
                                           ]
                    },
                    {
@@ -164,7 +164,7 @@
                        "sourcePart":  "word/media/image15.png",
                        "altText":  "Captura de «Crear una visita: paso 2, datos de la visita» relacionada con: 8. En Confirmar creación, revise la pregunta y pulse Aceptar para crear la visita o Cancelar para volver al formulario.",
                        "usedByTopicIds":  [
-                                              "visits.crear-una-visita-paso-2-datos-de-la-visita"
+
                                           ]
                    },
                    {
@@ -175,7 +175,7 @@
                        "sourcePart":  "word/media/image16.png",
                        "altText":  "Captura de «Crear una visita: paso 2, datos de la visita» relacionada con: 8. En Confirmar creación, revise la pregunta y pulse Aceptar para crear la visita o Cancelar para volver al formulario.",
                        "usedByTopicIds":  [
-                                              "visits.crear-una-visita-paso-2-datos-de-la-visita"
+
                                           ]
                    },
                    {
@@ -186,7 +186,7 @@
                        "sourcePart":  "word/media/image17.png",
                        "altText":  "Captura de «Editor de texto y dictado» relacionada con: Al pulsar Comentarios, Antecedentes o Conclusiones se abre un editor a pantalla completa. Escriba el texto y pulse Guardar para devolverlo al formulario. Cua...",
                        "usedByTopicIds":  [
-                                              "visits.editor-de-texto-y-dictado"
+
                                           ]
                    },
                    {
@@ -197,7 +197,7 @@
                        "sourcePart":  "word/media/image18.png",
                        "altText":  "Captura de «Editor de texto y dictado» relacionada con: Al pulsar Comentarios, Antecedentes o Conclusiones se abre un editor a pantalla completa. Escriba el texto y pulse Guardar para devolverlo al formulario. Cua...",
                        "usedByTopicIds":  [
-                                              "visits.editor-de-texto-y-dictado"
+
                                           ]
                    },
                    {
@@ -208,7 +208,7 @@
                        "sourcePart":  "word/media/image19.png",
                        "altText":  "Captura de «Editor de texto y dictado» relacionada con: Al pulsar Comentarios, Antecedentes o Conclusiones se abre un editor a pantalla completa. Escriba el texto y pulse Guardar para devolverlo al formulario. Cua...",
                        "usedByTopicIds":  [
-                                              "visits.editor-de-texto-y-dictado"
+
                                           ]
                    },
                    {
@@ -219,7 +219,7 @@
                        "sourcePart":  "word/media/image20.png",
                        "altText":  "Captura de «Consultar, editar o eliminar una visita» relacionada con: La cuenta y los contactos utilizados durante la creación no son campos editables en el detalle actual. Si la visita se creó para una cuenta equivocada, no ca...",
                        "usedByTopicIds":  [
-                                              "visits.consultar-editar-o-eliminar-una-visita"
+
                                           ]
                    },
                    {
@@ -230,7 +230,7 @@
                        "sourcePart":  "word/media/image21.png",
                        "altText":  "Captura de «Consultar, editar o eliminar una visita» relacionada con: La cuenta y los contactos utilizados durante la creación no son campos editables en el detalle actual. Si la visita se creó para una cuenta equivocada, no ca...",
                        "usedByTopicIds":  [
-                                              "visits.consultar-editar-o-eliminar-una-visita"
+
                                           ]
                    },
                    {
@@ -241,7 +241,7 @@
                        "sourcePart":  "word/media/image22.png",
                        "altText":  "Captura de «Abrir la lista de hojas» relacionada con: 3. Espere a que aparezcan las tarjetas. Cada tarjeta puede mostrar el identificador, la descripción, el propietario, la fecha, la divisa, el importe, el esta...",
                        "usedByTopicIds":  [
-                                              "expenses.abrir-la-lista-de-hojas"
+
                                           ]
                    },
                    {
@@ -252,7 +252,7 @@
                        "sourcePart":  "word/media/image23.png",
                        "altText":  "Captura de «Abrir la lista de hojas» relacionada con: 3. Espere a que aparezcan las tarjetas. Cada tarjeta puede mostrar el identificador, la descripción, el propietario, la fecha, la divisa, el importe, el esta...",
                        "usedByTopicIds":  [
-                                              "expenses.abrir-la-lista-de-hojas"
+
                                           ]
                    },
                    {
@@ -263,7 +263,7 @@
                        "sourcePart":  "word/media/image24.png",
                        "altText":  "Captura de «Abrir la lista de hojas» relacionada con: 3. Espere a que aparezcan las tarjetas. Cada tarjeta puede mostrar el identificador, la descripción, el propietario, la fecha, la divisa, el importe, el esta...",
                        "usedByTopicIds":  [
-                                              "expenses.abrir-la-lista-de-hojas"
+
                                           ]
                    },
                    {
@@ -274,7 +274,7 @@
                        "sourcePart":  "word/media/image25.png",
                        "altText":  "Captura de «Buscar y filtrar hojas» relacionada con: 4. Pulse Borrar para retirar todos los criterios.",
                        "usedByTopicIds":  [
-                                              "expenses.buscar-y-filtrar-hojas"
+
                                           ]
                    },
                    {
@@ -285,7 +285,7 @@
                        "sourcePart":  "word/media/image26.png",
                        "altText":  "Captura de «Buscar y filtrar hojas» relacionada con: 4. Pulse Borrar para retirar todos los criterios.",
                        "usedByTopicIds":  [
-                                              "expenses.buscar-y-filtrar-hojas"
+
                                           ]
                    },
                    {
@@ -296,7 +296,7 @@
                        "sourcePart":  "word/media/image27.png",
                        "altText":  "Captura de «Buscar y filtrar hojas» relacionada con: 4. Pulse Borrar para retirar todos los criterios.",
                        "usedByTopicIds":  [
-                                              "expenses.buscar-y-filtrar-hojas"
+
                                           ]
                    },
                    {
@@ -307,7 +307,7 @@
                        "sourcePart":  "word/media/image28.png",
                        "altText":  "Captura de «Utilizar el Asistente de gastos» relacionada con: La lista puede mostrar un botón para abrir el Asistente de gastos en la sección inferior izquierda del formulario. Este asistente analiza únicamente las hoja...",
                        "usedByTopicIds":  [
-                                              "expenses.utilizar-el-asistente-de-gastos"
+
                                           ]
                    },
                    {
@@ -318,7 +318,7 @@
                        "sourcePart":  "word/media/image29.png",
                        "altText":  "Captura de «Crear la cabecera de una hoja» relacionada con: 1. En la lista, pulse el botón Crear o el botón redondo con el signo más.",
                        "usedByTopicIds":  [
-                                              "expenses.crear-la-cabecera-de-una-hoja"
+
                                           ]
                    },
                    {
@@ -329,7 +329,7 @@
                        "sourcePart":  "word/media/image30.png",
                        "altText":  "Captura de «Comprender el detalle de la hoja» relacionada con: En Borrador y con permisos de edición, el botón de acciones rápidas ofrece Nuevo ticket, Vincular ticket y Nueva línea. Cuando la hoja es de solo lectura, es...",
                        "usedByTopicIds":  [
-                                              "expenses.comprender-el-detalle-de-la-hoja"
+
                                           ]
                    },
                    {
@@ -340,7 +340,7 @@
                        "sourcePart":  "word/media/image31.png",
                        "altText":  "Captura de «Comprender el detalle de la hoja» relacionada con: En Borrador y con permisos de edición, el botón de acciones rápidas ofrece Nuevo ticket, Vincular ticket y Nueva línea. Cuando la hoja es de solo lectura, es...",
                        "usedByTopicIds":  [
-                                              "expenses.comprender-el-detalle-de-la-hoja"
+
                                           ]
                    },
                    {
@@ -351,7 +351,7 @@
                        "sourcePart":  "word/media/image32.png",
                        "altText":  "Captura de «Añadir una línea manual» relacionada con: 8. Pulse Guardar y confirme.",
                        "usedByTopicIds":  [
-                                              "expenses.anadir-una-linea-manual"
+
                                           ]
                    },
                    {
@@ -362,7 +362,7 @@
                        "sourcePart":  "word/media/image33.png",
                        "altText":  "Captura de «Añadir una línea manual» relacionada con: 8. Pulse Guardar y confirme.",
                        "usedByTopicIds":  [
-                                              "expenses.anadir-una-linea-manual"
+
                                           ]
                    },
                    {
@@ -373,7 +373,7 @@
                        "sourcePart":  "word/media/image34.png",
                        "altText":  "Captura de «Añadir una línea manual» relacionada con: 8. Pulse Guardar y confirme.",
                        "usedByTopicIds":  [
-                                              "expenses.anadir-una-linea-manual"
+
                                           ]
                    },
                    {
@@ -384,7 +384,7 @@
                        "sourcePart":  "word/media/image35.png",
                        "altText":  "Captura de «Divisas e importes de una línea» relacionada con: Si ambas divisas coinciden, Tipo cambio se mantiene en 100 y no necesita introducirse. Si son distintas, la aplicación intenta obtener el tipo correspondient...",
                        "usedByTopicIds":  [
-                                              "expenses.divisas-e-importes-de-una-linea"
+
                                           ]
                    },
                    {
@@ -395,7 +395,7 @@
                        "sourcePart":  "word/media/image36.png",
                        "altText":  "Captura de «Divisas e importes de una línea» relacionada con: Si ambas divisas coinciden, Tipo cambio se mantiene en 100 y no necesita introducirse. Si son distintas, la aplicación intenta obtener el tipo correspondient...",
                        "usedByTopicIds":  [
-                                              "expenses.divisas-e-importes-de-una-linea"
+
                                           ]
                    },
                    {
@@ -406,7 +406,7 @@
                        "sourcePart":  "word/media/image37.png",
                        "altText":  "Captura de «Crear un ticket desde una hoja» relacionada con: 5. Pulse Guardar. El ticket queda vinculado a la hoja solo al completar correctamente este guardado. No cierre ni vuelva atrás antes de guardarlo y asegurars...",
                        "usedByTopicIds":  [
-                                              "expenses.crear-un-ticket-desde-una-hoja"
+
                                           ]
                    },
                    {
@@ -417,7 +417,7 @@
                        "sourcePart":  "word/media/image38.png",
                        "altText":  "Captura de «Crear un ticket desde una hoja» relacionada con: 5. Pulse Guardar. El ticket queda vinculado a la hoja solo al completar correctamente este guardado. No cierre ni vuelva atrás antes de guardarlo y asegurars...",
                        "usedByTopicIds":  [
-                                              "expenses.crear-un-ticket-desde-una-hoja"
+
                                           ]
                    },
                    {
@@ -428,7 +428,7 @@
                        "sourcePart":  "word/media/image39.png",
                        "altText":  "Captura de «Crear un ticket desde una hoja» relacionada con: 5. Pulse Guardar. El ticket queda vinculado a la hoja solo al completar correctamente este guardado. No cierre ni vuelva atrás antes de guardarlo y asegurars...",
                        "usedByTopicIds":  [
-                                              "expenses.crear-un-ticket-desde-una-hoja"
+
                                           ]
                    },
                    {
@@ -450,7 +450,7 @@
                        "sourcePart":  "word/media/image41.png",
                        "altText":  "Captura de «Vincular tickets existentes» relacionada con: 5. Lea el resultado. La aplicación indica cuántos fueron solicitados, vinculados, omitidos o fallidos. Si alguno falla, anote el motivo antes de cerrar.",
                        "usedByTopicIds":  [
-                                              "expenses.vincular-tickets-existentes"
+
                                           ]
                    },
                    {
@@ -461,7 +461,7 @@
                        "sourcePart":  "word/media/image42.png",
                        "altText":  "Captura de «Vincular tickets existentes» relacionada con: 5. Lea el resultado. La aplicación indica cuántos fueron solicitados, vinculados, omitidos o fallidos. Si alguno falla, anote el motivo antes de cerrar.",
                        "usedByTopicIds":  [
-                                              "expenses.vincular-tickets-existentes"
+
                                           ]
                    },
                    {
@@ -472,7 +472,7 @@
                        "sourcePart":  "word/media/image43.png",
                        "altText":  "Captura de «Vincular tickets existentes» relacionada con: 5. Lea el resultado. La aplicación indica cuántos fueron solicitados, vinculados, omitidos o fallidos. Si alguno falla, anote el motivo antes de cerrar.",
                        "usedByTopicIds":  [
-                                              "expenses.vincular-tickets-existentes"
+
                                           ]
                    },
                    {
@@ -483,7 +483,7 @@
                        "sourcePart":  "word/media/image44.png",
                        "altText":  "Captura de «Abrir y filtrar tickets» relacionada con: 4. Pulse una tarjeta para abrir su detalle.",
                        "usedByTopicIds":  [
-                                              "tickets.abrir-y-filtrar-tickets"
+
                                           ]
                    },
                    {
@@ -494,7 +494,7 @@
                        "sourcePart":  "word/media/image45.png",
                        "altText":  "Captura de «Abrir y filtrar tickets» relacionada con: 4. Pulse una tarjeta para abrir su detalle.",
                        "usedByTopicIds":  [
-                                              "tickets.abrir-y-filtrar-tickets"
+
                                           ]
                    },
                    {
@@ -505,7 +505,7 @@
                        "sourcePart":  "word/media/image46.png",
                        "altText":  "Captura de «Estado del ticket» relacionada con: Un ticket Pendiente todavía no está asignado a una hoja. Un ticket Asignado ya se encuentra relacionado con una hoja de gastos. Si necesita cambiar esa relac...",
                        "usedByTopicIds":  [
-                                              "tickets.estado-del-ticket"
+
                                           ]
                    },
                    {
@@ -516,7 +516,7 @@
                        "sourcePart":  "word/media/image47.png",
                        "altText":  "Captura de «Estado del ticket» relacionada con: Un ticket Pendiente todavía no está asignado a una hoja. Un ticket Asignado ya se encuentra relacionado con una hoja de gastos. Si necesita cambiar esa relac...",
                        "usedByTopicIds":  [
-                                              "tickets.estado-del-ticket"
+
                                           ]
                    },
                    {
@@ -527,7 +527,7 @@
                        "sourcePart":  "word/media/image48.png",
                        "altText":  "Captura de «Estado del ticket» relacionada con: Un ticket Pendiente todavía no está asignado a una hoja. Un ticket Asignado ya se encuentra relacionado con una hoja de gastos. Si necesita cambiar esa relac...",
                        "usedByTopicIds":  [
-                                              "tickets.estado-del-ticket"
+
                                           ]
                    },
                    {
@@ -538,7 +538,7 @@
                        "sourcePart":  "word/media/image49.png",
                        "altText":  "Captura de «Flujo general de estados» relacionada con: Desde Rechazada, Pasar a Borrador devuelve a Borrador y Deshacer rechazo devuelve a Aprobación solicitada.",
                        "usedByTopicIds":  [
-                                              "expense-approval.flujo-general-de-estados"
+
                                           ]
                    },
                    {
@@ -549,7 +549,7 @@
                        "sourcePart":  "word/media/image50.png",
                        "altText":  "Captura de «Enlaces recibidos por correo» relacionada con: Un correo de aprobación puede incluir un enlace directo a la hoja. Pulse el enlace, identifíquese si se solicita y espere. La aplicación puede cambiar a la e...",
                        "usedByTopicIds":  [
-                                              "expense-approval.enlaces-recibidos-por-correo"
+
                                           ]
                    },
                    {
@@ -560,7 +560,7 @@
                        "sourcePart":  "word/media/image51.png",
                        "altText":  "Captura de «Hoja de gastos: CRM / Usuarios / Hoja de gastos» relacionada con: Se puede realizar una acción directamente sobre el formulario tradicional de la hoja de gastos. En la botonera de la parte derecha, pulse Funciones para most...",
                        "usedByTopicIds":  [
-                                              "axapta.hoja-de-gastos-crm-usuarios-hoja-de-gastos"
+
                                           ]
                    },
                    {
@@ -571,7 +571,7 @@
                        "sourcePart":  "word/media/image52.png",
                        "altText":  "Captura de «Gestión de hojas de gastos» relacionada con: Esta nueva opción está disponible en el menú: CRM / Asuntos / Hojas de Gastos / Gestión de Hojas de Gastos.",
                        "usedByTopicIds":  [
-                                              "axapta.gestion-de-hojas-de-gastos"
+
                                           ]
                    },
                    {
@@ -582,7 +582,7 @@
                        "sourcePart":  "word/media/image53.png",
                        "altText":  "Captura de «Gestión de hojas de gastos» relacionada con: Esta nueva opción está disponible en el menú: CRM / Asuntos / Hojas de Gastos / Gestión de Hojas de Gastos.",
                        "usedByTopicIds":  [
-                                              "axapta.gestion-de-hojas-de-gastos"
+
                                           ]
                    },
                    {
@@ -593,7 +593,7 @@
                        "sourcePart":  "word/media/image54.png",
                        "altText":  "Captura de «Gestión de hojas de gastos» relacionada con: En la zona superior hay un filtro de estado de hoja de gastos. Es un desplegable en el que aparecen todas las opciones posibles:",
                        "usedByTopicIds":  [
-                                              "axapta.gestion-de-hojas-de-gastos"
+
                                           ]
                    }
                ]

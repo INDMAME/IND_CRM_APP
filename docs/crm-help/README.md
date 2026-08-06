@@ -11,11 +11,11 @@ docs/crm-help/
 ├── knowledge.json                 # Versión, culturas y procedencia
 ├── navigation.json                # Orden y routeKey permitidos
 ├── assets/manual-1.5/             # Capturas copiadas sin transformación
-├── localizations/{locale}.json    # Títulos, descripciones breves y respuestas rápidas
+├── localizations/es-ES.json       # Títulos, descripciones breves y respuestas rápidas
 ├── modules/{module}/module.json
 ├── modules/{module}/topics/{topic}/
 │   ├── topic.json                 # Metadatos, aliases, relaciones y FAQ
-│   └── content.{locale}.md        # Manual completo para cada cultura admitida
+│   └── content.es-ES.md           # Contenido completo publicado en español
 ├── evals/                          # Casos de recuperación y respuesta
 └── generated/                      # Bundle y reporte derivados
 ```
@@ -26,7 +26,7 @@ Los identificadores de módulo, tema, chunk, respuesta rápida y activo son esta
 
 1. Edite el `content.es-ES.md` canónico del tema existente o cree un tema completo con `topic.json`.
 2. Actualice título, resumen, aliases, preguntas de ejemplo, relaciones y respuestas rápidas cuando corresponda. La descripción del menú debe explicar el contenido en un máximo de 120 caracteres.
-3. Sincronice `localizations/{locale}.json` y `content.{locale}.md` para las seis culturas. Conserve los IDs, rutas de imágenes y hechos del original; no marque una traducción como revisada sin validación humana.
+3. Sincronice `localizations/es-ES.json` y `content.es-ES.md`. Mientras la edición española no esté cerrada, no añada contenidos ni metadatos de presentación en otros idiomas.
 4. Actualice los hashes de contenido:
 
    ```powershell
@@ -59,12 +59,12 @@ Los identificadores de módulo, tema, chunk, respuesta rápida y activo son esta
 
 ## Reglas editoriales
 
-- `es-ES` sigue siendo la fuente factual canónica. Las otras culturas contienen una versión completa y estática para lectura, pero no deben introducir permisos, estados, rutas, límites ni resultados que no existan en español.
-- Los metadatos, contenidos y respuestas rápidas de `eu-ES`, `en`, `pt`, `it` y `zh-Hans` se mantienen como `machine-draft` hasta revisión lingüística humana. La API debe proyectar la cultura solicitada de forma completa o usar el fallback español, nunca mezclar idiomas dentro de un tema.
-- Una respuesta rápida debe ser breve, declarar `sourceChunkIds` estables y conservar el significado de la fuente española en cada cultura.
+- `es-ES` es la única fuente factual y de presentación publicada durante esta fase editorial.
+- La API puede recibir una cultura distinta por compatibilidad con la aplicación, pero debe devolver el catálogo y el tema completos en español mientras no exista una traducción publicada.
+- Una respuesta rápida debe ser breve, declarar `sourceChunkIds` estables y conservar el significado de la fuente española.
 - No se inventan permisos, estados, rutas, límites ni resultados. Si la documentación no responde una pregunta, el resultado esperado es `notDocumented`.
 - Un tema `published` debe producir al menos un chunk textual útil. Un encabezado de navegación sin cuerpo pertenece al módulo, no al catálogo de temas.
-- Las capturas importadas conservan los bytes del DOCX. Para sustituir una imagen, cree un activo versionado, añada descripción funcional revisada y actualice su SHA-256; no recomprima el original.
+- Las capturas importadas se conservan únicamente como archivos históricos y no se muestran ni generan texto de referencia en el manual. Si vuelven a utilizarse en el futuro, deberán revisarse y asociarse de forma explícita.
 
 ## Navegación segura
 
@@ -77,9 +77,9 @@ Los identificadores de módulo, tema, chunk, respuesta rápida y activo son esta
 
 La APP resuelve estas claves a rutas autorizadas. El compilador falla si un tema utiliza otra clave; una sección sin destino verificado mantiene `routeKey: null`.
 
-## Traducciones y búsqueda
+## Idioma y búsqueda
 
-La migración reproducible guarda los títulos de búsqueda traducidos en `scripts/crm-help/resources/topic-search-overrides.json`. Las localizaciones de presentación y lectura se versionan en `localizations/{locale}.json` y `content.{locale}.md`. `Import-CrmHelpManualV15.ps1` es una herramienta de migración de una sola versión, protegida por el SHA-256 del DOCX. No debe ejecutarse durante el mantenimiento normal porque `-Force` vuelve a generar los temas 1.5 y puede reemplazar cambios editoriales.
+Las localizaciones de presentación y lectura se versionan actualmente solo en `localizations/es-ES.json` y `content.es-ES.md`. `Import-CrmHelpManualV15.ps1` es una herramienta histórica de migración de una sola versión, protegida por el SHA-256 del DOCX. No debe ejecutarse durante el mantenimiento normal porque `-Force` vuelve a generar los temas 1.5 y puede reemplazar cambios editoriales.
 
 Las nuevas consultas reales deben incorporarse como aliases o casos de evaluación únicamente después de redacción y revisión humana. Las métricas agregadas orientan la prioridad editorial, pero nunca modifican automáticamente la documentación.
 
@@ -89,9 +89,9 @@ Las nuevas consultas reales deben incorporarse como aliases o casos de evaluaci�
 
 Debe ejecutarse este corpus después de la evaluación de recuperación y antes de cada publicación que cambie documentación, modelo, prompt o política de contexto. Un resultado estructural correcto no basta: una persona debe revisar el significado de la respuesta, sus citas y el idioma solicitado.
 
-Los hechos esperados en `eu-ES`, `en`, `pt`, `it` y `zh-Hans` son borradores generados con IA y requieren validación lingüística humana antes de convertirse en criterio bloqueante de producción. La fuente factual sigue siendo el chunk español indicado. La definición reproducible de estos casos se conserva en `scripts/crm-help/resources/answer-cases.json`; el importador 1.5 la valida y la copia sin generar hechos nuevos.
+Todos los casos publicados utilizan `responseLocale: es-ES`. La definición reproducible se conserva en `scripts/crm-help/resources/answer-cases.json`; el importador 1.5 la valida y la copia sin generar hechos nuevos.
 
-El runner pre-release de la API exige un origen explícito, el corpus y un directorio de salida. Antes de utilizar credenciales, valide offline los parámetros y los 15 casos; `-ValidateOnly` no lee el token ni realiza peticiones de red:
+El runner pre-release de la API exige un origen explícito, el corpus y un directorio de salida. Antes de utilizar credenciales, valide offline los parámetros y los 10 casos; `-ValidateOnly` no lee el token ni realiza peticiones de red:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass `
@@ -114,9 +114,9 @@ powershell -NoProfile -ExecutionPolicy Bypass `
   -TokenEnvironmentVariable INDCRM_HELP_EVAL_BEARER_TOKEN
 ```
 
-Use `-CaseId answer-en-common-ui.active-company` para ejecutar un único caso. Cada request lleva un `clientInteractionId` nuevo y se envía secuencialmente al endpoint directo `/api/ia/service/help/ask`. El proceso devuelve un código distinto de cero si falla HTTP, el envelope, la resolución, el locale o las fuentes esperadas.
+Use `-CaseId answer-tickets.estado-del-ticket` para ejecutar un único caso. Cada request lleva un `clientInteractionId` nuevo y se envía secuencialmente al endpoint directo `/api/ia/service/help/ask`. El proceso devuelve un código distinto de cero si falla HTTP, el envelope, la resolución, el locale o las fuentes esperadas.
 
-Los JSON/HTML generados proyectan la respuesta sin guardar el token de autenticación ni `FeedbackToken`. Muestran `requiredFacts` y `forbiddenClaims` junto a la respuesta para revisión, pero no intentan decidir por coincidencia de texto si el significado es correcto. La exactitud factual, las afirmaciones prohibidas, la correspondencia semántica de las citas y la calidad de cada traducción siguen requiriendo aprobación humana.
+Los JSON/HTML generados proyectan la respuesta sin guardar el token de autenticación ni `FeedbackToken`. Muestran `requiredFacts` y `forbiddenClaims` junto a la respuesta para revisión, pero no intentan decidir por coincidencia de texto si el significado es correcto. La exactitud factual, las afirmaciones prohibidas y la correspondencia semántica de las citas siguen requiriendo aprobación humana.
 
 ## Validaciones del compilador
 
@@ -124,11 +124,11 @@ El compilador comprueba, entre otros puntos:
 
 - hash y presencia del DOCX de migración, contenidos y activos;
 - JSON válido, IDs únicos y orden coherente entre módulos y navegación;
-- temas publicados con título, descripción breve, contenido completo, respuestas rápidas y chunks en todas las culturas;
-- correspondencia de IDs y referencias de imagen entre la fuente española y cada localización;
+- temas publicados con título, descripción breve, contenido completo, respuestas rápidas y chunks en español;
+- correspondencia de IDs entre la fuente española y sus metadatos de presentación;
 - referencias de temas, activos, respuestas rápidas y casos de evaluación;
 - `routeKey` incluido en el registro permitido;
 - arrays JSON estables aun cuando tengan cero o un elemento;
 - salida UTF-8 y orden determinista, sin marcas de tiempo.
 
-El reporte válido debe mostrar cero errores. La comprobación estructural no sustituye la revisión editorial de traducciones, descripciones de capturas ni respuestas generadas.
+El reporte válido debe mostrar cero errores. La comprobación estructural no sustituye la revisión editorial del contenido ni de las respuestas generadas.

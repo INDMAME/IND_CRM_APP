@@ -67,7 +67,8 @@
         "requiredFacts":  [
                               "Pendiente significa que el ticket todavía no está asignado a una hoja.",
                               "Asignado significa que el ticket ya está relacionado con una hoja de gastos.",
-                              "El procedimiento documentado para cambiar la relación es eliminar el ticket, volver a cargarlo y vincularlo a la hoja correcta."
+                              "No existe una opción directa para cambiar la relación del ticket.",
+                              "El procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta."
                           ],
         "forbiddenClaims":  [
                                 "Existe un botón documentado para desvincular directamente el ticket.",
@@ -222,131 +223,6 @@
         "forbiddenClaims":  [
                                 "Debe enviarse la contraseña a soporte.",
                                 "La captura debe incluir códigos de acceso."
-                            ]
-    },
-    {
-        "id":  "answer-eu-access.cerrar-la-sesion",
-        "question":  "Nola itxi saioa CRMn?",
-        "responseLocale":  "eu-ES",
-        "expectedResolution":  "answered",
-        "expectedTopicId":  "access.cerrar-la-sesion",
-        "expectedTopicIds":  [
-                                 "access.cerrar-la-sesion"
-                             ],
-        "sourceChunkIds":  [
-                               "access.cerrar-la-sesion--01"
-                           ],
-        "requiredSourceChunkIds":  [
-                                       "access.cerrar-la-sesion--01"
-                                   ],
-        "requiredFacts":  [
-                              "Ezkerreko alboko menua ireki behar da.",
-                              "Beheko erabiltzaile-izena sakatu eta saioa ixteko aukera hautatu behar da.",
-                              "Sarbide-pantailara itzuli arte itxaron behar da."
-                          ],
-        "forbiddenClaims":  [
-                                "Laguntzaileak saioa erabiltzailearen ordez itxi du.",
-                                "Fitxa ixteak beti saioa ixten du."
-                            ]
-    },
-    {
-        "id":  "answer-en-common-ui.active-company",
-        "question":  "What does the active company affect?",
-        "responseLocale":  "en",
-        "expectedResolution":  "answered",
-        "expectedTopicId":  "common-ui.que-significa-empresa-activa",
-        "expectedTopicIds":  [
-                                 "common-ui.que-significa-empresa-activa"
-                             ],
-        "sourceChunkIds":  [
-                               "common-ui.que-significa-empresa-activa--01"
-                           ],
-        "requiredSourceChunkIds":  [
-                                       "common-ui.que-significa-empresa-activa--01"
-                                   ],
-        "requiredFacts":  [
-                              "The active company determines which customers, projects, currencies, visits, expense sheets, and tickets can be viewed.",
-                              "The user should verify the company before creating or searching for information.",
-                              "Changing company later does not automatically move an existing record."
-                          ],
-        "forbiddenClaims":  [
-                                "The assistant has changed the active company for the user.",
-                                "Changing company automatically transfers records already created."
-                            ]
-    },
-    {
-        "id":  "answer-pt-troubleshooting.page-not-open",
-        "question":  "O que devo fazer se a página do CRM não abrir?",
-        "responseLocale":  "pt",
-        "expectedResolution":  "answered",
-        "expectedTopicId":  "troubleshooting.la-pagina-no-abre",
-        "expectedTopicIds":  [
-                                 "troubleshooting.la-pagina-no-abre"
-                             ],
-        "sourceChunkIds":  [
-                               "troubleshooting.la-pagina-no-abre--01"
-                           ],
-        "requiredSourceChunkIds":  [
-                                       "troubleshooting.la-pagina-no-abre--01"
-                                   ],
-        "requiredFacts":  [
-                              "É necessário verificar a ligação e confirmar que o endereço está completo e sem espaços.",
-                              "Deve premir Atualizar apenas uma vez e aguardar.",
-                              "Se o problema continuar, deve reabrir o navegador e comunicar a hora, o endereço e a mensagem apresentada."
-                          ],
-        "forbiddenClaims":  [
-                                "Deve atualizar repetidamente a página.",
-                                "O assistente já reparou o acesso."
-                            ]
-    },
-    {
-        "id":  "answer-it-expenses.link-tickets",
-        "question":  "Come collego ticket esistenti a una nota spese?",
-        "responseLocale":  "it",
-        "expectedResolution":  "answered",
-        "expectedTopicId":  "expenses.vincular-tickets-existentes",
-        "expectedTopicIds":  [
-                                 "expenses.vincular-tickets-existentes"
-                             ],
-        "sourceChunkIds":  [
-                               "expenses.vincular-tickets-existentes--01"
-                           ],
-        "requiredSourceChunkIds":  [
-                                       "expenses.vincular-tickets-existentes--01"
-                                   ],
-        "requiredFacts":  [
-                              "La nota spese deve essere modificabile e l\u0027azione parte da Azioni rapide e Collega ticket.",
-                              "È possibile filtrare, selezionare uno o più ticket, controllare importo e selezione, quindi confermare.",
-                              "Il risultato indica quanti ticket sono stati richiesti, collegati, ignorati o non riusciti; gli errori vanno letti e corretti prima di ripetere."
-                          ],
-        "forbiddenClaims":  [
-                                "Il collegamento riesce sempre per tutti i ticket.",
-                                "L\u0027assistente ha già collegato i ticket."
-                            ]
-    },
-    {
-        "id":  "answer-zh-common-ui.change-language",
-        "question":  "如何更改 CRM 的语言？",
-        "responseLocale":  "zh-Hans",
-        "expectedResolution":  "answered",
-        "expectedTopicId":  "common-ui.cambiar-el-idioma",
-        "expectedTopicIds":  [
-                                 "common-ui.cambiar-el-idioma"
-                             ],
-        "sourceChunkIds":  [
-                               "common-ui.cambiar-el-idioma--01"
-                           ],
-        "requiredSourceChunkIds":  [
-                                       "common-ui.cambiar-el-idioma--01"
-                                   ],
-        "requiredFacts":  [
-                              "需要打开侧边菜单并点击用户名。",
-                              "需要进入语言选项并选择要使用的语言。",
-                              "选择后需要等待页面重新加载。"
-                          ],
-        "forbiddenClaims":  [
-                                "助手已经替用户更改了语言。",
-                                "选择语言后不需要等待页面重新加载。"
                             ]
     },
     {

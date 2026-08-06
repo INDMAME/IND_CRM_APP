@@ -4,7 +4,6 @@
 
 1. En la lista, pulse el botón Crear o el botón redondo con el signo más.
 
-![Captura de «Crear la cabecera de una hoja» relacionada con: 1. En la lista, pulse el botón Crear o el botón redondo con el signo más.](../../../../assets/manual-1.5/image29.png)
 
 2. Escriba una Descripción que permita reconocer el motivo o periodo de los gastos. Es obligatoria.
 

@@ -4,64 +4,19 @@
     "moduleId":  "common-ui",
     "sectionNumber":  "5.1",
     "title":  "Editar, guardar y cancelar",
-    "summary":  "En una pantalla de detalle, los datos pueden aparecer bloqueados para evitar cambios accidentales. Si dispone de permiso, pulse Editar para habilitar los campos. Después de modificar los datos, pulse Guardar. La aplicación mostrará una confirmación; confirme solo después de re...",
+    "summary":  "Aprende cuándo editar, guardar o cancelar cambios.",
     "aliases":  {
                     "es-ES":  [
                                   "Editar, guardar y cancelar",
                                   "pantalla",
                                   "empresa activa",
                                   "permisos"
-                              ],
-                    "eu-ES":  [
-                                  "Editatu, gorde eta ezeztatu",
-                                  "pantaila",
-                                  "enpresa aktiboa",
-                                  "baimenak"
-                              ],
-                    "en":  [
-                               "Edit, save, and cancel",
-                               "screen",
-                               "active company",
-                               "permissions"
-                           ],
-                    "pt":  [
-                               "Editar, guardar e cancelar",
-                               "ecrã",
-                               "empresa ativa",
-                               "permissões"
-                           ],
-                    "it":  [
-                               "Modificare, salvare e annullare",
-                               "schermata",
-                               "azienda attiva",
-                               "permessi"
-                           ],
-                    "zh-Hans":  [
-                                    "编辑、保存和取消",
-                                    "界面",
-                                    "当前公司",
-                                    "权限"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre editar, guardar y cancelar?"
-                                      ],
-                            "eu-ES":  [
-                                          "Editatu, gorde eta ezeztatu gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about edit, save, and cancel?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Editar, guardar e cancelar."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Modificare, salvare e annullare."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于编辑、保存和取消的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -74,7 +29,7 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.6.0",
+    "contentVersion":  "1.7.0",
     "contentHash":  "6920353439505E59C443846CD28ECF26B31426C2AE5D7A273444892E42D35513",
     "assets":  [
 
@@ -83,12 +38,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

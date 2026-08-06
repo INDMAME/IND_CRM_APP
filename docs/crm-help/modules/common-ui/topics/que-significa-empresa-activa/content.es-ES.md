@@ -4,7 +4,6 @@
 
 La empresa activa determina los clientes, proyectos, divisas, visitas, hojas de gastos y tickets que puede consultar. Antes de crear o buscar información, compruebe que está trabajando en la empresa correcta.
 
-![Captura de «Qué significa empresa activa» relacionada con: La empresa activa determina los clientes, proyectos, divisas, visitas, hojas de gastos y tickets que puede consultar. Antes de crear o buscar información, co...](../../../../assets/manual-1.5/image8.png)
 
 1. Abra el menú lateral y pulse su nombre de usuario en la parte inferior.
 

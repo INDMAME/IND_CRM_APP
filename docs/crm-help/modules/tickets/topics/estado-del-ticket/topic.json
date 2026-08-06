@@ -4,58 +4,19 @@
     "moduleId":  "tickets",
     "sectionNumber":  "9.3",
     "title":  "Estado del ticket",
-    "summary":  "Un ticket Pendiente todavía no está asignado a una hoja. Un ticket Asignado ya se encuentra relacionado con una hoja de gastos. Si necesita cambiar esa relación, ahora mismo para poder desvincular un ticket solo se podría eliminar este y volver a cargar en el sistema, para lue...",
+    "summary":  "Distingue cuándo un ticket está pendiente o asignado.",
     "aliases":  {
                     "es-ES":  [
                                   "Estado del ticket",
                                   "tickets",
                                   "justificantes"
-                              ],
-                    "eu-ES":  [
-                                  "Tiketaren egoera",
-                                  "tiketa",
-                                  "gastuen frogagiriak"
-                              ],
-                    "en":  [
-                               "Ticket status",
-                               "tickets",
-                               "expense receipts"
-                           ],
-                    "pt":  [
-                               "Estado do ticket",
-                               "tickets",
-                               "comprovativos de despesa"
-                           ],
-                    "it":  [
-                               "Stato del ticket",
-                               "ticket",
-                               "giustificativi di spesa"
-                           ],
-                    "zh-Hans":  [
-                                    "票据状态",
-                                    "票据",
-                                    "费用凭证"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre estado del ticket?"
-                                      ],
-                            "eu-ES":  [
-                                          "Tiketaren egoera gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about ticket status?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Estado do ticket."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Stato del ticket."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于票据状态的帮助。"
-                                        ]
+                                          "¿Dónde encuentro información sobre estado del ticket?",
+                                          "Necesito desvincular un ticket de una hoja"
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -68,30 +29,23 @@
                         ],
     "routeKey":  "expenses.tickets",
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "B5BA26A161A155B4674469EC319CDA0A0A779F36810AC5922607EC506709EE56",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "E56B3E855055A4F3EDE246274E4A077FFA8D4E1421D403C2692ACD055CE41860",
     "assets":  [
-                   "manual-1.5.image46",
-                   "manual-1.5.image47",
-                   "manual-1.5.image48"
+
                ],
     "quickAnswers":  [
                          {
                              "id":  "tickets.estado-del-ticket.quick-01",
                              "question":  "¿Qué significan los estados Pendiente y Asignado de un ticket?",
-                             "answer":  "Un ticket Pendiente todavía no está asignado a una hoja. Un ticket Asignado ya se encuentra relacionado con una hoja de gastos. Si necesita cambiar esa relación, ahora mismo para poder desvincular un ticket solo se podría eliminar este y volver a cargar en el sistema, para luego vincularlo nuevamente a la hoja de gasto que corresponda.",
+                             "answer":  "Pendiente significa que el ticket todavía no está asignado a una hoja. Asignado significa que ya se encuentra relacionado con una hoja de gastos. No existe una opción directa para cambiar esa relación: el procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta.",
                              "sourceChunkIds":  [
                                                     "tickets.estado-del-ticket--01"
                                                 ]
                          }
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",

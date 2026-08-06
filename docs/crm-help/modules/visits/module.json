@@ -8,27 +8,7 @@
                     "es-ES":  [
                                   "visitas",
                                   "historial de visitas"
-                              ],
-                    "eu-ES":  [
-                                  "bisitak",
-                                  "bisiten historia"
-                              ],
-                    "en":  [
-                               "visits",
-                               "visit history"
-                           ],
-                    "pt":  [
-                               "visitas",
-                               "histórico de visitas"
-                           ],
-                    "it":  [
-                               "visite",
-                               "cronologia visite"
-                           ],
-                    "zh-Hans":  [
-                                    "拜访",
-                                    "拜访记录"
-                                ]
+                              ]
                 },
     "topicIds":  [
                      "visits.modulo-visitas",

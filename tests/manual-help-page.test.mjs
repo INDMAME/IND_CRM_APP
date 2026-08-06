@@ -17,6 +17,7 @@ const [
   sidebarSource,
   authorizeFilterSource,
   spanishLocalizationSource,
+  manualPageSource,
 ] = await Promise.all([
   readFile(path.join(helpRoot, "ManualHelpView.tsx"), "utf8"),
   readFile(path.join(helpRoot, "ManualHelpTopicContent.tsx"), "utf8"),
@@ -26,6 +27,7 @@ const [
   readFile(path.join(repoRoot, "Web", "Views", "Shared", "_Sidebar.cshtml"), "utf8"),
   readFile(path.join(repoRoot, "App", "Infrastructure", "Security", "Filters", "INDModuleAuthorizeFilter.cs"), "utf8"),
   readFile(spanishLocalizationPath, "utf8"),
+  readFile(path.join(repoRoot, "Web", "Views", "Home", "Manual.cshtml"), "utf8"),
 ]);
 
 test("Manual access is global for authenticated app users while the feature is enabled", () => {
@@ -50,7 +52,7 @@ test("Manual focuses and reveals a topic only after its article is mounted", () 
   assert.match(viewSource, /topicContentRef\.current\?\.focus\(\{ preventScroll: true \}\)/u);
   assert.match(viewSource, /topicContentRef\.current\?\.scrollIntoView\(\{ block: "start" \}\)/u);
   assert.match(viewSource, /\}, \[topic\?\.id\]\)/u);
-  assert.match(viewSource, /id="manual-help-topic-detail" aria-busy=\{topicLoading\}/u);
+  assert.match(viewSource, /id="manual-help-topic-detail" hidden=\{!hasTopicDetail\} aria-busy=\{topicLoading\}/u);
   assert.match(contentSource, /tabIndex=\{-1\}/u);
   assert.match(contentSource, /focus:ring-2/u);
   assert.match(browserSource, /aria-controls=\{detailRegionId\}/u);
@@ -65,6 +67,29 @@ test("Manual topic choices show concise summaries and never render article chunk
   assert.ok(glossaryDisplay);
   assert.ok(glossaryDisplay.summary.length <= 120);
   assert.doesNotMatch(glossaryDisplay.summary, /^Aplicaci[oó]n web:/u);
+});
+
+test("Manual descriptions are visible context rather than topic actions", () => {
+  const topicsStart = browserSource.indexOf("module.topics.map");
+  const topicButtonStart = browserSource.indexOf("<button", topicsStart);
+  const topicButtonEnd = browserSource.indexOf("</button>", topicButtonStart);
+  const topicSummaryStart = browserSource.indexOf("{topic.summary ?", topicButtonStart);
+
+  assert.ok(topicsStart >= 0 && topicButtonStart > topicsStart);
+  assert.ok(topicButtonEnd > topicButtonStart && topicSummaryStart > topicButtonEnd);
+  assert.match(browserSource, /aria-describedby=\{topicSummaryId\}/u);
+  assert.match(browserSource, /bg-slate-100[^"]*text-slate-600/u);
+  assert.match(browserSource, /module\.description/u);
+  assert.doesNotMatch(contentSource, /\{topic\.summary/u);
+});
+
+test("Manual propagates the available page height to the scrollable catalog", () => {
+  assert.match(manualPageSource, /class="flex min-h-0 w-full flex-1 flex-col py-4 md:py-8"/u);
+  assert.match(viewSource, /flex min-h-0 w-full max-w-3xl flex-1 flex-col/u);
+  assert.match(viewSource, /flex min-h-0 flex-1 flex-col rounded/u);
+  assert.match(browserSource, /flex min-h-0 w-full flex-1 flex-col/u);
+  assert.match(browserSource, /mt-3 min-h-0 flex-1[^"]*overflow-y-auto/u);
+  assert.doesNotMatch(browserSource, /max-h-\[min\(65vh,36rem\)\]/u);
 });
 
 test("the glossary article retains definitions from the beginning, middle, and end", () => {

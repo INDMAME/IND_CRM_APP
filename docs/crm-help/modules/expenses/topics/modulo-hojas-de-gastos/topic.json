@@ -4,59 +4,19 @@
     "moduleId":  "expenses",
     "sectionNumber":  "8",
     "title":  "Módulo Hojas de gastos",
-    "summary":  "Una hoja de gastos agrupa los importes que una persona presenta para su tratamiento y, cuando corresponde, para su reembolso. La hoja se crea primero con sus datos generales. Después se añaden líneas, se crean tickets o se vinculan tickets existentes.",
+    "summary":  "Descubre cómo se organizan las hojas y sus líneas de gasto.",
     "aliases":  {
                     "es-ES":  [
                                   "Módulo Hojas de gastos",
                                   "Hojas de gastos",
                                   "hojas de gastos",
                                   "gastos"
-                              ],
-                    "eu-ES":  [
-                                  "Gastu-orriak modulua",
-                                  "gastu-orriak",
-                                  "gastuak"
-                              ],
-                    "en":  [
-                               "Expense sheets module",
-                               "expense sheets",
-                               "expenses"
-                           ],
-                    "pt":  [
-                               "Módulo Folhas de despesas",
-                               "folhas de despesas",
-                               "despesas"
-                           ],
-                    "it":  [
-                               "Modulo Note spese",
-                               "note spese",
-                               "spese"
-                           ],
-                    "zh-Hans":  [
-                                    "费用单模块",
-                                    "费用单",
-                                    "费用"
-                                ]
+                              ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
                                           "¿Dónde encuentro información sobre módulo hojas de gastos?"
-                                      ],
-                            "eu-ES":  [
-                                          "Gastu-orriak modulua gaiari buruzko laguntza behar dut."
-                                      ],
-                            "en":  [
-                                       "Where can I find information about expense sheets module?"
-                                   ],
-                            "pt":  [
-                                       "Preciso de ajuda com Módulo Folhas de despesas."
-                                   ],
-                            "it":  [
-                                       "Ho bisogno di aiuto con Modulo Note spese."
-                                   ],
-                            "zh-Hans":  [
-                                            "我需要关于费用单模块的帮助。"
-                                        ]
+                                      ]
                         },
     "audiences":  [
                       "authenticated-crm-user"
@@ -78,8 +38,8 @@
                         ],
     "routeKey":  "expenses.sheets",
     "status":  "published",
-    "contentVersion":  "1.6.0",
-    "contentHash":  "2E07ED184E8CE8AC14C51FCB51A0441AB010673042550A96A92D420270FC04CF",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "FBA8676DA188A1F03675185DF2B43CF5B0CE51A5DFBD0EA13B7A5344394AD321",
     "assets":  [
 
                ],
@@ -87,12 +47,7 @@
 
                      ],
     "translationCoverage":  {
-                                "es-ES":  "source",
-                                "eu-ES":  "machine-draft",
-                                "en":  "machine-draft",
-                                "pt":  "machine-draft",
-                                "it":  "machine-draft",
-                                "zh-Hans":  "machine-draft"
+                                "es-ES":  "source"
                             },
     "source":  {
                    "path":  "docs/exports/Manual App CRM 1.5.docx",
