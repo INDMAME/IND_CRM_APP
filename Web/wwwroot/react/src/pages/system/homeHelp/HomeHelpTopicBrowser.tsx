@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { ChevronDownIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import React, { type Ref, useDeferredValue, useMemo, useState } from "react";
+import { ChevronDownIcon, ChevronRightIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import type { HelpModule, HelpTopicSummary } from "./helpTypes.ts";
 
 type HomeHelpTopicBrowserProps = {
@@ -7,8 +7,10 @@ type HomeHelpTopicBrowserProps = {
   selectedTopicId?: string;
   searchLabel: string;
   searchPlaceholder: string;
+  loadingLabel: string;
   emptyLabel: string;
   detailRegionId?: string;
+  selectedTopicButtonRef?: Ref<HTMLButtonElement>;
   readOnly?: boolean;
   onSelect: (topic: HelpTopicSummary) => void;
 };
@@ -22,7 +24,7 @@ const normalizeSearchText = (value: string): string => {
     .trim();
 };
 
-// Filters catalog modules with the same normalized text used by the search input.
+// Filters catalog modules down to topics whose visible copy matches the search input.
 export const filterHelpModules = (modules: HelpModule[], query: string): HelpModule[] => {
   const normalizedQuery = normalizeSearchText(query);
   if (!normalizedQuery) {
@@ -30,12 +32,9 @@ export const filterHelpModules = (modules: HelpModule[], query: string): HelpMod
   }
 
   return modules.flatMap((module) => {
-    const moduleMatches = normalizeSearchText(`${module.title} ${module.description}`).includes(normalizedQuery);
-    const topics = moduleMatches
-      ? module.topics
-      : module.topics.filter((topic) =>
-          normalizeSearchText(`${topic.title} ${topic.summary}`).includes(normalizedQuery)
-        );
+    const topics = module.topics.filter((topic) =>
+      normalizeSearchText(`${topic.title} ${topic.summary}`).includes(normalizedQuery)
+    );
     return topics.length > 0 ? [{ ...module, topics }] : [];
   });
 };
@@ -46,33 +45,34 @@ const HomeHelpTopicBrowser = ({
   selectedTopicId = "",
   searchLabel,
   searchPlaceholder,
+  loadingLabel,
   emptyLabel,
   detailRegionId,
+  selectedTopicButtonRef,
   readOnly = false,
   onSelect,
 }: HomeHelpTopicBrowserProps) => {
   const [query, setQuery] = useState("");
-  const [openModuleIds, setOpenModuleIds] = useState<Set<string>>(() => {
-    const firstModuleId = modules[0]?.id;
-    return new Set(firstModuleId ? [firstModuleId] : []);
-  });
+  const [openModuleId, setOpenModuleId] = useState("");
+  const deferredQuery = useDeferredValue(query);
   const normalizedQuery = normalizeSearchText(query);
+  const deferredNormalizedQuery = normalizeSearchText(deferredQuery);
+  const isSearchPending = normalizedQuery !== deferredNormalizedQuery;
 
-  const filteredModules = useMemo(() => filterHelpModules(modules, normalizedQuery), [modules, normalizedQuery]);
+  const filteredModules = useMemo(
+    () => filterHelpModules(modules, deferredNormalizedQuery),
+    [modules, deferredNormalizedQuery]
+  );
 
-  const handleModuleToggle = (moduleId: string, open: boolean) => {
-    if (normalizedQuery) {
-      return;
-    }
-    setOpenModuleIds((current) => {
-      const next = new Set(current);
-      if (open) {
-        next.add(moduleId);
-      } else {
-        next.delete(moduleId);
-      }
-      return next;
-    });
+  const handleSearchChange = (nextQuery: string) => {
+    const normalizedNextQuery = normalizeSearchText(nextQuery);
+    const nextFilteredModules = filterHelpModules(modules, nextQuery);
+    setQuery(nextQuery);
+    setOpenModuleId(normalizedNextQuery ? nextFilteredModules[0]?.id || "" : "");
+  };
+
+  const handleModuleToggle = (moduleId: string) => {
+    setOpenModuleId((current) => current === moduleId ? "" : moduleId);
   };
 
   return (
@@ -88,41 +88,51 @@ const HomeHelpTopicBrowser = ({
           readOnly={readOnly}
           placeholder={searchPlaceholder}
           aria-label={searchLabel}
+          aria-controls="manual-help-topic-search-results"
           className="block w-full rounded-[var(--radius-xl)] border border-slate-200 bg-white py-2.5 pl-8 pr-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary/20 read-only:cursor-not-allowed read-only:text-slate-400"
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => handleSearchChange(event.target.value)}
         />
       </label>
 
-      <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-1">
-        {filteredModules.length === 0 ? (
-          <p className="px-2 py-3 text-center text-[11px] text-slate-500">{emptyLabel}</p>
+      <div
+        id="manual-help-topic-search-results"
+        className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-scroll overscroll-contain [scrollbar-gutter:stable] pr-1"
+        aria-busy={isSearchPending}
+      >
+        {isSearchPending ? (
+          <p className="px-2 py-6 text-center text-[11px] text-slate-500" role="status" aria-live="polite">
+            {loadingLabel}
+          </p>
+        ) : filteredModules.length === 0 ? (
+          <p className="px-2 py-3 text-center text-[11px] text-slate-500" role="status">
+            {emptyLabel}
+          </p>
         ) : (
           filteredModules.map((module) => {
-            const open = Boolean(normalizedQuery) || openModuleIds.has(module.id);
-            const moduleDescriptionId = module.description ? `manual-help-module-description-${module.id}` : undefined;
+            const open = openModuleId === module.id;
+            const moduleDescriptionId = !normalizedQuery && module.description
+              ? `manual-help-module-description-${module.id}`
+              : undefined;
             return (
               <details
                 key={module.id}
                 open={open}
                 className="rounded-[var(--radius-xl)] border border-slate-200 bg-white"
-                onToggle={(event) => {
-                  if (normalizedQuery && !event.currentTarget.open) {
-                    event.currentTarget.open = true;
-                    return;
-                  }
-                  handleModuleToggle(module.id, event.currentTarget.open);
-                }}
               >
                 <summary
                   aria-describedby={moduleDescriptionId}
                   className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2.5 text-sm font-semibold text-primary focus:outline-hidden focus:ring-2 focus:ring-inset focus:ring-primary/20"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    handleModuleToggle(module.id);
+                  }}
                 >
                   <span className="min-w-0 flex-1 break-words">{module.title}</span>
                   <span className="text-slate-400">{module.topics.length}</span>
                   <ChevronDownIcon className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
                 </summary>
                 <div className="border-t border-slate-100 p-1.5">
-                  {module.description ? (
+                  {moduleDescriptionId ? (
                     <p
                       id={moduleDescriptionId}
                       className="m-1 mb-2 rounded-[var(--radius-xl)] bg-slate-100 px-2.5 py-2 text-xs font-normal leading-5 text-slate-600"
@@ -133,36 +143,45 @@ const HomeHelpTopicBrowser = ({
                   <div className="space-y-1">
                     {module.topics.map((topic) => {
                       const selected = topic.id === selectedTopicId;
+                      const topicTitleId = `manual-help-topic-title-${topic.id}`;
                       const topicSummaryId = topic.summary ? `manual-help-topic-summary-${topic.id}` : undefined;
                       return (
-                        <div
+                        <button
                           key={topic.id}
-                          className={`rounded-[var(--radius-xl)] border ${
-                            selected ? "border-primary/20 bg-primary/5" : "border-transparent"
+                          ref={selected ? selectedTopicButtonRef : undefined}
+                          type="button"
+                          disabled={readOnly}
+                          aria-controls={detailRegionId}
+                          aria-labelledby={topicTitleId}
+                          aria-describedby={topicSummaryId}
+                          aria-pressed={selected}
+                          className={`group flex w-full touch-manipulation items-start gap-3 rounded-[var(--radius-xl)] border px-3 py-3 text-left transition-[border-color,background-color,box-shadow] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${
+                            selected
+                              ? "border-primary/30 bg-primary/[0.07] shadow-[0_8px_20px_rgba(0,41,107,0.08)]"
+                              : "border-slate-200 bg-white hover:border-primary/25 hover:bg-primary/[0.03] hover:shadow-[0_8px_18px_rgba(15,23,42,0.06)]"
                           }`}
+                          onClick={() => onSelect(topic)}
                         >
-                          <button
-                            type="button"
-                            disabled={readOnly}
-                            aria-controls={detailRegionId}
-                            aria-describedby={topicSummaryId}
-                            aria-pressed={selected}
-                            className={`block w-full rounded-[var(--radius-xl)] px-2.5 py-2 text-left text-sm font-semibold text-primary transition-colors focus:outline-hidden focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 ${
-                              selected ? "bg-primary/10" : "hover:bg-primary/5"
+                          <span className="min-w-0 flex-1">
+                            <span id={topicTitleId} className="block break-words text-sm font-semibold text-primary">
+                              {topic.title}
+                            </span>
+                            {topic.summary ? (
+                              <span
+                                id={topicSummaryId}
+                                className="mt-1.5 block break-words text-xs font-normal leading-5 text-slate-600"
+                              >
+                                {topic.summary}
+                              </span>
+                            ) : null}
+                          </span>
+                          <ChevronRightIcon
+                            className={`mt-0.5 h-4 w-4 shrink-0 transition-[color,transform] motion-reduce:transform-none motion-reduce:transition-none group-hover:translate-x-0.5 ${
+                              selected ? "text-primary" : "text-slate-400 group-hover:text-primary"
                             }`}
-                            onClick={() => onSelect(topic)}
-                          >
-                            <span className="block break-words">{topic.title}</span>
-                          </button>
-                          {topic.summary ? (
-                            <p
-                              id={topicSummaryId}
-                              className="mx-2.5 mb-2 rounded-[var(--radius-xl)] bg-slate-100 px-2.5 py-2 text-xs font-normal leading-5 text-slate-600"
-                            >
-                              {topic.summary}
-                            </p>
-                          ) : null}
-                        </div>
+                            aria-hidden="true"
+                          />
+                        </button>
                       );
                     })}
                   </div>

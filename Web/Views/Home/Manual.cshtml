@@ -5,6 +5,7 @@
 @{
     ViewData["Title"] = SR["Nav_Manual"];
     ViewData["ContentClass"] = "content w-full max-w-5xl mx-auto px-4 md:px-6 flex flex-col";
+    ViewData["HideNavArrows"] = true;
 
     var cultureFeature = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>();
     var currentCulture = cultureFeature?.RequestCulture.UICulture.Name ?? "es-ES";
@@ -24,6 +25,7 @@
         HomeHelp_CatalogSearchLabel = SR["HomeHelp_CatalogSearchLabel"].Value,
         HomeHelp_CatalogSearchPlaceholder = SR["HomeHelp_CatalogSearchPlaceholder"].Value,
         HomeHelp_CatalogEmpty = SR["HomeHelp_CatalogEmpty"].Value,
+        Topbar_Back = SR["Topbar_Back"].Value,
         ManualHelp_TopicLoading = SR["ManualHelp_TopicLoading"].Value,
         ManualHelp_TopicError = SR["ManualHelp_TopicError"].Value,
         HomeHelp_RenderError = SR["HomeHelp_RenderError"].Value,

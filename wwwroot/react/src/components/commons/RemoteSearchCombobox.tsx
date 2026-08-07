@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FloatingList from "./FloatingList.tsx";
 import Spinner from "./Spinner.tsx";
-import { ChevronDownSvg, ChevronUpSvg } from "./chevrons.tsx";
+import {
+  SELECT_FIELD_ACTION_BUTTON_CLASS_NAME,
+  SELECT_FIELD_ACTIONS_CLASS_NAME,
+  SelectChevron,
+} from "./chevrons.tsx";
 import { handleComboboxKeyDown } from "../../hooks/useComboboxKeyboard.ts";
 import { useOutsideClick } from "../../hooks/useOutsideClick.ts";
 import { classNames } from "../../utils/classNames.ts";
@@ -61,8 +65,6 @@ const uniqueByValue = (items: RemoteSearchOption[]): RemoteSearchOption[] => {
   }
   return Array.from(map.values());
 };
-
-const compactActionButtonClassName = "flex h-8 w-6 items-center justify-center p-0";
 
 // Generic remote-search combobox that supports manual search and optional paged loading on open.
 const RemoteSearchCombobox = ({
@@ -352,7 +354,7 @@ const RemoteSearchCombobox = ({
   const activeId =
     open && filtered[resolvedActiveIndex] ? `${idBase}-opt-${filtered[resolvedActiveIndex].value}` : undefined;
   const showLoadingOnlyState = loading && filtered.length === 0;
-  const inputActionPaddingClassName = showSearchIcon || loading ? "pr-14" : "pr-9";
+  const inputActionPaddingClassName = showSearchIcon || loading ? "pr-20" : "pr-10";
 
   return (
     <div className={containerClassName} ref={containerRef}>
@@ -420,9 +422,9 @@ const RemoteSearchCombobox = ({
             aria-activedescendant={activeId}
           />
 
-          <div className="absolute inset-y-0 right-1 flex items-center gap-0">
+          <div className={SELECT_FIELD_ACTIONS_CLASS_NAME}>
             {loading ? (
-              <span className="flex h-8 w-6 items-center justify-center" aria-hidden="true">
+              <span className={SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} aria-hidden="true">
                 <Spinner size="h-4 w-4" />
               </span>
             ) : null}
@@ -430,7 +432,7 @@ const RemoteSearchCombobox = ({
             {showSearchIcon ? (
               <button
                 type="button"
-                className={`${compactActionButtonClassName} text-slate-400 hover:text-slate-500`}
+                className={`${SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} text-slate-400 hover:text-slate-500`}
                 onClick={() => {
                   void runSearch();
                 }}
@@ -445,7 +447,7 @@ const RemoteSearchCombobox = ({
 
             <button
               type="button"
-              className={`${compactActionButtonClassName} text-slate-500 hover:text-slate-600`}
+              className={`${SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} text-slate-500 hover:text-slate-600`}
               onClick={() => {
                 if (readOnlyMode) return;
                 if (open) {
@@ -475,7 +477,7 @@ const RemoteSearchCombobox = ({
               aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
               disabled={readOnlyMode}
             >
-              {open ? <ChevronUpSvg className="size-4" /> : <ChevronDownSvg className="size-4" />}
+              <SelectChevron open={open} />
             </button>
           </div>
         </div>

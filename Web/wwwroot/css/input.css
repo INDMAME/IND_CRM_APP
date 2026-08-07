@@ -91,6 +91,15 @@
   color: var(--ind-text-color, #00296be0) !important;
 }
 
+@utility ind-native-select-chevron {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2300296b' stroke-width='1.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m19.5 8.25-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+  background-position: right 14px center;
+  background-repeat: no-repeat;
+  background-size: 20px 20px;
+  padding-right: 2.5rem !important;
+}
+
 @utility form-label {
   @apply text-sm sm:text-base font-medium text-slate-700;
   color: var(--ind-text-color, #00296be0) !important;

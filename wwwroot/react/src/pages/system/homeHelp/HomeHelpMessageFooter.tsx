@@ -271,7 +271,7 @@ const HomeHelpMessageFooter = ({
                     <select
                       value={reason}
                       disabled={disabled || feedbackStatus === "sending"}
-                      className="mt-1 block w-full rounded-[var(--radius-xl)] border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                      className="ind-native-select-chevron mt-1 block w-full rounded-[var(--radius-xl)] border border-slate-200 bg-white px-2 py-1.5 text-[11px] text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-primary/20"
                       onChange={(event) => setReason(event.target.value as HelpFeedbackReason | "")}
                     >
                       <option value="">{indT("HomeHelp_FeedbackReasonPlaceholder", "Select a reason")}</option>

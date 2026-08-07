@@ -12,6 +12,7 @@ type ManualHelpViewProps = {
 // Composes the Manual topic index and its inline document reader.
 const ManualHelpView = ({ responseLocale }: ManualHelpViewProps) => {
   const topicContentRef = useRef<HTMLElement | null>(null);
+  const selectedTopicButtonRef = useRef<HTMLButtonElement | null>(null);
   const pendingFocusTopicIdRef = useRef("");
   const {
     catalog,
@@ -39,9 +40,21 @@ const ManualHelpView = ({ responseLocale }: ManualHelpViewProps) => {
     return () => window.cancelAnimationFrame(animationFrame);
   }, [topic?.id]);
 
+  // Returns keyboard focus to the topic that opened the current article.
+  const returnToSelectedTopic = () => {
+    const selectedTopicButton = selectedTopicButtonRef.current;
+    if (!selectedTopicButton) {
+      return;
+    }
+
+    selectedTopicButton.focus({ preventScroll: true });
+    selectedTopicButton.scrollIntoView({ block: "center" });
+  };
+
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col gap-5">
       <section
+        id="manual-help-topic-catalog"
         aria-labelledby="manual-help-catalog-title"
         className="flex min-h-0 flex-1 flex-col rounded-[var(--radius-xl)] border border-slate-200 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.06)] sm:p-5"
       >
@@ -69,8 +82,10 @@ const ManualHelpView = ({ responseLocale }: ManualHelpViewProps) => {
             selectedTopicId={selectedTopicId}
             searchLabel={indT("HomeHelp_CatalogSearchLabel", "Search help topics")}
             searchPlaceholder={indT("HomeHelp_CatalogSearchPlaceholder", "Search topics…")}
+            loadingLabel={indT("HomeHelp_CatalogLoading", "Loading topics…")}
             emptyLabel={indT("HomeHelp_CatalogEmpty", "No matching topics.")}
             detailRegionId="manual-help-topic-detail"
+            selectedTopicButtonRef={selectedTopicButtonRef}
             onSelect={(nextTopic) => {
               pendingFocusTopicIdRef.current = nextTopic.id;
               void selectTopic(nextTopic);
@@ -96,7 +111,15 @@ const ManualHelpView = ({ responseLocale }: ManualHelpViewProps) => {
           </p>
         ) : null}
 
-        {topic ? <ManualHelpTopicContent articleRef={topicContentRef} topic={topic} /> : null}
+        {topic ? (
+          <ManualHelpTopicContent
+            articleRef={topicContentRef}
+            backLabel={indT("Topbar_Back", "Back")}
+            catalogRegionId="manual-help-topic-catalog"
+            onBack={returnToSelectedTopic}
+            topic={topic}
+          />
+        ) : null}
       </div>
     </div>
   );

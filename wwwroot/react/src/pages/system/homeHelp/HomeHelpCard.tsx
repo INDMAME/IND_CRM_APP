@@ -57,7 +57,7 @@ const HomeHelpCard = ({
             {title}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{body}</p>
-          {children ? <div className="mt-10 flex w-full justify-center sm:mt-12">{children}</div> : null}
+          {children ? <div className="mt-14 flex w-full justify-center sm:mt-16">{children}</div> : null}
         </div>
       </div>
 
