@@ -1,7 +1,7 @@
 {
     "schemaVersion":  "1.0",
     "id":  "common-ui",
-    "title":  "Pantalla, empresa y permisos",
+    "title":  "Uso general, empresa y permisos",
     "description":  "Controles comunes, empresa activa, idioma y permisos.",
     "order":  3,
     "aliases":  {

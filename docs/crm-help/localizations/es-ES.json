@@ -6,7 +6,7 @@
     "modules":  [
                     {
                         "id":  "common-ui",
-                        "title":  "Pantalla, empresa y permisos",
+                        "title":  "Uso general, empresa y permisos",
                         "description":  "Controles comunes, empresa activa, idioma y permisos."
                     },
                     {
@@ -20,14 +20,14 @@
                         "description":  "Creación y mantenimiento de hojas y líneas de gasto."
                     },
                     {
-                        "id":  "tickets",
-                        "title":  "Tickets",
-                        "description":  "Consulta, creación y estado de justificantes de gasto."
-                    },
-                    {
                         "id":  "expense-approval",
                         "title":  "Aprobación de gastos",
                         "description":  "Estados, responsables y acciones de aprobación."
+                    },
+                    {
+                        "id":  "tickets",
+                        "title":  "Tickets",
+                        "description":  "Consulta, creación y estado de justificantes de gasto."
                     },
                     {
                         "id":  "axapta",
@@ -251,42 +251,6 @@
                                         ]
                    },
                    {
-                       "id":  "tickets.modulo-tickets",
-                       "title":  "Módulo Tickets",
-                       "summary":  "Descubre qué contiene un ticket y cómo se relaciona con una hoja.",
-                       "quickAnswers":  [
-
-                                        ]
-                   },
-                   {
-                       "id":  "tickets.abrir-y-filtrar-tickets",
-                       "title":  "Abrir y filtrar tickets",
-                       "summary":  "Accede a la lista de tickets y aplica filtros.",
-                       "quickAnswers":  [
-
-                                        ]
-                   },
-                   {
-                       "id":  "tickets.crear-un-ticket-desde-el-modulo-tickets",
-                       "title":  "Crear un ticket desde el módulo Tickets",
-                       "summary":  "Crea un justificante desde el módulo Tickets.",
-                       "quickAnswers":  [
-
-                                        ]
-                   },
-                   {
-                       "id":  "tickets.estado-del-ticket",
-                       "title":  "Estado del ticket",
-                       "summary":  "Distingue cuándo un ticket está pendiente o asignado.",
-                       "quickAnswers":  [
-                                            {
-                                                "id":  "tickets.estado-del-ticket.quick-01",
-                                                "question":  "¿Qué significan los estados Pendiente y Asignado de un ticket?",
-                                                "answer":  "Pendiente significa que el ticket todavía no está asignado a una hoja. Asignado significa que ya se encuentra relacionado con una hoja de gastos. No existe una opción directa para cambiar esa relación: el procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta."
-                                            }
-                                        ]
-                   },
-                   {
                        "id":  "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos",
                        "title":  "Estados y aprobación de una hoja de gastos",
                        "summary":  "Entiende cómo el estado condiciona las acciones de aprobación.",
@@ -332,6 +296,42 @@
                        "summary":  "Abre de forma segura una hoja desde un enlace de correo.",
                        "quickAnswers":  [
 
+                                        ]
+                   },
+                   {
+                       "id":  "tickets.modulo-tickets",
+                       "title":  "Módulo Tickets",
+                       "summary":  "Descubre qué contiene un ticket y cómo se relaciona con una hoja.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "tickets.abrir-y-filtrar-tickets",
+                       "title":  "Abrir y filtrar tickets",
+                       "summary":  "Accede a la lista de tickets y aplica filtros.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "tickets.crear-un-ticket-desde-el-modulo-tickets",
+                       "title":  "Crear un ticket desde el módulo Tickets",
+                       "summary":  "Crea un justificante desde el módulo Tickets.",
+                       "quickAnswers":  [
+
+                                        ]
+                   },
+                   {
+                       "id":  "tickets.estado-del-ticket",
+                       "title":  "Estado del ticket",
+                       "summary":  "Distingue cuándo un ticket está pendiente o asignado.",
+                       "quickAnswers":  [
+                                            {
+                                                "id":  "tickets.estado-del-ticket.quick-01",
+                                                "question":  "¿Qué significan los estados Pendiente y Asignado de un ticket?",
+                                                "answer":  "Pendiente significa que el ticket todavía no está asignado a una hoja. Asignado significa que ya se encuentra relacionado con una hoja de gastos. No existe una opción directa para cambiar esa relación: el procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta."
+                                            }
                                         ]
                    },
                    {

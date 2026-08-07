@@ -1,6 +1,6 @@
 {
     "schemaVersion":  "1.1",
-    "knowledgeVersion":  "1.8.1",
+    "knowledgeVersion":  "1.8.2",
     "title":  "Ayuda de la aplicación CRM",
     "defaultLocale":  "es-ES",
     "supportedResponseLocales":  [
@@ -18,8 +18,8 @@
                         "modules/common-ui/module.json",
                         "modules/visits/module.json",
                         "modules/expenses/module.json",
-                        "modules/tickets/module.json",
                         "modules/expense-approval/module.json",
+                        "modules/tickets/module.json",
                         "modules/axapta/module.json",
                         "modules/troubleshooting/module.json",
                         "modules/glossary/module.json"

@@ -3,7 +3,7 @@
     "id":  "expense-approval",
     "title":  "Aprobación de gastos",
     "description":  "Estados, responsables y acciones de aprobación.",
-    "order":  7,
+    "order":  6,
     "aliases":  {
                     "es-ES":  [
                                   "aprobación de gastos",

@@ -3,7 +3,7 @@
     "id":  "tickets",
     "title":  "Tickets",
     "description":  "Consulta, creación y estado de justificantes de gasto.",
-    "order":  6,
+    "order":  7,
     "aliases":  {
                     "es-ES":  [
                                   "tickets",

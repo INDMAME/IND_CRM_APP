@@ -1,7 +1,7 @@
 {
     "schemaVersion":  "1.1",
-    "knowledgeVersion":  "1.8.1",
-    "knowledgeHash":  "FF452BE8A49C4262C9A1B9106DFFAB659D4E70C4FE6695B58F28B3967563D795",
+    "knowledgeVersion":  "1.8.2",
+    "knowledgeHash":  "EE70E5395D92BD51FD29B28AA7C51EE827F132272952984C58FC6D07219AC2A0",
     "title":  "Ayuda de la aplicación CRM",
     "titleLocalizations":  {
                                "es-ES":  "Ayuda de la aplicación CRM"
@@ -24,7 +24,7 @@
     "modules":  [
                     {
                         "id":  "common-ui",
-                        "title":  "Pantalla, empresa y permisos",
+                        "title":  "Uso general, empresa y permisos",
                         "description":  "Controles comunes, empresa activa, idioma y permisos.",
                         "order":  3,
                         "aliases":  {
@@ -44,7 +44,7 @@
                                      ],
                         "localizations":  {
                                               "es-ES":  {
-                                                            "title":  "Pantalla, empresa y permisos",
+                                                            "title":  "Uso general, empresa y permisos",
                                                             "description":  "Controles comunes, empresa activa, idioma y permisos."
                                                         }
                                           }
@@ -109,34 +109,10 @@
                                           }
                     },
                     {
-                        "id":  "tickets",
-                        "title":  "Tickets",
-                        "description":  "Consulta, creación y estado de justificantes de gasto.",
-                        "order":  6,
-                        "aliases":  {
-                                        "es-ES":  [
-                                                      "tickets",
-                                                      "justificantes"
-                                                  ]
-                                    },
-                        "topicIds":  [
-                                         "tickets.modulo-tickets",
-                                         "tickets.abrir-y-filtrar-tickets",
-                                         "tickets.crear-un-ticket-desde-el-modulo-tickets",
-                                         "tickets.estado-del-ticket"
-                                     ],
-                        "localizations":  {
-                                              "es-ES":  {
-                                                            "title":  "Tickets",
-                                                            "description":  "Consulta, creación y estado de justificantes de gasto."
-                                                        }
-                                          }
-                    },
-                    {
                         "id":  "expense-approval",
                         "title":  "Aprobación de gastos",
                         "description":  "Estados, responsables y acciones de aprobación.",
-                        "order":  7,
+                        "order":  6,
                         "aliases":  {
                                         "es-ES":  [
                                                       "aprobación de gastos",
@@ -155,6 +131,30 @@
                                               "es-ES":  {
                                                             "title":  "Aprobación de gastos",
                                                             "description":  "Estados, responsables y acciones de aprobación."
+                                                        }
+                                          }
+                    },
+                    {
+                        "id":  "tickets",
+                        "title":  "Tickets",
+                        "description":  "Consulta, creación y estado de justificantes de gasto.",
+                        "order":  7,
+                        "aliases":  {
+                                        "es-ES":  [
+                                                      "tickets",
+                                                      "justificantes"
+                                                  ]
+                                    },
+                        "topicIds":  [
+                                         "tickets.modulo-tickets",
+                                         "tickets.abrir-y-filtrar-tickets",
+                                         "tickets.crear-un-ticket-desde-el-modulo-tickets",
+                                         "tickets.estado-del-ticket"
+                                     ],
+                        "localizations":  {
+                                              "es-ES":  {
+                                                            "title":  "Tickets",
+                                                            "description":  "Consulta, creación y estado de justificantes de gasto."
                                                         }
                                           }
                     },
@@ -2204,332 +2204,6 @@
                                          }
                    },
                    {
-                       "id":  "tickets.modulo-tickets",
-                       "moduleId":  "tickets",
-                       "sectionNumber":  "9",
-                       "title":  "Módulo Tickets",
-                       "summary":  "Descubre qué contiene un ticket y cómo se relaciona con una hoja.",
-                       "aliases":  {
-                                       "es-ES":  [
-                                                     "Módulo Tickets",
-                                                     "Tickets",
-                                                     "tickets",
-                                                     "justificantes"
-                                                 ]
-                                   },
-                       "sampleQuestions":  {
-                                               "es-ES":  [
-                                                             "¿Dónde encuentro información sobre módulo tickets?"
-                                                         ]
-                                           },
-                       "audiences":  [
-                                         "authenticated-crm-user"
-                                     ],
-                       "prerequisiteTopicIds":  [
-
-                                                ],
-                       "relatedTopicIds":  [
-                                               "tickets.abrir-y-filtrar-tickets",
-                                               "tickets.crear-un-ticket-desde-el-modulo-tickets",
-                                               "tickets.estado-del-ticket"
-                                           ],
-                       "routeKey":  "expenses.tickets",
-                       "status":  "published",
-                       "contentVersion":  "1.7.0",
-                       "contentHash":  "FB15CD9F9029A19E134590C616564B75C91145CB69F2E2B22D1BE2D618234C4B",
-                       "translationCoverage":  {
-                                                   "es-ES":  "source"
-                                               },
-                       "source":  {
-                                      "path":  "docs/exports/Manual App CRM 1.5.docx",
-                                      "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
-                                      "sectionNumber":  "9",
-                                      "pageFromTableOfContents":  24
-                                  },
-                       "quickAnswers":  [
-
-                                        ],
-                       "chunks":  [
-                                      {
-                                          "id":  "tickets.modulo-tickets--01",
-                                          "heading":  "Módulo Tickets",
-                                          "body":  "Un ticket reúne la imagen y los datos de un justificante de gasto. Puede crearse directamente desde una hoja o desde el menú Tickets, donde permanecerá disponible hasta que se vincule a una hoja editable.\n\nUtilice este módulo para buscar justificantes, revisar los datos leídos de la imagen y corregir los campos permitidos. Antes de guardar, compruebe la fecha, la divisa, el establecimiento o la descripción, los importes y la categoría.\n\nEl estado Pendiente indica que el ticket todavía no está asociado a una hoja; Asignado indica que ya forma parte de una. No cargue de nuevo el mismo justificante si ya existe: búsquelo primero.",
-                                          "imageRefs":  [
-
-                                                        ],
-                                          "estimatedTokens":  159
-                                      }
-                                  ],
-                       "localizations":  {
-                                             "es-ES":  {
-                                                           "title":  "Módulo Tickets",
-                                                           "summary":  "Descubre qué contiene un ticket y cómo se relaciona con una hoja.",
-                                                           "status":  "source",
-                                                           "contentHash":  "FB15CD9F9029A19E134590C616564B75C91145CB69F2E2B22D1BE2D618234C4B",
-                                                           "quickAnswers":  [
-
-                                                                            ],
-                                                           "chunks":  [
-                                                                          {
-                                                                              "id":  "tickets.modulo-tickets--01",
-                                                                              "heading":  "Módulo Tickets",
-                                                                              "body":  "Un ticket reúne la imagen y los datos de un justificante de gasto. Puede crearse directamente desde una hoja o desde el menú Tickets, donde permanecerá disponible hasta que se vincule a una hoja editable.\n\nUtilice este módulo para buscar justificantes, revisar los datos leídos de la imagen y corregir los campos permitidos. Antes de guardar, compruebe la fecha, la divisa, el establecimiento o la descripción, los importes y la categoría.\n\nEl estado Pendiente indica que el ticket todavía no está asociado a una hoja; Asignado indica que ya forma parte de una. No cargue de nuevo el mismo justificante si ya existe: búsquelo primero.",
-                                                                              "imageRefs":  [
-
-                                                                                            ],
-                                                                              "estimatedTokens":  159
-                                                                          }
-                                                                      ]
-                                                       }
-                                         }
-                   },
-                   {
-                       "id":  "tickets.abrir-y-filtrar-tickets",
-                       "moduleId":  "tickets",
-                       "sectionNumber":  "9.1",
-                       "title":  "Abrir y filtrar tickets",
-                       "summary":  "Accede a la lista de tickets y aplica filtros.",
-                       "aliases":  {
-                                       "es-ES":  [
-                                                     "Abrir y filtrar tickets",
-                                                     "tickets",
-                                                     "justificantes"
-                                                 ]
-                                   },
-                       "sampleQuestions":  {
-                                               "es-ES":  [
-                                                             "¿Dónde encuentro información sobre abrir y filtrar tickets?"
-                                                         ]
-                                           },
-                       "audiences":  [
-                                         "authenticated-crm-user"
-                                     ],
-                       "prerequisiteTopicIds":  [
-
-                                                ],
-                       "relatedTopicIds":  [
-                                               "tickets.modulo-tickets"
-                                           ],
-                       "routeKey":  "expenses.tickets",
-                       "status":  "published",
-                       "contentVersion":  "1.7.0",
-                       "contentHash":  "7ED811F824A4CADADBA3AEFE80A83EA71674F069570D90E969CAB5E94B354AA8",
-                       "translationCoverage":  {
-                                                   "es-ES":  "source"
-                                               },
-                       "source":  {
-                                      "path":  "docs/exports/Manual App CRM 1.5.docx",
-                                      "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
-                                      "sectionNumber":  "9.1",
-                                      "pageFromTableOfContents":  24
-                                  },
-                       "quickAnswers":  [
-
-                                        ],
-                       "chunks":  [
-                                      {
-                                          "id":  "tickets.abrir-y-filtrar-tickets--01",
-                                          "heading":  "Abrir y filtrar tickets",
-                                          "body":  "1. Abra el menú lateral.\n\n2. En GASTOS, pulse Tickets.\n\n3. Utilice Filtro para buscar por Ticket, Estado, Categoría o Procesado por IA. Pulse Aplicar para buscar o Borrar para limpiar.\n\n4. Pulse una tarjeta para abrir su detalle.",
-                                          "imageRefs":  [
-
-                                                        ],
-                                          "estimatedTokens":  58
-                                      }
-                                  ],
-                       "localizations":  {
-                                             "es-ES":  {
-                                                           "title":  "Abrir y filtrar tickets",
-                                                           "summary":  "Accede a la lista de tickets y aplica filtros.",
-                                                           "status":  "source",
-                                                           "contentHash":  "7ED811F824A4CADADBA3AEFE80A83EA71674F069570D90E969CAB5E94B354AA8",
-                                                           "quickAnswers":  [
-
-                                                                            ],
-                                                           "chunks":  [
-                                                                          {
-                                                                              "id":  "tickets.abrir-y-filtrar-tickets--01",
-                                                                              "heading":  "Abrir y filtrar tickets",
-                                                                              "body":  "1. Abra el menú lateral.\n\n2. En GASTOS, pulse Tickets.\n\n3. Utilice Filtro para buscar por Ticket, Estado, Categoría o Procesado por IA. Pulse Aplicar para buscar o Borrar para limpiar.\n\n4. Pulse una tarjeta para abrir su detalle.",
-                                                                              "imageRefs":  [
-
-                                                                                            ],
-                                                                              "estimatedTokens":  58
-                                                                          }
-                                                                      ]
-                                                       }
-                                         }
-                   },
-                   {
-                       "id":  "tickets.crear-un-ticket-desde-el-modulo-tickets",
-                       "moduleId":  "tickets",
-                       "sectionNumber":  "9.2",
-                       "title":  "Crear un ticket desde el módulo Tickets",
-                       "summary":  "Crea un justificante desde el módulo Tickets.",
-                       "aliases":  {
-                                       "es-ES":  [
-                                                     "Crear un ticket desde el módulo Tickets",
-                                                     "tickets",
-                                                     "justificantes"
-                                                 ]
-                                   },
-                       "sampleQuestions":  {
-                                               "es-ES":  [
-                                                             "¿Dónde encuentro información sobre crear un ticket desde el módulo tickets?"
-                                                         ]
-                                           },
-                       "audiences":  [
-                                         "authenticated-crm-user"
-                                     ],
-                       "prerequisiteTopicIds":  [
-
-                                                ],
-                       "relatedTopicIds":  [
-                                               "tickets.modulo-tickets"
-                                           ],
-                       "routeKey":  "expenses.tickets",
-                       "status":  "published",
-                       "contentVersion":  "1.7.0",
-                       "contentHash":  "B066B341610345F5F29FD54E46678F1EA8D7B21A5B9725572D26A7E0D3127B4B",
-                       "translationCoverage":  {
-                                                   "es-ES":  "source"
-                                               },
-                       "source":  {
-                                      "path":  "docs/exports/Manual App CRM 1.5.docx",
-                                      "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
-                                      "sectionNumber":  "9.2",
-                                      "pageFromTableOfContents":  25
-                                  },
-                       "quickAnswers":  [
-
-                                        ],
-                       "chunks":  [
-                                      {
-                                          "id":  "tickets.crear-un-ticket-desde-el-modulo-tickets--01",
-                                          "heading":  "Crear un ticket desde el módulo Tickets",
-                                          "body":  "1. Pulse el botón Crear o el botón redondo con el signo más.\n\n2. Elija Usar cámara o Elegir imagen.\n\n3. Espere a que termine el procesamiento.\n\n4. Revise todos los datos y líneas del ticket en modo edición.\n\n5. Pulse Guardar.\n\n\u003e **REVISIÓN OBLIGATORIA:** La lectura automática puede confundir fechas, separadores decimales, divisas, cantidades o categorías. Compare los campos con la imagen original antes de guardar.",
-                                          "imageRefs":  [
-
-                                                        ],
-                                          "estimatedTokens":  105
-                                      }
-                                  ],
-                       "localizations":  {
-                                             "es-ES":  {
-                                                           "title":  "Crear un ticket desde el módulo Tickets",
-                                                           "summary":  "Crea un justificante desde el módulo Tickets.",
-                                                           "status":  "source",
-                                                           "contentHash":  "B066B341610345F5F29FD54E46678F1EA8D7B21A5B9725572D26A7E0D3127B4B",
-                                                           "quickAnswers":  [
-
-                                                                            ],
-                                                           "chunks":  [
-                                                                          {
-                                                                              "id":  "tickets.crear-un-ticket-desde-el-modulo-tickets--01",
-                                                                              "heading":  "Crear un ticket desde el módulo Tickets",
-                                                                              "body":  "1. Pulse el botón Crear o el botón redondo con el signo más.\n\n2. Elija Usar cámara o Elegir imagen.\n\n3. Espere a que termine el procesamiento.\n\n4. Revise todos los datos y líneas del ticket en modo edición.\n\n5. Pulse Guardar.\n\n\u003e **REVISIÓN OBLIGATORIA:** La lectura automática puede confundir fechas, separadores decimales, divisas, cantidades o categorías. Compare los campos con la imagen original antes de guardar.",
-                                                                              "imageRefs":  [
-
-                                                                                            ],
-                                                                              "estimatedTokens":  105
-                                                                          }
-                                                                      ]
-                                                       }
-                                         }
-                   },
-                   {
-                       "id":  "tickets.estado-del-ticket",
-                       "moduleId":  "tickets",
-                       "sectionNumber":  "9.3",
-                       "title":  "Estado del ticket",
-                       "summary":  "Distingue cuándo un ticket está pendiente o asignado.",
-                       "aliases":  {
-                                       "es-ES":  [
-                                                     "Estado del ticket",
-                                                     "tickets",
-                                                     "justificantes"
-                                                 ]
-                                   },
-                       "sampleQuestions":  {
-                                               "es-ES":  [
-                                                             "¿Dónde encuentro información sobre estado del ticket?",
-                                                             "Necesito desvincular un ticket de una hoja"
-                                                         ]
-                                           },
-                       "audiences":  [
-                                         "authenticated-crm-user"
-                                     ],
-                       "prerequisiteTopicIds":  [
-
-                                                ],
-                       "relatedTopicIds":  [
-                                               "tickets.modulo-tickets"
-                                           ],
-                       "routeKey":  "expenses.tickets",
-                       "status":  "published",
-                       "contentVersion":  "1.7.0",
-                       "contentHash":  "E56B3E855055A4F3EDE246274E4A077FFA8D4E1421D403C2692ACD055CE41860",
-                       "translationCoverage":  {
-                                                   "es-ES":  "source"
-                                               },
-                       "source":  {
-                                      "path":  "docs/exports/Manual App CRM 1.5.docx",
-                                      "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
-                                      "sectionNumber":  "9.3",
-                                      "pageFromTableOfContents":  25
-                                  },
-                       "quickAnswers":  [
-                                            {
-                                                "id":  "tickets.estado-del-ticket.quick-01",
-                                                "question":  "¿Qué significan los estados Pendiente y Asignado de un ticket?",
-                                                "answer":  "Pendiente significa que el ticket todavía no está asignado a una hoja. Asignado significa que ya se encuentra relacionado con una hoja de gastos. No existe una opción directa para cambiar esa relación: el procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta.",
-                                                "sourceChunkIds":  [
-                                                                       "tickets.estado-del-ticket--01"
-                                                                   ]
-                                            }
-                                        ],
-                       "chunks":  [
-                                      {
-                                          "id":  "tickets.estado-del-ticket--01",
-                                          "heading":  "Estado del ticket",
-                                          "body":  "Un ticket puede mostrar uno de estos estados:\n\n- **Pendiente:** todavía no está asignado a una hoja de gastos y puede seleccionarse desde la opción Vincular ticket.\n\n- **Asignado:** ya se encuentra relacionado con una hoja de gastos y no debe volver a vincularse como si fuera un justificante nuevo.\n\nLa aplicación no ofrece una opción directa para cambiar la hoja de un ticket asignado. El procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta. Antes de hacerlo, compruebe el identificador del ticket y consulte el procedimiento interno si la hoja ya no es editable.",
-                                          "imageRefs":  [
-
-                                                        ],
-                                          "estimatedTokens":  159
-                                      }
-                                  ],
-                       "localizations":  {
-                                             "es-ES":  {
-                                                           "title":  "Estado del ticket",
-                                                           "summary":  "Distingue cuándo un ticket está pendiente o asignado.",
-                                                           "status":  "source",
-                                                           "contentHash":  "E56B3E855055A4F3EDE246274E4A077FFA8D4E1421D403C2692ACD055CE41860",
-                                                           "quickAnswers":  [
-                                                                                {
-                                                                                    "id":  "tickets.estado-del-ticket.quick-01",
-                                                                                    "question":  "¿Qué significan los estados Pendiente y Asignado de un ticket?",
-                                                                                    "answer":  "Pendiente significa que el ticket todavía no está asignado a una hoja. Asignado significa que ya se encuentra relacionado con una hoja de gastos. No existe una opción directa para cambiar esa relación: el procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta.",
-                                                                                    "sourceChunkIds":  [
-                                                                                                           "tickets.estado-del-ticket--01"
-                                                                                                       ]
-                                                                                }
-                                                                            ],
-                                                           "chunks":  [
-                                                                          {
-                                                                              "id":  "tickets.estado-del-ticket--01",
-                                                                              "heading":  "Estado del ticket",
-                                                                              "body":  "Un ticket puede mostrar uno de estos estados:\n\n- **Pendiente:** todavía no está asignado a una hoja de gastos y puede seleccionarse desde la opción Vincular ticket.\n\n- **Asignado:** ya se encuentra relacionado con una hoja de gastos y no debe volver a vincularse como si fuera un justificante nuevo.\n\nLa aplicación no ofrece una opción directa para cambiar la hoja de un ticket asignado. El procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta. Antes de hacerlo, compruebe el identificador del ticket y consulte el procedimiento interno si la hoja ya no es editable.",
-                                                                              "imageRefs":  [
-
-                                                                                            ],
-                                                                              "estimatedTokens":  159
-                                                                          }
-                                                                      ]
-                                                       }
-                                         }
-                   },
-                   {
                        "id":  "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos",
                        "moduleId":  "expense-approval",
                        "sectionNumber":  "10",
@@ -2991,6 +2665,332 @@
 
                                                                                             ],
                                                                               "estimatedTokens":  78
+                                                                          }
+                                                                      ]
+                                                       }
+                                         }
+                   },
+                   {
+                       "id":  "tickets.modulo-tickets",
+                       "moduleId":  "tickets",
+                       "sectionNumber":  "9",
+                       "title":  "Módulo Tickets",
+                       "summary":  "Descubre qué contiene un ticket y cómo se relaciona con una hoja.",
+                       "aliases":  {
+                                       "es-ES":  [
+                                                     "Módulo Tickets",
+                                                     "Tickets",
+                                                     "tickets",
+                                                     "justificantes"
+                                                 ]
+                                   },
+                       "sampleQuestions":  {
+                                               "es-ES":  [
+                                                             "¿Dónde encuentro información sobre módulo tickets?"
+                                                         ]
+                                           },
+                       "audiences":  [
+                                         "authenticated-crm-user"
+                                     ],
+                       "prerequisiteTopicIds":  [
+
+                                                ],
+                       "relatedTopicIds":  [
+                                               "tickets.abrir-y-filtrar-tickets",
+                                               "tickets.crear-un-ticket-desde-el-modulo-tickets",
+                                               "tickets.estado-del-ticket"
+                                           ],
+                       "routeKey":  "expenses.tickets",
+                       "status":  "published",
+                       "contentVersion":  "1.7.0",
+                       "contentHash":  "FB15CD9F9029A19E134590C616564B75C91145CB69F2E2B22D1BE2D618234C4B",
+                       "translationCoverage":  {
+                                                   "es-ES":  "source"
+                                               },
+                       "source":  {
+                                      "path":  "docs/exports/Manual App CRM 1.5.docx",
+                                      "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                                      "sectionNumber":  "9",
+                                      "pageFromTableOfContents":  24
+                                  },
+                       "quickAnswers":  [
+
+                                        ],
+                       "chunks":  [
+                                      {
+                                          "id":  "tickets.modulo-tickets--01",
+                                          "heading":  "Módulo Tickets",
+                                          "body":  "Un ticket reúne la imagen y los datos de un justificante de gasto. Puede crearse directamente desde una hoja o desde el menú Tickets, donde permanecerá disponible hasta que se vincule a una hoja editable.\n\nUtilice este módulo para buscar justificantes, revisar los datos leídos de la imagen y corregir los campos permitidos. Antes de guardar, compruebe la fecha, la divisa, el establecimiento o la descripción, los importes y la categoría.\n\nEl estado Pendiente indica que el ticket todavía no está asociado a una hoja; Asignado indica que ya forma parte de una. No cargue de nuevo el mismo justificante si ya existe: búsquelo primero.",
+                                          "imageRefs":  [
+
+                                                        ],
+                                          "estimatedTokens":  159
+                                      }
+                                  ],
+                       "localizations":  {
+                                             "es-ES":  {
+                                                           "title":  "Módulo Tickets",
+                                                           "summary":  "Descubre qué contiene un ticket y cómo se relaciona con una hoja.",
+                                                           "status":  "source",
+                                                           "contentHash":  "FB15CD9F9029A19E134590C616564B75C91145CB69F2E2B22D1BE2D618234C4B",
+                                                           "quickAnswers":  [
+
+                                                                            ],
+                                                           "chunks":  [
+                                                                          {
+                                                                              "id":  "tickets.modulo-tickets--01",
+                                                                              "heading":  "Módulo Tickets",
+                                                                              "body":  "Un ticket reúne la imagen y los datos de un justificante de gasto. Puede crearse directamente desde una hoja o desde el menú Tickets, donde permanecerá disponible hasta que se vincule a una hoja editable.\n\nUtilice este módulo para buscar justificantes, revisar los datos leídos de la imagen y corregir los campos permitidos. Antes de guardar, compruebe la fecha, la divisa, el establecimiento o la descripción, los importes y la categoría.\n\nEl estado Pendiente indica que el ticket todavía no está asociado a una hoja; Asignado indica que ya forma parte de una. No cargue de nuevo el mismo justificante si ya existe: búsquelo primero.",
+                                                                              "imageRefs":  [
+
+                                                                                            ],
+                                                                              "estimatedTokens":  159
+                                                                          }
+                                                                      ]
+                                                       }
+                                         }
+                   },
+                   {
+                       "id":  "tickets.abrir-y-filtrar-tickets",
+                       "moduleId":  "tickets",
+                       "sectionNumber":  "9.1",
+                       "title":  "Abrir y filtrar tickets",
+                       "summary":  "Accede a la lista de tickets y aplica filtros.",
+                       "aliases":  {
+                                       "es-ES":  [
+                                                     "Abrir y filtrar tickets",
+                                                     "tickets",
+                                                     "justificantes"
+                                                 ]
+                                   },
+                       "sampleQuestions":  {
+                                               "es-ES":  [
+                                                             "¿Dónde encuentro información sobre abrir y filtrar tickets?"
+                                                         ]
+                                           },
+                       "audiences":  [
+                                         "authenticated-crm-user"
+                                     ],
+                       "prerequisiteTopicIds":  [
+
+                                                ],
+                       "relatedTopicIds":  [
+                                               "tickets.modulo-tickets"
+                                           ],
+                       "routeKey":  "expenses.tickets",
+                       "status":  "published",
+                       "contentVersion":  "1.7.0",
+                       "contentHash":  "7ED811F824A4CADADBA3AEFE80A83EA71674F069570D90E969CAB5E94B354AA8",
+                       "translationCoverage":  {
+                                                   "es-ES":  "source"
+                                               },
+                       "source":  {
+                                      "path":  "docs/exports/Manual App CRM 1.5.docx",
+                                      "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                                      "sectionNumber":  "9.1",
+                                      "pageFromTableOfContents":  24
+                                  },
+                       "quickAnswers":  [
+
+                                        ],
+                       "chunks":  [
+                                      {
+                                          "id":  "tickets.abrir-y-filtrar-tickets--01",
+                                          "heading":  "Abrir y filtrar tickets",
+                                          "body":  "1. Abra el menú lateral.\n\n2. En GASTOS, pulse Tickets.\n\n3. Utilice Filtro para buscar por Ticket, Estado, Categoría o Procesado por IA. Pulse Aplicar para buscar o Borrar para limpiar.\n\n4. Pulse una tarjeta para abrir su detalle.",
+                                          "imageRefs":  [
+
+                                                        ],
+                                          "estimatedTokens":  58
+                                      }
+                                  ],
+                       "localizations":  {
+                                             "es-ES":  {
+                                                           "title":  "Abrir y filtrar tickets",
+                                                           "summary":  "Accede a la lista de tickets y aplica filtros.",
+                                                           "status":  "source",
+                                                           "contentHash":  "7ED811F824A4CADADBA3AEFE80A83EA71674F069570D90E969CAB5E94B354AA8",
+                                                           "quickAnswers":  [
+
+                                                                            ],
+                                                           "chunks":  [
+                                                                          {
+                                                                              "id":  "tickets.abrir-y-filtrar-tickets--01",
+                                                                              "heading":  "Abrir y filtrar tickets",
+                                                                              "body":  "1. Abra el menú lateral.\n\n2. En GASTOS, pulse Tickets.\n\n3. Utilice Filtro para buscar por Ticket, Estado, Categoría o Procesado por IA. Pulse Aplicar para buscar o Borrar para limpiar.\n\n4. Pulse una tarjeta para abrir su detalle.",
+                                                                              "imageRefs":  [
+
+                                                                                            ],
+                                                                              "estimatedTokens":  58
+                                                                          }
+                                                                      ]
+                                                       }
+                                         }
+                   },
+                   {
+                       "id":  "tickets.crear-un-ticket-desde-el-modulo-tickets",
+                       "moduleId":  "tickets",
+                       "sectionNumber":  "9.2",
+                       "title":  "Crear un ticket desde el módulo Tickets",
+                       "summary":  "Crea un justificante desde el módulo Tickets.",
+                       "aliases":  {
+                                       "es-ES":  [
+                                                     "Crear un ticket desde el módulo Tickets",
+                                                     "tickets",
+                                                     "justificantes"
+                                                 ]
+                                   },
+                       "sampleQuestions":  {
+                                               "es-ES":  [
+                                                             "¿Dónde encuentro información sobre crear un ticket desde el módulo tickets?"
+                                                         ]
+                                           },
+                       "audiences":  [
+                                         "authenticated-crm-user"
+                                     ],
+                       "prerequisiteTopicIds":  [
+
+                                                ],
+                       "relatedTopicIds":  [
+                                               "tickets.modulo-tickets"
+                                           ],
+                       "routeKey":  "expenses.tickets",
+                       "status":  "published",
+                       "contentVersion":  "1.7.0",
+                       "contentHash":  "B066B341610345F5F29FD54E46678F1EA8D7B21A5B9725572D26A7E0D3127B4B",
+                       "translationCoverage":  {
+                                                   "es-ES":  "source"
+                                               },
+                       "source":  {
+                                      "path":  "docs/exports/Manual App CRM 1.5.docx",
+                                      "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                                      "sectionNumber":  "9.2",
+                                      "pageFromTableOfContents":  25
+                                  },
+                       "quickAnswers":  [
+
+                                        ],
+                       "chunks":  [
+                                      {
+                                          "id":  "tickets.crear-un-ticket-desde-el-modulo-tickets--01",
+                                          "heading":  "Crear un ticket desde el módulo Tickets",
+                                          "body":  "1. Pulse el botón Crear o el botón redondo con el signo más.\n\n2. Elija Usar cámara o Elegir imagen.\n\n3. Espere a que termine el procesamiento.\n\n4. Revise todos los datos y líneas del ticket en modo edición.\n\n5. Pulse Guardar.\n\n\u003e **REVISIÓN OBLIGATORIA:** La lectura automática puede confundir fechas, separadores decimales, divisas, cantidades o categorías. Compare los campos con la imagen original antes de guardar.",
+                                          "imageRefs":  [
+
+                                                        ],
+                                          "estimatedTokens":  105
+                                      }
+                                  ],
+                       "localizations":  {
+                                             "es-ES":  {
+                                                           "title":  "Crear un ticket desde el módulo Tickets",
+                                                           "summary":  "Crea un justificante desde el módulo Tickets.",
+                                                           "status":  "source",
+                                                           "contentHash":  "B066B341610345F5F29FD54E46678F1EA8D7B21A5B9725572D26A7E0D3127B4B",
+                                                           "quickAnswers":  [
+
+                                                                            ],
+                                                           "chunks":  [
+                                                                          {
+                                                                              "id":  "tickets.crear-un-ticket-desde-el-modulo-tickets--01",
+                                                                              "heading":  "Crear un ticket desde el módulo Tickets",
+                                                                              "body":  "1. Pulse el botón Crear o el botón redondo con el signo más.\n\n2. Elija Usar cámara o Elegir imagen.\n\n3. Espere a que termine el procesamiento.\n\n4. Revise todos los datos y líneas del ticket en modo edición.\n\n5. Pulse Guardar.\n\n\u003e **REVISIÓN OBLIGATORIA:** La lectura automática puede confundir fechas, separadores decimales, divisas, cantidades o categorías. Compare los campos con la imagen original antes de guardar.",
+                                                                              "imageRefs":  [
+
+                                                                                            ],
+                                                                              "estimatedTokens":  105
+                                                                          }
+                                                                      ]
+                                                       }
+                                         }
+                   },
+                   {
+                       "id":  "tickets.estado-del-ticket",
+                       "moduleId":  "tickets",
+                       "sectionNumber":  "9.3",
+                       "title":  "Estado del ticket",
+                       "summary":  "Distingue cuándo un ticket está pendiente o asignado.",
+                       "aliases":  {
+                                       "es-ES":  [
+                                                     "Estado del ticket",
+                                                     "tickets",
+                                                     "justificantes"
+                                                 ]
+                                   },
+                       "sampleQuestions":  {
+                                               "es-ES":  [
+                                                             "¿Dónde encuentro información sobre estado del ticket?",
+                                                             "Necesito desvincular un ticket de una hoja"
+                                                         ]
+                                           },
+                       "audiences":  [
+                                         "authenticated-crm-user"
+                                     ],
+                       "prerequisiteTopicIds":  [
+
+                                                ],
+                       "relatedTopicIds":  [
+                                               "tickets.modulo-tickets"
+                                           ],
+                       "routeKey":  "expenses.tickets",
+                       "status":  "published",
+                       "contentVersion":  "1.7.0",
+                       "contentHash":  "E56B3E855055A4F3EDE246274E4A077FFA8D4E1421D403C2692ACD055CE41860",
+                       "translationCoverage":  {
+                                                   "es-ES":  "source"
+                                               },
+                       "source":  {
+                                      "path":  "docs/exports/Manual App CRM 1.5.docx",
+                                      "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                                      "sectionNumber":  "9.3",
+                                      "pageFromTableOfContents":  25
+                                  },
+                       "quickAnswers":  [
+                                            {
+                                                "id":  "tickets.estado-del-ticket.quick-01",
+                                                "question":  "¿Qué significan los estados Pendiente y Asignado de un ticket?",
+                                                "answer":  "Pendiente significa que el ticket todavía no está asignado a una hoja. Asignado significa que ya se encuentra relacionado con una hoja de gastos. No existe una opción directa para cambiar esa relación: el procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta.",
+                                                "sourceChunkIds":  [
+                                                                       "tickets.estado-del-ticket--01"
+                                                                   ]
+                                            }
+                                        ],
+                       "chunks":  [
+                                      {
+                                          "id":  "tickets.estado-del-ticket--01",
+                                          "heading":  "Estado del ticket",
+                                          "body":  "Un ticket puede mostrar uno de estos estados:\n\n- **Pendiente:** todavía no está asignado a una hoja de gastos y puede seleccionarse desde la opción Vincular ticket.\n\n- **Asignado:** ya se encuentra relacionado con una hoja de gastos y no debe volver a vincularse como si fuera un justificante nuevo.\n\nLa aplicación no ofrece una opción directa para cambiar la hoja de un ticket asignado. El procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta. Antes de hacerlo, compruebe el identificador del ticket y consulte el procedimiento interno si la hoja ya no es editable.",
+                                          "imageRefs":  [
+
+                                                        ],
+                                          "estimatedTokens":  159
+                                      }
+                                  ],
+                       "localizations":  {
+                                             "es-ES":  {
+                                                           "title":  "Estado del ticket",
+                                                           "summary":  "Distingue cuándo un ticket está pendiente o asignado.",
+                                                           "status":  "source",
+                                                           "contentHash":  "E56B3E855055A4F3EDE246274E4A077FFA8D4E1421D403C2692ACD055CE41860",
+                                                           "quickAnswers":  [
+                                                                                {
+                                                                                    "id":  "tickets.estado-del-ticket.quick-01",
+                                                                                    "question":  "¿Qué significan los estados Pendiente y Asignado de un ticket?",
+                                                                                    "answer":  "Pendiente significa que el ticket todavía no está asignado a una hoja. Asignado significa que ya se encuentra relacionado con una hoja de gastos. No existe una opción directa para cambiar esa relación: el procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta.",
+                                                                                    "sourceChunkIds":  [
+                                                                                                           "tickets.estado-del-ticket--01"
+                                                                                                       ]
+                                                                                }
+                                                                            ],
+                                                           "chunks":  [
+                                                                          {
+                                                                              "id":  "tickets.estado-del-ticket--01",
+                                                                              "heading":  "Estado del ticket",
+                                                                              "body":  "Un ticket puede mostrar uno de estos estados:\n\n- **Pendiente:** todavía no está asignado a una hoja de gastos y puede seleccionarse desde la opción Vincular ticket.\n\n- **Asignado:** ya se encuentra relacionado con una hoja de gastos y no debe volver a vincularse como si fuera un justificante nuevo.\n\nLa aplicación no ofrece una opción directa para cambiar la hoja de un ticket asignado. El procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta. Antes de hacerlo, compruebe el identificador del ticket y consulte el procedimiento interno si la hoja ya no es editable.",
+                                                                              "imageRefs":  [
+
+                                                                                            ],
+                                                                              "estimatedTokens":  159
                                                                           }
                                                                       ]
                                                        }

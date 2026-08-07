@@ -80,3 +80,27 @@ test("the Spanish glossary keeps all 23 definitions", async () => {
     .filter((value) => value && !value.startsWith("#") && !value.startsWith("<!--"));
   assert.equal(definitionBlocks.length, 23, "Spanish glossary does not contain 23 definition blocks");
 });
+
+test("Manual uses the clarified module title and keeps expense approval next to expense sheets", async () => {
+  const expectedModuleIds = [
+    "common-ui",
+    "visits",
+    "expenses",
+    "expense-approval",
+    "tickets",
+    "axapta",
+    "troubleshooting",
+    "glossary",
+  ];
+  const spanishMetadata = JSON.parse(await readFile(path.join(helpRoot, "localizations", "es-ES.json"), "utf8"));
+  const commonModule = modules.find((module) => module.id === "common-ui");
+  const approvalModule = modules.find((module) => module.id === "expense-approval");
+  const ticketsModule = modules.find((module) => module.id === "tickets");
+
+  assert.deepEqual(modules.map((module) => module.id), expectedModuleIds);
+  assert.deepEqual(spanishMetadata.modules.map((module) => module.id), expectedModuleIds);
+  assert.equal(commonModule?.title, "Uso general, empresa y permisos");
+  assert.equal(spanishMetadata.modules.find((module) => module.id === "common-ui")?.title, commonModule?.title);
+  assert.equal(approvalModule?.order, 6);
+  assert.equal(ticketsModule?.order, 7);
+});

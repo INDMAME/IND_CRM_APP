@@ -48,15 +48,6 @@
                                      ]
                     },
                     {
-                        "moduleId":  "tickets",
-                        "topicIds":  [
-                                         "tickets.modulo-tickets",
-                                         "tickets.abrir-y-filtrar-tickets",
-                                         "tickets.crear-un-ticket-desde-el-modulo-tickets",
-                                         "tickets.estado-del-ticket"
-                                     ]
-                    },
-                    {
                         "moduleId":  "expense-approval",
                         "topicIds":  [
                                          "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos",
@@ -65,6 +56,15 @@
                                          "expense-approval.acciones-del-propietario",
                                          "expense-approval.acciones-del-responsable",
                                          "expense-approval.enlaces-recibidos-por-correo"
+                                     ]
+                    },
+                    {
+                        "moduleId":  "tickets",
+                        "topicIds":  [
+                                         "tickets.modulo-tickets",
+                                         "tickets.abrir-y-filtrar-tickets",
+                                         "tickets.crear-un-ticket-desde-el-modulo-tickets",
+                                         "tickets.estado-del-ticket"
                                      ]
                     },
                     {
