@@ -123,9 +123,9 @@ test("chat requires one global module and manual input before enabling its compo
   assert.doesNotMatch(assistantSource, /HomeHelpLocaleSelect|HomeHelpTopicBrowser|catalogOpen/u);
 });
 
-test("Home hides getting started and lets the selected section return to a clean selector", () => {
-  assert.match(assistantSource, /const HIDDEN_HOME_HELP_MODULE_ID = "introduction"/u);
-  assert.match(assistantSource, /selectableModules = modules\.filter\([\s\S]*HIDDEN_HOME_HELP_MODULE_ID/u);
+test("Home hides manual-only sections and lets the selected section return to a clean selector", () => {
+  assert.match(assistantSource, /const HIDDEN_HOME_HELP_MODULE_IDS = new Set\(\["introduction", "troubleshooting", "glossary"\]\)/u);
+  assert.match(assistantSource, /selectableModules = modules\.filter\([\s\S]*!HIDDEN_HOME_HELP_MODULE_IDS\.has\(module\.id\)/u);
   assert.match(assistantSource, /modules=\{selectableModules\}/u);
   assert.match(assistantSource, /backAriaLabel=\{indT\("HomeHelp_ChangeModule"/u);
   assert.match(assistantSource, /onBack=\{returnToModuleSelection\}/u);
@@ -258,6 +258,7 @@ test("Home sends the selected module while keeping answer instructions server-ow
   assert.match(helpControllerSource, /request\.SelectedModuleId\.Length == 0[\s\S]*"INVALID_MODULE_ID"/u);
   assert.match(apiClientSource, /SelectedModuleId = NormalizeOptionalText\(request\.SelectedModuleId\)/u);
   assert.match(apiClientSource, /AnswerInstructions = CrmHelpAnswerInstructions\.Value/u);
+  assert.match(answerInstructionsSource, /When the question is short or ambiguous/u);
   assert.match(answerInstructionsSource, /Synthesize and paraphrase/u);
   assert.match(answerInstructionsSource, /Never return quotations, excerpts, source passages/u);
 });
@@ -279,12 +280,12 @@ test("Home uses standard page spacing and stretches its assistant card through t
   assert.match(cardSource, /relative z-10 flex flex-1/u);
   assert.match(cardSource, /flex w-full flex-col justify-center px-5 py-6/u);
   assert.match(cardSource, /children\?: ReactNode/u);
-  assert.match(cardSource, /mt-6 flex w-full justify-center/u);
+  assert.match(cardSource, /mt-10 flex w-full justify-center sm:mt-12/u);
   assert.doesNotMatch(cardSource, /justify-evenly/u);
   assert.match(cardSource, /relative z-10 shrink-0/u);
 });
 
-test("Home composes one inline launcher below the card copy", () => {
+test("Home composes one vertical inline launcher below the card copy", () => {
   const cardStart = assistantPageSource.indexOf("<HomeHelpCard");
   const callout = assistantPageSource.indexOf("<HomeHelpBotCallout");
   const cardEnd = assistantPageSource.indexOf("</HomeHelpCard>", cardStart);
@@ -294,11 +295,16 @@ test("Home composes one inline launcher below the card copy", () => {
   assert.match(calloutSource, /<AssistantLauncherButton/u);
   assert.match(calloutSource, /imageSources=\{launcherImageSources\}/u);
   assert.match(calloutSource, /layoutVariant="inline"/u);
+  assert.match(calloutSource, /className="flex-col"/u);
   assert.doesNotMatch(calloutSource, /FLOATING_BOTTOM_INSET|desktopPlacement=|bottomInset=/u);
   assert.match(calloutSource, /currentMessage/u);
-  assert.match(calloutSource, /truncate whitespace-nowrap/u);
-  assert.doesNotMatch(calloutSource, /line-clamp|left-\[calc\(100%/u);
-  assert.match(calloutSource, /-left-2 top-1\/2/u);
+  assert.match(calloutSource, /order-first inline-flex/u);
+  assert.match(calloutSource, /inline-flex max-w-\[min\(18rem,calc\(100vw-4rem\)\)\][^"]*whitespace-normal[^"]*break-words/u);
+  assert.doesNotMatch(calloutSource, /order-first w-full|min-h-12 w-full/u);
+  assert.doesNotMatch(calloutSource, /truncate|whitespace-nowrap|line-clamp/u);
+  assert.match(calloutSource, /bottom-\[-6px\] left-1\/2/u);
+  assert.match(calloutSource, /rotate-45 rounded-\[4px\] border border-sky-100/u);
+  assert.doesNotMatch(calloutSource, /-left-2 top-1\/2/u);
   assert.match(calloutSource, /aria-haspopup="dialog"/u);
   assert.match(calloutSource, /aria-controls="home-help-assistant-dialog"/u);
   assert.match(calloutSource, /aria-expanded=\{chatOpen\}/u);
@@ -313,6 +319,34 @@ test("Home composes one inline launcher below the card copy", () => {
   assert.match(launcherSource, /h-\[54px\] w-\[54px\]/u);
   assert.match(launcherSource, /focus-visible:ring-2/u);
   assert.doesNotMatch(launcherSource, /focus:ring-4/u);
+});
+
+test("Home distinguishes localized quality, provider, manual, and quota failures", () => {
+  assert.match(assistantHookSource, /HELP_ANSWER_REWRITE_REQUIRED/u);
+  assert.match(assistantHookSource, /AI_RATE_LIMIT_EXCEEDED/u);
+  assert.match(assistantHookSource, /AI_SERVICE_UNAVAILABLE/u);
+  assert.match(assistantHookSource, /HELP_FEATURE_DISABLED/u);
+  assert.match(assistantHookSource, /HELP_KNOWLEDGE_UNAVAILABLE/u);
+  assert.match(assistantHookSource, /HomeHelp_ErrorRewriteRequired/u);
+  assert.match(assistantHookSource, /HomeHelp_ErrorAiRateLimit/u);
+  assert.match(assistantHookSource, /HomeHelp_ErrorAiUnavailable/u);
+  assert.match(assistantHookSource, /HomeHelp_ErrorFeatureDisabled/u);
+  assert.match(assistantHookSource, /HomeHelp_ErrorKnowledgeUnavailable/u);
+  assert.match(assistantHookSource, /HomeHelp_ErrorRequest/u);
+  assert.doesNotMatch(assistantHookSource, /if \(error\.status === 429\)[\s\S]{0,300}text: error\.message/u);
+  assert.match(assistantHookSource, /traceId: resolvedError\.traceId/u);
+  assert.match(homeViewSource, /HomeHelp_ErrorRewriteRequired = SR\["HomeHelp_ErrorRewriteRequired"\]\.Value/u);
+  assert.match(homeViewSource, /HomeHelp_ErrorAiUnavailable = SR\["HomeHelp_ErrorAiUnavailable"\]\.Value/u);
+  assert.match(homeViewSource, /HomeHelp_ErrorAiRateLimit = SR\["HomeHelp_ErrorAiRateLimit"\]\.Value/u);
+  assert.match(homeViewSource, /HomeHelp_ErrorFeatureDisabled = SR\["HomeHelp_ErrorFeatureDisabled"\]\.Value/u);
+  assert.match(homeViewSource, /HomeHelp_ErrorKnowledgeUnavailable = SR\["HomeHelp_ErrorKnowledgeUnavailable"\]\.Value/u);
+  localizedResourceSources.forEach((resourceSource) => {
+    assert.match(resourceSource, /<data name="HomeHelp_ErrorRewriteRequired"/u);
+    assert.match(resourceSource, /<data name="HomeHelp_ErrorAiUnavailable"/u);
+    assert.match(resourceSource, /<data name="HomeHelp_ErrorAiRateLimit"/u);
+    assert.match(resourceSource, /<data name="HomeHelp_ErrorFeatureDisabled"/u);
+    assert.match(resourceSource, /<data name="HomeHelp_ErrorKnowledgeUnavailable"/u);
+  });
 });
 
 test("Manual reuses the topic browser and is linked after the expense section", () => {

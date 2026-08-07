@@ -1809,7 +1809,13 @@
   <data name="HomeHelp_ChangeModule" xml:space="preserve"><value>返回选择其他部分</value></data>
   <data name="HomeHelp_Loading" xml:space="preserve"><value>正在搜索 CRM 指南…</value></data>
   <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>已超过查询次数限制。请在 15 分钟后重试。</value></data>
-  <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>助手当前不可用。</value></data>
+  <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>无法完成帮助请求。请稍等几秒后重试。</value></data>
+  <data name="HomeHelp_ErrorAiUnavailable" xml:space="preserve"><value>AI 服务未能完成回答。请稍等几秒后重试。</value></data>
+  <data name="HomeHelp_ErrorAiRateLimit" xml:space="preserve"><value>AI 服务正忙。请稍等几秒后重试。</value></data>
+  <data name="HomeHelp_ErrorFeatureDisabled" xml:space="preserve"><value>此环境未启用 AI 帮助。</value></data>
+  <data name="HomeHelp_ErrorKnowledgeUnavailable" xml:space="preserve"><value>助手目前无法访问 CRM 指南。请稍等几秒后重试。</value></data>
+  <data name="HomeHelp_ErrorRewriteRequired" xml:space="preserve"><value>我无法根据找到的信息生成清晰的回答。请补充一些细节后重新提问。</value></data>
+  <data name="HomeHelp_ErrorReference" xml:space="preserve"><value>支持参考编号：{0}</value></data>
   <data name="HomeHelp_NeedsSelection" xml:space="preserve"><value>请选择最接近的主题，以便我准确回答。</value></data>
   <data name="HomeHelp_NotDocumented" xml:space="preserve"><value>此信息尚未记录。</value></data>
   <data name="HomeHelp_TopicQuestionTemplate" xml:space="preserve"><value>说明如何使用 {0}。</value></data>

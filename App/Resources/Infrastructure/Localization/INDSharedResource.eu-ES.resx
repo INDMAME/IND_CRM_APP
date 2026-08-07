@@ -1813,7 +1813,13 @@
   <data name="HomeHelp_CatalogEmpty" xml:space="preserve"><value>Ez dago bat datorren gairik.</value></data>
   <data name="HomeHelp_Loading" xml:space="preserve"><value>CRM gidan bilatzen…</value></data>
   <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>Kontsulta-muga gainditu da. Mesedez, saiatu berriro 15 minutu barru.</value></data>
-  <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>Laguntzailea ez dago erabilgarri une honetan.</value></data>
+  <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>Ezin izan da laguntza-eskaera osatu. Saiatu berriro segundo batzuk barru.</value></data>
+  <data name="HomeHelp_ErrorAiUnavailable" xml:space="preserve"><value>IA zerbitzuak ezin izan du erantzuna osatu. Saiatu berriro segundo batzuk barru.</value></data>
+  <data name="HomeHelp_ErrorAiRateLimit" xml:space="preserve"><value>IA zerbitzua lanpetuta dago. Saiatu berriro segundo batzuk barru.</value></data>
+  <data name="HomeHelp_ErrorFeatureDisabled" xml:space="preserve"><value>IA bidezko laguntza ez dago gaituta ingurune honetan.</value></data>
+  <data name="HomeHelp_ErrorKnowledgeUnavailable" xml:space="preserve"><value>Laguntzaileak ezin du CRM gida kontsultatu une honetan. Saiatu berriro segundo batzuk barru.</value></data>
+  <data name="HomeHelp_ErrorRewriteRequired" xml:space="preserve"><value>Ezin izan dut aurkitutako informazioarekin erantzun argirik prestatu. Birformulatu galdera xehetasun pixka batekin.</value></data>
+  <data name="HomeHelp_ErrorReference" xml:space="preserve"><value>Laguntzarako erreferentzia: {0}</value></data>
   <data name="HomeHelp_NeedsSelection" xml:space="preserve"><value>Aukeratu gairik hurbilena zehaztasunez erantzun ahal izateko.</value></data>
   <data name="HomeHelp_NotDocumented" xml:space="preserve"><value>Informazio hau oraindik ez dago dokumentatuta.</value></data>
   <data name="HomeHelp_TopicQuestionTemplate" xml:space="preserve"><value>Azaldu nola erabili {0}.</value></data>

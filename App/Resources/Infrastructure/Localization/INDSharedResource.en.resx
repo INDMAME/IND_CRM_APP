@@ -1809,7 +1809,13 @@
   <data name="HomeHelp_ChangeModule" xml:space="preserve"><value>Choose another section</value></data>
   <data name="HomeHelp_Loading" xml:space="preserve"><value>Searching the CRM guide…</value></data>
   <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>The query limit has been exceeded. Please try again in 15 minutes.</value></data>
-  <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>The assistant is not available right now.</value></data>
+  <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>The help request could not be completed. Try again in a few seconds.</value></data>
+  <data name="HomeHelp_ErrorAiUnavailable" xml:space="preserve"><value>The AI service could not complete the answer. Try again in a few seconds.</value></data>
+  <data name="HomeHelp_ErrorAiRateLimit" xml:space="preserve"><value>The AI service is busy. Try again in a few seconds.</value></data>
+  <data name="HomeHelp_ErrorFeatureDisabled" xml:space="preserve"><value>AI help is not enabled in this environment.</value></data>
+  <data name="HomeHelp_ErrorKnowledgeUnavailable" xml:space="preserve"><value>The assistant cannot access the CRM guide right now. Try again in a few seconds.</value></data>
+  <data name="HomeHelp_ErrorRewriteRequired" xml:space="preserve"><value>I could not prepare a clear answer from the information found. Rephrase the question with a little more detail.</value></data>
+  <data name="HomeHelp_ErrorReference" xml:space="preserve"><value>Support reference: {0}</value></data>
   <data name="HomeHelp_NeedsSelection" xml:space="preserve"><value>Choose the closest topic so I can answer precisely.</value></data>
   <data name="HomeHelp_NotDocumented" xml:space="preserve"><value>This information is not documented yet.</value></data>
   <data name="HomeHelp_TopicQuestionTemplate" xml:space="preserve"><value>Explain how to use {0}.</value></data>

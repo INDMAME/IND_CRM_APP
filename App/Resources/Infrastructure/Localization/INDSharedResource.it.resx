@@ -1813,7 +1813,13 @@
   <data name="HomeHelp_CatalogEmpty" xml:space="preserve"><value>Nessun argomento corrispondente.</value></data>
   <data name="HomeHelp_Loading" xml:space="preserve"><value>Ricerca nella guida CRM…</value></data>
   <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>È stato superato il limite di richieste. Riprova tra 15 minuti.</value></data>
-  <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>L'assistente non è disponibile in questo momento.</value></data>
+  <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>Non è stato possibile completare la richiesta di assistenza. Riprova tra qualche secondo.</value></data>
+  <data name="HomeHelp_ErrorAiUnavailable" xml:space="preserve"><value>Il servizio di IA non ha potuto completare la risposta. Riprova tra qualche secondo.</value></data>
+  <data name="HomeHelp_ErrorAiRateLimit" xml:space="preserve"><value>Il servizio di IA è occupato. Riprova tra qualche secondo.</value></data>
+  <data name="HomeHelp_ErrorFeatureDisabled" xml:space="preserve"><value>L'assistenza con IA non è abilitata in questo ambiente.</value></data>
+  <data name="HomeHelp_ErrorKnowledgeUnavailable" xml:space="preserve"><value>L'assistente non può consultare la guida CRM in questo momento. Riprova tra qualche secondo.</value></data>
+  <data name="HomeHelp_ErrorRewriteRequired" xml:space="preserve"><value>Non sono riuscito a preparare una risposta chiara con le informazioni trovate. Riformula la domanda con qualche dettaglio in più.</value></data>
+  <data name="HomeHelp_ErrorReference" xml:space="preserve"><value>Riferimento per l'assistenza: {0}</value></data>
   <data name="HomeHelp_NeedsSelection" xml:space="preserve"><value>Scegli l'argomento più vicino così potrò rispondere con precisione.</value></data>
   <data name="HomeHelp_NotDocumented" xml:space="preserve"><value>Questa informazione non è ancora documentata.</value></data>
   <data name="HomeHelp_TopicQuestionTemplate" xml:space="preserve"><value>Spiegami come utilizzare {0}.</value></data>

@@ -1809,7 +1809,13 @@
   <data name="HomeHelp_ChangeModule" xml:space="preserve"><value>Volver a seleccionar sección</value></data>
   <data name="HomeHelp_Loading" xml:space="preserve"><value>Buscando en la guía del CRM…</value></data>
   <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>Se ha superado el límite de consultas. Por favor, vuelva a intentarlo dentro de 15 minutos.</value></data>
-  <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>El asistente no está disponible en este momento.</value></data>
+  <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>No se ha podido completar la solicitud de ayuda. Vuelve a intentarlo en unos segundos.</value></data>
+  <data name="HomeHelp_ErrorAiUnavailable" xml:space="preserve"><value>El servicio de IA no ha podido completar la respuesta. Vuelve a intentarlo en unos segundos.</value></data>
+  <data name="HomeHelp_ErrorAiRateLimit" xml:space="preserve"><value>El servicio de IA está ocupado. Vuelve a intentarlo en unos segundos.</value></data>
+  <data name="HomeHelp_ErrorFeatureDisabled" xml:space="preserve"><value>La ayuda con IA no está habilitada en este entorno.</value></data>
+  <data name="HomeHelp_ErrorKnowledgeUnavailable" xml:space="preserve"><value>El asistente no puede consultar el manual del CRM en este momento. Vuelve a intentarlo en unos segundos.</value></data>
+  <data name="HomeHelp_ErrorRewriteRequired" xml:space="preserve"><value>No he podido preparar una respuesta clara con la información encontrada. Reformula la pregunta con un poco más de detalle.</value></data>
+  <data name="HomeHelp_ErrorReference" xml:space="preserve"><value>Referencia para soporte: {0}</value></data>
   <data name="HomeHelp_NeedsSelection" xml:space="preserve"><value>Elige el tema más cercano para que pueda responder con precisión.</value></data>
   <data name="HomeHelp_NotDocumented" xml:space="preserve"><value>Esta información todavía no está documentada.</value></data>
   <data name="HomeHelp_TopicQuestionTemplate" xml:space="preserve"><value>Explícame cómo utilizar {0}.</value></data>

@@ -17,7 +17,7 @@ type HomeHelpAssistantProps = {
 };
 
 const BOT_IMAGE_SRC = "/images/kaloria_bot.png";
-const HIDDEN_HOME_HELP_MODULE_ID = "introduction";
+const HIDDEN_HOME_HELP_MODULE_IDS = new Set(["introduction", "troubleshooting", "glossary"]);
 const noopChartSelection = () => {};
 
 // Adapts Home help state to the shared assistant shell.
@@ -35,7 +35,7 @@ const HomeHelpAssistant = ({
     state: catalogState,
     errorMessage: catalogError,
   } = useHomeHelpModuleCatalog({ enabled: isOpen, responseLocale });
-  const selectableModules = modules.filter((module) => module.id !== HIDDEN_HOME_HELP_MODULE_ID);
+  const selectableModules = modules.filter((module) => !HIDDEN_HOME_HELP_MODULE_IDS.has(module.id));
   const selectedModule = selectableModules.find((module) => module.id === selectedModuleId) || null;
   const {
     isSending,

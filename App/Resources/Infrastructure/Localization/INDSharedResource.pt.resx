@@ -1813,7 +1813,13 @@
   <data name="HomeHelp_CatalogEmpty" xml:space="preserve"><value>Não existem temas correspondentes.</value></data>
   <data name="HomeHelp_Loading" xml:space="preserve"><value>A pesquisar no guia do CRM…</value></data>
   <data name="HomeHelp_ErrorRateLimit" xml:space="preserve"><value>O limite de consultas foi excedido. Por favor, tente novamente dentro de 15 minutos.</value></data>
-  <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>O assistente não está disponível neste momento.</value></data>
+  <data name="HomeHelp_ErrorRequest" xml:space="preserve"><value>Não foi possível concluir o pedido de ajuda. Tente novamente dentro de alguns segundos.</value></data>
+  <data name="HomeHelp_ErrorAiUnavailable" xml:space="preserve"><value>O serviço de IA não conseguiu concluir a resposta. Tente novamente dentro de alguns segundos.</value></data>
+  <data name="HomeHelp_ErrorAiRateLimit" xml:space="preserve"><value>O serviço de IA está ocupado. Tente novamente dentro de alguns segundos.</value></data>
+  <data name="HomeHelp_ErrorFeatureDisabled" xml:space="preserve"><value>A ajuda com IA não está ativada neste ambiente.</value></data>
+  <data name="HomeHelp_ErrorKnowledgeUnavailable" xml:space="preserve"><value>O assistente não pode consultar o manual do CRM neste momento. Tente novamente dentro de alguns segundos.</value></data>
+  <data name="HomeHelp_ErrorRewriteRequired" xml:space="preserve"><value>Não consegui preparar uma resposta clara com a informação encontrada. Reformule a pergunta com um pouco mais de detalhe.</value></data>
+  <data name="HomeHelp_ErrorReference" xml:space="preserve"><value>Referência para suporte: {0}</value></data>
   <data name="HomeHelp_NeedsSelection" xml:space="preserve"><value>Escolha o tema mais próximo para que eu possa responder com precisão.</value></data>
   <data name="HomeHelp_NotDocumented" xml:space="preserve"><value>Esta informação ainda não está documentada.</value></data>
   <data name="HomeHelp_TopicQuestionTemplate" xml:space="preserve"><value>Explique como utilizar {0}.</value></data>

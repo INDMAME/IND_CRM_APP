@@ -40,6 +40,7 @@ const HomeHelpBotCallout = ({
       buttonRef={buttonRef}
       imageSources={launcherImageSources}
       layoutVariant="inline"
+      className="flex-col"
       aria-label={ariaLabel}
       aria-haspopup="dialog"
       aria-expanded={chatOpen}
@@ -52,12 +53,14 @@ const HomeHelpBotCallout = ({
     >
       <span
         aria-hidden="true"
-        className="pointer-events-none relative min-w-0 max-w-[min(32rem,calc(100vw-9rem))] truncate whitespace-nowrap rounded-[var(--radius-xl)] border border-sky-100 bg-white px-3 py-2 text-center text-[12px] font-semibold leading-4 text-primary shadow-[0_12px_30px_rgba(15,23,42,0.12)]"
+        className="pointer-events-none relative order-first inline-flex max-w-[min(18rem,calc(100vw-4rem))]"
       >
-        {currentMessage}
+        <span className="relative z-10 inline-flex max-w-[min(18rem,calc(100vw-4rem))] items-center justify-center whitespace-normal break-words rounded-[var(--radius-xl)] border border-sky-100 bg-white px-3 py-2 text-center text-[12px] font-semibold leading-4 text-primary shadow-[0_12px_30px_rgba(15,23,42,0.12)]">
+          {currentMessage}
+        </span>
         <span
           aria-hidden="true"
-          className="absolute -left-2 top-1/2 h-4 w-4 -translate-y-1/2 rotate-45 border-b border-l border-sky-100 bg-white"
+          className="absolute bottom-[-6px] left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 rounded-[4px] border border-sky-100 bg-white"
         />
       </span>
     </AssistantLauncherButton>

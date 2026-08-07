@@ -9,7 +9,7 @@ import {
 import type { AssistantChatMessage } from "../../../components/commons/chat/assistantChatTypes.ts";
 import { createMarkdownMessage } from "../../../components/commons/chat/chatMessageFactories.ts";
 import { ApiFetchError } from "../../../services/apiService.ts";
-import { indT } from "../../../utils/indI18n.ts";
+import { indFormat, indT } from "../../../utils/indI18n.ts";
 import { askCrmHelp } from "./helpService.ts";
 import {
   buildBoundedHelpHistory,
@@ -76,23 +76,55 @@ type SendQuestionOptions = {
 };
 
 const ASSISTANT_QUERY_RATE_LIMIT_ERROR_CODE = "ASSISTANT_QUERY_RATE_LIMIT_EXCEEDED";
+const HELP_ANSWER_REWRITE_REQUIRED_ERROR_CODE = "HELP_ANSWER_REWRITE_REQUIRED";
+const AI_RATE_LIMIT_ERROR_CODE = "AI_RATE_LIMIT_EXCEEDED";
+const AI_SERVICE_UNAVAILABLE_ERROR_CODE = "AI_SERVICE_UNAVAILABLE";
+const HELP_FEATURE_DISABLED_ERROR_CODE = "HELP_FEATURE_DISABLED";
+const HELP_KNOWLEDGE_UNAVAILABLE_ERROR_CODE = "HELP_KNOWLEDGE_UNAVAILABLE";
 
-// Distinguishes the configured 15-minute quota from short-lived 429 responses.
-const isAssistantQueryRateLimitError = (error: ApiFetchError): boolean => {
-  if (error.status !== 429 || !error.responseBody) return false;
+type HelpErrorEnvelope = {
+  errorCode: string;
+  traceId: string;
+};
+
+// Reads only the safe routing fields required to present a useful localized error.
+const readHelpErrorEnvelope = (error: ApiFetchError): HelpErrorEnvelope => {
+  if (!error.responseBody) return { errorCode: "", traceId: "" };
 
   try {
     const payload = JSON.parse(error.responseBody) as Record<string, unknown>;
     const errorCode = payload.ErrorCode ?? payload.errorCode;
-    return errorCode === ASSISTANT_QUERY_RATE_LIMIT_ERROR_CODE;
+    const traceId = payload.TraceId ?? payload.traceId;
+    return {
+      errorCode: typeof errorCode === "string" ? errorCode.trim() : "",
+      traceId: typeof traceId === "string" ? traceId.trim() : "",
+    };
   } catch {
-    return false;
+    return { errorCode: "", traceId: "" };
   }
 };
 
+// Distinguishes the configured 15-minute quota from short-lived 429 responses.
+const isAssistantQueryRateLimitError = (error: ApiFetchError): boolean => {
+  if (error.status !== 429) return false;
+  return readHelpErrorEnvelope(error).errorCode === ASSISTANT_QUERY_RATE_LIMIT_ERROR_CODE;
+};
+
+// Adds a safe correlation reference when support may need to inspect the server trace.
+const appendSupportReference = (text: string, traceId: string): string =>
+  traceId
+    ? `${text}\n\n${indFormat("HomeHelp_ErrorReference", "Support reference: {0}", traceId)}`
+    : text;
+
 // Resolves a localized safe error without exposing upstream response bodies.
-const resolveAskError = (error: unknown): { text: string; retryable: boolean; status?: number } => {
+const resolveAskError = (error: unknown): {
+  text: string;
+  retryable: boolean;
+  status?: number;
+  traceId?: string;
+} => {
   if (error instanceof ApiFetchError) {
+    const envelope = readHelpErrorEnvelope(error);
     if (isAssistantQueryRateLimitError(error)) {
       return {
         text: indT(
@@ -104,23 +136,107 @@ const resolveAskError = (error: unknown): { text: string; retryable: boolean; st
       };
     }
 
-    if (error.status === 429) {
+    if (envelope.errorCode === HELP_ANSWER_REWRITE_REQUIRED_ERROR_CODE) {
       return {
-        text: error.message || indT("HomeHelp_ErrorRequest", "The assistant is not available right now."),
-        retryable: true,
+        text: indT(
+          "HomeHelp_ErrorRewriteRequired",
+          "I could not prepare a clear answer from the information found. Rephrase the question with a little more detail."
+        ),
+        retryable: false,
         status: error.status,
+        traceId: envelope.traceId || undefined,
       };
     }
 
+    if (envelope.errorCode === AI_RATE_LIMIT_ERROR_CODE) {
+      return {
+        text: appendSupportReference(
+          indT("HomeHelp_ErrorAiRateLimit", "The AI service is busy. Try again in a few seconds."),
+          envelope.traceId
+        ),
+        retryable: true,
+        status: error.status,
+        traceId: envelope.traceId || undefined,
+      };
+    }
+
+    if (envelope.errorCode === HELP_FEATURE_DISABLED_ERROR_CODE) {
+      return {
+        text: appendSupportReference(
+          indT("HomeHelp_ErrorFeatureDisabled", "AI help is not enabled in this environment."),
+          envelope.traceId
+        ),
+        retryable: false,
+        status: error.status,
+        traceId: envelope.traceId || undefined,
+      };
+    }
+
+    if (envelope.errorCode === HELP_KNOWLEDGE_UNAVAILABLE_ERROR_CODE) {
+      return {
+        text: appendSupportReference(
+          indT(
+            "HomeHelp_ErrorKnowledgeUnavailable",
+            "The assistant cannot access the CRM guide right now. Try again in a few seconds."
+          ),
+          envelope.traceId
+        ),
+        retryable: true,
+        status: error.status,
+        traceId: envelope.traceId || undefined,
+      };
+    }
+
+    if (envelope.errorCode === AI_SERVICE_UNAVAILABLE_ERROR_CODE) {
+      return {
+        text: appendSupportReference(
+          indT(
+            "HomeHelp_ErrorAiUnavailable",
+            "The AI service could not complete the answer. Try again in a few seconds."
+          ),
+          envelope.traceId
+        ),
+        retryable: true,
+        status: error.status,
+        traceId: envelope.traceId || undefined,
+      };
+    }
+
+    if (error.status === 429) {
+      return {
+        text: appendSupportReference(
+          indT("HomeHelp_ErrorRequest", "The help request could not be completed. Try again in a few seconds."),
+          envelope.traceId
+        ),
+        retryable: true,
+        status: error.status,
+        traceId: envelope.traceId || undefined,
+      };
+    }
+
+    const serviceUnavailable = Boolean(error.status && [500, 502, 503, 504].includes(error.status));
+    const fallbackText = serviceUnavailable
+      ? indT(
+          "HomeHelp_ErrorRequest",
+          "The help request could not be completed. Try again in a few seconds."
+        )
+      : error.message || indT("HomeHelp_ErrorRequest", "The help request could not be completed.");
+    const text = serviceUnavailable
+      ? appendSupportReference(fallbackText, envelope.traceId)
+      : fallbackText;
     return {
-      text: error.message || indT("HomeHelp_ErrorRequest", "The assistant is not available right now."),
-      retryable: Boolean(error.status && [500, 502, 503, 504].includes(error.status)),
+      text,
+      retryable: serviceUnavailable,
       status: error.status,
+      traceId: envelope.traceId || undefined,
     };
   }
 
   return {
-    text: indT("HomeHelp_ErrorRequest", "The assistant is not available right now."),
+    text: indT(
+      "HomeHelp_ErrorRequest",
+      "The help request could not be completed. Try again in a few seconds."
+    ),
     retryable: true,
   };
 };
@@ -340,7 +456,7 @@ export const useHomeHelpAssistant = ({
           message: createMarkdownMessage(resolvedError.text),
           state: "error",
           retryQuestion: resolvedError.retryable ? question : null,
-          meta: { httpStatus: resolvedError.status },
+          meta: { httpStatus: resolvedError.status, traceId: resolvedError.traceId },
         };
         setMessages((current) =>
           current.map((message) => (message.id === assistantMessageId ? failedMessage : message))
