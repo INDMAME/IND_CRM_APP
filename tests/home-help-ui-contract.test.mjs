@@ -280,7 +280,7 @@ test("Home uses standard page spacing and stretches its assistant card through t
   assert.match(cardSource, /relative z-10 flex flex-1/u);
   assert.match(cardSource, /flex w-full flex-col justify-center px-5 py-6/u);
   assert.match(cardSource, /children\?: ReactNode/u);
-  assert.match(cardSource, /mt-10 flex w-full justify-center sm:mt-12/u);
+  assert.match(cardSource, /mt-14 flex w-full justify-center sm:mt-16/u);
   assert.doesNotMatch(cardSource, /justify-evenly/u);
   assert.match(cardSource, /relative z-10 shrink-0/u);
 });
