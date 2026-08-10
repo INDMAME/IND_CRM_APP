@@ -96,7 +96,7 @@ const HomeHelpTopicBrowser = ({
 
       <div
         id="manual-help-topic-search-results"
-        className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-scroll overscroll-contain [scrollbar-gutter:stable] pr-1"
+        className="mt-3 max-h-[min(65dvh,36rem)] min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain [scrollbar-gutter:stable] pr-1"
         aria-busy={isSearchPending}
       >
         {isSearchPending ? (

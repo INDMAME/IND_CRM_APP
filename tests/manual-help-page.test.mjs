@@ -148,7 +148,7 @@ test("Manual modules use a one-open-or-none accordion with stable scrolling", ()
   assert.match(browserSource, /const open = openModuleId === module\.id/u);
   assert.match(browserSource, /onClick=\{\(event\) => \{[\s\S]*event\.preventDefault\(\)[\s\S]*handleModuleToggle\(module\.id\)/u);
   assert.match(browserSource, /setOpenModuleId\(normalizedNextQuery \? nextFilteredModules\[0\]\?\.id \|\| "" : ""\)/u);
-  assert.match(browserSource, /overflow-y-scroll[^"\n]*\[scrollbar-gutter:stable\]/u);
+  assert.match(browserSource, /overflow-y-auto[^"\n]*\[scrollbar-gutter:stable\]/u);
   assert.doesNotMatch(browserSource, /openModuleIds|new Set\(|onToggle=/u);
 });
 
@@ -182,13 +182,15 @@ test("Manual keeps troubleshooting and glossary visible without chatbot filterin
   assert.doesNotMatch(viewSource, /HIDDEN_HOME_HELP_MODULE_IDS|\.filter\(/u);
 });
 
-test("Manual propagates the available page height to the scrollable catalog", () => {
+test("Manual bounds the topic list so filtered mobile results remain scrollable", () => {
   assert.match(manualPageSource, /class="flex min-h-0 w-full flex-1 flex-col py-4 md:py-8"/u);
   assert.match(viewSource, /flex min-h-0 w-full max-w-3xl flex-1 flex-col/u);
   assert.match(viewSource, /flex min-h-0 flex-1 flex-col rounded/u);
   assert.match(browserSource, /flex min-h-0 w-full flex-1 flex-col/u);
-  assert.match(browserSource, /mt-3 min-h-0 flex-1[^"]*overflow-y-scroll/u);
-  assert.doesNotMatch(browserSource, /max-h-\[min\(65vh,36rem\)\]/u);
+  assert.match(
+    browserSource,
+    /mt-3 max-h-\[min\(65dvh,36rem\)\] min-h-0 flex-1[^"]*overflow-y-auto[^"]*overscroll-contain/u,
+  );
 });
 
 test("the glossary article retains definitions from the beginning, middle, and end", () => {
