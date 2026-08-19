@@ -4568,9 +4568,20 @@ namespace IND_CRM_APP.Controllers
             }
 
             var snapshot = mutationGuard.Snapshot;
+            var effectiveDescription = snapshot.Description;
+            if (string.IsNullOrWhiteSpace(effectiveDescription))
+            {
+                effectiveDescription = $"Hoja de gastos {hojaGastosId}";
+                _logger.LogInformation(
+                    "Applied legacy expense sheet description fallback. HojaGastosId: {HojaGastosId}. CurrentStatus: {CurrentStatus}. TargetStatus: {TargetStatus}.",
+                    hojaGastosId,
+                    snapshot.StatusCode?.ToString(CultureInfo.InvariantCulture) ?? "<null>",
+                    request.ExpenseSheetStatus?.ToString(CultureInfo.InvariantCulture) ?? "<null>");
+            }
+
             var effectiveRequest = new ExpenseSheetUpdateRequest
             {
-                Description = snapshot.Description,
+                Description = effectiveDescription,
                 CurrencyCode = snapshot.CurrencyCode,
                 ExchRate = NormalizeExpenseSheetExchangeRateForWrite(snapshot.CurrencyCode, snapshot.ExchangeRate),
                 ProjId = snapshot.ProjectId,
