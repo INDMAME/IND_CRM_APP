@@ -93,7 +93,7 @@ export type UseExpenseSheetQuickTicketFlowArgs = {
   isSheetLocked: boolean;
   linkToSheet?: boolean;
   onForbidden: () => void;
-  onCompleted?: (result: { fileId: string; linkedToSheet: boolean }) => void;
+  onCompleted?: (result: { fileId: string; linkedToSheet: boolean; processedByAI: boolean | null }) => void;
 };
 
 export type QuickFlowProgressKey =

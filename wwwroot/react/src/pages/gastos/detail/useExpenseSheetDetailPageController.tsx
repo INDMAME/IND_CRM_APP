@@ -24,6 +24,7 @@ import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
 import { useExpenseSheetQuickTicketFlow } from "./useExpenseSheetQuickTicketFlow.ts";
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
 import { LinkTicketIcon, NewLineIcon, NewTicketIcon } from "../components/ExpenseSheetActionIcons.tsx";
+import { EXPENSE_AI_DETECTION_QUERY_PARAM } from "../hooks/useExpenseGastoTypeWarning.ts";
 
 const LINES_PAGE_SIZE = 6;
 const EXPENSE_STATUS_APPROVAL_REQUESTED = 1;
@@ -642,6 +643,9 @@ export const useExpenseSheetDetailPageController = () => {
         mode: "edit",
         origin: "sheet-create",
       });
+      if (result?.processedByAI === true) {
+        query.set(EXPENSE_AI_DETECTION_QUERY_PARAM, "1");
+      }
       if (currentSheetId) {
         saveExpenseTicketReturnContext({
           fileId: createdFileId,

@@ -17,6 +17,10 @@ import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { navigateToExpenseUrl, reloadExpensePage } from "../utils/expenseNavigation.ts";
 import { appendExpenseTicketReturnQuery, saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
 import { getExpenseGastoTypeOptions } from "../constants/expenseGastoTypeCatalog.ts";
+import {
+  useExpenseGastoTypeWarning,
+  type ExpenseGastoTypeWarningDialogOptions,
+} from "../hooks/useExpenseGastoTypeWarning.ts";
 import { areExpenseNumericInputsEquivalent, formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 import {
   calculateExpenseLineAmountMSTForCurrency,
@@ -717,6 +721,26 @@ const ExpenseSheetLineDetailContent = () => {
     setStatus,
   });
 
+  const openGastoTypeWarning = useCallback(
+    (options: ExpenseGastoTypeWarningDialogOptions) => {
+      setModalError("");
+      openConfirm(options);
+    },
+    [openConfirm, setModalError]
+  );
+  const { warnForChange: warnForGastoTypeChange } = useExpenseGastoTypeWarning({
+    openWarning: openGastoTypeWarning,
+    dialogOpen: modal.open,
+  });
+  const handleDraftTypeValueCodeChangeWithWarning = useCallback(
+    (value: string) => {
+      const previousValue = draftTypeValueCode;
+      handleDraftTypeValueCodeChange(value);
+      warnForGastoTypeChange(previousValue, value);
+    },
+    [draftTypeValueCode, handleDraftTypeValueCodeChange, warnForGastoTypeChange]
+  );
+
   const { handleUpdate, handleDelete, handleDetachTicket } = useExpenseSheetLineDetailMutations({
     busy,
     isEditing,
@@ -1068,7 +1092,7 @@ const ExpenseSheetLineDetailContent = () => {
           qtyInvalid={qtyInvalid}
           onDraftDescriptionChange={handleDraftDescriptionChange}
           onDraftTransDateChange={handleLineTransDateChange}
-          onDraftTypeValueCodeChange={handleDraftTypeValueCodeChange}
+          onDraftTypeValueCodeChange={handleDraftTypeValueCodeChangeWithWarning}
           onDraftPriceChange={handleLinePriceChange}
           onDraftQtyChange={handleLineQtyChange}
           onDraftAmountCurrencyChange={handleLineAmountCurrencyChange}

@@ -438,6 +438,12 @@
   <data name="ExpenseSheets_Field_Type" xml:space="preserve">
     <value>Categoria</value>
   </data>
+  <data name="ExpenseSheets_GasolineCategory_Warning_Title" xml:space="preserve">
+    <value>Avviso sulla categoria «Carburante»</value>
+  </data>
+  <data name="ExpenseSheets_GasolineCategory_Warning_Body" xml:space="preserve">
+    <value>La categoria «Carburante» viene normalmente utilizzata per le spese di carburante dei veicoli a noleggio. Se desideri richiedere il rimborso per l'uso di un veicolo personale e hai un accordo con l'azienda, seleziona la categoria «Km».</value>
+  </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>Importo</value>
   </data>

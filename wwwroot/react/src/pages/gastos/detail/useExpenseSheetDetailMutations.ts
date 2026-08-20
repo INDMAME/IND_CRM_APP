@@ -3,7 +3,6 @@ import { indT } from "../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../utils/permissions.ts";
 import type {
   ExpenseSheetCreateRequest,
-  ExpenseSheetHeaderUpdateRequest,
   ExpenseSheetLine,
   ExpenseSheetLineUpdateRequest,
 } from "../expenseTypes.ts";
@@ -11,7 +10,6 @@ import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts"
 import {
   normalizeExpenseReimbursableExpense,
   REIMBURSABLE_EXPENSE_BOTH_VALUE,
-  resolveExpenseReimbursableExpenseForWrite,
 } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { executeExpenseMutation } from "../hooks/expenseMutationUtils.ts";
 import {
@@ -22,6 +20,10 @@ import {
   updateExpenseSheetHeader,
 } from "../utils/expenseApi.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
+import {
+  buildExpenseSheetFullUpdatePayload,
+  buildExpenseSheetStatusTransitionPayload,
+} from "./expenseSheetHeaderPayloads.ts";
 
 type UseExpenseSheetDetailMutationsArgs = {
   busy: boolean;
@@ -187,53 +189,6 @@ export const useExpenseSheetDetailMutations = ({
   setStatus,
   setIsEditing,
 }: UseExpenseSheetDetailMutationsArgs) => {
-  const buildUpdatePayload = useCallback(
-    (
-      nextStatus?: number | null,
-      statusCommentOverride?: string | null
-    ): { payload: ExpenseSheetHeaderUpdateRequest } | { error: string } => {
-      const hasExplicitStatusCommentOverride = statusCommentOverride !== undefined;
-      const normalizedDescription = String(draftDescription || "").trim();
-      const normalizedProjectId = String(draftProjectId || "").trim();
-      const normalizedEstadoComentarios = String(
-        statusCommentOverride ?? draftEstadoComentarios ?? ""
-      ).trim();
-      const reimbursableExpenseForWrite = resolveExpenseReimbursableExpenseForWrite(
-        draftReimbursableExpense,
-        isCreateMode
-      );
-      const resolvedExpenseSheetStatus =
-        nextStatus ?? (currentExpenseSheetStatus != null ? Number(currentExpenseSheetStatus) : undefined);
-
-      if (!normalizedDescription) {
-        return {
-          error: indT("ExpenseSheets_Validation_DescriptionRequired", "Description is required."),
-        };
-      }
-
-      return {
-        payload: {
-          description: normalizedDescription,
-          projId: normalizedProjectId || undefined,
-          expenseSheetStatus: resolvedExpenseSheetStatus,
-          reimbursableExpense: reimbursableExpenseForWrite,
-          // Preserve explicit empty status comments so the backend can clear the stored value.
-          estadoComentarios: hasExplicitStatusCommentOverride
-            ? normalizedEstadoComentarios
-            : (normalizedEstadoComentarios || undefined),
-        },
-      };
-    },
-    [
-      currentExpenseSheetStatus,
-      draftDescription,
-      draftEstadoComentarios,
-      draftProjectId,
-      draftReimbursableExpense,
-      isCreateMode,
-    ]
-  );
-
   const handleUpdate = useCallback(async () => {
     if (busy || !isEditing) return false;
     if (!isCreateMode && isEditLocked) return false;
@@ -244,10 +199,18 @@ export const useExpenseSheetDetailMutations = ({
       return false;
     }
 
-    const payloadResult = buildUpdatePayload();
-    if ("error" in payloadResult) {
-      setModalError(payloadResult.error);
-      setStatus(payloadResult.error);
+    const payloadResult = buildExpenseSheetFullUpdatePayload({
+      draftDescription,
+      draftProjectId,
+      draftEstadoComentarios,
+      draftReimbursableExpense,
+      currentExpenseSheetStatus,
+      isCreateMode,
+    });
+    if ("errorKey" in payloadResult) {
+      const validationMessage = indT(payloadResult.errorKey, "Description is required.");
+      setModalError(validationMessage);
+      setStatus(validationMessage);
       return false;
     }
 
@@ -305,9 +268,13 @@ export const useExpenseSheetDetailMutations = ({
     return result.ok;
   }, [
     busy,
-    buildUpdatePayload,
     canCreateExpense,
     canEditExpense,
+    currentExpenseSheetStatus,
+    draftDescription,
+    draftEstadoComentarios,
+    draftProjectId,
+    draftReimbursableExpense,
     isCreateMode,
     isEditLocked,
     isEditing,
@@ -444,12 +411,14 @@ export const useExpenseSheetDetailMutations = ({
         return false;
       }
 
-      const payloadResult = buildUpdatePayload(nextStatus, statusCommentOverride);
-      if ("error" in payloadResult) {
-        setModalError(payloadResult.error);
-        setStatus(payloadResult.error);
-        return false;
-      }
+      const payload = buildExpenseSheetStatusTransitionPayload({
+        draftDescription,
+        draftProjectId,
+        draftEstadoComentarios,
+        draftReimbursableExpense,
+        nextStatus,
+        statusCommentOverride,
+      });
 
       const result = await executeExpenseMutation({
         startStatus,
@@ -458,7 +427,7 @@ export const useExpenseSheetDetailMutations = ({
         setBusy,
         setStatus,
         action: async () => {
-          const response = await updateExpenseSheetHeader(sheetId, payloadResult.payload);
+          const response = await updateExpenseSheetHeader(sheetId, payload);
 
           if (!response.Success) {
             throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
@@ -474,8 +443,11 @@ export const useExpenseSheetDetailMutations = ({
     },
     [
       busy,
-      buildUpdatePayload,
       canTransitionStatus,
+      draftDescription,
+      draftEstadoComentarios,
+      draftProjectId,
+      draftReimbursableExpense,
       isCreateMode,
       setBusy,
       setIsEditing,

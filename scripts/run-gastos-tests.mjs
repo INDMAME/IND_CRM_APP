@@ -7,6 +7,7 @@ const repoRoot = path.resolve(import.meta.dirname, "..");
 const outDir = path.join(repoRoot, ".playwright", ".tmp");
 const testFiles = [
   "gastos-currency-settlement.test.ts",
+  "gastos-expense-gasto-type-warning.test.ts",
   "gastos-expense-sheet-status-transition.test.ts",
 ];
 

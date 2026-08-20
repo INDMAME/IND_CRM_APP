@@ -438,6 +438,12 @@
   <data name="ExpenseSheets_Field_Type" xml:space="preserve">
     <value>Kategoria</value>
   </data>
+  <data name="ExpenseSheets_GasolineCategory_Warning_Title" xml:space="preserve">
+    <value>«Erregaia» kategoriari buruzko oharra</value>
+  </data>
+  <data name="ExpenseSheets_GasolineCategory_Warning_Body" xml:space="preserve">
+    <value>«Erregaia» kategoria alokairuko ibilgailuen erregai-gastuetarako erabili ohi da. Norberaren ibilgailua erabiltzeagatik sortutako gastuen itzulketa eskatu nahi baduzu eta enpresarekin horretarako akordioa baduzu, hautatu «Km» kategoria.</value>
+  </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>Zenbatekoa</value>
   </data>

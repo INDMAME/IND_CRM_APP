@@ -426,6 +426,12 @@
   <data name="ExpenseSheets_Field_Type" xml:space="preserve">
     <value>Categoria</value>
   </data>
+  <data name="ExpenseSheets_GasolineCategory_Warning_Title" xml:space="preserve">
+    <value>Aviso sobre a categoria «Combustível»</value>
+  </data>
+  <data name="ExpenseSheets_GasolineCategory_Warning_Body" xml:space="preserve">
+    <value>A categoria «Combustível» é habitualmente utilizada para despesas de combustível de veículos de aluguer. Se pretender solicitar o reembolso pela utilização de veículo próprio e existir um acordo com a empresa, selecione a categoria «Km».</value>
+  </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>Montante</value>
   </data>

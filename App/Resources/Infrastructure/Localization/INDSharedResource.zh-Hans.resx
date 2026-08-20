@@ -351,6 +351,12 @@
   <data name="ExpenseSheets_Field_Type" xml:space="preserve">
     <value>类别</value>
   </data>
+  <data name="ExpenseSheets_GasolineCategory_Warning_Title" xml:space="preserve">
+    <value>“汽油”类别提示</value>
+  </data>
+  <data name="ExpenseSheets_GasolineCategory_Warning_Body" xml:space="preserve">
+    <value>“汽油”类别通常用于租赁车辆的燃油费用。如果您希望报销因使用自有车辆产生的费用，并且已与公司达成相关协议，请选择“公里”类别。</value>
+  </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>金额</value>
   </data>

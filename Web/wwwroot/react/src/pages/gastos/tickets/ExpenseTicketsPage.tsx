@@ -47,6 +47,7 @@ import {
 } from "../utils/expenseUiUtils.ts";
 import { useExpenseSheetQuickTicketFlow } from "../detail/useExpenseSheetQuickTicketFlow.ts";
 import { TICKET_IMAGE_ACCEPT_ATTRIBUTE } from "../detail/useExpenseSheetQuickTicketFlowCore.ts";
+import { EXPENSE_AI_DETECTION_QUERY_PARAM } from "../hooks/useExpenseGastoTypeWarning.ts";
 import { useExpenseTicketsFiltersState } from "./useExpenseTicketsFiltersState.ts";
 import { useExpenseTicketsListData } from "./useExpenseTicketsListData.ts";
 import { useExpenseTicketsFilterCache, type ExpenseTicketsCachedState } from "./useExpenseTicketsFilterCache.ts";
@@ -558,6 +559,9 @@ const ExpenseTicketsPageContent = () => {
           origin: sheetCallerOrigin,
           sheetId: linkSheetId,
         });
+        if (result?.processedByAI === true) {
+          query.set(EXPENSE_AI_DETECTION_QUERY_PARAM, "1");
+        }
         navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
           askConfirmation: false,
         });
@@ -565,7 +569,15 @@ const ExpenseTicketsPageContent = () => {
       }
 
       clearExpenseTicketReturnContext();
-      navigateToExpenseUrl(`/Gastos/TicketDetail?fileId=${encodeURIComponent(createdFileId)}&mode=edit&origin=ticket-create`, {
+      const query = new URLSearchParams({
+        fileId: createdFileId,
+        mode: "edit",
+        origin: "ticket-create",
+      });
+      if (result?.processedByAI === true) {
+        query.set(EXPENSE_AI_DETECTION_QUERY_PARAM, "1");
+      }
+      navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
         askConfirmation: false,
       });
     },

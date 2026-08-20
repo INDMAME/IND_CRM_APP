@@ -454,7 +454,7 @@ export const useExpenseSheetQuickTicketFlow = ({
   }, []);
 
   const completeFlowSuccess = useCallback(
-    async (fileId: string, linkedToSheet: boolean, cacheKey: string) => {
+    async (fileId: string, linkedToSheet: boolean, processedByAI: boolean | null, cacheKey: string) => {
       setProgressKey("done");
       setDisplayProgressKey("done");
       await removeCachedImageFile(cacheKey);
@@ -466,7 +466,7 @@ export const useExpenseSheetQuickTicketFlow = ({
       setDisplayProgressKey(null);
       progressStartedAtRef.current = null;
       setProgressElapsedMs(0);
-      onCompleted?.({ fileId, linkedToSheet });
+      onCompleted?.({ fileId, linkedToSheet, processedByAI });
     },
     [onCompleted]
   );
@@ -524,7 +524,7 @@ export const useExpenseSheetQuickTicketFlow = ({
             throw new Error(indT("ExpenseSheets_NewTicket_Error_NoFileId", "Could not resolve ticket file id."));
           }
 
-          await completeFlowSuccess(fileId, linkedToSheet, cacheKey);
+          await completeFlowSuccess(fileId, linkedToSheet, response.Data?.ProcessedByAI ?? null, cacheKey);
           logQuickTicketInfo("quick-create.request.succeeded", {
             attemptId: context.attemptId,
             source: context.source,

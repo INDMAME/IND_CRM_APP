@@ -438,6 +438,12 @@
   <data name="ExpenseSheets_Field_Type" xml:space="preserve">
     <value>Categoría</value>
   </data>
+  <data name="ExpenseSheets_GasolineCategory_Warning_Title" xml:space="preserve">
+    <value>Aviso sobre la categoría «Gasolina»</value>
+  </data>
+  <data name="ExpenseSheets_GasolineCategory_Warning_Body" xml:space="preserve">
+    <value>La categoría «Gasolina» se utiliza habitualmente para gastos de combustible de vehículos de alquiler. Si deseas solicitar el reembolso por el uso de un vehículo propio y existe un acuerdo con la empresa, selecciona la categoría «Km».</value>
+  </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>Importe</value>
   </data>

@@ -438,6 +438,12 @@
   <data name="ExpenseSheets_Field_Type" xml:space="preserve">
     <value>Category</value>
   </data>
+  <data name="ExpenseSheets_GasolineCategory_Warning_Title" xml:space="preserve">
+    <value>“Fuel” category notice</value>
+  </data>
+  <data name="ExpenseSheets_GasolineCategory_Warning_Body" xml:space="preserve">
+    <value>The “Fuel” category is normally used for fuel expenses for rental vehicles. If you want to claim reimbursement for using your own vehicle and have an agreement with the company, select the “Km” category.</value>
+  </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>Amount</value>
   </data>
