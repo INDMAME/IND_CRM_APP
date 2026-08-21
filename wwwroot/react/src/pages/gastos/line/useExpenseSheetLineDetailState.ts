@@ -7,6 +7,7 @@ import type {
   ExpenseSheetLineReimbursableExpense,
 } from "../expenseTypes.ts";
 import {
+  fetchExistingExpenseProjectId,
   fetchExpenseSheetDetail,
   getExpenseSheetDefaultCurrencyCode,
   getFuelPriceKm,
@@ -232,14 +233,13 @@ export const useExpenseSheetLineDetailState = ({
     nextHeader: ExpenseSheetHeader | null,
     resolvedCompanyCurrencyCode: string
   ) => {
-    const isExistingLine = !!safeText(nextLine?.lineRecId);
     const normalizedLineProjectId = safeText(nextLine?.projId);
     setDraftDescription(safeText(nextLine?.description));
     setDraftTransDate(toInputDate(nextLine?.transDate || nextHeader?.createdDate));
     setDraftTypeValueCode(safeText(nextLine?.typeValueCode));
     setDraftPrice(formatEditableNumber(nextLine?.price));
     setDraftQty(formatEditableQuantity(nextLine?.qty));
-    setDraftProjectId(isExistingLine ? normalizedLineProjectId : (normalizedLineProjectId || safeText(nextHeader?.projId)));
+    setDraftProjectId(normalizedLineProjectId);
     setDraftInternational(nextLine?.internacional === true ? "true" : nextLine?.internacional === false ? "false" : "");
     setDraftReimbursableExpense(normalizeExpenseLineReimbursableExpense(nextLine?.reimbursableExpense));
     const localCurrencyCode = safeText(resolvedCompanyCurrencyCode).toUpperCase();
@@ -342,9 +342,15 @@ export const useExpenseSheetLineDetailState = ({
             return;
           }
 
+          const inheritedProjectId = await fetchExistingExpenseProjectId(
+            safeText(loadedHeader.projId),
+            { suppressPermissionModal: true }
+          );
+          if (isCancelled) return;
+
           const draftLine = buildCreateLineDraft(
             toIsoDate(new Date()),
-            safeText(loadedHeader.projId),
+            inheritedProjectId,
             loadedCompanyCurrencyCode || safeText(loadedHeader.currencyCode).toUpperCase()
           );
           setHeader(loadedHeader);

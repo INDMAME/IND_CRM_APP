@@ -267,7 +267,7 @@ const ExpenseSheetLineDetailContent = () => {
     () => formatAmountWithCurrency(displayedReimbursableAmount, localCurrencyCode),
     [displayedReimbursableAmount, localCurrencyCode]
   );
-  const projectValue = safeText(line?.projId || header?.projId);
+  const projectValue = safeText(line?.projId);
   const sheetDescription = safeText(header?.description) || "-";
   const internacionalLabel = getExpenseInternationalLabel(line?.internacional);
   const linkedTicketFileIdValue = safeText(linkedTicketFileId);

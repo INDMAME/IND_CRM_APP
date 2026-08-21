@@ -93,26 +93,12 @@ import {
   toExpenseSheetLineReimbursableExpense,
   toExpenseSheetReimbursableExpense,
 } from "./expenseSheetTotals.ts";
+import {
+  resolveExistingExpenseProjectIdFromPages,
+  type ExpenseProjectCatalogPage,
+} from "./expenseProjectValidation.ts";
 
-type ProjectDropdownOption = {
-  value?: string;
-  Value?: string;
-  text?: string;
-  Text?: string;
-  projId?: string;
-  ProjId?: string;
-  name?: string;
-  Name?: string;
-  description?: string;
-  Description?: string;
-};
-
-type ProjectDropdownResponse = {
-  total?: number;
-  Total?: number;
-  items?: ProjectDropdownOption[];
-  Items?: ProjectDropdownOption[];
-};
+type ProjectDropdownResponse = ExpenseProjectCatalogPage;
 
 type LegacyExpenseListItem = {
   hojaGastosId?: unknown;
@@ -2376,5 +2362,19 @@ export const fetchExpenseProjects = async (
       method: "GET",
       ...options,
     }
+  );
+};
+
+// Resolves an exact project id through the existing company-scoped project catalog.
+export const fetchExistingExpenseProjectId = async (
+  projectId: string,
+  options?: ApiFetchOptions
+): Promise<string> => {
+  const normalizedProjectId = String(projectId || "").trim();
+  if (!normalizedProjectId) return "";
+
+  return resolveExistingExpenseProjectIdFromPages(
+    normalizedProjectId,
+    (page, pageSize) => fetchExpenseProjects(normalizedProjectId, page, pageSize, options)
   );
 };

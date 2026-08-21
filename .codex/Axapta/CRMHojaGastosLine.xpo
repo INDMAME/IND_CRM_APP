@@ -1754,6 +1754,26 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #resolveRealProjectId
+        #//MMS - Ajustes CRM - 2026.08.21
+        #// Returns a real inherited project, or empty when the value is reserved or missing.
+        #static ProjId resolveRealProjectId(ProjId _projId)
+        #{
+        #    PurchParameters purchParameters = PurchParameters::find();
+        #    ProjTable        projTable;
+        #    ;
+        #
+        #    if (!_projId ||
+        #        (purchParameters.INDProjIdVarious &&
+        #         _projId == purchParameters.INDProjIdVarious))
+        #        return '';
+        #
+        #    projTable = ProjTable::find(_projId);
+        #
+        #    return projTable.RecId ? projTable.ProjId : '';
+        #}
+        #
+      ENDSOURCE
       SOURCE #InitFromHojaGastosTable
         #void InitFromHojaGastosTable()
         #{
@@ -1765,8 +1785,7 @@ Formatversion: 1
         #
         #    this.Division           = hojaGastosTable.Division;
         #
-        #    if (!hojaGastosTable.isVariousProjectDefault())
-        #    this.ProjIdHornos       = hojaGastosTable.ProjId;
+        #    this.ProjIdHornos       = CRMHojaGastosLine::resolveRealProjectId(hojaGastosTable.ProjId);
         #
         #    //MMS - Ajustes CRM - 2026.06.26
         #    // La cabecera siempre aporta la divisa local inicial; la divisa extranjera se informa en la linea.
@@ -1809,7 +1828,7 @@ Formatversion: 1
         #    this.AmountMST          = 0;
         #    this.Currency           = _hojaGastosLine.Currency;
         #    this.Week               = _hojaGastosLine.Week;
-        #    this.ProjIdHornos       = _hojaGastosLine.ProjIdHornos;
+        #    this.ProjIdHornos       = CRMHojaGastosLine::resolveRealProjectId(_hojaGastosLine.ProjIdHornos);
         #    this.DisciplinaId       = "";
         #    //MMS - Divisa desde línea - 2026.05.22
         #    this.Currency           = _hojaGastosLine.Currency;

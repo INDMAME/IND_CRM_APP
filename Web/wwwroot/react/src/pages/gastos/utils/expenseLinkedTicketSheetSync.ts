@@ -15,6 +15,7 @@ import {
 } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import {
   createExpenseSheet,
+  fetchExistingExpenseProjectId,
   fetchExpenseSheetDetail,
   fetchExpenseSheetTicket,
   mapExpenseSheetHeader,
@@ -204,7 +205,9 @@ const buildLinePayload = ({
 }): ExpenseSheetCreateLineRequest => {
   const resolvedProjectId = hasProjectIdOverride
     ? safeText(projectIdOverride)
-    : safeText(existingLine?.projId || sheetProjectId);
+    : existingLine
+      ? safeText(existingLine.projId)
+      : safeText(sheetProjectId);
   const resolvedReimbursableExpense = hasReimbursableExpenseOverride
     ? normalizeExpenseLineReimbursableExpense(reimbursableExpenseOverride) ?? undefined
     : existingLine
@@ -302,9 +305,15 @@ export const syncExpenseLinkedTicketSheetLine = async (args: SyncExpenseLinkedTi
     );
   }
 
+  const inheritedProjectId = !existingLine && !hasProjectIdOverride
+    ? await fetchExistingExpenseProjectId(
+        safeText(sheetHeader.projId),
+        { suppressPermissionModal: true }
+      )
+    : "";
   const payload = buildLinePayload({
     fileId: safeFileId,
-    sheetProjectId: safeText(sheetHeader.projId),
+    sheetProjectId: inheritedProjectId,
     existingLine,
     ticketSnapshot,
     projectIdOverride,

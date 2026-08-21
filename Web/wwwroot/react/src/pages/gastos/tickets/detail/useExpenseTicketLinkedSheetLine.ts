@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiFetchError } from "../../../../services/apiService.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 import type { ExpenseSheetDetailDto, ExpenseSheetLine } from "../../expenseTypes.ts";
@@ -6,7 +6,12 @@ import {
   DEFAULT_LINE_REIMBURSABLE_EXPENSE,
   normalizeExpenseLineReimbursableExpense,
 } from "../../constants/expenseReimbursableExpenseCatalog.ts";
-import { fetchExpenseSheetDetail, mapExpenseSheetHeader, mapExpenseSheetLine } from "../../utils/expenseApi.ts";
+import {
+  fetchExistingExpenseProjectId,
+  fetchExpenseSheetDetail,
+  mapExpenseSheetHeader,
+  mapExpenseSheetLine,
+} from "../../utils/expenseApi.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 
 type UseExpenseTicketLinkedSheetLineArgs = {
@@ -54,8 +59,10 @@ export const useExpenseTicketLinkedSheetLine = ({
   const [localCurrencyCode, setLocalCurrencyCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const latestRequestIdRef = useRef(0);
 
   const reloadLine = useCallback(async () => {
+    const requestId = ++latestRequestIdRef.current;
     const safeSheetId = safeText(sheetId);
     const safeLineRecId = safeText(lineRecId);
     if (!enabled || !safeSheetId) {
@@ -77,6 +84,7 @@ export const useExpenseTicketLinkedSheetLine = ({
       const response = await fetchExpenseSheetDetail(safeSheetId, {
         suppressPermissionModal: true,
       });
+      if (requestId !== latestRequestIdRef.current) return;
 
       if (response?.Success === false) {
         setLine(null);
@@ -95,8 +103,12 @@ export const useExpenseTicketLinkedSheetLine = ({
       if (!safeLineRecId) {
         // Prefills line fields during direct ticket creation from an expense sheet.
         const initialProjectId = initializeMissingLine && sheet
-          ? safeText(mapExpenseSheetHeader(sheet).projId)
+          ? await fetchExistingExpenseProjectId(
+              safeText(mapExpenseSheetHeader(sheet).projId),
+              { suppressPermissionModal: true }
+            )
           : "";
+        if (requestId !== latestRequestIdRef.current) return;
         const initialReimbursableExpense = initializeMissingLine
           ? DEFAULT_LINE_REIMBURSABLE_EXPENSE
           : null;
@@ -130,6 +142,8 @@ export const useExpenseTicketLinkedSheetLine = ({
       setDraftReimbursableExpense(reimbursableExpense);
       setLocalCurrencyCode(sheetLocalCurrencyCode);
     } catch (error) {
+      if (requestId !== latestRequestIdRef.current) return;
+
       if (error instanceof ApiFetchError && error.status === 403) {
         onForbidden();
         return;
@@ -143,12 +157,16 @@ export const useExpenseTicketLinkedSheetLine = ({
       setLocalCurrencyCode("");
       setErrorMessage(error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."));
     } finally {
+      if (requestId !== latestRequestIdRef.current) return;
       setIsLoading(false);
     }
   }, [enabled, initializeMissingLine, lineRecId, onForbidden, sheetId]);
 
   useEffect(() => {
     void reloadLine();
+    return () => {
+      latestRequestIdRef.current += 1;
+    };
   }, [reloadLine]);
 
   const projectIdChanged = useMemo(

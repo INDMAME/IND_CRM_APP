@@ -638,6 +638,7 @@ Formatversion: 1
         #    real      qty;
         #    real      price;
         #    str       lineProjId;
+        #    ProjId    resolvedLineProjId;
         #    INDReimbursableExpenseLines lineReimbursableExpense;
         #    boolean   hasLineReimbursableExpense;
         #    str 16    lineReimbursableExpenseRaw;
@@ -1068,17 +1069,14 @@ Formatversion: 1
         #                    if (hasLineReimbursableExpense)
         #                        line.ReimbursableExpense = any2int(lineReimbursableExpense);
         #
-        #                    // Prefiere el proyecto de linea; si falta, usa el proyecto de cabecera
+        #                    // Only real projects are inherited; reserved or missing ids remain empty.
         #                    if (lineProjId)
-        #                    {
-        #                        line.ProjId       = lineProjId;
-        #                        line.ProjIdHornos = lineProjId;
-        #                    }
-        #                    else if (!header.isVariousProjectDefault())
-        #                    {
-        #                        line.ProjId       = header.ProjId;
-        #                        line.ProjIdHornos = header.ProjId;
-        #                    }
+        #                        resolvedLineProjId = CRMHojaGastosLine::resolveRealProjectId(lineProjId);
+        #                    else
+        #                        resolvedLineProjId = CRMHojaGastosLine::resolveRealProjectId(header.ProjId);
+        #
+        #                    line.ProjId       = resolvedLineProjId;
+        #                    line.ProjIdHornos = resolvedLineProjId;
         #
         #                    // Auditoria
         #                    line.INDCreatedByUserId = axUserId;
@@ -5505,17 +5503,9 @@ Formatversion: 1
         #            if (hasLineReimbursableExpense)
         #                line.ReimbursableExpense = any2int(lineReimbursableExpense);
         #
-        #            // Mantiene explicito el proyecto de linea y usa el proyecto de cabecera cuando se omite.
-        #            if (projId)
-        #            {
-        #                line.ProjId       = projId;
-        #                line.ProjIdHornos = projId;
-        #            }
-        #            else if (!header.isVariousProjectDefault())
-        #            {
-        #                line.ProjId       = header.ProjId;
-        #                line.ProjIdHornos = header.ProjId;
-        #            }
+        #            // Preserve the explicit line project, including an intentional empty value.
+        #            line.ProjId       = projId;
+        #            line.ProjIdHornos = projId;
         #
         #            msg = INDCRMExpenseSheetService::validateExpenseSheetLineForApi(line); //MMS - Ajustes CRM - 2026.06.29
         #            if (msg)
