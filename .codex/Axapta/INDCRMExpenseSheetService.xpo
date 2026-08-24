@@ -574,6 +574,50 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #buildLinkedTicketMonetarySnapshot
+        #//MMS - CRM fix - 2026.08.24
+        #// Builds the authoritative monetary snapshot used by every ticket-link path.
+        #// Output: [valid, message, currencyCode, totalAmount, amountMST, exchRate].
+        #static container buildLinkedTicketMonetarySnapshot(INDTicketInfoTable _ticketHeader)
+        #{
+        #    CurrencyCode currencyCode;
+        #    CurrencyCode localCurrencyCode;
+        #    Amount       totalAmount;
+        #    Amount       amountMST;
+        #    ExchRate     exchRate;
+        #    ;
+        #
+        #    if (!_ticketHeader.RecId)
+        #        return [false, 'Ticket no encontrado.', '', 0, 0, 0];
+        #
+        #    currencyCode = strUpr(strLRTrim(_ticketHeader.CurrencyCode));
+        #    if (currencyCode)
+        #        currencyCode = INDCRMUtilityService::resolveCurrencyCode(currencyCode);
+        #
+        #    if (!currencyCode)
+        #        return [false, 'El ticket no tiene una divisa valida y no se ha vinculado.', '', 0, 0, 0];
+        #
+        #    totalAmount = Currency::amount(_ticketHeader.TotalAmount, currencyCode);
+        #    if (totalAmount <= 0)
+        #        return [false, 'El importe original del ticket debe ser mayor que cero.', '', 0, 0, 0];
+        #
+        #    localCurrencyCode = CompanyInfo::standardCurrency();
+        #    if (currencyCode == localCurrencyCode)
+        #    {
+        #        amountMST = Currency::amount(totalAmount, localCurrencyCode);
+        #        return [true, '', currencyCode, totalAmount, amountMST, 100];
+        #    }
+        #
+        #    amountMST = Currency::amount(_ticketHeader.AmountMST, localCurrencyCode);
+        #    exchRate  = _ticketHeader.ExchRate;
+        #
+        #    if (amountMST <= 0 || exchRate <= 0)
+        #        return [false, strFmt('El ticket en divisa %1 necesita importe original, importe de reembolso y tipo de cambio positivos.', currencyCode), '', 0, 0, 0];
+        #
+        #    return [true, '', currencyCode, totalAmount, amountMST, exchRate];
+        #}
+        #
+      ENDSOURCE
       SOURCE #createExpenseSheet
         #/*
         #    Metodo: indExpenseSheetCreate (createExpenseSheet)
@@ -654,6 +698,7 @@ Formatversion: 1
         #
         #    CRMHojaGastosLine  existingFileLine;
         #    INDTicketInfoTable ticketHeader;
+        #    container          ticketMonetarySnapshot;
         #
         #    container linesOut = conNull();
         #    str       message;
@@ -807,11 +852,14 @@ Formatversion: 1
         #                    return [INDCRMUtilityService::buildHeader(false, strFmt('No existe la hoja de gastos: %1', existingHojaGastosId), conNull()), conNull()];
         #                }
         #
-        #                // La hoja debe estar abierta
-        #                if (header.Voucher)
+        #                //MMS - CRM fix - 2026.08.24
+        #                // Revalidates the editable header contract inside the write transaction.
+        #                if (!CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(header.ExpenseSheetStatus) ||
+        #                    header.Aprobado ||
+        #                    header.Voucher)
         #                {
         #                    ttsabort;
-        #                    return [INDCRMUtilityService::buildHeader(false, 'La hoja de gastos no esta abierta (Voucher informado). No se pueden anadir lineas.', conNull()), conNull()];
+        #                    return [INDCRMUtilityService::buildHeader(false, 'La hoja de gastos no esta abierta. Debe estar en borrador, no aprobada y sin Voucher para anadir lineas.', conNull()), conNull()];
         #                }
         #
         #                // Comprobacion opcional pero recomendada: valida la propiedad
@@ -1003,27 +1051,6 @@ Formatversion: 1
         #                        return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
         #                    }
         #
-        #                    if (qty <= 0)
-        #                    {
-        #                        if (appl.ttsLevel() > 0)
-        #                            ttsabort;
-        #                        if (numberSeq)
-        #                            numberSeq.abort();
-        #
-        #                        return [INDCRMUtilityService::buildHeader(false, 'Qty debe ser mayor que 0.', conNull()), conNull()];
-        #                    }
-        #
-        #                    if (price <= 0)
-        #                    {
-        #                        if (appl.ttsLevel() > 0)
-        #                            ttsabort;
-        #                        if (numberSeq)
-        #                            numberSeq.abort();
-        #
-        #                        return [INDCRMUtilityService::buildHeader(false, 'Price debe ser mayor que 0.', conNull()), conNull()];
-        #                    }
-        #
-        #
         #                    if (fileId)
         #                    {
         #                        select firstonly forupdate ticketHeader
@@ -1052,6 +1079,58 @@ Formatversion: 1
         #
         #                            return [INDCRMUtilityService::buildHeader(false, strFmt('FileId ya esta asignado a otra linea: %1', fileId), conNull()), conNull()];
         #                        }
+        #
+        #                        //MMS - CRM fix - 2026.08.24
+        #                        // Mode 2 uses the locked ticket as the sole monetary authority.
+        #                        if (mode == #ModeAddLinesToExisting)
+        #                        {
+        #                            if (ticketHeader.Status != INDTicketStatus::Pending)
+        #                            {
+        #                                ttsabort;
+        #                                if (numberSeq)
+        #                                    numberSeq.abort();
+        #
+        #                                return [INDCRMUtilityService::buildHeader(false, strFmt('El ticket %1 no esta pendiente y no se puede vincular.', fileId), conNull()), conNull()];
+        #                            }
+        #
+        #                            ticketMonetarySnapshot = INDCRMExpenseSheetService::buildLinkedTicketMonetarySnapshot(ticketHeader);
+        #                            if (!conPeek(ticketMonetarySnapshot, 1))
+        #                            {
+        #                                ttsabort;
+        #                                if (numberSeq)
+        #                                    numberSeq.abort();
+        #
+        #                                return [INDCRMUtilityService::buildHeader(false, conPeek(ticketMonetarySnapshot, 2), conNull()), conNull()];
+        #                            }
+        #
+        #                            lineCurrencyCode = conPeek(ticketMonetarySnapshot, 3);
+        #                            qty              = 1;
+        #                            price            = conPeek(ticketMonetarySnapshot, 4);
+        #                            lineAmountMST    = conPeek(ticketMonetarySnapshot, 5);
+        #                            lineExchRate     = conPeek(ticketMonetarySnapshot, 6);
+        #                            hasLineAmountMST = true;
+        #                            hasLineExchRate  = true;
+        #                        }
+        #                    }
+        #
+        #                    if (qty <= 0)
+        #                    {
+        #                        if (appl.ttsLevel() > 0)
+        #                            ttsabort;
+        #                        if (numberSeq)
+        #                            numberSeq.abort();
+        #
+        #                        return [INDCRMUtilityService::buildHeader(false, 'Qty debe ser mayor que 0.', conNull()), conNull()];
+        #                    }
+        #
+        #                    if (price <= 0)
+        #                    {
+        #                        if (appl.ttsLevel() > 0)
+        #                            ttsabort;
+        #                        if (numberSeq)
+        #                            numberSeq.abort();
+        #
+        #                        return [INDCRMUtilityService::buildHeader(false, 'Price debe ser mayor que 0.', conNull()), conNull()];
         #                    }
         #
         #                    line.clear();
@@ -1070,10 +1149,11 @@ Formatversion: 1
         #                    line.Description   = lineDescr;
         #                    line.Internacional = internacional ? NoYes::Yes : NoYes::No;
         #                    line.FileId        = fileId;
-        #                    line.Price         = price;
-        #                    line.Qty           = qty;
-        #                    line.Amount        = line.CalcAmount();
-        #                    line.Currency      = lineCurrencyCode ? lineCurrencyCode : (currencyCode ? currencyCode : header.CurrencyCode);
+        #
+        #                    line.Price    = price;
+        #                    line.Qty      = qty;
+        #                    line.Currency = lineCurrencyCode ? lineCurrencyCode : (currencyCode ? currencyCode : header.CurrencyCode);
+        #                    line.Amount   = line.CalcAmount();
         #
         #                    if (hasLineExchRate)
         #                        line.ExchRate = lineExchRate;
@@ -1087,7 +1167,11 @@ Formatversion: 1
         #                        line.ExchRate = 0;
         #                    if (hasLineAmountMST)
         #                        line.AmountMST = lineAmountMST;
-        #                    line.normalizeCurrencyAmounts(hasLineAmountMST);
+        #
+        #                    if (mode == #ModeAddLinesToExisting && fileId)
+        #                        line.recalculateReimbursableAmount();
+        #                    else
+        #                        line.normalizeCurrencyAmounts(hasLineAmountMST);
         #
         #                    if (hasLineReimbursableExpense)
         #                        line.ReimbursableExpense = any2int(lineReimbursableExpense);

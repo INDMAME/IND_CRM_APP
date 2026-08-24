@@ -69,6 +69,10 @@ import { resolveExpenseLineReimbursableAmountPreview } from "../Web/wwwroot/reac
 import { resolveExpenseQuickDateFilterFromRange } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseQuickDateFilterState.ts";
 import { buildExpenseTicketLinkInitialSnapshot } from "../Web/wwwroot/react/src/pages/gastos/tickets/expenseTicketLinkFilterSnapshot.ts";
 import {
+  getExpenseTicketLinkBulkUnresolvedIds,
+  resolveExpenseTicketLinkBulkOutcome,
+} from "../Web/wwwroot/react/src/pages/gastos/components/ExpenseTicketLinkBulkSummary.tsx";
+import {
   normalizeCardTitleText,
   normalizeDescriptionText,
 } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseUiUtils.ts";
@@ -80,6 +84,7 @@ import type {
   ExpenseSheetCreateResponseData,
   ExpenseSheetDetailDto,
   ExpenseSheetListItemDto,
+  ExpenseSheetTicketLinkBulkResultDto,
   ExpenseSheetTicketDetailDto,
   IndPagedResponse,
 } from "../Web/wwwroot/react/src/pages/gastos/expenseTypes.ts";
@@ -95,6 +100,54 @@ assert.equal(normalizeCardTitleText("", ""), "");
 assert.equal(normalizeCardTitleText("", "") || "HG000080", "HG000080");
 assert.equal(normalizeCardTitleText("", "") || "FACTURA.JPG", "FACTURA.JPG");
 assert.equal(normalizeDescriptionText("  pRUEBA de PROYECTO  ", ""), "Prueba De Proyecto");
+const completeTicketLinkResult: ExpenseSheetTicketLinkBulkResultDto = {
+  expenseSheetId: "000366",
+  requestedCount: 1,
+  linkedCount: 1,
+  skippedCount: 0,
+  failedCount: 0,
+  linkedTicketIds: ["F000000060"],
+  skipped: [],
+  failed: [],
+};
+assert.equal(resolveExpenseTicketLinkBulkOutcome(completeTicketLinkResult), "complete");
+assert.equal(
+  resolveExpenseTicketLinkBulkOutcome({
+    ...completeTicketLinkResult,
+    requestedCount: 2,
+    failedCount: 1,
+    failed: [{ ticketId: "F000000061", reason: "Invalid currency snapshot" }],
+  }),
+  "partial"
+);
+assert.equal(
+  resolveExpenseTicketLinkBulkOutcome({
+    ...completeTicketLinkResult,
+    linkedCount: 0,
+    linkedTicketIds: [],
+    failedCount: 1,
+    failed: [{ ticketId: "F000000060", reason: "Invalid currency snapshot" }],
+  }),
+  "no-success"
+);
+assert.deepEqual(
+  getExpenseTicketLinkBulkUnresolvedIds({
+    ...completeTicketLinkResult,
+    linkedCount: 0,
+    linkedTicketIds: [],
+    skippedCount: 2,
+    failedCount: 2,
+    failed: [
+      { ticketId: " f000000060 ", reason: "Invalid currency snapshot" },
+      { ticketId: "F000000060", reason: "Duplicate result" },
+    ],
+    skipped: [
+      { ticketId: "f000000061", reason: "Already linked" },
+      { ticketId: "", reason: "Missing identifier" },
+    ],
+  }),
+  ["F000000060", "F000000061"]
+);
 assert.equal(toNullableNumber(null), null);
 assert.equal(toNullableNumber(""), null);
 assert.equal(toNullableNumber(0), 0);
@@ -832,6 +885,42 @@ const expenseTicketsPageSource = readFileSync(
   ),
   "utf8"
 );
+const expenseTicketLinkBulkSummarySource = readFileSync(
+  path.join(
+    repositoryRoot,
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "components",
+    "ExpenseTicketLinkBulkSummary.tsx"
+  ),
+  "utf8"
+);
+const expenseApiClientSource = readFileSync(
+  path.join(repositoryRoot, "Web", "wwwroot", "react", "src", "pages", "gastos", "utils", "expenseApi.ts"),
+  "utf8"
+);
+const expenseTicketsListDataSource = readFileSync(
+  path.join(
+    repositoryRoot,
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "tickets",
+    "useExpenseTicketsListData.ts"
+  ),
+  "utf8"
+);
+const confirmDialogSource = readFileSync(
+  path.join(repositoryRoot, "Web", "wwwroot", "react", "src", "hooks", "useConfirmDialog.ts"),
+  "utf8"
+);
 const ticketProxyMapperStart = gastosControllerSource.indexOf(
   "private static object ToExpenseSheetTicketApiDetailLine"
 );
@@ -946,5 +1035,103 @@ const settlementCurrencyIndex = expenseCurrencySettlementFieldsSource.indexOf('<
 assert.ok(settlementCompanyAmountIndex >= 0);
 assert.ok(settlementMiddleContentIndex > settlementCompanyAmountIndex);
 assert.ok(settlementCurrencyIndex > settlementMiddleContentIndex);
+
+const bulkFlowStart = expenseTicketsPageSource.indexOf("const runTicketLinkFlow = useCallback");
+const bulkFlowEnd = expenseTicketsPageSource.indexOf("useLayoutEffect(() =>", bulkFlowStart);
+assert.ok(bulkFlowStart >= 0 && bulkFlowEnd > bulkFlowStart);
+const bulkFlowSource = expenseTicketsPageSource.slice(bulkFlowStart, bulkFlowEnd);
+const bulkApiStart = expenseApiClientSource.indexOf("export const linkExpenseSheetTicketsBulk");
+const bulkApiEnd = expenseApiClientSource.indexOf("// Loads one ticket detail", bulkApiStart);
+assert.ok(bulkApiStart >= 0 && bulkApiEnd > bulkApiStart);
+const bulkApiSource = expenseApiClientSource.slice(bulkApiStart, bulkApiEnd);
+const bulkSummaryUsageStart = expenseTicketsPageSource.indexOf("<ExpenseTicketLinkBulkSummary");
+assert.ok(bulkSummaryUsageStart >= 0);
+const bulkSummaryUsageSource = expenseTicketsPageSource.slice(
+  Math.max(0, bulkSummaryUsageStart - 700),
+  bulkSummaryUsageStart + 700
+);
+
+//MMS - Characterizes bulk ticket-link outcomes before changing production behavior - 2026.08.24
+const bulkLinkContractFailures: string[] = [];
+const recordBulkLinkContract = (condition: boolean, message: string) => {
+  if (!condition) bulkLinkContractFailures.push(message);
+};
+
+recordBulkLinkContract(
+  (bulkFlowSource.match(/navigateToExpenseUrl\(buildExpenseSheetDetailUrl\(linkSheetId\)/g) || []).length === 1,
+  "full success must navigate to the expense sheet exactly once"
+);
+recordBulkLinkContract(
+  !/if\s*\(\s*result\.linkedCount\s*>\s*0\s*\)\s*\{[\s\S]{0,1800}?navigateToExpenseUrl\(buildExpenseSheetDetailUrl/.test(
+    bulkFlowSource
+  ),
+  "a partial result must not navigate merely because linkedCount is positive"
+);
+recordBulkLinkContract(
+  /const\s+hasBulkIssues\s*=\s*result\.failedCount\s*>\s*0\s*\|\|\s*result\.skippedCount\s*>\s*0/.test(
+    bulkFlowSource
+  ),
+  "bulk flow must distinguish complete success from partial or failed outcomes"
+);
+recordBulkLinkContract(
+  /getExpenseTicketLinkBulkUnresolvedIds\(result\)[\s\S]{0,2500}?restoreLinkTicketSelection\(/.test(bulkFlowSource),
+  "partial and failed outcomes must retain the unresolved ticket ids for retry"
+);
+recordBulkLinkContract(
+  /if\s*\(\s*hasBulkIssues\s*\)\s*\{[\s\S]{0,3000}?await\s+loadList\(/.test(bulkFlowSource),
+  "partial and failed outcomes must refresh the link list from the server"
+);
+recordBulkLinkContract(
+  (bulkFlowSource.match(/resetList\("bulk-link-server-refresh"\);\s*await\s+loadList\(/g) || []).length === 2,
+  "every post-link refresh must invalidate an older in-flight list request first"
+);
+recordBulkLinkContract(
+  !/if\s*\(\s*hasBulkIssues\s*\)\s*\{[\s\S]{0,3000}?(?:navigateToExpenseUrl|clearTicketSelection)\(/.test(
+    bulkFlowSource
+  ),
+  "partial and all-failed outcomes must keep the summary visible and remain on the ticket list"
+);
+recordBulkLinkContract(
+  /failedLinkTicketIds\.has\(fileId\.toUpperCase\(\)\)/.test(expenseTicketsPageSource) &&
+    /EXPENSE_TICKET_LINK_FAILURE_REPAIR_INTENT/.test(expenseTicketsPageSource),
+  "all-failed results must keep the failed ticket repair-and-retry path"
+);
+recordBulkLinkContract(
+  /expenseSheetId:\s*safeText\(payload\?\.expenseSheetId\)/.test(bulkApiSource) &&
+    /selectionMode/.test(bulkApiSource) &&
+    /ticketIds/.test(bulkApiSource) &&
+    /body:\s*JSON\.stringify\(safePayload\)/.test(bulkApiSource) &&
+    !/\b(?:TotalAmount|TotalAmountMST|AmountMST|ExchRate|totalAmount|totalAmountMST|amountMST|exchRate)\b/.test(
+      bulkApiSource
+    ),
+  "bulk request serialization must contain identifiers or filters but no authoritative monetary fields"
+);
+recordBulkLinkContract(
+  /confirmInFlightRef\s*=\s*useRef\(false\)/.test(confirmDialogSource) &&
+    /if\s*\(confirmInFlightRef\.current\)\s*return/.test(confirmDialogSource) &&
+    /confirmInFlightRef\.current\s*=\s*true/.test(confirmDialogSource),
+  "confirm dialog must block repeated submissions before React busy state is committed"
+);
+recordBulkLinkContract(
+  /fetchExpenseSheetTicketLinkList\(payload/.test(expenseTicketsListDataSource) &&
+    /setItems\(mappedItems\)/.test(expenseTicketsListDataSource),
+  "post-link ticket data must be replaced with the refreshed server response"
+);
+recordBulkLinkContract(
+  /aria-live=(?:"polite"|"assertive")/.test(
+    `${expenseTicketLinkBulkSummarySource}\n${bulkSummaryUsageSource}`
+  ) &&
+    /aria-atomic="true"/.test(`${expenseTicketLinkBulkSummarySource}\n${bulkSummaryUsageSource}`) &&
+    /tabIndex=\{-1\}/.test(`${expenseTicketLinkBulkSummarySource}\n${bulkSummaryUsageSource}`),
+  "bulk result summary must be an accessible live-region focus target"
+);
+recordBulkLinkContract(
+  /linkBulkSummaryRef/.test(expenseTicketsPageSource) &&
+    /linkBulkSummaryRef\.current\?*\.focus\(/.test(expenseTicketsPageSource) &&
+    /modal\.open/.test(expenseTicketsPageSource),
+  "bulk result summary must receive focus after the confirmation modal closes"
+);
+
+assert.deepEqual(bulkLinkContractFailures, [], "Expense ticket bulk-link UI contracts are incomplete");
 
 console.log("[ok] Gastos regression rules passed.");

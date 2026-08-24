@@ -1879,8 +1879,11 @@ Formatversion: 1
       SOURCE #insert
         #public void insert()
         #{
-        #    boolean amountMSTWasProvided;    //MMS - Divisa desde línea - 2026.05.21
-        #    CRMHojaGastosTable hojaGastosTable;
+        #    boolean              amountMSTWasProvided;    //MMS - Divisa desde línea - 2026.05.21
+        #    CRMHojaGastosTable  hojaGastosTable;
+        #    INDTicketInfoTable  linkedTicketSnapshot;
+        #    container           linkedMonetarySnapshot;
+        #    boolean             preserveLinkedTicketSnapshot;
         #    ;
         #
         #    //MMS - Ajustes CRM - 2026.08.24
@@ -1896,17 +1899,41 @@ Formatversion: 1
         #    ttsbegin;
         #    hojaGastosTable = this.HojaGastosTable(true);
         #
+        #    //MMS - Saved line recalculation - 2026.06.29
+        #    if (!this.Amount && this.Qty && this.Price)
+        #        this.Amount = this.CalcAmount();
+        #
+        #    //MMS - CRM fix - 2026.08.24
+        #    // Preserves a validated ticket snapshot instead of deriving a different exchange rate.
+        #    if (this.FileId)
+        #    {
+        #        linkedTicketSnapshot = INDTicketInfoTable::findByFileId(this.FileId);
+        #        if (linkedTicketSnapshot.RecId)
+        #        {
+        #            linkedMonetarySnapshot = INDCRMExpenseSheetService::buildLinkedTicketMonetarySnapshot(linkedTicketSnapshot);
+        #            preserveLinkedTicketSnapshot = conPeek(linkedMonetarySnapshot, 1) &&
+        #                this.Currency  == conPeek(linkedMonetarySnapshot, 3) &&
+        #                this.Amount    == conPeek(linkedMonetarySnapshot, 4) &&
+        #                this.AmountMST == conPeek(linkedMonetarySnapshot, 5) &&
+        #                this.ExchRate  == conPeek(linkedMonetarySnapshot, 6);
+        #
+        #            if (!preserveLinkedTicketSnapshot)
+        #                throw error('Los importes de la linea no coinciden con el snapshot monetario autoritativo del ticket.');
+        #        }
+        #    }
+        #
         #    //IJL.15/04/26
         #    if (this.ModalidadPago == CRMHojaGastoModalidadPago::TarjetaGasolina)
         #        this.Type = CRMGastoType::Gasolina;
         #
-        #    //MMS - Recalculo guardado linea - 2026.06.29
-        #    if (!this.Amount && this.Qty && this.Price)
-        #        this.Amount = this.CalcAmount();
-        #
         #    amountMSTWasProvided = this.AmountMST != 0;  //MMS - Preserva reembolso informado - 2026.07.01
-        #    this.normalizeCurrencyAmounts(amountMSTWasProvided);  //INDMMS_ExternalCRM - 2026.05.21
-        #    this.recalculateReimbursableAmount();
+        #    if (preserveLinkedTicketSnapshot)
+        #        this.recalculateReimbursableAmount();
+        #    else
+        #    {
+        #        this.normalizeCurrencyAmounts(amountMSTWasProvided);  //INDMMS_ExternalCRM - 2026.05.21
+        #        this.recalculateReimbursableAmount();
+        #    }
         #
         #    if (!this.validateCurrencyAmounts())
         #        throw error("Datos de divisa de la linea invalidos.");
@@ -1926,7 +1953,7 @@ Formatversion: 1
         #
         #    this.CreaActualizaProyectoEnLineCust();
         #
-        #    this.syncLinkedTicket(); //MMS - Ajustes CRM - 2026.06.29
+        #    this.syncLinkedTicket(preserveLinkedTicketSnapshot); //MMS - Ajustes CRM - 2026.06.29
         #    if (hojaGastosTable)
         #        hojaGastosTable.markHeaderVariousFromLine(this);
         #    ttscommit;
@@ -2531,11 +2558,12 @@ Formatversion: 1
       ENDSOURCE
       SOURCE #syncLinkedTicket
         #//MMS - Ajustes CRM - 2026.06.29
-        #void syncLinkedTicket()
+        #void syncLinkedTicket(boolean _preserveCurrencySnapshot = false)
         #{
         #    INDTicketInfoTable ticketInfoTable;
         #    INDTicketInfoLine  ticketInfoLine;
         #    INDTicketInfoLine  ticketInfoLineCount;
+        #    CurrencyCode      localCurrencyCode;
         #    str 20             adjustmentUserId;
         #    int                ticketLineCount;
         #    ;
@@ -2549,6 +2577,26 @@ Formatversion: 1
         #
         #    if (ticketInfoTable)
         #    {
+        #        //MMS - CRM fix - 2026.08.24
+        #        // Keeps exact ticket values stable when the update did not change money.
+        #        if (!_preserveCurrencySnapshot)
+        #        {
+        #            localCurrencyCode = CompanyInfo::standardCurrency();
+        #            _preserveCurrencySnapshot =
+        #                ticketInfoTable.CurrencyCode &&
+        #                ticketInfoTable.TotalAmount > 0 &&
+        #                ticketInfoTable.CurrencyCode == this.Currency &&
+        #                ticketInfoTable.TotalAmount  == this.Amount &&
+        #                ticketInfoTable.AmountMST    == this.AmountMST &&
+        #                ticketInfoTable.ExchRate     == this.ExchRate &&
+        #                ((ticketInfoTable.CurrencyCode == localCurrencyCode &&
+        #                  ticketInfoTable.ExchRate == 100 &&
+        #                  ticketInfoTable.AmountMST == Currency::amount(ticketInfoTable.TotalAmount, localCurrencyCode)) ||
+        #                 (ticketInfoTable.CurrencyCode != localCurrencyCode &&
+        #                  ticketInfoTable.AmountMST > 0 &&
+        #                  ticketInfoTable.ExchRate > 0));
+        #        }
+        #
         #        adjustmentUserId = this.INDCreatedByUserId ? this.INDCreatedByUserId : ticketInfoTable.CreatedByUserId;
         #
         #        if (!adjustmentUserId)
@@ -2591,7 +2639,18 @@ Formatversion: 1
         #        }
         #
         #        ticketInfoTable.updateSearchKey();
-        #        ticketInfoTable.normalizeCurrencyAmounts(ticketInfoTable.AmountMST != 0);
+        #
+        #        //MMS - CRM fix - 2026.08.24
+        #        // Restores the exact persisted ticket snapshot after adjustment-line reconciliation.
+        #        if (_preserveCurrencySnapshot)
+        #        {
+        #            ticketInfoTable.CurrencyCode = this.Currency;
+        #            ticketInfoTable.TotalAmount  = this.Amount;
+        #            ticketInfoTable.ExchRate     = this.ExchRate;
+        #            ticketInfoTable.AmountMST    = this.AmountMST;
+        #        }
+        #        else
+        #            ticketInfoTable.normalizeCurrencyAmounts(ticketInfoTable.AmountMST != 0);
         #
         #        if (!ticketInfoTable.validateCurrencyAmounts())
         #        {

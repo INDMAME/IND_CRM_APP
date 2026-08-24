@@ -14,7 +14,10 @@ import { flashActionMark } from "../../../utils/visitasHistory.ts";
 import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
 import ExpenseTimelineCard from "../components/ExpenseTimelineCard.tsx";
 import ExpenseTicketLinkTimelineItem from "../components/ExpenseTicketLinkTimelineItem.tsx";
-import ExpenseTicketLinkBulkSummary from "../components/ExpenseTicketLinkBulkSummary.tsx";
+import ExpenseTicketLinkBulkSummary, {
+  getExpenseTicketLinkBulkUnresolvedIds,
+  resolveExpenseTicketLinkBulkOutcome,
+} from "../components/ExpenseTicketLinkBulkSummary.tsx";
 import ExpenseTicketsFiltersPanel from "../components/ExpenseTicketsFiltersPanel.tsx";
 import ExpenseQuickTicketProgressOverlay from "../components/ExpenseQuickTicketProgressOverlay.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
@@ -193,6 +196,7 @@ const ExpenseTicketsPageContent = () => {
   const pendingScrollRestoreRef = React.useRef<number | null>(null);
   const pendingFocusFileIdRef = React.useRef("");
   const runTicketLinkFlowRef = React.useRef<() => Promise<boolean>>(async () => false);
+  const linkBulkSummaryRef = React.useRef<HTMLDivElement | null>(null);
   const linkModeContext = useMemo(() => {
     const url = new URL(window.location.href);
     const action = safeText(url.searchParams.get("action")).toLowerCase();
@@ -286,6 +290,10 @@ const ExpenseTicketsPageContent = () => {
     defaultConfirmText: indT("Confirm_Yes", "OK"),
     defaultCancelText: indT("Confirm_No", "Cancel"),
   });
+  useEffect(() => {
+    if (!linkBulkResult || modal.open) return;
+    linkBulkSummaryRef.current?.focus();
+  }, [linkBulkResult, modal.open]);
 
   const gastoTypeOptions = useMemo<ExpenseSelectOption[]>(() => getExpenseGastoTypeOptions(), []);
 
@@ -1019,14 +1027,15 @@ const ExpenseTicketsPageContent = () => {
       }
 
       setLinkBulkResult(result);
+      const bulkOutcome = resolveExpenseTicketLinkBulkOutcome(result);
+      const hasBulkIssues = result.failedCount > 0 || result.skippedCount > 0;
 
-      if (result.linkedCount > 0) {
+      if (bulkOutcome === "complete") {
         clearTicketSelection();
         clearCachedState();
         clearExpenseTicketLinkReturnState();
         clearExpenseTicketReturnContext();
-        const successMark = result.failedCount > 0 || result.skippedCount > 0 ? "warningProcess" : "okProcess";
-        flashActionMark(successMark, successMark === "okProcess" ? 1200 : 1500);
+        flashActionMark("okProcess", 1200);
         navigateToExpenseUrl(buildExpenseSheetDetailUrl(linkSheetId), {
           askConfirmation: false,
           bypassGuardOnce: true,
@@ -1034,23 +1043,60 @@ const ExpenseTicketsPageContent = () => {
         return true;
       }
 
-      if (result.failedCount > 0 && result.linkedCount < 1) {
-        const failureMessage = response.Message || indT("Api_RequestFailed", "Request failed.");
-        setLinkFlowStatus(failureMessage);
-        flashActionMark("errorProcess", 1500);
-        await loadList(currentPage < 1 ? 1 : currentPage, activeFilters);
-        return true;
-      }
+      if (hasBulkIssues) {
+        const unresolvedTicketIds = getExpenseTicketLinkBulkUnresolvedIds(result);
+        if (unresolvedTicketIds.length > 0) {
+          const availableTicketsById = new Map<string, ExpenseTicketLinkCard>();
+          for (const ticket of selectedTickets) {
+            const ticketId = safeText(ticket.fileId).toUpperCase();
+            if (ticketId) availableTicketsById.set(ticketId, ticket);
+          }
+          for (const item of items) {
+            if (item.kind !== "link") continue;
+            const ticketId = safeText(item.fileId).toUpperCase();
+            if (ticketId) availableTicketsById.set(ticketId, item);
+          }
 
-      if (result.failedCount > 0 || result.skippedCount > 0) {
-        setLinkFlowStatus(response.Message || indT("Common_OK", "OK"));
-        flashActionMark("warningProcess", 1500);
+          const unresolvedTickets = unresolvedTicketIds.map<ExpenseTicketLinkCard>((ticketId) => {
+            return (
+              availableTicketsById.get(ticketId) || {
+                kind: "link",
+                fileId: ticketId,
+                description: "",
+                processedByAI: null,
+                currencyCode: "",
+                totalAmount: null,
+                transDate: "",
+                fileName: ticketId,
+                gastoType: null,
+              }
+            );
+          });
+          restoreLinkTicketSelection({
+            selectionMode: "selected",
+            selectedTickets: unresolvedTickets,
+            excludedIds: [],
+            filteredSnapshot: null,
+            filteredTotalCount: 0,
+          });
+        }
+
+        const hasOnlyFailedTickets = bulkOutcome === "no-success" && result.failedCount > 0;
+        setLinkFlowStatus(
+          response.Message ||
+            (hasOnlyFailedTickets
+              ? indT("Api_RequestFailed", "Request failed.")
+              : indT("Common_OK", "OK"))
+        );
+        flashActionMark(hasOnlyFailedTickets ? "errorProcess" : "warningProcess", 1500);
+        resetList("bulk-link-server-refresh");
         await loadList(currentPage < 1 ? 1 : currentPage, activeFilters);
         return true;
       }
 
       setLinkFlowStatus(response.Message || indT("Common_OK", "OK"));
       flashActionMark("okProcess", 1200);
+      resetList("bulk-link-server-refresh");
       await loadList(currentPage < 1 ? 1 : currentPage, activeFilters);
       return true;
     } catch (error) {
@@ -1073,6 +1119,7 @@ const ExpenseTicketsPageContent = () => {
     isLineLinkMode,
     isLinkMode,
     isFilteredSelectionActive,
+    items,
     lineLinkTargetReady,
     linkFlowBusy,
     linkSheetId,
@@ -1081,8 +1128,10 @@ const ExpenseTicketsPageContent = () => {
     linkSheetCheckBusy,
     linkSheetCheckComplete,
     loadList,
+    resetList,
     resolveActiveFilters,
     resolveSelectedCount,
+    restoreLinkTicketSelection,
     selectedTickets,
     targetLineRecId,
     total,
@@ -1905,7 +1954,9 @@ const ExpenseTicketsPageContent = () => {
         </div>
       ) : null}
 
-      {isLinkMode && !isLineLinkMode ? <ExpenseTicketLinkBulkSummary result={linkBulkResult} /> : null}
+      {isLinkMode && !isLineLinkMode ? (
+        <ExpenseTicketLinkBulkSummary ref={linkBulkSummaryRef} result={linkBulkResult} />
+      ) : null}
 
       <div
         className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"

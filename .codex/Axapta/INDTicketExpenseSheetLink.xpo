@@ -166,10 +166,19 @@ Formatversion: 1
         #/// </summary>
         #public void run()
         #{
-        #    MapEnumerator        mapEnum;
-        #    RecId                ticketRecId;
-        #    INDTicketInfoTable   ticket;
-        #    CRMHojaGastosLine    hojaGastosLine;
+        #    MapEnumerator         mapEnum;
+        #    RecId                 ticketRecId;
+        #    INDTicketInfoTable    ticket;
+        #    CRMHojaGastosTable    hojaGastosTable;
+        #    CRMHojaGastosLine     hojaGastosLine;
+        #    CRMHojaGastosLine     existingFileLine;
+        #    CRMUsuarioTable       crmUsuario;
+        #    container             ticketMonetarySnapshot;
+        #    CurrencyCode          linkedCurrencyCode;
+        #    Amount                linkedTotalAmount;
+        #    Amount                linkedAmountMST;
+        #    ExchRate              linkedExchRate;
+        #    str                   validationMessage;
         #    ;
         #
         #    if (!selectedTickets || selectedTickets.elements() == 0)
@@ -180,56 +189,127 @@ Formatversion: 1
         #
         #    ttsbegin;
         #
+        #    //MMS - CRM fix - 2026.08.24
+        #    // Revalidates the target header inside the same transaction as the inserts.
+        #    crmUsuario = SysUserInfo::getCRMUsuarioTable(curUserId());
+        #    if (!crmUsuario.UserId)
+        #    {
+        #        ttsabort;
+        #        throw error("El usuario actual no esta vinculado a un usuario CRM.");
+        #    }
+        #
+        #    select firstonly forupdate hojaGastosTable
+        #        where hojaGastosTable.HojaGastosId == hojaGastosId;
+        #
+        #    if (!hojaGastosTable.RecId)
+        #    {
+        #        ttsabort;
+        #        throw error("La hoja de gastos seleccionada no existe.");
+        #    }
+        #
+        #    if (hojaGastosTable.UserId != crmUsuario.UserId)
+        #    {
+        #        ttsabort;
+        #        throw error("La hoja de gastos seleccionada no pertenece al usuario actual.");
+        #    }
+        #
+        #    if (!CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(hojaGastosTable.ExpenseSheetStatus) ||
+        #        hojaGastosTable.Aprobado ||
+        #        hojaGastosTable.Voucher)
+        #    {
+        #        ttsabort;
+        #        throw error("La hoja de gastos no esta abierta. Debe estar en borrador, no aprobada y sin Voucher para vincular tickets.");
+        #    }
+        #
         #    mapEnum = selectedTickets.getEnumerator();
         #
         #    while (mapEnum.moveNext())
         #    {
         #        ticketRecId = mapEnum.currentKey();
-        #        ticket = INDTicketInfoTable::findRecId(ticketRecId);
+        #        ticket = INDTicketInfoTable::findRecId(ticketRecId, true);
         #
-        #        if (ticket.RecId)
+        #        if (!ticket.RecId)
         #        {
-        #            // Protección defensiva
-        #            if (ticket.Status != INDTicketStatus::Pending)
-        #                continue;
-        #
-        #
-        #            hojaGastosLine.clear();
-        #            hojaGastosLine.initValue();
-        #
-        #            hojaGastosLine.HojaGastosId = hojaGastosId;
-        #            hojaGastosLine.InitFromHojaGastosTable();
-        #
-        #            hojaGastosLine.UserId = SysUserInfo::getCRMUsuarioTable(curUserId()).UserId;
-        #            hojaGastosLine.InitFromUsuarioTable();
-        #
-        #            hojaGastosLine.TransDate = ticket.createdDate;
-        #            hojaGastosLine.Type      = ticket.GastoType;
-        #            hojaGastosLine.InitFromGastoType();
-        #
-        #            hojaGastosLine.Description = ticket.Description;
-        #            hojaGastosLine.FileId      = ticket.FileId;
-        #            hojaGastosLine.Price       = ticket.TotalAmount;
-        #            hojaGastosLine.Qty         = 1;
-        #            hojaGastosLine.Amount      = ticket.TotalAmount;
-        #
-        #            //MMS - Copia los valores de divisa del ticket en la nueva linea de gasto - 2026.07.29
-        #            hojaGastosLine.Currency    = ticket.CurrencyCode;
-        #            hojaGastosLine.ExchRate    = ticket.ExchRate;
-        #            hojaGastosLine.AmountMST   = ticket.AmountMST;
-        #
-        #            // Auditoria
-        #            hojaGastosLine.INDCreatedByUserId = curUserId();
-        #
-        #            hojaGastosLine.insert();
-        #
-        #            // Actualización estado ticket
-        #            INDCRMExpenseSheetService::refreshTicketStatusByFileId(curUserId(), ticket.FileId);
-        #
-        #            info(strFmt("Ticket %1 vinculado a hoja de gasto %2",
-        #                        ticket.FileId,
-        #                        hojaGastosId));
+        #            warning(strFmt("El ticket con RecId %1 no existe.", ticketRecId));
+        #            continue;
         #        }
+        #
+        #        if (ticket.CreatedByUserId != curUserId())
+        #        {
+        #            warning(strFmt("El ticket %1 no pertenece al usuario actual.", ticket.FileId));
+        #            continue;
+        #        }
+        #
+        #        if (ticket.Status != INDTicketStatus::Pending)
+        #        {
+        #            warning(strFmt("El ticket %1 no esta pendiente y no se puede vincular.", ticket.FileId));
+        #            continue;
+        #        }
+        #
+        #        select firstonly existingFileLine
+        #            where existingFileLine.FileId == ticket.FileId;
+        #
+        #        if (existingFileLine.RecId)
+        #        {
+        #            warning(strFmt("El ticket %1 ya esta asignado a otra linea.", ticket.FileId));
+        #            continue;
+        #        }
+        #
+        #        //MMS - CRM fix - 2026.08.24
+        #        // Rejects incomplete snapshots before the expense-line buffer is mutated.
+        #        ticketMonetarySnapshot = INDCRMExpenseSheetService::buildLinkedTicketMonetarySnapshot(ticket);
+        #        if (!conPeek(ticketMonetarySnapshot, 1))
+        #        {
+        #            warning(strFmt("Ticket %1: %2", ticket.FileId, conPeek(ticketMonetarySnapshot, 2)));
+        #            continue;
+        #        }
+        #
+        #        linkedCurrencyCode = conPeek(ticketMonetarySnapshot, 3);
+        #        linkedTotalAmount  = conPeek(ticketMonetarySnapshot, 4);
+        #        linkedAmountMST    = conPeek(ticketMonetarySnapshot, 5);
+        #        linkedExchRate     = conPeek(ticketMonetarySnapshot, 6);
+        #
+        #        hojaGastosLine.clear();
+        #        hojaGastosLine.initValue();
+        #
+        #        hojaGastosLine.HojaGastosId = hojaGastosId;
+        #        hojaGastosLine.InitFromHojaGastosTable();
+        #
+        #        hojaGastosLine.UserId = hojaGastosTable.UserId;
+        #        hojaGastosLine.InitFromUsuarioTable();
+        #
+        #        hojaGastosLine.TransDate = ticket.createdDate;
+        #        hojaGastosLine.Type      = ticket.GastoType;
+        #        hojaGastosLine.InitFromGastoType();
+        #
+        #        hojaGastosLine.Description = ticket.Description;
+        #        hojaGastosLine.FileId      = ticket.FileId;
+        #        hojaGastosLine.Price       = linkedTotalAmount;
+        #        hojaGastosLine.Qty         = 1;
+        #        hojaGastosLine.Amount      = linkedTotalAmount;
+        #        hojaGastosLine.Currency    = linkedCurrencyCode;
+        #        hojaGastosLine.ExchRate    = linkedExchRate;
+        #        hojaGastosLine.AmountMST   = linkedAmountMST;
+        #        hojaGastosLine.recalculateReimbursableAmount();
+        #
+        #        // Auditoria
+        #        hojaGastosLine.INDCreatedByUserId = curUserId();
+        #
+        #        validationMessage = INDCRMExpenseSheetService::validateExpenseSheetLineForApi(hojaGastosLine);
+        #        if (validationMessage)
+        #        {
+        #            warning(strFmt("Ticket %1: %2", ticket.FileId, validationMessage));
+        #            continue;
+        #        }
+        #
+        #        hojaGastosLine.insert();
+        #
+        #        // Refreshes the linked ticket status.
+        #        INDCRMExpenseSheetService::refreshTicketStatusByFileId(curUserId(), ticket.FileId);
+        #
+        #        info(strFmt("Ticket %1 vinculado a hoja de gasto %2",
+        #                    ticket.FileId,
+        #                    hojaGastosId));
         #    }
         #
         #    ttscommit;
