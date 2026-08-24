@@ -1082,6 +1082,12 @@ recordBulkLinkContract(
   "partial and failed outcomes must refresh the link list from the server"
 );
 recordBulkLinkContract(
+  /if\s*\(\s*hasBulkIssues\s*\)\s*\{[\s\S]{0,3500}?resetList\("bulk-link-server-refresh"\);\s*await\s+loadList\(1,\s*activeFilters\)/.test(
+    bulkFlowSource
+  ),
+  "partial and failed outcomes must reload page one after the pending-ticket total shrinks"
+);
+recordBulkLinkContract(
   (bulkFlowSource.match(/resetList\("bulk-link-server-refresh"\);\s*await\s+loadList\(/g) || []).length === 2,
   "every post-link refresh must invalidate an older in-flight list request first"
 );

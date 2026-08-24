@@ -1090,7 +1090,7 @@ const ExpenseTicketsPageContent = () => {
         );
         flashActionMark(hasOnlyFailedTickets ? "errorProcess" : "warningProcess", 1500);
         resetList("bulk-link-server-refresh");
-        await loadList(currentPage < 1 ? 1 : currentPage, activeFilters);
+        await loadList(1, activeFilters);
         return true;
       }
 
