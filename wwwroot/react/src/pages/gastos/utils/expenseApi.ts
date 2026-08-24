@@ -1410,6 +1410,34 @@ export const propagateExpenseSheetReimbursableExpense = async (
   return normalizeApiResponse(response);
 };
 
+// Atomically updates the header project and every line, preserving an explicit blank value.
+export const propagateExpenseSheetProjectDefault = async (
+  hojaGastosId: string,
+  projectId: string,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<null>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeSheetId = encodeURIComponent(String(hojaGastosId || "").trim());
+  if (!safeSheetId) {
+    throw new ApiFetchError(indT("Api_RequestFailed", "Request failed."));
+  }
+
+  const response = await fetchJson<IndApiResponse<null>>(
+    `/api/crm/expensesheets/${safeSheetId}/project-default/propagate`,
+    {
+      ...options,
+      method: "POST",
+      headers: buildExpenseHeaders(context, options, true),
+      body: JSON.stringify({
+        projId: safeText(projectId),
+        projIdProvided: true,
+      }),
+    }
+  );
+
+  return normalizeApiResponse(response);
+};
+
 // Deletes a full expense sheet using /api/crm/expensesheets/{hojaGastosId}/lines/0?deleteWholeSheet=true.
 export const deleteExpenseSheet = async (
   hojaGastosId: string,

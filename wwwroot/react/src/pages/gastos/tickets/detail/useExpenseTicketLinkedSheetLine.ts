@@ -13,6 +13,10 @@ import {
   mapExpenseSheetLine,
 } from "../../utils/expenseApi.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
+import {
+  hasServerExpenseLineProjectDefault,
+  resolveNewExpenseLineProjectCandidate,
+} from "../../utils/expenseProjectRules.ts";
 
 type UseExpenseTicketLinkedSheetLineArgs = {
   enabled: boolean;
@@ -53,7 +57,8 @@ export const useExpenseTicketLinkedSheetLine = ({
 }: UseExpenseTicketLinkedSheetLineArgs) => {
   const [line, setLine] = useState<ExpenseSheetLine | null>(null);
   const [originalProjectId, setOriginalProjectId] = useState("");
-  const [draftProjectId, setDraftProjectId] = useState("");
+  const [draftProjectId, setDraftProjectIdValue] = useState("");
+  const [projectIdTouched, setProjectIdTouched] = useState(false);
   const [originalReimbursableExpense, setOriginalReimbursableExpense] = useState<number | null>(null);
   const [draftReimbursableExpense, setDraftReimbursableExpense] = useState<number | null>(null);
   const [localCurrencyCode, setLocalCurrencyCode] = useState("");
@@ -68,7 +73,8 @@ export const useExpenseTicketLinkedSheetLine = ({
     if (!enabled || !safeSheetId) {
       setLine(null);
       setOriginalProjectId("");
-      setDraftProjectId("");
+      setDraftProjectIdValue("");
+      setProjectIdTouched(false);
       setOriginalReimbursableExpense(null);
       setDraftReimbursableExpense(null);
       setLocalCurrencyCode("");
@@ -89,7 +95,8 @@ export const useExpenseTicketLinkedSheetLine = ({
       if (response?.Success === false) {
         setLine(null);
         setOriginalProjectId("");
-        setDraftProjectId("");
+        setDraftProjectIdValue("");
+        setProjectIdTouched(false);
         setOriginalReimbursableExpense(null);
         setDraftReimbursableExpense(null);
         setLocalCurrencyCode("");
@@ -102,11 +109,20 @@ export const useExpenseTicketLinkedSheetLine = ({
       const selectedLine = sheet && safeLineRecId ? selectLine(sheet, safeLineRecId) : null;
       if (!safeLineRecId) {
         // Prefills line fields during direct ticket creation from an expense sheet.
+        const mappedHeader = sheet ? mapExpenseSheetHeader(sheet) : null;
+        const serverDefaultProvided = hasServerExpenseLineProjectDefault(sheet);
+        const projectCandidate = resolveNewExpenseLineProjectCandidate({
+          defaultLineProjectId: mappedHeader?.defaultLineProjId,
+          headerProjectId: mappedHeader?.projId,
+          serverDefaultProvided,
+        });
         const initialProjectId = initializeMissingLine && sheet
-          ? await fetchExistingExpenseProjectId(
-              safeText(mapExpenseSheetHeader(sheet).projId),
-              { suppressPermissionModal: true }
-            )
+          ? serverDefaultProvided
+            ? projectCandidate
+            : await fetchExistingExpenseProjectId(
+                projectCandidate,
+                { suppressPermissionModal: true }
+              )
           : "";
         if (requestId !== latestRequestIdRef.current) return;
         const initialReimbursableExpense = initializeMissingLine
@@ -114,7 +130,8 @@ export const useExpenseTicketLinkedSheetLine = ({
           : null;
         setLine(null);
         setOriginalProjectId(initialProjectId);
-        setDraftProjectId(initialProjectId);
+        setDraftProjectIdValue(initialProjectId);
+        setProjectIdTouched(false);
         setOriginalReimbursableExpense(initialReimbursableExpense);
         setDraftReimbursableExpense(initialReimbursableExpense);
         setLocalCurrencyCode(sheetLocalCurrencyCode);
@@ -125,7 +142,8 @@ export const useExpenseTicketLinkedSheetLine = ({
       if (!selectedLine) {
         setLine(null);
         setOriginalProjectId("");
-        setDraftProjectId("");
+        setDraftProjectIdValue("");
+        setProjectIdTouched(false);
         setOriginalReimbursableExpense(null);
         setDraftReimbursableExpense(null);
         setLocalCurrencyCode(sheetLocalCurrencyCode);
@@ -137,7 +155,8 @@ export const useExpenseTicketLinkedSheetLine = ({
       const reimbursableExpense = normalizeExpenseLineReimbursableExpense(selectedLine.reimbursableExpense);
       setLine(selectedLine);
       setOriginalProjectId(projectId);
-      setDraftProjectId(projectId);
+      setDraftProjectIdValue(projectId);
+      setProjectIdTouched(false);
       setOriginalReimbursableExpense(reimbursableExpense);
       setDraftReimbursableExpense(reimbursableExpense);
       setLocalCurrencyCode(sheetLocalCurrencyCode);
@@ -151,7 +170,8 @@ export const useExpenseTicketLinkedSheetLine = ({
 
       setLine(null);
       setOriginalProjectId("");
-      setDraftProjectId("");
+      setDraftProjectIdValue("");
+      setProjectIdTouched(false);
       setOriginalReimbursableExpense(null);
       setDraftReimbursableExpense(null);
       setLocalCurrencyCode("");
@@ -170,15 +190,20 @@ export const useExpenseTicketLinkedSheetLine = ({
   }, [reloadLine]);
 
   const projectIdChanged = useMemo(
-    () => safeText(draftProjectId) !== safeText(originalProjectId),
-    [draftProjectId, originalProjectId]
+    () => projectIdTouched || safeText(draftProjectId) !== safeText(originalProjectId),
+    [draftProjectId, originalProjectId, projectIdTouched]
   );
   const reimbursableExpenseChanged = useMemo(
     () => draftReimbursableExpense !== originalReimbursableExpense,
     [draftReimbursableExpense, originalReimbursableExpense]
   );
+  const setDraftProjectId = useCallback((value: string) => {
+    setProjectIdTouched(true);
+    setDraftProjectIdValue(value);
+  }, []);
   const resetDraftProjectId = useCallback(() => {
-    setDraftProjectId(originalProjectId);
+    setDraftProjectIdValue(originalProjectId);
+    setProjectIdTouched(false);
   }, [originalProjectId]);
   const resetDraftReimbursableExpense = useCallback(() => {
     setDraftReimbursableExpense(originalReimbursableExpense);
@@ -186,7 +211,8 @@ export const useExpenseTicketLinkedSheetLine = ({
   const acceptDraftProjectId = useCallback(() => {
     const safeProjectId = safeText(draftProjectId);
     setOriginalProjectId(safeProjectId);
-    setDraftProjectId(safeProjectId);
+    setDraftProjectIdValue(safeProjectId);
+    setProjectIdTouched(false);
   }, [draftProjectId]);
   const acceptDraftReimbursableExpense = useCallback(() => {
     const safeReimbursableExpense = normalizeExpenseLineReimbursableExpense(draftReimbursableExpense);

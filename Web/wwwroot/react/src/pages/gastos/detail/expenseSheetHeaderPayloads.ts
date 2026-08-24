@@ -48,6 +48,7 @@ const buildSharedExpenseSheetPayload = ({
   return {
     description: String(draftDescription || "").trim(),
     projId: String(draftProjectId || "").trim() || undefined,
+    ...(isCreateMode ? {} : { projIdProvided: false }),
     expenseSheetStatus,
     reimbursableExpense: resolveExpenseReimbursableExpenseForWrite(
       draftReimbursableExpense,

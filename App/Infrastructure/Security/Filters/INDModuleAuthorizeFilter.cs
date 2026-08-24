@@ -256,9 +256,10 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                     IsExpenseSheetLineTicketAssociationPath(path))
                     return IndAccessRights.Edit;
 
-                // Reimbursement propagation mutates an existing sheet even though the route uses POST.
+                // Header-to-line propagation mutates an existing sheet even though the routes use POST.
                 if (HttpMethods.IsPost(method) &&
-                    path.TrimEnd('/').EndsWith("/reimbursable-expense/propagate", StringComparison.OrdinalIgnoreCase))
+                    (path.TrimEnd('/').EndsWith("/reimbursable-expense/propagate", StringComparison.OrdinalIgnoreCase) ||
+                     path.TrimEnd('/').EndsWith("/project-default/propagate", StringComparison.OrdinalIgnoreCase)))
                     return IndAccessRights.Edit;
 
                 if (HttpMethods.IsPost(method))

@@ -216,6 +216,14 @@ namespace IND_CRM_APP.Services
             string? axUserIdOverride = null
         );
 
+        // Propagates an optional project target atomically through the dedicated endpoint.
+        Task<ApiResponse<object>> PropagateExpenseSheetProjectDefaultAsync(
+            string token,
+            string hojaGastosId,
+            ExpenseSheetProjectDefaultPropagationRequest? request = null,
+            string? axUserIdOverride = null
+        );
+
         Task<ApiResponse<object>> DeleteExpenseSheetLineAsync(
             string token,
             string hojaGastosId,

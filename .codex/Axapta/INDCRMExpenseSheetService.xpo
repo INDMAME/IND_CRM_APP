@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Jueves 06/08/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Lunes 24/08/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -587,7 +587,7 @@ Formatversion: 1
         #         - Modo 0/1: [axUserId, descr, currencyCode, exchRate, projId, expenseSheetStatus, exchangeRateMode, reimbursableExpense]
         #         - Modo 2  : al menos [axUserId] (se ignoran los demas campos)
         #      3) linesIn (contenedor de contenedores de linea)
-        #         - Cada linea: [transDateStr, typeValue, lineDescr, internacional, fileId, qty, price, lineProjId, reimbursableExpense, currencyCode, amountMST, exchRate]
+        #         - Cada linea: [transDateStr, typeValue, lineDescr, internacional, fileId, qty, price, lineProjId, reimbursableExpense, currencyCode, amountMST, exchRate, lineProjectProvided]
         #         - amount se calcula internamente como qty * price
         #      4) optionsIn (contenedor opcional): [mode, existingHojaGastosId]
         #         - mode: 0|1|2
@@ -639,6 +639,7 @@ Formatversion: 1
         #    real      price;
         #    str       lineProjId;
         #    ProjId    resolvedLineProjId;
+        #    boolean   lineProjectProvided;
         #    INDReimbursableExpenseLines lineReimbursableExpense;
         #    boolean   hasLineReimbursableExpense;
         #    str 16    lineReimbursableExpenseRaw;
@@ -662,6 +663,7 @@ Formatversion: 1
         #
         #    int       startLine;
         #    NumberSeq numberSeq; // Usado solo al crear una cabecera nueva
+        #    PurchParameters purchParameters;
         #    ;
         #
         #    // ---- Validaciones base compatibles con versiones anteriores ----
@@ -782,6 +784,7 @@ Formatversion: 1
         #    {
         #        changecompany(companyId)
         #        {
+        #            purchParameters = PurchParameters::find();
         #            // Convierte el usuario AX en usuario CRM
         #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
         #                        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
@@ -844,6 +847,17 @@ Formatversion: 1
         #
         #                header.Description  = descr;
         #                header.normalizeReimbursementCurrencyDefaults(); //MMS - Ajustes CRM - 2026.06.26
+        #                //MMS - Ajustes CRM - 2026.08.21
+        #                // El proyecto explicito de cabecera debe ser seleccionable para nuevos gastos.
+        #                if (projId && !CRMHojaGastosLine::resolveEligibleProjectId(projId))
+        #                {
+        #                    ttsabort;
+        #                    if (numberSeq)
+        #                        numberSeq.abort();
+        #
+        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('El proyecto %1 no existe, esta cerrado o no permite imputar gastos.', projId), conNull()), conNull()];
+        #                }
+        #
         #                header.ProjId       = projId;
         #
         #                header.DestinoId    = "GENERALES";
@@ -904,6 +918,7 @@ Formatversion: 1
         #                    qty           = conPeek(lineIn, 6);
         #                    price         = conPeek(lineIn, 7);
         #                    lineProjId    = conPeek(lineIn, 8);
+        #                    lineProjectProvided = lineProjId ? true : false;
         #                    hasLineReimbursableExpense = false;
         #                    lineCurrencyCode = '';
         #                    hasLineAmountMST = false;
@@ -958,6 +973,14 @@ Formatversion: 1
         #                            hasLineExchRate = true;
         #                        }
         #                    }
+        #
+        #                    //MMS - Ajustes CRM - 2026.08.21
+        #                    // La posicion 13 distingue un proyecto vacio intencionado de un valor omitido.
+        #                    if (conLen(lineIn) >= 13)
+        #                        lineProjectProvided = any2int(conPeek(lineIn, 13)) != 0;
+        #                    else if (purchParameters.INDProjIdVarious &&
+        #                             lineProjId == purchParameters.INDProjIdVarious)
+        #                        lineProjectProvided = false;
         #
         #                    if (!INDCRMExpenseSheetService::isValidGastoType(typeValue))
         #                    {
@@ -1069,11 +1092,37 @@ Formatversion: 1
         #                    if (hasLineReimbursableExpense)
         #                        line.ReimbursableExpense = any2int(lineReimbursableExpense);
         #
-        #                    // Only real projects are inherited; reserved or missing ids remain empty.
-        #                    if (lineProjId)
+        #                    //MMS - Ajustes CRM - 2026.08.21
+        #                    // Los valores explicitos se rechazan y los defaults invalidos quedan vacios.
+        #                    if (lineProjectProvided)
+        #                    {
         #                        resolvedLineProjId = CRMHojaGastosLine::resolveRealProjectId(lineProjId);
+        #
+        #                        if (lineProjId && !resolvedLineProjId)
+        #                        {
+        #                            ttsabort;
+        #                            if (numberSeq)
+        #                                numberSeq.abort();
+        #
+        #                            return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: el proyecto %2 no existe o esta reservado.', i, lineProjId), conNull()), conNull()];
+        #                        }
+        #
+        #                        if (resolvedLineProjId &&
+        #                            !CRMHojaGastosLine::resolveEligibleProjectId(resolvedLineProjId))
+        #                        {
+        #                            ttsabort;
+        #                            if (numberSeq)
+        #                                numberSeq.abort();
+        #
+        #                            return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: el proyecto %2 esta cerrado o no permite imputar gastos.', i, lineProjId), conNull()), conNull()];
+        #                        }
+        #                    }
         #                    else
-        #                        resolvedLineProjId = CRMHojaGastosLine::resolveRealProjectId(header.ProjId);
+        #                    {
+        #                        //MMS - Ajustes CRM - 2026.08.24
+        #                        // Usa solo el proyecto elegible de cabecera; vacio y VARIOS no se precargan.
+        #                        resolvedLineProjId = header.defaultProjectForNewLine();
+        #                    }
         #
         #                    line.ProjId       = resolvedLineProjId;
         #                    line.ProjIdHornos = resolvedLineProjId;
@@ -2269,6 +2318,7 @@ Formatversion: 1
         #    Amount              totalAmountMST;
         #    Amount              totalGrossAmountMST;
         #    INDReimbursableAmount totalReimbursableAmount;
+        #    ProjId              defaultLineProjId;
         #    Price               price;
         #    container           headerOut;
         #    container           linesOut = conNull();
@@ -2353,6 +2403,7 @@ Formatversion: 1
         #        //MMS - Anade totales explicitos en divisa de empresa sin desplazar las columnas heredadas - 2026.07.29
         #        totalGrossAmountMST     = header.TotalBrutoAmountMST();
         #        totalReimbursableAmount = header.TotalReimbursableAmount();
+        #        defaultLineProjId       = header.defaultProjectForNewLine();
         #        exchangeRateMode    = any2int(header.ExchangeRateMode);
         #        expenseSheetStatus  = any2int(header.ExpenseSheetStatus);
         #        reimbursableExpense = any2int(header.ReimbursableExpense);
@@ -2387,7 +2438,10 @@ Formatversion: 1
         #                                                      strFmt("%1", totalAmountMST),
         #                                                      strFmt("%1", date2Str(header.CreatedDate, 123, 2,2,2,2,4)),
         #                                                      strFmt("%1", totalGrossAmountMST),
-        #                                                      strFmt("%1", totalReimbursableAmount)
+        #                                                      strFmt("%1", totalReimbursableAmount),
+        #                                                      //MMS - Ajustes CRM - 2026.08.21
+        #                                                      // Anade el default resuelto sin desplazar campos heredados.
+        #                                                      strFmt("%1", defaultLineProjId)
         #                                                     ]);
         #
         #        while select line
@@ -4009,6 +4063,8 @@ Formatversion: 1
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #//  - _data[3] = HojaGastosId
+        #//  - _data[4] = ProjId opcional; si se incluye, vacio significa limpiar
+        #//  - _data[5] = projectProvided opcional; distingue body ausente de borrado explicito
         #static server container propagateExpenseSheetProjectDefault(container _data)
         #{
         #    DataAreaId          companyId;
@@ -4016,6 +4072,9 @@ Formatversion: 1
         #    str 20              axUserId;
         #    CRMHojaGastosId     hojaId;
         #    CRMHojaGastosTable  header;
+        #    ProjId              projectId;
+        #    ProjId              realProjectId;
+        #    boolean             projectProvided;
         #    int                 updated;
         #    int                 startLine;
         #    str                 msg;
@@ -4031,6 +4090,12 @@ Formatversion: 1
         #
         #    axUserId = conPeek(_data, 2);
         #    hojaId   = conPeek(_data, 3);
+        #    projectProvided = conLen(_data) >= 4;
+        #    if (conLen(_data) >= 5)
+        #        projectProvided = any2int(conPeek(_data, 5)) != 0;
+        #
+        #    if (projectProvided)
+        #        projectId = conPeek(_data, 4);
         #
         #    startLine = infolog.line();
         #
@@ -4044,21 +4109,55 @@ Formatversion: 1
         #            if (!crmUserId || !hojaId)
         #                return INDCRMUtilityService::buildHeader(false, 'crmUserId y HojaGastosId son obligatorios.', conNull());
         #
+        #            ttsbegin;
         #            header = INDCRMUtilityService::findHeaderForUpdate(crmUserId, hojaId);
         #
         #            if (!header.RecId)
+        #            {
+        #                ttsabort;
         #                return INDCRMUtilityService::buildHeader(false, 'Hoja de gastos no encontrada.', conNull());
+        #            }
         #
         #            if (INDCRMUtilityService::isHeaderLocked(header))
+        #            {
+        #                ttsabort;
         #                return INDCRMUtilityService::buildHeader(false, 'Hoja de gastos bloqueada. Voucher informado.', conNull());
+        #            }
         #
-        #            if (header.isVariousProjectDefault())
-        #                return INDCRMUtilityService::buildHeader(false, 'ProjId de cabecera es el valor varios; indique un proyecto real antes de propagar.', conNull());
+        #            if (!projectProvided)
+        #            {
+        #                projectId = header.ProjId;
         #
-        #            if (!header.ProjId)
-        #                return INDCRMUtilityService::buildHeader(false, 'ProjId de cabecera es obligatorio para propagar proyecto.', conNull());
+        #                if (header.isVariousProjectDefault())
+        #                {
+        #                    ttsabort;
+        #                    return INDCRMUtilityService::buildHeader(false, 'ProjId de cabecera es el valor varios; indique un proyecto real antes de propagar.', conNull());
+        #                }
         #
-        #            updated = header.updateProjectDefaultInLines();
+        #                if (!projectId)
+        #                {
+        #                    ttsabort;
+        #                    return INDCRMUtilityService::buildHeader(false, 'ProjId de cabecera es obligatorio para propagar proyecto.', conNull());
+        #                }
+        #            }
+        #
+        #            realProjectId = CRMHojaGastosLine::resolveRealProjectId(projectId);
+        #
+        #            if (projectId && !realProjectId)
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, strFmt('El proyecto %1 no existe o esta reservado.', projectId), conNull());
+        #            }
+        #
+        #            if (realProjectId &&
+        #                !CRMHojaGastosLine::resolveEligibleProjectId(realProjectId))
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, strFmt('El proyecto %1 esta cerrado o no permite imputar gastos.', projectId), conNull());
+        #            }
+        #
+        #            updated = header.updateProjectDefaultInLines(projectId);
+        #            ttscommit;
         #
         #            return INDCRMUtilityService::buildHeader(true, 'Proyecto de cabecera propagado correctamente.',
         #                                                     [header.HojaGastosId, strFmt('%1', updated), '0']);
@@ -5022,6 +5121,7 @@ Formatversion: 1
         #//  - _data[10] = estadoComentarios (opcional)
         #//  - _data[11] = ReimbursableExpense (optional: 0 Yes, 1 No; Both is derived)
         #//  - _data[12] = actorAxUserId (opcional, solo para notificacion web de jefes)
+        #//  - _data[13] = projectProvided (opcional; 0 conserva el proyecto actual, 1 aplica ProjId)
         #static server container updateExpenseSheetHeader(container _data)
         #{
         #    DataAreaId            companyId;
@@ -5045,10 +5145,13 @@ Formatversion: 1
         #    INDExchangeRateMode   exchangeRateMode;
         #    INDReimbursableExpense reimbursableExpense;
         #    CRMHojaGastosTable    header;
+        #    ProjId                oldProjectId;
         #    INDExpenseSheetStatus oldExpenseSheetStatus;
         #    INDExpenseSheetStatus newExpenseSheetStatus;
         #    boolean               sendStatusNotification;
         #    boolean               notificationSent;
+        #    boolean               projectProvided;
+        #    boolean               projectChanged;
         #    str 16                expenseSheetStatusRaw;
         #    str 16                exchangeRateModeRaw;
         #    str 16                estadoComentariosRaw;
@@ -5130,6 +5233,10 @@ Formatversion: 1
         #            actorAxUserId = actorAxUserIdRaw;
         #    }
         #
+        #    //MMS - Ajustes CRM - 2026.08.21
+        #    // New clients declare intent so stale project values do not overwrite the header.
+        #    projectProvided = conLen(_data) < 13 || any2int(conPeek(_data, 13)) != 0;
+        #
         #
         #    startLine = infolog.line(); //MMS - Ajustes CRM - 2026.06.29
         #    sendStatusNotification = false;
@@ -5160,6 +5267,8 @@ Formatversion: 1
         #            }
         #
         #            oldExpenseSheetStatus = header.ExpenseSheetStatus;
+        #            oldProjectId          = header.ProjId;
+        #            projectChanged        = projectProvided && projId != oldProjectId;
         #
         #            if (currencyCode || exchRate != 0)
         #            {
@@ -5171,7 +5280,17 @@ Formatversion: 1
         #            if (descr)
         #                header.Description = descr;
         #
-        #            header.ProjId = projId;
+        #            //MMS - Ajustes CRM - 2026.08.21
+        #            // Un proyecto cambiado es explicito y no puede estar reservado ni ser inelegible.
+        #            if (projectChanged && projId &&
+        #                !CRMHojaGastosLine::resolveEligibleProjectId(projId))
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, strFmt('El proyecto %1 no existe, esta cerrado o no permite imputar gastos.', projId), conNull());
+        #            }
+        #
+        #            if (projectProvided)
+        #                header.ProjId = projId;
         #
         #            if (hasExpenseSheetStatus)
         #                header.ExpenseSheetStatus = expenseSheetStatus;
@@ -5318,6 +5437,8 @@ Formatversion: 1
         #    real  lineExchRate;
         #    boolean hasLineExchRate;
         #    str 32  lineExchRateRaw;
+        #    boolean legacyProjectContract;
+        #    boolean projectProvided;
         #    int   startLine;
         #    str   msg;
         #
@@ -5347,6 +5468,8 @@ Formatversion: 1
         #    qty           = conPeek(_data, 10);
         #    price         = conPeek(_data, 11);
         #    projId        = conPeek(_data, 12);
+        #    legacyProjectContract = conLen(_data) < 17;
+        #    projectProvided = legacyProjectContract || any2int(conPeek(_data, 17)) != 0;
         #    hasLineReimbursableExpense = false;
         #    hasLineAmountMST = false;
         #    hasLineExchRate  = false;
@@ -5470,6 +5593,25 @@ Formatversion: 1
         #                }
         #            }
         #
+        #            //MMS - Ajustes CRM - 2026.08.24
+        #            // El contrato heredado usa solo el proyecto elegible de cabecera.
+        #            if (legacyProjectContract && !projId)
+        #            {
+        #                projId = header.defaultProjectForNewLine();
+        #
+        #                if (!projId)
+        #                    projectProvided = false;
+        #            }
+        #
+        #            //MMS - Ajustes CRM - 2026.08.21
+        #            // Rechaza un proyecto nuevo reservado, inexistente, cerrado o no imputable.
+        #            if (projectProvided && projId != line.ProjIdHornos && projId &&
+        #                !CRMHojaGastosLine::resolveEligibleProjectId(projId))
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, strFmt('El proyecto %1 no existe, esta cerrado o no permite imputar gastos.', projId), conNull());
+        #            }
+        #
         #            line.TransDate     = transDate;
         #            line.Type          = typeValue;
         #            line.Description   = descr;
@@ -5503,9 +5645,13 @@ Formatversion: 1
         #            if (hasLineReimbursableExpense)
         #                line.ReimbursableExpense = any2int(lineReimbursableExpense);
         #
-        #            // Preserve the explicit line project, including an intentional empty value.
-        #            line.ProjId       = projId;
-        #            line.ProjIdHornos = projId;
+        #            //MMS - Ajustes CRM - 2026.08.21
+        #            // Conserva el proyecto si el cliente no expresa intencion de modificarlo.
+        #            if (projectProvided)
+        #            {
+        #                line.ProjId       = projId;
+        #                line.ProjIdHornos = projId;
+        #            }
         #
         #            msg = INDCRMExpenseSheetService::validateExpenseSheetLineForApi(line); //MMS - Ajustes CRM - 2026.06.29
         #            if (msg)

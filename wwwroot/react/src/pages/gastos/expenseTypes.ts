@@ -268,6 +268,8 @@ export type ExpenseSheetDetailDto = {
   reimbursableExpense?: ExpenseSheetReimbursableExpense | null;
   ProjId?: string;
   projId?: string;
+  DefaultLineProjId?: string | null;
+  defaultLineProjId?: string | null;
   Voucher?: string;
   voucher?: string;
   CreatedDate?: ExpenseApiDate | null;
@@ -286,6 +288,7 @@ export type ExpenseSheetCreateLineRequest = {
   qty: number;
   price: number;
   projId?: string;
+  projIdProvided?: boolean;
   reimbursableExpense?: ExpenseSheetLineReimbursableExpense | null;
   currencyCode?: string;
   amountMST?: number | null;
@@ -382,6 +385,7 @@ export type ExpenseSheetHeaderUpdateRequest = {
   currencyCode?: string;
   exchRate?: number | null;
   projId?: string;
+  projIdProvided?: boolean;
   expenseSheetStatus?: number;
   exchangeRateMode?: number;
   estadoComentarios?: string;
@@ -399,6 +403,7 @@ export type ExpenseSheetLineUpdateRequest = {
   qty: number;
   price: number;
   projId?: string;
+  projIdProvided?: boolean;
   reimbursableExpense?: ExpenseSheetLineReimbursableExpense | null;
   currencyCode?: string;
   amountMST?: number | null;
@@ -484,6 +489,7 @@ export type ExpenseSheetHeader = {
   exchangeRateMode?: number | null;
   reimbursableExpense?: ExpenseSheetReimbursableExpense | null;
   projId?: string;
+  defaultLineProjId?: string;
   voucher?: string;
   createdDate?: string;
 };

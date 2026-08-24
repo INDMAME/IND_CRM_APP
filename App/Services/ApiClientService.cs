@@ -1580,6 +1580,28 @@ namespace IND_CRM_APP.Services
             return BuildApiResponse<object>(result, "PropagateExpenseSheetReimbursableExpense");
         }
 
+        // Propagates an optional project target through the dedicated upstream endpoint.
+        public async Task<ApiResponse<object>> PropagateExpenseSheetProjectDefaultAsync(
+            string token,
+            string hojaGastosId,
+            ExpenseSheetProjectDefaultPropagationRequest? request = null,
+            string? axUserIdOverride = null)
+        {
+            PrepareRequestHeaders(
+                token,
+                "PropagateExpenseSheetProjectDefault",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
+
+            var safeSheetId = EscapePathSegment(hojaGastosId);
+            var result = await SendPostAsync(
+                ApiRoutes.ExpenseSheetProjectDefaultPropagate(safeSheetId),
+                Serialize(request ?? new ExpenseSheetProjectDefaultPropagationRequest()));
+            return BuildApiResponse<object>(result, "PropagateExpenseSheetProjectDefault");
+        }
+
         public async Task<ApiResponse<object>> DeleteExpenseSheetLineAsync(
             string token,
             string hojaGastosId,

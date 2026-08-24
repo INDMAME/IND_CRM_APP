@@ -47,6 +47,7 @@ type UseExpenseSheetLineDetailMutationsArgs = {
   draftPrice: string;
   draftQty: string;
   draftProjectId: string;
+  draftProjectIdProvided: boolean;
   draftInternational: string;
   draftReimbursableExpense: number | null;
   draftCurrencyCode: string;
@@ -89,6 +90,7 @@ export const useExpenseSheetLineDetailMutations = ({
   draftPrice,
   draftQty,
   draftProjectId,
+  draftProjectIdProvided,
   draftInternational,
   draftReimbursableExpense,
   draftCurrencyCode,
@@ -211,6 +213,7 @@ export const useExpenseSheetLineDetailMutations = ({
           normalizedLocalCurrencyCode,
           parsedExchangeRate
         );
+        const normalizedProjectId = String(draftProjectId || "").trim();
         const commonLinePayload = {
           transDate: normalizedDate,
           typeValue: parsedTypeValue,
@@ -219,7 +222,6 @@ export const useExpenseSheetLineDetailMutations = ({
           ticket: line?.ticket === true,
           qty: Number(parsedQty),
           price: Number(parsedPrice),
-          projId: String(draftProjectId || "").trim() || undefined,
           reimbursableExpense: reimbursableExpenseForWrite,
           currencyCode: normalizedCurrencyCode || undefined,
           amountMST: payloadAmountMST,
@@ -227,8 +229,16 @@ export const useExpenseSheetLineDetailMutations = ({
           indAttachFiles: safeText(line?.indAttachFiles),
         };
 
-        const createLinePayload: ExpenseSheetCreateLineRequest = commonLinePayload;
-        const updateLinePayload: ExpenseSheetLineUpdateRequest = commonLinePayload;
+        const createLinePayload: ExpenseSheetCreateLineRequest = {
+          ...commonLinePayload,
+          projId: draftProjectIdProvided ? normalizedProjectId : undefined,
+          projIdProvided: draftProjectIdProvided,
+        };
+        const updateLinePayload: ExpenseSheetLineUpdateRequest = {
+          ...commonLinePayload,
+          projId: draftProjectIdProvided ? normalizedProjectId : undefined,
+          projIdProvided: draftProjectIdProvided,
+        };
 
         const response = isCreateMode
           ? await createExpenseSheet({
@@ -265,6 +275,7 @@ export const useExpenseSheetLineDetailMutations = ({
     draftCurrencyCode,
     draftExchangeRate,
     draftProjectId,
+    draftProjectIdProvided,
     draftQty,
     draftTransDate,
     draftTypeValueCode,

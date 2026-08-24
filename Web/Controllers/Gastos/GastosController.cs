@@ -1278,7 +1278,12 @@ namespace IND_CRM_APP.Controllers
                     Ticket = line.Ticket,
                     Qty = line.Qty,
                     Price = line.Price,
-                    ProjId = NormalizeOptionalText(line.ProjId),
+                    ProjId = line.ProjIdProvided == true
+                        ? (line.ProjId ?? string.Empty).Trim()
+                        : line.ProjIdProvided == false
+                            ? null
+                            : line.ProjId?.Trim(),
+                    ProjIdProvided = line.ProjIdProvided ?? (line.ProjId == null ? null : true),
                     ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpenseForCreate(line.ReimbursableExpense),
                     CurrencyCode = NormalizeOptionalText(line.CurrencyCode)?.ToUpperInvariant(),
                     AmountMST = line.AmountMST,
@@ -1453,13 +1458,17 @@ namespace IND_CRM_APP.Controllers
                 : (int?)null;
             var normalizedEstadoComentarios = NormalizeOptionalClearableText(req.EstadoComentarios);
             var normalizedVoucher = NormalizeOptionalText(req.Voucher);
+            var normalizedProjIdProvided = req.ProjIdProvided ?? (req.ProjId == null ? (bool?)null : true);
 
             var request = new ExpenseSheetUpdateRequest
             {
                 Description = (req.Description ?? string.Empty).Trim(),
                 CurrencyCode = normalizedCurrency,
                 ExchRate = normalizedExchRate,
-                ProjId = NormalizeOptionalText(req.ProjId),
+                ProjId = normalizedProjIdProvided == true
+                    ? (req.ProjId ?? string.Empty).Trim()
+                    : null,
+                ProjIdProvided = normalizedProjIdProvided,
                 Voucher = normalizedVoucher,
                 ExpenseSheetStatus = normalizedExpenseSheetStatus,
                 ExchangeRateMode = normalizedExchangeRateMode,
@@ -1631,6 +1640,87 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // Proxies atomic project propagation while preserving the existing expense sheet mutation policy.
+        [HttpPost]
+        public async Task<IActionResult> ApiExpenseSheetProjectDefaultPropagate(
+            string hojaGastosId,
+            [FromBody] ExpenseSheetProjectDefaultPropagationRequest? req = null)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeSheetId = NormalizeOptionalText(hojaGastosId);
+            if (string.IsNullOrWhiteSpace(safeSheetId))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(
+                token,
+                nameof(ApiExpenseSheetProjectDefaultPropagate));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
+
+            var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                token,
+                safeSheetId,
+                requestAxUserId,
+                nameof(ApiExpenseSheetProjectDefaultPropagate),
+                ExpenseSheetMutationType.LineMutation);
+            if (!mutationGuard.Allowed)
+                return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+
+            var projectProvided = req?.ProjIdProvided ?? (req?.ProjId != null);
+            var request = new ExpenseSheetProjectDefaultPropagationRequest
+            {
+                ProjId = projectProvided ? (req?.ProjId ?? string.Empty).Trim() : null,
+                ProjIdProvided = projectProvided
+            };
+
+            try
+            {
+                var response = await _apiClient.PropagateExpenseSheetProjectDefaultAsync(
+                    token,
+                    safeSheetId,
+                    request,
+                    requestAxUserId);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetProjectDefaultPropagate");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetProjectDefaultPropagate");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
         // API route used by React clients for /api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId}.
         [HttpPut]
         public async Task<IActionResult> ApiExpenseSheetLineUpdate(
@@ -1674,7 +1764,12 @@ namespace IND_CRM_APP.Controllers
                 Ticket = req.Ticket,
                 Qty = req.Qty,
                 Price = req.Price,
-                ProjId = NormalizeOptionalText(req.ProjId),
+                ProjId = req.ProjIdProvided == true
+                    ? (req.ProjId ?? string.Empty).Trim()
+                    : req.ProjIdProvided == false
+                        ? null
+                        : req.ProjId?.Trim(),
+                ProjIdProvided = req.ProjIdProvided ?? (req.ProjId == null ? null : true),
                 ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpense(req.ReimbursableExpense),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
                 AmountMST = req.AmountMST,
@@ -3745,7 +3840,12 @@ namespace IND_CRM_APP.Controllers
                         Ticket = line.Ticket,
                         Qty = line.Qty,
                         Price = line.Price,
-                        ProjId = NormalizeOptionalText(line.ProjId),
+                        ProjId = line.ProjIdProvided == true
+                            ? (line.ProjId ?? string.Empty).Trim()
+                            : line.ProjIdProvided == false
+                                ? null
+                                : line.ProjId?.Trim(),
+                        ProjIdProvided = line.ProjIdProvided ?? (line.ProjId == null ? null : true),
                         ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpenseForCreate(line.ReimbursableExpense),
                         CurrencyCode = NormalizeOptionalText(line.CurrencyCode)?.ToUpperInvariant(),
                         AmountMST = line.AmountMST,
@@ -3894,13 +3994,17 @@ namespace IND_CRM_APP.Controllers
                     : (int?)null;
                 var normalizedEstadoComentarios = NormalizeOptionalClearableText(req.EstadoComentarios);
                 var normalizedVoucher = NormalizeOptionalText(req.Voucher);
+                var normalizedProjIdProvided = req.ProjIdProvided ?? (req.ProjId == null ? (bool?)null : true);
 
                 var request = new ExpenseSheetUpdateRequest
                 {
                     Description = (req.Description ?? string.Empty).Trim(),
                     CurrencyCode = normalizedCurrency,
                     ExchRate = normalizedExchRate,
-                    ProjId = NormalizeOptionalText(req.ProjId),
+                    ProjId = normalizedProjIdProvided == true
+                        ? (req.ProjId ?? string.Empty).Trim()
+                        : null,
+                    ProjIdProvided = normalizedProjIdProvided,
                     Voucher = normalizedVoucher,
                     ExpenseSheetStatus = normalizedExpenseSheetStatus,
                     ExchangeRateMode = normalizedExchangeRateMode,
@@ -4004,7 +4108,12 @@ namespace IND_CRM_APP.Controllers
                     Ticket = req.Ticket,
                     Qty = req.Qty,
                     Price = req.Price,
-                    ProjId = NormalizeOptionalText(req.ProjId),
+                    ProjId = req.ProjIdProvided == true
+                        ? (req.ProjId ?? string.Empty).Trim()
+                        : req.ProjIdProvided == false
+                            ? null
+                            : req.ProjId?.Trim(),
+                    ProjIdProvided = req.ProjIdProvided ?? (req.ProjId == null ? null : true),
                     ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpense(req.ReimbursableExpense),
                     CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
                     AmountMST = req.AmountMST,
@@ -4584,7 +4693,8 @@ namespace IND_CRM_APP.Controllers
                 Description = effectiveDescription,
                 CurrencyCode = snapshot.CurrencyCode,
                 ExchRate = NormalizeExpenseSheetExchangeRateForWrite(snapshot.CurrencyCode, snapshot.ExchangeRate),
-                ProjId = snapshot.ProjectId,
+                ProjId = null,
+                ProjIdProvided = false,
                 Voucher = snapshot.Voucher,
                 ExpenseSheetStatus = request.ExpenseSheetStatus,
                 ExchangeRateMode = snapshot.ExchangeRateMode,
@@ -4618,7 +4728,9 @@ namespace IND_CRM_APP.Controllers
             if (!string.Equals((request.Description ?? string.Empty).Trim(), snapshot.Description, StringComparison.Ordinal))
                 return true;
 
-            if (!string.Equals(NormalizeOptionalText(request.ProjId) ?? string.Empty, snapshot.ProjectId ?? string.Empty, StringComparison.OrdinalIgnoreCase))
+            var projectProvided = request.ProjIdProvided ?? (request.ProjId != null);
+            if (projectProvided &&
+                !string.Equals(NormalizeOptionalText(request.ProjId) ?? string.Empty, snapshot.ProjectId ?? string.Empty, StringComparison.OrdinalIgnoreCase))
                 return true;
 
             if (!string.Equals(NormalizeOptionalText(request.Voucher) ?? string.Empty, snapshot.Voucher ?? string.Empty, StringComparison.OrdinalIgnoreCase))
@@ -6364,6 +6476,7 @@ namespace IND_CRM_APP.Controllers
                 exchangeRateMode = ReadTypedOrExtraInt(sheet.ExchangeRateMode, sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
                 reimbursableExpense = ReadTypedOrExtraInt(sheet.ReimbursableExpense, sheet.Extra, "reimbursableExpense", "ReimbursableExpense"),
                 projId = ReadTypedOrExtraString(sheet.ProjId, sheet.Extra, "projId", "projectId", "proyectoId", "project"),
+                defaultLineProjId = sheet.DefaultLineProjId,
                 voucher = ReadTypedOrExtraString(sheet.Voucher, sheet.Extra, "voucher")
             };
         }

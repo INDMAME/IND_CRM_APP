@@ -22,6 +22,7 @@ const legacyTransitionPayload = buildExpenseSheetStatusTransitionPayload({
 assert.deepEqual(legacyTransitionPayload, {
   description: "",
   projId: "P-100",
+  projIdProvided: false,
   expenseSheetStatus: 2,
   reimbursableExpense: 0,
   estadoComentarios: "",
@@ -39,6 +40,7 @@ assert.deepEqual(
   {
     description: "Existing description",
     projId: "P-200",
+    projIdProvided: false,
     expenseSheetStatus: 1,
     reimbursableExpense: 1,
     estadoComentarios: "Keep this comment",
@@ -64,6 +66,16 @@ const existingDescriptionResult = buildExpenseSheetFullUpdatePayload({
 });
 assert.ok("payload" in existingDescriptionResult);
 assert.equal(existingDescriptionResult.payload.description, "Existing description");
+assert.equal(existingDescriptionResult.payload.projIdProvided, false);
+
+const createDescriptionResult = buildExpenseSheetFullUpdatePayload({
+  ...legacyDraft,
+  draftDescription: "New sheet",
+  currentExpenseSheetStatus: 0,
+  isCreateMode: true,
+});
+assert.ok("payload" in createDescriptionResult);
+assert.equal("projIdProvided" in createDescriptionResult.payload, false);
 
 const repositoryRoot = process.cwd();
 const gastosControllerSource = readFileSync(
@@ -170,6 +182,8 @@ assert.match(
   /effectiveDescription = \$"Hoja de gastos \{hojaGastosId\}";/
 );
 assert.match(effectiveRequestMethodSource, /Description = effectiveDescription,/);
+assert.match(effectiveRequestMethodSource, /ProjId = null,/);
+assert.match(effectiveRequestMethodSource, /ProjIdProvided = false,/);
 assert.match(effectiveRequestMethodSource, /ExpenseSheetStatus = request\.ExpenseSheetStatus,/);
 assert.match(effectiveRequestMethodSource, /EstadoComentarios = request\.EstadoComentarios,/);
 

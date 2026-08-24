@@ -336,7 +336,8 @@ export const buildSheetLinePayload = (
     ticket: true,
     qty: 1,
     price: effectiveTotal,
-    projId: safeText(projectId) || undefined,
+    projId: safeText(projectId),
+    projIdProvided: true,
   };
 };
 

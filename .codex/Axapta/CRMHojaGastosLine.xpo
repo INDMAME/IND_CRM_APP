@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosLine unloaded at Jueves 06/08/2026
+; Navision Axapta Table : CRMHojaGastosLine unloaded at Lunes 24/08/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -1575,17 +1575,29 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #delete
-        #//MMS - Recalcula el estado de la cabecera despues de eliminar una linea - 2026.07.29
+        #//MMS - Ajustes CRM - 2026.08.24
+        #// Mantiene los valores derivados de cabecera despues de borrar una linea.
         #public void delete()
         #{
         #    CRMHojaGastosTable hojaGastosTable;
+        #    boolean             mustUpdate;
         #    ;
         #
+        #    ttsbegin;
         #    hojaGastosTable = this.HojaGastosTable(true);
         #    super();
         #
-        #    if (hojaGastosTable && hojaGastosTable.recalculateReimbursableExpenseFromLines())
+        #    if (hojaGastosTable)
+        #    {
+        #        mustUpdate = hojaGastosTable.recalculateProjectFromLines();
+        #
+        #        if (hojaGastosTable.recalculateReimbursableExpenseFromLines())
+        #            mustUpdate = true;
+        #
+        #        if (mustUpdate)
         #        hojaGastosTable.doUpdate();
+        #    }
+        #    ttscommit;
         #}
         #
       ENDSOURCE
@@ -1754,26 +1766,6 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
-      SOURCE #resolveRealProjectId
-        #//MMS - Ajustes CRM - 2026.08.21
-        #// Returns a real inherited project, or empty when the value is reserved or missing.
-        #static ProjId resolveRealProjectId(ProjId _projId)
-        #{
-        #    PurchParameters purchParameters = PurchParameters::find();
-        #    ProjTable        projTable;
-        #    ;
-        #
-        #    if (!_projId ||
-        #        (purchParameters.INDProjIdVarious &&
-        #         _projId == purchParameters.INDProjIdVarious))
-        #        return '';
-        #
-        #    projTable = ProjTable::find(_projId);
-        #
-        #    return projTable.RecId ? projTable.ProjId : '';
-        #}
-        #
-      ENDSOURCE
       SOURCE #InitFromHojaGastosTable
         #void InitFromHojaGastosTable()
         #{
@@ -1785,7 +1777,7 @@ Formatversion: 1
         #
         #    this.Division           = hojaGastosTable.Division;
         #
-        #    this.ProjIdHornos       = CRMHojaGastosLine::resolveRealProjectId(hojaGastosTable.ProjId);
+        #    this.ProjIdHornos       = hojaGastosTable.defaultProjectForNewLine();
         #
         #    //MMS - Ajustes CRM - 2026.06.26
         #    // La cabecera siempre aporta la divisa local inicial; la divisa extranjera se informa en la linea.
@@ -1828,7 +1820,12 @@ Formatversion: 1
         #    this.AmountMST          = 0;
         #    this.Currency           = _hojaGastosLine.Currency;
         #    this.Week               = _hojaGastosLine.Week;
-        #    this.ProjIdHornos       = CRMHojaGastosLine::resolveRealProjectId(_hojaGastosLine.ProjIdHornos);
+        #    //MMS - Ajustes CRM - 2026.08.24
+        #    // Precarga solo el proyecto elegible de cabecera; vacio y VARIOS no se heredan.
+        #    this.ProjIdHornos       = '';
+        #
+        #    if (this.HojaGastosTable())
+        #        this.ProjIdHornos = this.HojaGastosTable().defaultProjectForNewLine();
         #    this.DisciplinaId       = "";
         #    //MMS - Divisa desde línea - 2026.05.22
         #    this.Currency           = _hojaGastosLine.Currency;
@@ -1883,7 +1880,21 @@ Formatversion: 1
         #public void insert()
         #{
         #    boolean amountMSTWasProvided;    //MMS - Divisa desde línea - 2026.05.21
+        #    CRMHojaGastosTable hojaGastosTable;
         #    ;
+        #
+        #    //MMS - Ajustes CRM - 2026.08.24
+        #    // Impide insertar una linea con un proyecto reservado, inexistente, cerrado o no imputable.
+        #    if (this.ProjIdHornos &&
+        #        !CRMHojaGastosLine::resolveEligibleProjectId(this.ProjIdHornos))
+        #    {
+        #        throw error(strFmt("El proyecto %1 no existe, esta cerrado, esta reservado o no permite imputar gastos.", this.ProjIdHornos));
+        #    }
+        #
+        #    //MMS - Ajustes CRM - 2026.08.21
+        #    // Bloquea la cabecera antes de cambiar la linea para serializar los recalculos.
+        #    ttsbegin;
+        #    hojaGastosTable = this.HojaGastosTable(true);
         #
         #    //IJL.15/04/26
         #    if (this.ModalidadPago == CRMHojaGastoModalidadPago::TarjetaGasolina)
@@ -1916,7 +1927,9 @@ Formatversion: 1
         #    this.CreaActualizaProyectoEnLineCust();
         #
         #    this.syncLinkedTicket(); //MMS - Ajustes CRM - 2026.06.29
-        #    this.syncHojaGastosTable(); //INDMMS_ExternalCRM - 2026.03.10
+        #    if (hojaGastosTable)
+        #        hojaGastosTable.markHeaderVariousFromLine(this);
+        #    ttscommit;
         #}
         #
       ENDSOURCE
@@ -2610,7 +2623,23 @@ Formatversion: 1
         #public void update()
         #{
         #    boolean amountMSTChanged;
+        #    CRMHojaGastosTable hojaGastosTable;
         #    ;
+        #
+        #    //MMS - Ajustes CRM - 2026.08.24
+        #    // Bloquea cambios programaticos y conserva proyectos historicos cuando no se modifican.
+        #    if (this.ProjIdHornos != this.orig().ProjIdHornos &&
+        #        this.ProjIdHornos &&
+        #        !CRMHojaGastosLine::resolveEligibleProjectId(this.ProjIdHornos))
+        #    {
+        #        throw error(strFmt("El proyecto %1 no existe, esta cerrado, esta reservado o no permite imputar gastos.", this.ProjIdHornos));
+        #    }
+        #
+        #    //MMS - Ajustes CRM - 2026.08.21
+        #    // Bloquea la cabecera antes de cambiar la linea para serializar los recalculos.
+        #    ttsbegin;
+        #    hojaGastosTable = this.HojaGastosTable(true);
+        #
         #    this.Ticket = this.Ticket ? NoYes::Yes : NoYes::No;  //INDMMS_ExternalCRM - 2026.02.26
         #
         #    //MMS - Recalculo guardado linea - 2026.06.29
@@ -2643,8 +2672,10 @@ Formatversion: 1
         #    INDProjCostRevenueTable::CreateProjCostFromCommon(this);
         #
         #    this.syncLinkedTicket(); //MMS - Ajustes CRM - 2026.06.29
-        #    this.syncHojaGastosTable(); //INDMMS_ExternalCRM - 2026.03.10
+        #    if (hojaGastosTable)
+        #        hojaGastosTable.markHeaderVariousFromLine(this);
         #
+        #    ttscommit;
         #}
         #
       ENDSOURCE
@@ -2715,13 +2746,22 @@ Formatversion: 1
         #
         #        case FieldNum(CRMHojaGastosLine, ProjIdHornos):
         #
-        #            //IJL.09/10/23
-        #            ret = ProjTable::PermitirCambioProyecto(projTableOrig.ProjId, projTable.ProjId);
-        #            if (! ret)
-        #                return false;
+        #            //MMS - Ajustes CRM - 2026.08.24
+        #            // Conserva proyectos historicos si el valor no cambia.
+        #            if (!this.RecId || this.ProjIdHornos != this.orig().ProjIdHornos)
+        #            {
+        #                ret = ret && ProjTable::PermitirCambioProyecto(projTableOrig.ProjId, projTable.ProjId);
+        #                if (!ret)
+        #                    return false;
+        #            }
         #
-        #            if (this.ProjIdHornos && ! ProjTable::find(this.ProjIdHornos).INDPermitirImputarGastos)
-        #                ret = checkFailed("El proyecto no permite la imputación de gastos. SI deseas indicar el desplazamiento debes pulsar el botón 'Cliente/Proveedor'");
+        #            // Rechaza proyectos inelegibles al crear la linea o cambiar su proyecto.
+        #            if (this.ProjIdHornos &&
+        #                (!this.RecId || this.ProjIdHornos != this.orig().ProjIdHornos) &&
+        #                !CRMHojaGastosLine::resolveEligibleProjectId(this.ProjIdHornos))
+        #            {
+        #                ret = checkFailed("El proyecto no existe, esta cerrado o no permite la imputacion de gastos. Si deseas indicar el desplazamiento debes pulsar el boton 'Cliente/Proveedor'.");
+        #            }
         #
         #            break;
         #
@@ -2762,21 +2802,42 @@ Formatversion: 1
         #
         #    return ret;
         #}
+        #
       ENDSOURCE
       SOURCE #validateWrite
         #public boolean validateWrite()
         #{
         #    boolean ret;
         #    CRMHojaGastosTable hojaGastosTable;
+        #    PurchParameters    purchParameters = PurchParameters::find();
         #    ;
         #
         #    ret = super();
         #
         #    hojaGastosTable = this.HojaGastosTable(); //MMS - Divisa desde línea - 2026.05.22
         #
-        #    //IJL.23/01/14.
-        #    if (this.ProjIdHornos && !ProjTable::find(this.ProjIdHornos).INDPermitirImputarGastos){
+        #    //MMS - Ajustes CRM - 2026.08.21
+        #    // Impide guardar el marcador reservado de cabecera en una linea.
+        #    if (purchParameters.INDProjIdVarious &&
+        #        (this.ProjIdHornos == purchParameters.INDProjIdVarious ||
+        #         this.ProjId       == purchParameters.INDProjIdVarious))
+        #    {
+        #        ret = checkFailed("El marcador de varios proyectos no se puede guardar en una linea de gastos.");
+        #    }
+        #    //MMS - Ajustes CRM - 2026.08.24
+        #    // Permite editar otros campos si un proyecto historico deja de ser imputable o desaparece.
+        #    else if (this.ProjIdHornos &&
+        #             (!this.RecId || this.ProjIdHornos != this.orig().ProjIdHornos) &&
+        #             !ProjTable::find(this.ProjIdHornos).INDPermitirImputarGastos){
         #        ret = checkFailed(strfmt("El proyecto %1 no permite la imputación de gastos", this.ProjIdHornos));
+        #    }
+        #    //MMS - Ajustes CRM - 2026.08.24
+        #    // Rechaza un proyecto cerrado nuevo y conserva las lineas historicas sin cambios.
+        #    else if (this.ProjIdHornos &&
+        #             (!this.RecId || this.ProjIdHornos != this.orig().ProjIdHornos) &&
+        #             !CRMHojaGastosLine::resolveEligibleProjectId(this.ProjIdHornos))
+        #    {
+        #        ret = checkFailed(strFmt("El proyecto %1 esta cerrado para imputacion de gastos.", this.ProjIdHornos));
         #    }
         #
         #    //IJL.09/03/22
@@ -2890,6 +2951,52 @@ Formatversion: 1
         #    where CRMHojaGastosLine.FileId   == _id;
         #
         #    return CRMHojaGastosLine;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #resolveEligibleProjectId
+        #//MMS - Ajustes CRM - 2026.08.21
+        #// Aplica la misma regla de elegibilidad que el catalogo de proyectos de gastos.
+        #static ProjId resolveEligibleProjectId(ProjId _projId)
+        #{
+        #    ProjId    resolvedProjectId;
+        #    ProjTable projTable;
+        #    ;
+        #
+        #    resolvedProjectId = CRMHojaGastosLine::resolveRealProjectId(_projId);
+        #
+        #    if (!resolvedProjectId)
+        #        return '';
+        #
+        #    projTable = ProjTable::find(resolvedProjectId);
+        #
+        #    if (!projTable.INDPermitirImputarGastos ||
+        #        projTable.INDTransDateCierreCostes != dateNull())
+        #    {
+        #        return '';
+        #    }
+        #
+        #    return projTable.ProjId;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #resolveRealProjectId
+        #//MMS - Ajustes CRM - 2026.08.21
+        #// Devuelve un proyecto real o vacio si el valor esta reservado o no existe.
+        #static ProjId resolveRealProjectId(ProjId _projId)
+        #{
+        #    PurchParameters purchParameters = PurchParameters::find();
+        #    ProjTable        projTable;
+        #    ;
+        #
+        #    if (!_projId ||
+        #        (purchParameters.INDProjIdVarious &&
+        #         _projId == purchParameters.INDProjIdVarious))
+        #        return '';
+        #
+        #    projTable = ProjTable::find(_projId);
+        #
+        #    return projTable.RecId ? projTable.ProjId : '';
         #}
         #
       ENDSOURCE

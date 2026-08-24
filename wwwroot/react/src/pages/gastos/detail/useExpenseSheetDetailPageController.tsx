@@ -286,7 +286,6 @@ export const useExpenseSheetDetailPageController = () => {
     currentProjectId: safeText(header?.projId),
     currentEstadoComentarios: safeText(header?.estadoComentarios),
     currentExpenseSheetStatus: header?.expenseSheetStatus,
-    currentLines: lines,
     exchangeRateBaseCurrency,
     onCreateSuccess: (createdSheetId) => {
       createdSheetIdRef.current = safeText(createdSheetId);
@@ -327,10 +326,10 @@ export const useExpenseSheetDetailPageController = () => {
         return;
       }
 
-      const shouldConfirmPropagation =
-        !isCreateMode && isEditing && canEditHeaderFieldsCurrent && lines.length > 0;
+      const shouldPersistAtomically =
+        !isCreateMode && isEditing && canEditHeaderFieldsCurrent;
 
-      if (!shouldConfirmPropagation) {
+      if (!shouldPersistAtomically) {
         setDraftProjectId(nextValue);
         setConfirmedProjectId(nextValue);
         return;
@@ -342,6 +341,11 @@ export const useExpenseSheetDetailPageController = () => {
       }
 
       setDraftProjectId(nextValue);
+      if (lines.length === 0) {
+        void handleConfirmProjectPropagation(nextValue);
+        return;
+      }
+
       openConfirm({
         title: indT("ExpenseSheets_Detail_PropagateProject_Title", "Update lines"),
         message: indT(
@@ -436,8 +440,10 @@ export const useExpenseSheetDetailPageController = () => {
     !isCreateMode &&
     isEditing &&
     canEditHeaderFieldsCurrent &&
-    lines.length > 0 &&
     safeText(draftProjectId) !== safeText(confirmedProjectId);
+
+  const shouldConfirmPendingProjectPropagation =
+    hasPendingProjectPropagation && lines.length > 0;
 
   const handlePendingProjectPropagationCancel = useCallback(() => {
     if (!hasPendingProjectPropagation) return;
@@ -453,16 +459,18 @@ export const useExpenseSheetDetailPageController = () => {
     return handleUpdate();
   }, [draftProjectId, handleConfirmProjectPropagation, handleUpdate, hasPendingProjectPropagation]);
 
-  const projectPropagationSaveTitle = hasPendingProjectPropagation
+  const projectPropagationSaveTitle = shouldConfirmPendingProjectPropagation
     ? indT("ExpenseSheets_Detail_PropagateProject_Title", "Update lines")
     : undefined;
-  const projectPropagationSaveMessage = hasPendingProjectPropagation
+  const projectPropagationSaveMessage = shouldConfirmPendingProjectPropagation
     ? indT(
         "ExpenseSheets_Detail_PropagateProject_Body",
         "The projects on all lines will be updated. Do you want to continue?"
       )
     : undefined;
-  const projectPropagationSaveConfirmText = hasPendingProjectPropagation ? indT("Confirm_Yes", "OK") : undefined;
+  const projectPropagationSaveConfirmText = shouldConfirmPendingProjectPropagation
+    ? indT("Confirm_Yes", "OK")
+    : undefined;
 
   const handleOpenLineDetail = useCallback(
     async (lineRecId: string) => {

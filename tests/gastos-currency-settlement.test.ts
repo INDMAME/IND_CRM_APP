@@ -934,7 +934,7 @@ assert.equal(
 );
 assert.match(
   expenseTicketLinkedSheetLineSource,
-  /initialProjectId[\s\S]*mapExpenseSheetHeader\(sheet\)\.projId/
+  /resolveNewExpenseLineProjectCandidate\([\s\S]*?defaultLineProjectId[\s\S]*?initialProjectId/
 );
 assert.match(
   expenseTicketLinkedSheetLineSource,

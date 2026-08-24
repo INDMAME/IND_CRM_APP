@@ -28,6 +28,10 @@ import {
   DEFAULT_LINE_REIMBURSABLE_EXPENSE,
   normalizeExpenseLineReimbursableExpense,
 } from "../constants/expenseReimbursableExpenseCatalog.ts";
+import {
+  hasServerExpenseLineProjectDefault,
+  resolveNewExpenseLineProjectCandidate,
+} from "../utils/expenseProjectRules.ts";
 
 const KM_GASTO_TYPE_CODE = "3";
 const FUEL_PRICE_DEBOUNCE_MS = 300;
@@ -216,7 +220,8 @@ export const useExpenseSheetLineDetailState = ({
   const [draftTypeValueCode, setDraftTypeValueCode] = useState("");
   const [draftPrice, setDraftPrice] = useState("");
   const [draftQty, setDraftQty] = useState("");
-  const [draftProjectId, setDraftProjectId] = useState("");
+  const [draftProjectId, setDraftProjectIdValue] = useState("");
+  const [draftProjectIdProvided, setDraftProjectIdProvided] = useState(false);
   const [draftInternational, setDraftInternational] = useState("");
   const [draftReimbursableExpense, setDraftReimbursableExpense] = useState<number | null>(null);
   const [draftCurrencyCode, setDraftCurrencyCode] = useState("");
@@ -239,7 +244,8 @@ export const useExpenseSheetLineDetailState = ({
     setDraftTypeValueCode(safeText(nextLine?.typeValueCode));
     setDraftPrice(formatEditableNumber(nextLine?.price));
     setDraftQty(formatEditableQuantity(nextLine?.qty));
-    setDraftProjectId(normalizedLineProjectId);
+    setDraftProjectIdValue(normalizedLineProjectId);
+    setDraftProjectIdProvided(false);
     setDraftInternational(nextLine?.internacional === true ? "true" : nextLine?.internacional === false ? "false" : "");
     setDraftReimbursableExpense(normalizeExpenseLineReimbursableExpense(nextLine?.reimbursableExpense));
     const localCurrencyCode = safeText(resolvedCompanyCurrencyCode).toUpperCase();
@@ -251,6 +257,12 @@ export const useExpenseSheetLineDetailState = ({
     setDraftCurrencyCode(lineCurrencyCode);
     setDraftAmountMST(formatEditableNumber(lineAmountMST));
     setDraftExchangeRate(formatEditableExchangeRate(lineExchangeRate));
+  }, []);
+
+  // Records explicit user intent separately from a server-provided project suggestion.
+  const setDraftProjectId = useCallback((value: string) => {
+    setDraftProjectIdProvided(true);
+    setDraftProjectIdValue(value);
   }, []);
 
   useEffect(() => {
@@ -342,10 +354,15 @@ export const useExpenseSheetLineDetailState = ({
             return;
           }
 
-          const inheritedProjectId = await fetchExistingExpenseProjectId(
-            safeText(loadedHeader.projId),
-            { suppressPermissionModal: true }
-          );
+          const serverDefaultProvided = hasServerExpenseLineProjectDefault(selectedSheet);
+          const projectCandidate = resolveNewExpenseLineProjectCandidate({
+            defaultLineProjectId: loadedHeader.defaultLineProjId,
+            headerProjectId: loadedHeader.projId,
+            serverDefaultProvided,
+          });
+          const inheritedProjectId = serverDefaultProvided
+            ? projectCandidate
+            : await fetchExistingExpenseProjectId(projectCandidate, { suppressPermissionModal: true });
           if (isCancelled) return;
 
           const draftLine = buildCreateLineDraft(
@@ -719,6 +736,7 @@ export const useExpenseSheetLineDetailState = ({
     draftPrice,
     draftQty,
     draftProjectId,
+    draftProjectIdProvided,
     draftInternational,
     draftReimbursableExpense,
     draftCurrencyCode,

@@ -636,6 +636,13 @@ app.MapControllerRoute(
     constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
 );
 
+app.MapControllerRoute(
+    name: "api-expense-sheets-project-default-propagate",
+    pattern: "api/crm/expensesheets/{hojaGastosId}/project-default/propagate",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetProjectDefaultPropagate" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
 // MMS - Registers line ticket routes before the generic expense line routes. - 2026.08.04
 app.MapControllerRoute(
     name: "api-expense-sheets-line-ticket-attach",

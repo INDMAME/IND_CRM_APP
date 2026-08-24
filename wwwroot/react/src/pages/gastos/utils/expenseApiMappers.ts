@@ -89,6 +89,7 @@ export const mapExpenseSheetHeader = (sheet: ExpenseSheetDetailDto): ExpenseShee
       sheet.ReimbursableExpense ?? sheet.reimbursableExpense
     ),
     projId: safeText(sheet.ProjId ?? sheet.projId),
+    defaultLineProjId: safeText(sheet.DefaultLineProjId ?? sheet.defaultLineProjId),
     voucher: safeText(sheet.Voucher ?? sheet.voucher),
     createdDate: safeText(sheet.CreatedDate ?? sheet.createdDate),
   };
