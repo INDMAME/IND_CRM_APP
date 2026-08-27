@@ -2708,7 +2708,11 @@ Formatversion: 1
         #
         #    amountMSTChanged = this.AmountMST != 0 && this.orig().AmountMST != this.AmountMST; //MMS - Preserva reembolso informado - 2026.07.01
         #
-        #    if (this.Currency != this.orig().Currency && this.ExchRate == this.orig().ExchRate)
+        #    //MMS - Preserve a positive rate entered in the Axapta form - 2026.08.26
+        #    // AmountMST zero marks a manual rate that must be recalculated instead of cleared.
+        #    if (this.Currency != this.orig().Currency &&
+        #        this.ExchRate == this.orig().ExchRate &&
+        #        (this.ExchRate <= 0 || this.AmountMST != 0))
         #    {
         #        //MMS - Ajustes CRM - 2026.07.06
         #        // El cambio de divisa no debe interpretar el AmountMST recalculado como importe manual.

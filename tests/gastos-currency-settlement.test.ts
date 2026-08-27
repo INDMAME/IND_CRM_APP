@@ -803,8 +803,23 @@ const expenseSheetTableXpoSource = readFileSync(
 );
 const expenseSheetLineXpoSource = readFileSync(
   path.join(repositoryRoot, ".codex", "Axapta", "CRMHojaGastosLine.xpo"),
-  "utf8"
+  "latin1"
 );
+const expenseSheetLineFormXpoSource = readFileSync(
+  path.join(repositoryRoot, ".codex", "Axapta", "CRMHojaGastosLineForm.xpo"),
+  "latin1"
+);
+const extractXpoSourceBlock = (source: string, marker: string, endMarker: string): string => {
+  const start = source.indexOf(marker);
+  assert.ok(start >= 0, `Missing XPO marker: ${marker}`);
+
+  const end = source.indexOf(endMarker, start + marker.length);
+  assert.ok(end > start, `Missing XPO end marker after: ${marker}`);
+
+  return source.slice(start, end);
+};
+const extractXpoMethodSource = (source: string, methodName: string): string =>
+  extractXpoSourceBlock(source, `SOURCE #${methodName}`, "ENDSOURCE");
 const readExpenseComponentSource = (fileName: string): string => readFileSync(
   path.join(repositoryRoot, "Web", "wwwroot", "react", "src", "pages", "gastos", "components", fileName),
   "utf8"
@@ -986,6 +1001,115 @@ assert.match(
 assert.match(
   expenseSheetLineXpoSource,
   /SOURCE #recalculateReimbursableAmount[\s\S]*?INDReimbursableExpenseLines::Yes[\s\S]*?this\.ReimbursableAmount\s*=\s*this\.AmountMST;[\s\S]*?this\.ReimbursableAmount\s*=\s*0;/
+);
+const requiresManualExchangeRateSource = extractXpoMethodSource(
+  expenseSheetLineFormXpoSource,
+  "requiresManualExchangeRate"
+);
+const expenseSheetLineFormClassDeclarationSource = extractXpoMethodSource(
+  expenseSheetLineFormXpoSource,
+  "classDeclaration"
+);
+const refreshExchangeRateEditStateSource = extractXpoMethodSource(
+  expenseSheetLineFormXpoSource,
+  "refreshExchangeRateEditState"
+);
+const expenseSheetLineFormWriteSource = extractXpoMethodSource(expenseSheetLineFormXpoSource, "write");
+const expenseSheetLineFormValidateWriteSource = extractXpoMethodSource(
+  expenseSheetLineFormXpoSource,
+  "validateWrite"
+);
+const expenseSheetLineFormCreateSource = extractXpoMethodSource(expenseSheetLineFormXpoSource, "create");
+const expenseSheetLineFormRereadSource = extractXpoMethodSource(expenseSheetLineFormXpoSource, "reread");
+const expenseSheetLineTableUpdateSource = extractXpoMethodSource(expenseSheetLineXpoSource, "update");
+
+assert.match(requiresManualExchangeRateSource, /CompanyInfo::standardCurrency\(\)/);
+assert.match(expenseSheetLineFormClassDeclarationSource, /boolean\s+manualExchangeRatePending;/);
+assert.match(expenseSheetLineFormClassDeclarationSource, /RecId\s+manualExchangeRatePendingRecId;/);
+assert.match(
+  requiresManualExchangeRateSource,
+  /isForeignCurrency\s*&&[\s\S]*?!CRMHojaGastosLine\.RecId\s*\|\|[\s\S]*?CRMHojaGastosLine\.Currency\s*!=\s*originalLine\.Currency/
+);
+assert.match(
+  requiresManualExchangeRateSource,
+  /manualExchangeRatePending\s*&&\s*manualExchangeRatePendingRecId\s*==\s*CRMHojaGastosLine\.RecId/
+);
+assert.match(
+  requiresManualExchangeRateSource,
+  /CRMHojaGastosLine\.ExchRate\s*!=\s*originalLine\.ExchRate/
+);
+assert.match(
+  refreshExchangeRateEditStateSource,
+  /if\s*\(_resetExchangeRate\)[\s\S]*?manualExchangeRatePending\s*=\s*hasCurrency\s*&&\s*!isCompanyCurrency;[\s\S]*?ExchRate\s*=\s*isCompanyCurrency\s*\?\s*100\s*:\s*0;/
+);
+assert.match(
+  refreshExchangeRateEditStateSource,
+  /manualExchangeRatePending\s*&&\s*manualExchangeRatePendingRecId\s*!=\s*CRMHojaGastosLine\.RecId[\s\S]*?manualExchangeRatePending\s*=\s*false;/
+);
+assert.match(
+  refreshExchangeRateEditStateSource,
+  /manualExchangeRateRequired\s*&&\s*CRMHojaGastosLine\.ExchRate\s*<=\s*0[\s\S]*?CRMHojaGastosLine\.AmountMST\s*=\s*0;/
+);
+assert.match(
+  refreshExchangeRateEditStateSource,
+  /FieldNum\(CRMHojaGastosLine, ExchRate\)\)\.mandatory\(manualExchangeRateRequired\)/
+);
+assert.match(
+  refreshExchangeRateEditStateSource,
+  /FieldNum\(CRMHojaGastosLine, AmountMST\)\)\.allowEdit\(!manualExchangeRateRequired\)/
+);
+for (const fieldName of ["Qty", "Price", "Amount", "ExchRate", "AmountMST"]) {
+  const fieldSource = extractXpoSourceBlock(
+    expenseSheetLineFormXpoSource,
+    `DATAFIELD ${fieldName}`,
+    "ENDDATAFIELD"
+  );
+  assert.match(
+    fieldSource,
+    /SOURCE #modified[\s\S]*?element\.refreshExchangeRateEditState\(\);/,
+    `${fieldName}.modified must preserve the pending manual exchange-rate state`
+  );
+}
+const amountMSTFieldSource = extractXpoSourceBlock(
+  expenseSheetLineFormXpoSource,
+  "DATAFIELD AmountMST",
+  "ENDDATAFIELD"
+);
+const priceFieldSource = extractXpoSourceBlock(
+  expenseSheetLineFormXpoSource,
+  "DATAFIELD Price",
+  "ENDDATAFIELD"
+);
+assert.match(
+  amountMSTFieldSource,
+  /requiresManualExchangeRate\(\)[\s\S]*?CRMHojaGastosLine\.AmountMST\s*=\s*0;[\s\S]*?return;[\s\S]*?super\(\);/
+);
+assert.doesNotMatch(priceFieldSource, /AmountMST cannot provide an automatic rate/);
+assert.match(
+  expenseSheetLineFormCreateSource,
+  /InitFromPreviousLine\(hojaActual\);[\s\S]*?element\.refreshExchangeRateEditState\(true\);/
+);
+assert.match(
+  expenseSheetLineFormValidateWriteSource,
+  /requiresManualExchangeRate\(\)\s*&&\s*CRMHojaGastosLine\.ExchRate\s*<=\s*0[\s\S]*?checkFailed\(strFmt/
+);
+assert.ok(
+  expenseSheetLineFormValidateWriteSource.indexOf("requiresManualExchangeRate()") <
+    expenseSheetLineFormValidateWriteSource.indexOf("ret = super();"),
+  "manual exchange-rate validation must run before inherited currency validation"
+);
+assert.match(
+  expenseSheetLineFormWriteSource,
+  /requiresManualExchangeRate\(\)\s*&&\s*CRMHojaGastosLine\.ExchRate\s*>\s*0[\s\S]*?CRMHojaGastosLine\.AmountMST\s*=\s*0;[\s\S]*?super\(\);/
+);
+assert.match(
+  expenseSheetLineFormRereadSource,
+  /super\(\);[\s\S]*?manualExchangeRatePending\s*=\s*false;[\s\S]*?manualExchangeRatePendingRecId\s*=\s*0;/
+);
+assert.match(expenseSheetLineFormWriteSource, /super\(\);[\s\S]*?this\.reread\(\);/);
+assert.match(
+  expenseSheetLineTableUpdateSource,
+  /this\.Currency\s*!=\s*this\.orig\(\)\.Currency\s*&&[\s\S]*?this\.ExchRate\s*==\s*this\.orig\(\)\.ExchRate\s*&&[\s\S]*?\(this\.ExchRate\s*<=\s*0\s*\|\|\s*this\.AmountMST\s*!=\s*0\)/
 );
 assert.match(
   gastosControllerSource,

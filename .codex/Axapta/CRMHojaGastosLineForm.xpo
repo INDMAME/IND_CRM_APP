@@ -19,6 +19,8 @@ FORM #CRMHojaGastosLine
       #{
       #    CRMUsuarioTable usuarioTable;
       #    ProjTable       projTable;
+      #    boolean         manualExchangeRatePending;
+      #    RecId           manualExchangeRatePendingRecId;
       #}
     ENDSOURCE
     SOURCE #close
@@ -160,21 +162,67 @@ FORM #CRMHojaGastosLine
       #        CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, NochesHotel)).enabled(true);
       #}
     ENDSOURCE
-    SOURCE #refreshExchangeRateEditState
-      #//MMS - Ajustes CRM - 2026.07.06
-      #void refreshExchangeRateEditState(boolean _setCompanyRate = false)
+    SOURCE #requiresManualExchangeRate
+      #//MMS - Require a manual exchange rate for new lines or currency changes - 2026.08.26
+      #boolean requiresManualExchangeRate()
       #{
-      #    CurrencyCode companyCurrency;
-      #    boolean      isCompanyCurrency;
+      #    CRMHojaGastosLine originalLine = CRMHojaGastosLine.orig();
+      #    CurrencyCode      companyCurrency;
+      #    boolean           isForeignCurrency;
       #    ;
       #
       #    companyCurrency   = CompanyInfo::standardCurrency();
-      #    isCompanyCurrency = CRMHojaGastosLine.Currency != "" && CRMHojaGastosLine.Currency == companyCurrency;
+      #    isForeignCurrency = CRMHojaGastosLine.Currency != "" && CRMHojaGastosLine.Currency != companyCurrency;
       #
-      #    if (isCompanyCurrency && _setCompanyRate)
-      #        CRMHojaGastosLine.ExchRate = 100;
+      #    return isForeignCurrency &&
+      #           (!CRMHojaGastosLine.RecId ||
+      #            CRMHojaGastosLine.Currency != originalLine.Currency ||
+      #            CRMHojaGastosLine.ExchRate != originalLine.ExchRate ||
+      #            (manualExchangeRatePending && manualExchangeRatePendingRecId == CRMHojaGastosLine.RecId));
+      #}
+      #
+    ENDSOURCE
+    SOURCE #refreshExchangeRateEditState
+      #//MMS - Keep manual exchange rates authoritative in the Axapta form - 2026.08.26
+      #void refreshExchangeRateEditState(boolean _resetExchangeRate = false)
+      #{
+      #    CurrencyCode companyCurrency;
+      #    boolean      hasCurrency;
+      #    boolean      isCompanyCurrency;
+      #    boolean      manualExchangeRateRequired;
+      #    ;
+      #
+      #    companyCurrency            = CompanyInfo::standardCurrency();
+      #    hasCurrency                = CRMHojaGastosLine.Currency != "";
+      #    isCompanyCurrency          = hasCurrency && CRMHojaGastosLine.Currency == companyCurrency;
+      #
+      #    if (manualExchangeRatePending && manualExchangeRatePendingRecId != CRMHojaGastosLine.RecId)
+      #    {
+      #        manualExchangeRatePending      = false;
+      #        manualExchangeRatePendingRecId = 0;
+      #    }
+      #
+      #    if (_resetExchangeRate)
+      #    {
+      #        manualExchangeRatePending      = hasCurrency && !isCompanyCurrency;
+      #        manualExchangeRatePendingRecId = manualExchangeRatePending ? CRMHojaGastosLine.RecId : 0;
+      #
+      #        if (hasCurrency)
+      #            CRMHojaGastosLine.ExchRate = isCompanyCurrency ? 100 : 0;
+      #    }
+      #
+      #    manualExchangeRateRequired = element.requiresManualExchangeRate();
+      #
+      #    if (manualExchangeRateRequired && CRMHojaGastosLine.ExchRate <= 0)
+      #    {
+      #        CRMHojaGastosLine.ExchRate  = 0;
+      #        CRMHojaGastosLine.AmountMST = 0;
+      #        CRMHojaGastosLine.recalculateReimbursableAmount();
+      #    }
       #
       #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, ExchRate)).enabled(!isCompanyCurrency);
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, ExchRate)).mandatory(manualExchangeRateRequired);
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, AmountMST)).allowEdit(!manualExchangeRateRequired);
       #
       #    CRMHojaGastosLine_ds.refresh();
       #
@@ -386,7 +434,7 @@ FORM #CRMHojaGastosLine
                 #{
                 #    super();
                 #
-                #    CRMHojaGastosLine_ds.refresh();
+                #    element.refreshExchangeRateEditState();
                 #}
               ENDSOURCE
             ENDMETHODS
@@ -433,7 +481,7 @@ FORM #CRMHojaGastosLine
                 #{
                 #    super();
                 #
-                #    CRMHojaGastosLine_ds.refresh();
+                #    element.refreshExchangeRateEditState();
                 #}
               ENDSOURCE
             ENDMETHODS
@@ -457,7 +505,7 @@ FORM #CRMHojaGastosLine
                 #{
                 #    super();
                 #
-                #    CRMHojaGastosLine_ds.refresh();
+                #    element.refreshExchangeRateEditState();
                 #}
               ENDSOURCE
             ENDMETHODS
@@ -481,7 +529,7 @@ FORM #CRMHojaGastosLine
                 #{
                 #    super();
                 #
-                #    CRMHojaGastosLine_ds.refresh();
+                #    element.refreshExchangeRateEditState();
                 #}
               ENDSOURCE
             ENDMETHODS
@@ -529,7 +577,7 @@ FORM #CRMHojaGastosLine
                 #{
                 #    super();
                 #
-                #    CRMHojaGastosLine_ds.refresh();
+                #    element.refreshExchangeRateEditState();
                 #}
               ENDSOURCE
             ENDMETHODS
@@ -551,9 +599,18 @@ FORM #CRMHojaGastosLine
                 #//MMS - Refresca el importe reembolsable derivado - 2026.07.29
                 #public void modified()
                 #{
+                #    //MMS - AmountMST cannot provide an automatic rate while manual entry is pending - 2026.08.26
+                #    if (element.requiresManualExchangeRate())
+                #    {
+                #        CRMHojaGastosLine.AmountMST = 0;
+                #        CRMHojaGastosLine.recalculateReimbursableAmount();
+                #        element.refreshExchangeRateEditState();
+                #        return;
+                #    }
+                #
                 #    super();
                 #
-                #    CRMHojaGastosLine_ds.refresh();
+                #    element.refreshExchangeRateEditState();
                 #}
               ENDSOURCE
             ENDMETHODS
@@ -563,17 +620,45 @@ FORM #CRMHojaGastosLine
       ENDOBJECTPOOL
       METHODS
         Version: 3
+        SOURCE #reread
+          #//MMS - Clear the pending manual rate when the database record is restored - 2026.08.26
+          #public void reread()
+          #{
+          #    super();
+          #
+          #    manualExchangeRatePending      = false;
+          #    manualExchangeRatePendingRecId = 0;
+          #}
+        ENDSOURCE
         SOURCE #write
           #public void write()
           #{
+          #    //MMS - Recalculate company amount from the manual exchange rate - 2026.08.26
+          #    if (element.requiresManualExchangeRate() && CRMHojaGastosLine.ExchRate > 0)
+          #    {
+          #        CRMHojaGastosLine.AmountMST = 0;
+          #        CRMHojaGastosLine.recalculateReimbursableAmount();
+          #    }
+          #
           #    super();
           #    this.reread();
+          #    element.refreshExchangeRateEditState();
           #}
         ENDSOURCE
         SOURCE #validateWrite
           #public boolean validateWrite()
           #{
           #    boolean ret;
+          #    CurrencyCode companyCurrency;
+          #    ;
+          #
+          #    if (element.requiresManualExchangeRate() && CRMHojaGastosLine.ExchRate <= 0)
+          #    {
+          #        companyCurrency = CompanyInfo::standardCurrency();
+          #        return checkFailed(strFmt("La divisa %1 es distinta de la divisa estandar de la empresa %2. Debe indicar manualmente un tipo de cambio mayor que cero.",
+          #                                  CRMHojaGastosLine.Currency,
+          #                                  companyCurrency));
+          #    }
           #
           #    ret = super();
           #
@@ -630,6 +715,8 @@ FORM #CRMHojaGastosLine
           #
           #    if (hojaActual.TransDate)
           #        crmHojaGastosLine.InitFromPreviousLine(hojaActual);
+          #
+          #    element.refreshExchangeRateEditState(true);
           #}
         ENDSOURCE
         SOURCE #initValue
