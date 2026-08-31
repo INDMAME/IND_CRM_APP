@@ -393,6 +393,11 @@ if ($LASTEXITCODE -ne 0) {
     throw "Localization key coverage validation failed with exit code $LASTEXITCODE."
 }
 
+npm run test:static-chunks
+if ($LASTEXITCODE -ne 0) {
+    throw "Static chunk retention tests failed with exit code $LASTEXITCODE."
+}
+
 # Build frontend assets and sync Web/wwwroot -> wwwroot.
 # Use the production React bundle for publish deployments.
 npm run build:react:prod
@@ -414,6 +419,16 @@ dotnet publish $ProjectPath -c $Configuration -o $ResolvedOutputPath
 if ($LASTEXITCODE -ne 0) {
     throw "Publish failed with exit code $LASTEXITCODE."
 }
+
+# Preserve one prior hashed chunk generation for browser tabs opened before this deployment.
+$StaticChunkRetentionScriptPath = Join-Path $PSScriptRoot "scripts\preserve-static-chunks.ps1"
+if (-not (Test-Path -LiteralPath $StaticChunkRetentionScriptPath -PathType Leaf)) {
+    throw "Static chunk retention script '$StaticChunkRetentionScriptPath' is missing."
+}
+
+& $StaticChunkRetentionScriptPath `
+    -PublishOutputPath $ResolvedOutputPath `
+    -IisPath $IisPath
 
 if ($RestartIis) {
     iisreset /stop

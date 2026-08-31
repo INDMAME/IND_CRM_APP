@@ -10,18 +10,19 @@ import { useHomeHelpDesktopWindow } from "./useHomeHelpDesktopWindow.ts";
 import { useHomeHelpModuleCatalog } from "./useHomeHelpModuleCatalog.ts";
 
 type HomeHelpAssistantProps = {
+  botImageSrc: string;
   isOpen: boolean;
   initialLocale: string;
   launcherImageSources: AssistantLauncherImageSources;
   onClose: () => void;
 };
 
-const BOT_IMAGE_SRC = "/images/kaloria_bot.png";
 const HIDDEN_HOME_HELP_MODULE_IDS = new Set(["introduction", "troubleshooting", "glossary"]);
 const noopChartSelection = () => {};
 
 // Adapts Home help state to the shared assistant shell.
 const HomeHelpAssistant = ({
+  botImageSrc,
   isOpen,
   initialLocale,
   launcherImageSources,
@@ -107,7 +108,7 @@ const HomeHelpAssistant = ({
       noContextBody={indT("HomeHelp_NoContextBody", "The CRM guide could not be loaded.")}
       noContextMessage={indT("HomeHelp_NoContextMessage", "Reload the page and try again.")}
       desktopWindow={desktopWindow}
-      botImageSrc={BOT_IMAGE_SRC}
+      botImageSrc={botImageSrc}
       launcherImageSources={launcherImageSources}
       contextNotice={null}
       emptyStateContent={!selectedModule ? (

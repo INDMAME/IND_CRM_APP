@@ -5,6 +5,7 @@ using IND_CRM_APP.Services.Enums;
 using Microsoft.AspNetCore.Diagnostics;
 using IND_CRM_APP.Infrastructure.Security.Auth;
 using IND_CRM_APP.Infrastructure.Security.Filters;
+using IND_CRM_APP.Infrastructure.Performance;
 using IND_CRM_APP.Infrastructure.Validation;
 using System.Reflection;
 using Microsoft.AspNetCore.Localization;
@@ -94,7 +95,7 @@ builder.WebHost.ConfigureKestrel(options =>
 // -----------------------------
 // Servicios
 // -----------------------------
-//builder.Services.AddResponseCompression();
+builder.Services.AddStaticAssetDelivery();
 // Point localization to the new Resources root.
 builder.Services.AddLocalization(options => options.ResourcesPath = "App/Resources");
 
@@ -381,8 +382,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
-//app.UseResponseCompression();
-app.UseStaticFiles();
+app.UseStaticAssetDelivery(app.Environment.WebRootFileProvider);
 app.UseRequestLocalization(app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value);
 app.UseRouting();
 // Friendly 404 page for missing routes.

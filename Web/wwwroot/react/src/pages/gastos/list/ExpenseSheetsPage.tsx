@@ -51,6 +51,7 @@ const PAGE_SIZE = 6;
 const FLOATING_BASELINE_BOTTOM_PX = 24;
 
 type ExpenseSheetsPageProps = {
+  assistantBotImageSrc: string;
   assistantLauncherImageSources: AssistantLauncherImageSources;
 };
 
@@ -63,7 +64,7 @@ const bootstrapExpenseApiAuth = () => {
   });
 };
 
-const ExpenseSheetsPageContent = ({ assistantLauncherImageSources }: ExpenseSheetsPageProps) => {
+const ExpenseSheetsPageContent = ({ assistantBotImageSrc, assistantLauncherImageSources }: ExpenseSheetsPageProps) => {
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const timelineContainerRef = React.useRef<HTMLDivElement | null>(null);
@@ -767,6 +768,7 @@ const ExpenseSheetsPageContent = ({ assistantLauncherImageSources }: ExpenseShee
       />
 
       <ExpenseSheetsAssistant
+        botImageSrc={assistantBotImageSrc}
         context={assistantContext}
         isListLoading={isLoading}
         launcherImageSources={assistantLauncherImageSources}
@@ -787,10 +789,13 @@ const ExpenseSheetsPageContent = ({ assistantLauncherImageSources }: ExpenseShee
 };
 
 // Main page entry for expense sheets list.
-const ExpenseSheetsPage = ({ assistantLauncherImageSources }: ExpenseSheetsPageProps) => {
+const ExpenseSheetsPage = ({ assistantBotImageSrc, assistantLauncherImageSources }: ExpenseSheetsPageProps) => {
   return (
     <VisitasPageProviders enableExpenseManagement>
-      <ExpenseSheetsPageContent assistantLauncherImageSources={assistantLauncherImageSources} />
+      <ExpenseSheetsPageContent
+        assistantBotImageSrc={assistantBotImageSrc}
+        assistantLauncherImageSources={assistantLauncherImageSources}
+      />
     </VisitasPageProviders>
   );
 };
@@ -799,6 +804,7 @@ const mount = () => {
   bootstrapExpenseApiAuth();
   const rootEl = document.getElementById("expense-sheets-root");
   if (!rootEl) return;
+  const assistantBotImageSrc = rootEl.dataset.assistantBotImage || "/images/kaloria_bot.png";
   const assistantLauncherImageSources: AssistantLauncherImageSources = {
     animatedWebp: rootEl.dataset.assistantLauncherAnimatedWebp || "",
     animatedGif: rootEl.dataset.assistantLauncherAnimatedGif || "",
@@ -806,7 +812,10 @@ const mount = () => {
   };
   mountReactIsland(
     rootEl,
-    <ExpenseSheetsPage assistantLauncherImageSources={assistantLauncherImageSources} />
+    <ExpenseSheetsPage
+      assistantBotImageSrc={assistantBotImageSrc}
+      assistantLauncherImageSources={assistantLauncherImageSources}
+    />
   );
 };
 

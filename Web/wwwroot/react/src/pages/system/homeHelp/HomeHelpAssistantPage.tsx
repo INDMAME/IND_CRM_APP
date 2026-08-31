@@ -14,6 +14,7 @@ const HOME_HELP_CALLOUT_MESSAGES = [
 ];
 
 type HomeHelpAssistantPageProps = {
+  botImageSrc: string;
   initialLocale: string;
   launcherImageSources: AssistantLauncherImageSources;
   technicalInfo: HomeHelpTechnicalInfo;
@@ -21,6 +22,7 @@ type HomeHelpAssistantPageProps = {
 
 // Composes the visible Home card and lazily loads the chat only after activation.
 const HomeHelpAssistantPage = ({
+  botImageSrc,
   initialLocale,
   launcherImageSources,
   technicalInfo,
@@ -71,6 +73,7 @@ const HomeHelpAssistantPage = ({
           }
         >
           <HomeHelpAssistant
+            botImageSrc={botImageSrc}
             isOpen={chatOpen}
             initialLocale={initialLocale}
             launcherImageSources={launcherImageSources}
@@ -90,6 +93,7 @@ const mount = () => {
   }
 
   const initialLocale = rootElement.dataset.responseLocale || document.documentElement.lang || "es-ES";
+  const botImageSrc = rootElement.dataset.assistantBotImage || "/images/kaloria_bot.png";
   const launcherImageSources: AssistantLauncherImageSources = {
     animatedWebp: rootElement.dataset.assistantLauncherAnimatedWebp || "",
     animatedGif: rootElement.dataset.assistantLauncherAnimatedGif || "",
@@ -105,6 +109,7 @@ const mount = () => {
     rootElement,
     <AppErrorBoundary fallbackMessage={indT("HomeHelp_RenderError", "CRM help could not be displayed.")}>
       <HomeHelpAssistantPage
+        botImageSrc={botImageSrc}
         initialLocale={initialLocale}
         launcherImageSources={launcherImageSources}
         technicalInfo={technicalInfo}

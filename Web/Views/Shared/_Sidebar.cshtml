@@ -85,7 +85,7 @@
     </button>
 
     <a asp-controller="Home" asp-action="Index" class="sidebar-logo mt-6 mb-6 flex flex-col items-center text-center hover:scale-[1.02] transition">
-        <img src="~/images/insertec_logo_blanco.png" alt="@SR["Common_AppLogoAlt"]" />
+        <img src="~/images/insertec_logo_blanco.png" asp-append-version="true" alt="@SR["Common_AppLogoAlt"]" />
     </a>
 
     @if (canManageVisits)
