@@ -10,6 +10,7 @@ import {
 import { indT } from "../utils/indI18n.ts";
 import { resolveEffectiveCompanyId } from "../utils/companySelection.ts";
 import { getSessionJsonWithExpiry, setSessionJsonWithExpiry } from "../utils/sessionExpiry.ts";
+import { getBrowserStorageScopeToken } from "../utils/browserStorageScope.ts";
 import {
   buildVisibleUserByOwnerMap,
   normalizeModuleDataVisibilityUsers,
@@ -58,9 +59,12 @@ const buildCacheKey = (
   moduleCode: string,
   includeCrmUserId: boolean
 ): string => {
+  const browserScope = getBrowserStorageScopeToken();
+  if (!browserScope) return "";
   const effectiveCompanyId = resolveCacheCompanyId(companyId);
   return [
     CACHE_PREFIX,
+    browserScope,
     normalizeScopePart(effectiveCompanyId),
     normalizeScopePart(axUserId),
     normalizeScopePart(permissionsRevision),
@@ -130,12 +134,16 @@ export const useModuleDataVisibility = ({
         setVisibleUsersLoading(false);
         setVisibleUsersError("");
         setVisibleUsersReady(true);
-        setSessionJsonWithExpiry(cacheKey, { users: preloaded, total: preloaded.length }, CACHE_TTL_MS);
+        if (cacheKey) {
+          setSessionJsonWithExpiry(cacheKey, { users: preloaded, total: preloaded.length }, CACHE_TTL_MS);
+        }
         onDebug?.("moduleDataVisibility:preloaded", { appCode, moduleCode, count: preloaded.length, cacheKey });
         return;
       }
 
-      const cached = force || !allowCachedUsers ? null : getSessionJsonWithExpiry<ModuleDataVisibilityCacheEntry>(cacheKey);
+      const cached = force || !allowCachedUsers || !cacheKey
+        ? null
+        : getSessionJsonWithExpiry<ModuleDataVisibilityCacheEntry>(cacheKey);
       if (cached && Array.isArray(cached.users)) {
         setVisibleUsers(cached.users);
         setVisibleUsersLoading(false);
@@ -178,7 +186,9 @@ export const useModuleDataVisibility = ({
         setVisibleUsersError("");
         setVisibleUsersReady(true);
         activeAbortRef.current = null;
-        setSessionJsonWithExpiry(cacheKey, { users, total: users.length, traceId }, CACHE_TTL_MS);
+        if (cacheKey) {
+          setSessionJsonWithExpiry(cacheKey, { users, total: users.length, traceId }, CACHE_TTL_MS);
+        }
         onDebug?.("moduleDataVisibility:response", { appCode, moduleCode, count: users.length, traceId: traceId || "" });
       } catch (err: any) {
         if (requestId !== activeRequestIdRef.current) return;

@@ -284,10 +284,14 @@ const forceReloginAndWait = async <T>(reason: string): Promise<T> => {
   }
 
   if (!forcedReloginPromise) {
-    forcedReloginPromise = requestForcedRelogin(reason);
+    forcedReloginPromise = (async () => {
+      await window.IND?.browserState?.prepareForRelogin(reason);
+      return requestForcedRelogin(reason);
+    })();
   }
 
   const loginUrl = await forcedReloginPromise;
+  window.IND?.browserState?.completeRelogin(loginUrl);
   window.location.replace(loginUrl || getDefaultLoginUrl());
 
   // Keep pending until navigation finishes to avoid rendering transient errors.

@@ -391,6 +391,8 @@ app.UseCookiePolicy();
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+// Reject stale company tabs before any middleware can call IND_CRM_API.
+app.UseMiddleware<ExpectedCompanyContextMiddleware>();
 // Token refresh middleware
 app.UseMiddleware<TokenRefreshMiddleware>();
 app.UseMiddleware<IndContextRefreshMiddleware>();

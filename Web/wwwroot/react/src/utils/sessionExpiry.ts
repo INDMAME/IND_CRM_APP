@@ -1,3 +1,5 @@
+import { canPersistSensitiveBrowserState } from "./browserStorageScope.ts";
+
 const EXPIRY_SUFFIX = "__exp";
 
 const toExpiryKey = (key: string) => `${key}${EXPIRY_SUFFIX}`;
@@ -6,6 +8,7 @@ const safeNow = () => Date.now();
 
 // Reads a session value and enforces expiry when an expiry marker exists.
 export const getSessionValueWithExpiry = (key: string): string | null => {
+  if (!key || !canPersistSensitiveBrowserState()) return null;
   try {
     const raw = sessionStorage.getItem(key);
     if (raw === null) return null;
@@ -31,6 +34,7 @@ export const getSessionValueWithExpiry = (key: string): string | null => {
 
 // Writes a session value and stores an optional expiry marker.
 export const setSessionValueWithExpiry = (key: string, value: string, ttlMs?: number): void => {
+  if (!key || !canPersistSensitiveBrowserState()) return;
   try {
     sessionStorage.setItem(key, value);
     if (!ttlMs || ttlMs <= 0) {
@@ -46,6 +50,7 @@ export const setSessionValueWithExpiry = (key: string, value: string, ttlMs?: nu
 
 // Removes a session value and its expiry marker.
 export const removeSessionValueWithExpiry = (key: string): void => {
+  if (!key) return;
   try {
     sessionStorage.removeItem(key);
     sessionStorage.removeItem(toExpiryKey(key));

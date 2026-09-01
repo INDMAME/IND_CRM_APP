@@ -35,6 +35,10 @@ const entryPoints = {
   "ind-audio-worklet": "Web/wwwroot/react/audio-recorder/ind-audio-worklet.ts",
 };
 
+const browserStateEntryPoint = {
+  "ind-browser-state": "Web/wwwroot/react/src/legacy/ind-browser-state.ts",
+};
+
 // Keep the chunk folder clean so old hashed files do not accumulate between builds.
 rmSync("Web/wwwroot/js/chunks", { recursive: true, force: true });
 
@@ -51,4 +55,18 @@ await build({
   minify: isProd,
   jsx: "automatic",
   loader: { ".ts": "ts", ".tsx": "tsx" },
+});
+
+// Build the early browser-state guard as a classic script so it runs synchronously in Razor layouts.
+await build({
+  entryPoints: browserStateEntryPoint,
+  bundle: true,
+  splitting: false,
+  format: "iife",
+  platform: "browser",
+  outdir: "Web/wwwroot/js",
+  entryNames: "[name]",
+  sourcemap: isProd ? true : "inline",
+  minify: isProd,
+  loader: { ".ts": "ts" },
 });

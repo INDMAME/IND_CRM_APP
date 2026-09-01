@@ -1,6 +1,7 @@
 @using IND_CRM_APP.Infrastructure.Localization
 @using IND_CRM_APP.Models.Shared
 @using IND_CRM_APP.Infrastructure.Security.Modules
+@using IND_CRM_APP.Infrastructure.Security.Auth
 @using System.Collections.Generic
 @using System.Linq
 @using System.Text.Json
@@ -68,6 +69,28 @@
     var selectedCompany = !string.IsNullOrWhiteSpace(selectedCompanyId)
         ? permissionContext?.Companies.FirstOrDefault(c => string.Equals(c.CompanyId, selectedCompanyId, StringComparison.OrdinalIgnoreCase))
         : permissionContext?.Companies.FirstOrDefault();
+
+    var claimEntraOid = Context?.User?.FindFirst(IndAuthEnv.ClaimOid)?.Value
+        ?? Context?.User?.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
+    var sessionEntraOid = Context?.Session?.GetString("ENTRAOID");
+    var contextEntraOid = permissionContext?.EntraOid;
+    var entraOid = string.Empty;
+    if (Context?.User?.Identity?.IsAuthenticated == true)
+    {
+        if (!string.IsNullOrWhiteSpace(claimEntraOid) &&
+            (string.IsNullOrWhiteSpace(contextEntraOid) ||
+             string.Equals(claimEntraOid, contextEntraOid, StringComparison.OrdinalIgnoreCase)))
+        {
+            entraOid = claimEntraOid.Trim();
+        }
+        else if (string.IsNullOrWhiteSpace(claimEntraOid) &&
+                 !string.IsNullOrWhiteSpace(sessionEntraOid) &&
+                 !string.IsNullOrWhiteSpace(contextEntraOid) &&
+                 string.Equals(sessionEntraOid, contextEntraOid, StringComparison.OrdinalIgnoreCase))
+        {
+            entraOid = sessionEntraOid.Trim();
+        }
+    }
 
     var moduleAccess = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
     if (selectedCompany?.Modules != null)
@@ -383,6 +406,8 @@
                     form.dataset.indBound = "true";
                     form.addEventListener("submit", (event) => {
                         event.preventDefault();
+                        const browserState = window.IND && window.IND.browserState;
+                        browserState?.prepareForCompanyChange?.();
                         const payload = new FormData(form);
                         fetch(form.action, {
                             method: "POST",
@@ -394,13 +419,19 @@
                                 if (typeof window.__indBypassNavigationGuardOnce === "function") {
                                     window.__indBypassNavigationGuardOnce();
                                 }
+                                browserState?.completeCompanyChange?.();
                                 window.location.replace("/");
                             })
                             .catch(() => {
                                 if (typeof window.__indBypassNavigationGuardOnce === "function") {
                                     window.__indBypassNavigationGuardOnce();
                                 }
-                                form.submit();
+                                if (browserState && typeof browserState.completeCompanyChange === "function") {
+                                    browserState.completeCompanyChange();
+                                    window.location.replace("/");
+                                    return;
+                                }
+                                HTMLFormElement.prototype.submit.call(form);
                             });
                     });
                 });
@@ -553,6 +584,7 @@
 
     <script nonce="@cspNonce">
         window.__IND_MODULE_ACCESS__ = @Html.Raw(moduleAccessJson);
+        window.__IND_ENTRA_OID__ = @Html.Raw(JsonSerializer.Serialize(entraOid));
         window.__IND_SELECTED_COMPANY__ = @Html.Raw(JsonSerializer.Serialize(selectedCompanyId ?? string.Empty));
         window.__IND_ALLOW_SELF_MANAGEMENT__ = @Html.Raw(JsonSerializer.Serialize(allowSelfManagement));
         window.__IND_PERMISSION_I18N__ = {
@@ -566,6 +598,8 @@
             cancel: @Html.Raw(JsonSerializer.Serialize(SR["Confirm_No"].Value))
         };
     </script>
+
+    <script nonce="@cspNonce" src="~/js/ind-browser-state.js" asp-append-version="true"></script>
 
     <script nonce="@cspNonce">
         (function () {
@@ -761,20 +795,38 @@
                 if (target.hasAttribute("data-no-nav-guard")) return;
                 if (target.target && target.target !== "_self") return;
                 if (event.defaultPrevented) return;
-                if (!guard.active || guard.bypass) return;
 
-                event.preventDefault();
-                event.stopPropagation();
-                event.stopImmediatePropagation?.();
                 const form = target;
-
-                requestNavigation(() => {
+                const submitForm = () => {
+                    const browserState = window.IND && window.IND.browserState;
+                    if (form.hasAttribute("data-ind-browser-state-logout")) {
+                        if (browserState && typeof browserState.submitLogoutForm === "function") {
+                            void browserState.submitLogoutForm(form);
+                            return;
+                        }
+                        HTMLFormElement.prototype.submit.call(form);
+                        return;
+                    }
                     if (typeof form.requestSubmit === "function") {
                         form.requestSubmit();
                         return;
                     }
                     form.submit();
-                });
+                };
+
+                if (!guard.active || guard.bypass) {
+                    if (!form.hasAttribute("data-ind-browser-state-logout")) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation?.();
+                    submitForm();
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation?.();
+                requestNavigation(submitForm);
             };
 
             const onBeforeUnload = (event) => {

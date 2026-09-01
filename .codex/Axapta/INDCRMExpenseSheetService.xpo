@@ -2383,7 +2383,8 @@ Formatversion: 1
       ENDSOURCE
       SOURCE #getExpenseSheet
         #// Metodo: indExpenseSheetGet
-        #// Proposito: Obtiene cabecera + lineas por CompanyId + crmUserId + HojaGastosId.
+        #// Purpose: Returns header and lines by CompanyId, AX actor, and HojaGastosId.
+        #// The optional fourth field lets the actor query an authorized subordinate sheet.
         #static server container getExpenseSheet(container _data)
         #{
         #    DataAreaId          companyId;
@@ -2413,6 +2414,7 @@ Formatversion: 1
         #    str                 debugSheetUserId;
         #    str                 debugSheetCreatedByUserId;
         #    str                 debugSheetStatus;
+        #    boolean             allowManagedOwner;
         #    ;
         #
         #    companyId = INDCRMUtilityService::getCompany(_data);
@@ -2425,6 +2427,9 @@ Formatversion: 1
         #
         #    axUserId  = conPeek(_data, 2);
         #    hojaId    = conPeek(_data, 3);
+        #    allowManagedOwner = false;
+        #    if (conLen(_data) >= 4)
+        #        allowManagedOwner = any2int(conPeek(_data, 4)) == 1;
         #
         #    changecompany(companyId)
         #    {
@@ -2462,15 +2467,27 @@ Formatversion: 1
         #            debugSheetStatus = strFmt('%1', any2int(debugHeader.ExpenseSheetStatus));
         #        }
         #
-        #        select firstonly header
-        #            where header.UserId       == crmUserId
-        #               && header.HojaGastosId == hojaId;
+        #        if (allowManagedOwner)
+        #        {
+        #            // Looks up one exact sheet, then validates its owner against the signed actor.
+        #            select firstonly header
+        #                where header.HojaGastosId == hojaId;
+        #        }
+        #        else
+        #        {
+        #            select firstonly header
+        #                where header.UserId       == crmUserId
+        #                   && header.HojaGastosId == hojaId;
+        #        }
         #
-        #        if (!header.RecId)
+        #        if (!header.RecId ||
+        #            (allowManagedOwner &&
+        #             header.UserId != crmUserId &&
+        #             !INDCRMExpenseSheetService::canExpenseSheetActorManageOwner(axUserId, header.UserId)))
         #            return [INDCRMUtilityService::buildHeader(false, 'Hoja de gastos no encontrada.',
         #                                                   [
         #                                                    'stage=detail-access',
-        #                                                    'rule=header.UserId==crmUserId&&header.HojaGastosId==hojaId',
+        #                                                    'rule=exact-sheet-and-owner-or-managed-owner',
         #                                                    strFmt('companyId=%1', companyId),
         #                                                    strFmt('axUserId=%1', axUserId),
         #                                                    strFmt('crmUserId=%1', crmUserId),
@@ -2530,7 +2547,7 @@ Formatversion: 1
         #
         #        while select line
         #        order by createdDate DESC
-        #            where line.UserId       == crmUserId
+        #            where line.UserId       == header.UserId
         #               && line.HojaGastosId == hojaId
         #        {
         #             gastoTypeInt = any2int(line.Type);

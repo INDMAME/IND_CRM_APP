@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -28,6 +31,43 @@ namespace IND_CRM_APP.Controllers
             var currentAxUser = HttpContext.Session.GetString("AxUser");
             var trimmed = companyId?.Trim();
             var cachedContext = _authContext.GetCachedContext();
+
+            if (!string.IsNullOrWhiteSpace(trimmed))
+            {
+                var authorizedCompany = FindAuthorizedCompanyId(cachedContext, trimmed);
+                if (authorizedCompany == null)
+                {
+                    var refreshResult = await _authContext.EnsureContextAsync(forceRefresh: true);
+                    cachedContext = refreshResult.Context;
+                    authorizedCompany = FindAuthorizedCompanyId(cachedContext, trimmed);
+                }
+
+                if (authorizedCompany == null)
+                {
+                    _logger.LogWarning(
+                        "SetCompany rejected an unavailable company. RequestedCompany={RequestedCompany}; CurrentCompany={CurrentCompany}; SessionAxUser={SessionAxUser}; CachedCompanyCount={CachedCompanyCount}",
+                        NormalizeLogValue(trimmed),
+                        NormalizeLogValue(current),
+                        NormalizeLogValue(currentAxUser),
+                        cachedContext?.Companies?.Count ?? 0);
+
+                    if (IsAjaxRequest())
+                    {
+                        return StatusCode(StatusCodes.Status403Forbidden, new
+                        {
+                            Success = false,
+                            Message = "The requested company is not available for this user.",
+                            ErrorCode = "COMPANY_ACCESS_DENIED",
+                            TraceId = HttpContext.TraceIdentifier
+                        });
+                    }
+
+                    return RedirectToAction("Index", "Home");
+                }
+
+                trimmed = authorizedCompany;
+            }
+
             var changed = !string.IsNullOrWhiteSpace(trimmed) &&
                           !string.Equals(current, trimmed, StringComparison.OrdinalIgnoreCase);
             _logger.LogInformation(
@@ -95,6 +135,17 @@ namespace IND_CRM_APP.Controllers
         {
             var trimmed = (value ?? string.Empty).Trim();
             return string.IsNullOrWhiteSpace(trimmed) ? "(empty)" : trimmed;
+        }
+
+        private static string? FindAuthorizedCompanyId(IndWebContext? context, string requestedCompanyId)
+        {
+            return context?.Companies?
+                .FirstOrDefault(company => string.Equals(
+                    company.CompanyId?.Trim(),
+                    requestedCompanyId,
+                    StringComparison.OrdinalIgnoreCase))
+                ?.CompanyId
+                ?.Trim();
         }
     }
 }
