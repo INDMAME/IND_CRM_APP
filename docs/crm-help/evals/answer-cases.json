@@ -203,6 +203,36 @@
                             ]
     },
     {
+        "id":  "answer-expense-approval.undo-approval-destination",
+        "question":  "¿A qué estado vuelve una hoja al deshacer una aprobación?",
+        "responseLocale":  "es-ES",
+        "selectedModuleId":  "expense-approval",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "expense-approval.flujo-general-de-estados",
+        "expectedTopicIds":  [
+                                 "expense-approval.flujo-general-de-estados",
+                                 "expense-approval.acciones-del-propietario",
+                                 "expense-approval.acciones-del-responsable"
+                             ],
+        "sourceChunkIds":  [
+                               "expense-approval.flujo-general-de-estados--01",
+                               "expense-approval.acciones-del-propietario--01",
+                               "expense-approval.acciones-del-responsable--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "expense-approval.flujo-general-de-estados--01"
+                                   ],
+        "requiredFacts":  [
+                              "Un responsable que deshace la aprobación de la hoja de un subordinado la devuelve a Aprobación solicitada.",
+                              "El propietario con autogestión que deshace la aprobación de su propia hoja la devuelve a Borrador.",
+                              "El destino depende del perfil y de quién sea el propietario."
+                          ],
+        "forbiddenClaims":  [
+                                "Deshacer aprobación siempre devuelve la hoja a Aprobación solicitada.",
+                                "Deshacer aprobación siempre devuelve la hoja a Borrador."
+                            ]
+    },
+    {
         "id":  "answer-expenses-module-not-documented-password",
         "question":  "¿Cómo restablezco mi contraseña corporativa?",
         "responseLocale":  "es-ES",

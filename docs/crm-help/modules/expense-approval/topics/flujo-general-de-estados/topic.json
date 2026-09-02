@@ -14,7 +14,8 @@
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre flujo general de estados?"
+                                          "¿Dónde encuentro información sobre flujo general de estados?",
+                                          "¿A qué estado vuelve una hoja al deshacer una aprobación?"
                                       ]
                         },
     "audiences":  [
@@ -28,8 +29,8 @@
                         ],
     "routeKey":  "expenses.sheets",
     "status":  "published",
-    "contentVersion":  "1.7.0",
-    "contentHash":  "FEE3A09EFE2FED99388D18C94B63FA3E8EAF4C68BF981F2002D89AE2679E3C05",
+    "contentVersion":  "1.8.0",
+    "contentHash":  "56113D52289190C7741D15FED05893B3720FBABD92AC9C2DD6D385CB201A76D2",
     "assets":  [
 
                ],

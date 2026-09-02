@@ -1,7 +1,7 @@
 {
     "schemaVersion":  "1.1",
-    "knowledgeVersion":  "1.8.2",
-    "knowledgeHash":  "EE70E5395D92BD51FD29B28AA7C51EE827F132272952984C58FC6D07219AC2A0",
+    "knowledgeVersion":  "1.8.3",
+    "knowledgeHash":  "C1406B5DC1791E10D02702C9511C83C77E63C7FE2A02060EF9FC2BB0FCB8CCD0",
     "title":  "Ayuda de la aplicación CRM",
     "titleLocalizations":  {
                                "es-ES":  "Ayuda de la aplicación CRM"
@@ -2299,7 +2299,8 @@
                                    },
                        "sampleQuestions":  {
                                                "es-ES":  [
-                                                             "¿Dónde encuentro información sobre flujo general de estados?"
+                                                             "¿Dónde encuentro información sobre flujo general de estados?",
+                                                             "¿A qué estado vuelve una hoja al deshacer una aprobación?"
                                                          ]
                                            },
                        "audiences":  [
@@ -2313,8 +2314,8 @@
                                            ],
                        "routeKey":  "expenses.sheets",
                        "status":  "published",
-                       "contentVersion":  "1.7.0",
-                       "contentHash":  "FEE3A09EFE2FED99388D18C94B63FA3E8EAF4C68BF981F2002D89AE2679E3C05",
+                       "contentVersion":  "1.8.0",
+                       "contentHash":  "56113D52289190C7741D15FED05893B3720FBABD92AC9C2DD6D385CB201A76D2",
                        "translationCoverage":  {
                                                    "es-ES":  "source"
                                                },
@@ -2331,11 +2332,11 @@
                                       {
                                           "id":  "expense-approval.flujo-general-de-estados--01",
                                           "heading":  "Flujo general de estados",
-                                          "body":  "Las transiciones disponibles dependen de la configuración, del perfil del usuario y del estado actual:\n\n- Desde Borrador, Solicitar aprobación lleva a Aprobación solicitada; cuando no se requiere aprobación, Aprobar lleva a Aprobada.\n- Desde Aprobación solicitada, Deshacer solicitud devuelve a Borrador, Aprobar lleva a Aprobada y Rechazar lleva a Rechazada.\n- Desde Aprobada, Deshacer aprobación devuelve a Aprobación solicitada y Contabilizar en Axapta lleva a Pagada.\n- Desde Rechazada, Pasar a Borrador devuelve a Borrador y Deshacer rechazo devuelve a Aprobación solicitada.\n\nLa pantalla solo muestra las acciones permitidas para la hoja y el usuario actuales. Lea siempre la confirmación porque indica el estado al que pasará la hoja.",
+                                          "body":  "Las transiciones disponibles dependen de la configuración, del perfil del usuario y del estado actual:\n\n- Desde Borrador, Solicitar aprobación lleva a Aprobación solicitada; cuando no se requiere aprobación, Aprobar lleva a Aprobado.\n- Desde Aprobación solicitada, Deshacer solicitud devuelve a Borrador, Aprobar lleva a Aprobado y Rechazar lleva a Rechazado.\n- Desde Aprobado, el destino de Deshacer aprobación depende del perfil y de quién sea el propietario: un responsable que gestiona la hoja de un subordinado la devuelve a Aprobación solicitada; el propietario con autogestión que revierte su propia aprobación la devuelve a Borrador. Contabilizar en Axapta lleva a Pagado.\n- Desde Rechazado, Pasar a Borrador devuelve a Borrador y Deshacer rechazo devuelve a Aprobación solicitada.\n\nLa pantalla solo muestra las acciones permitidas para la hoja y el usuario actuales. Lea siempre la confirmación porque indica el estado al que pasará la hoja; no dé por hecho que Deshacer aprobación tiene el mismo destino para todos los perfiles.",
                                           "imageRefs":  [
 
                                                         ],
-                                          "estimatedTokens":  186
+                                          "estimatedTokens":  260
                                       }
                                   ],
                        "localizations":  {
@@ -2343,7 +2344,7 @@
                                                            "title":  "Flujo general de estados",
                                                            "summary":  "Consulta las transiciones posibles entre estados.",
                                                            "status":  "source",
-                                                           "contentHash":  "FEE3A09EFE2FED99388D18C94B63FA3E8EAF4C68BF981F2002D89AE2679E3C05",
+                                                           "contentHash":  "56113D52289190C7741D15FED05893B3720FBABD92AC9C2DD6D385CB201A76D2",
                                                            "quickAnswers":  [
 
                                                                             ],
@@ -2351,11 +2352,11 @@
                                                                           {
                                                                               "id":  "expense-approval.flujo-general-de-estados--01",
                                                                               "heading":  "Flujo general de estados",
-                                                                              "body":  "Las transiciones disponibles dependen de la configuración, del perfil del usuario y del estado actual:\n\n- Desde Borrador, Solicitar aprobación lleva a Aprobación solicitada; cuando no se requiere aprobación, Aprobar lleva a Aprobada.\n- Desde Aprobación solicitada, Deshacer solicitud devuelve a Borrador, Aprobar lleva a Aprobada y Rechazar lleva a Rechazada.\n- Desde Aprobada, Deshacer aprobación devuelve a Aprobación solicitada y Contabilizar en Axapta lleva a Pagada.\n- Desde Rechazada, Pasar a Borrador devuelve a Borrador y Deshacer rechazo devuelve a Aprobación solicitada.\n\nLa pantalla solo muestra las acciones permitidas para la hoja y el usuario actuales. Lea siempre la confirmación porque indica el estado al que pasará la hoja.",
+                                                                              "body":  "Las transiciones disponibles dependen de la configuración, del perfil del usuario y del estado actual:\n\n- Desde Borrador, Solicitar aprobación lleva a Aprobación solicitada; cuando no se requiere aprobación, Aprobar lleva a Aprobado.\n- Desde Aprobación solicitada, Deshacer solicitud devuelve a Borrador, Aprobar lleva a Aprobado y Rechazar lleva a Rechazado.\n- Desde Aprobado, el destino de Deshacer aprobación depende del perfil y de quién sea el propietario: un responsable que gestiona la hoja de un subordinado la devuelve a Aprobación solicitada; el propietario con autogestión que revierte su propia aprobación la devuelve a Borrador. Contabilizar en Axapta lleva a Pagado.\n- Desde Rechazado, Pasar a Borrador devuelve a Borrador y Deshacer rechazo devuelve a Aprobación solicitada.\n\nLa pantalla solo muestra las acciones permitidas para la hoja y el usuario actuales. Lea siempre la confirmación porque indica el estado al que pasará la hoja; no dé por hecho que Deshacer aprobación tiene el mismo destino para todos los perfiles.",
                                                                               "imageRefs":  [
 
                                                                                             ],
-                                                                              "estimatedTokens":  186
+                                                                              "estimatedTokens":  260
                                                                           }
                                                                       ]
                                                        }
@@ -2467,8 +2468,8 @@
                                            ],
                        "routeKey":  "expenses.sheets",
                        "status":  "published",
-                       "contentVersion":  "1.7.0",
-                       "contentHash":  "FF995DCA6B4D4D34F6E288BC7A1F288271438945C9E403B97EE0CFC2CC3EC667",
+                       "contentVersion":  "1.8.0",
+                       "contentHash":  "47AD2649DA73975BE86F6CD678F411A371DBCB743F13CFAB3EB5A008040F4972",
                        "translationCoverage":  {
                                                    "es-ES":  "source"
                                                },
@@ -2485,11 +2486,11 @@
                                       {
                                           "id":  "expense-approval.acciones-del-propietario--01",
                                           "heading":  "Acciones del propietario",
-                                          "body":  "Si la autoaprobación (configurada en gestión de personas) no está habilitada, una hoja propia en Borrador ofrece Solicitar aprobación. Una hoja propia en Aprobación solicitada puede ofrecer Deshacer solicitud. Una hoja Rechazada puede ofrecer Pasar a Borrador.\n\nSi la autoaprobación está habilitada, la hoja propia en Borrador puede ofrecer Aprobar directamente. Las acciones para deshacer una aprobación dependen del perfil y devuelven la hoja al estado anterior que muestre la confirmación.",
+                                          "body":  "Si la autoaprobación (configurada en gestión de personas) no está habilitada, una hoja propia en Borrador ofrece Solicitar aprobación. Una hoja propia en Aprobación solicitada puede ofrecer Deshacer solicitud. Una hoja en estado Rechazado puede ofrecer Pasar a Borrador.\n\nSi la autoaprobación está habilitada, la hoja propia en Borrador puede ofrecer Aprobar directamente. Cuando ese mismo propietario deshace la aprobación de su hoja propia, la hoja vuelve a Borrador para poder corregirla. Este destino es distinto del que utiliza un responsable al revertir la aprobación de un subordinado.",
                                           "imageRefs":  [
 
                                                         ],
-                                          "estimatedTokens":  123
+                                          "estimatedTokens":  148
                                       }
                                   ],
                        "localizations":  {
@@ -2497,7 +2498,7 @@
                                                            "title":  "Acciones del propietario",
                                                            "summary":  "Consulta las acciones disponibles para el propietario de una hoja.",
                                                            "status":  "source",
-                                                           "contentHash":  "FF995DCA6B4D4D34F6E288BC7A1F288271438945C9E403B97EE0CFC2CC3EC667",
+                                                           "contentHash":  "47AD2649DA73975BE86F6CD678F411A371DBCB743F13CFAB3EB5A008040F4972",
                                                            "quickAnswers":  [
 
                                                                             ],
@@ -2505,11 +2506,11 @@
                                                                           {
                                                                               "id":  "expense-approval.acciones-del-propietario--01",
                                                                               "heading":  "Acciones del propietario",
-                                                                              "body":  "Si la autoaprobación (configurada en gestión de personas) no está habilitada, una hoja propia en Borrador ofrece Solicitar aprobación. Una hoja propia en Aprobación solicitada puede ofrecer Deshacer solicitud. Una hoja Rechazada puede ofrecer Pasar a Borrador.\n\nSi la autoaprobación está habilitada, la hoja propia en Borrador puede ofrecer Aprobar directamente. Las acciones para deshacer una aprobación dependen del perfil y devuelven la hoja al estado anterior que muestre la confirmación.",
+                                                                              "body":  "Si la autoaprobación (configurada en gestión de personas) no está habilitada, una hoja propia en Borrador ofrece Solicitar aprobación. Una hoja propia en Aprobación solicitada puede ofrecer Deshacer solicitud. Una hoja en estado Rechazado puede ofrecer Pasar a Borrador.\n\nSi la autoaprobación está habilitada, la hoja propia en Borrador puede ofrecer Aprobar directamente. Cuando ese mismo propietario deshace la aprobación de su hoja propia, la hoja vuelve a Borrador para poder corregirla. Este destino es distinto del que utiliza un responsable al revertir la aprobación de un subordinado.",
                                                                               "imageRefs":  [
 
                                                                                             ],
-                                                                              "estimatedTokens":  123
+                                                                              "estimatedTokens":  148
                                                                           }
                                                                       ]
                                                        }
@@ -2545,8 +2546,8 @@
                                            ],
                        "routeKey":  "expenses.sheets",
                        "status":  "published",
-                       "contentVersion":  "1.7.0",
-                       "contentHash":  "FB2B45003DAA75DDCA75A073DA5D34BB9AA04A2623C3FA3F6CA40CB88AC0902D",
+                       "contentVersion":  "1.8.0",
+                       "contentHash":  "5F8D456344F5A34C5D49BADCD095307A157BC04119AC48EC34D545584C6DF3CE",
                        "translationCoverage":  {
                                                    "es-ES":  "source"
                                                },
@@ -2563,11 +2564,11 @@
                                       {
                                           "id":  "expense-approval.acciones-del-responsable--01",
                                           "heading":  "Acciones del responsable",
-                                          "body":  "Al consultar una hoja de una persona gestionada (subordinado), el responsable no edita su contenido. En Aprobación solicitada puede Aprobar o Rechazar. En Aprobado puede Deshacer aprobación. En Rechazado puede Deshacer rechazo. Estas reversiones devuelven la hoja al estado anterior previsto por el sistema.\n\nAl pulsar una acción de estado aparece una confirmación con un campo Comentario estado. Escriba una explicación útil, especialmente al rechazar o revertir una decisión, y confirme solo después de comprobar el identificador y el propietario.\n\n\u003e **ACCIÓN DESHABILITADA:** Las acciones de estado pueden permanecer deshabilitadas si la hoja no tiene líneas y tampoco tiene un importe total positivo. Añada o corrija los gastos antes de solicitar o ejecutar el cambio de estado.\n\n\u003e **BLOQUEO CONTABLE:** Una hoja Pagada o con justificante contable queda bloqueada en la aplicación web. No intente modificarla eliminando datos relacionados; consulte al área responsable.",
+                                          "body":  "Al consultar una hoja de una persona gestionada (subordinado), el responsable no edita su contenido. En Aprobación solicitada puede Aprobar o Rechazar. En Aprobado puede Deshacer aprobación y devolver la hoja a Aprobación solicitada. En Rechazado puede Deshacer rechazo y devolverla a Aprobación solicitada. El propietario con autogestión sigue otra regla al revertir su propia aprobación: vuelve a Borrador.\n\nAl pulsar una acción de estado aparece una confirmación con un campo Comentario estado. Escriba una explicación útil, especialmente al rechazar o revertir una decisión, y confirme solo después de comprobar el identificador y el propietario.\n\n\u003e **ACCIÓN DESHABILITADA:** Las acciones de estado pueden permanecer deshabilitadas si la hoja no tiene líneas y tampoco tiene un importe total positivo. Añada o corrija los gastos antes de solicitar o ejecutar el cambio de estado.\n\n\u003e **BLOQUEO CONTABLE:** Una hoja en estado Pagado o con justificante contable queda bloqueada en la aplicación web. No intente modificarla eliminando datos relacionados; consulte al área responsable.",
                                           "imageRefs":  [
 
                                                         ],
-                                          "estimatedTokens":  244
+                                          "estimatedTokens":  271
                                       }
                                   ],
                        "localizations":  {
@@ -2575,7 +2576,7 @@
                                                            "title":  "Acciones del responsable",
                                                            "summary":  "Consulta cómo puede aprobar, rechazar o revertir un responsable.",
                                                            "status":  "source",
-                                                           "contentHash":  "FB2B45003DAA75DDCA75A073DA5D34BB9AA04A2623C3FA3F6CA40CB88AC0902D",
+                                                           "contentHash":  "5F8D456344F5A34C5D49BADCD095307A157BC04119AC48EC34D545584C6DF3CE",
                                                            "quickAnswers":  [
 
                                                                             ],
@@ -2583,11 +2584,11 @@
                                                                           {
                                                                               "id":  "expense-approval.acciones-del-responsable--01",
                                                                               "heading":  "Acciones del responsable",
-                                                                              "body":  "Al consultar una hoja de una persona gestionada (subordinado), el responsable no edita su contenido. En Aprobación solicitada puede Aprobar o Rechazar. En Aprobado puede Deshacer aprobación. En Rechazado puede Deshacer rechazo. Estas reversiones devuelven la hoja al estado anterior previsto por el sistema.\n\nAl pulsar una acción de estado aparece una confirmación con un campo Comentario estado. Escriba una explicación útil, especialmente al rechazar o revertir una decisión, y confirme solo después de comprobar el identificador y el propietario.\n\n\u003e **ACCIÓN DESHABILITADA:** Las acciones de estado pueden permanecer deshabilitadas si la hoja no tiene líneas y tampoco tiene un importe total positivo. Añada o corrija los gastos antes de solicitar o ejecutar el cambio de estado.\n\n\u003e **BLOQUEO CONTABLE:** Una hoja Pagada o con justificante contable queda bloqueada en la aplicación web. No intente modificarla eliminando datos relacionados; consulte al área responsable.",
+                                                                              "body":  "Al consultar una hoja de una persona gestionada (subordinado), el responsable no edita su contenido. En Aprobación solicitada puede Aprobar o Rechazar. En Aprobado puede Deshacer aprobación y devolver la hoja a Aprobación solicitada. En Rechazado puede Deshacer rechazo y devolverla a Aprobación solicitada. El propietario con autogestión sigue otra regla al revertir su propia aprobación: vuelve a Borrador.\n\nAl pulsar una acción de estado aparece una confirmación con un campo Comentario estado. Escriba una explicación útil, especialmente al rechazar o revertir una decisión, y confirme solo después de comprobar el identificador y el propietario.\n\n\u003e **ACCIÓN DESHABILITADA:** Las acciones de estado pueden permanecer deshabilitadas si la hoja no tiene líneas y tampoco tiene un importe total positivo. Añada o corrija los gastos antes de solicitar o ejecutar el cambio de estado.\n\n\u003e **BLOQUEO CONTABLE:** Una hoja en estado Pagado o con justificante contable queda bloqueada en la aplicación web. No intente modificarla eliminando datos relacionados; consulte al área responsable.",
                                                                               "imageRefs":  [
 
                                                                                             ],
-                                                                              "estimatedTokens":  244
+                                                                              "estimatedTokens":  271
                                                                           }
                                                                       ]
                                                        }

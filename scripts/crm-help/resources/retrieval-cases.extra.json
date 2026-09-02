@@ -140,6 +140,17 @@
                              ]
     },
     {
+        "id":  "route-real-es-019-undo-approval",
+        "question":  "¿A qué estado vuelve una hoja al deshacer una aprobación?",
+        "responseLocale":  "es-ES",
+        "selectedTopicId":  null,
+        "selectedModuleId":  "expense-approval",
+        "expectedResolution":  "answered",
+        "expectedTopicIds":  [
+                                 "expense-approval.flujo-general-de-estados"
+                             ]
+    },
+    {
         "id":  "route-ambiguous-tickets",
         "question":  "Ayuda con un ticket",
         "responseLocale":  "es-ES",
