@@ -2,7 +2,6 @@
   "name": "ind_crm_app",
   "version": "1.0.0",
   "description": "",
-  "main": "tailwind.config.js",
   "scripts": {
     "test:e2e": "playwright test",
     "test:e2e:dev": "set IND_E2E_DEVTOOLS=true&& playwright test",
@@ -25,7 +24,7 @@
     "check:resx:encoding": "node scripts/check-resx-encoding.mjs",
     "check:localization:keys": "node scripts/check-localization-keys.mjs",
     "sync:codex:references:watch": "node scripts/sync-local-skill-references.mjs --watch",
-    "build:css": "tailwindcss -c tailwind.config.js -i ./Web/wwwroot/css/input.css -o ./Web/wwwroot/css/tailwind.css --minify",
+    "build:css": "tailwindcss -i ./Web/wwwroot/css/input.css -o ./Web/wwwroot/css/tailwind.css --minify",
     "build:react": "node scripts/build-react.mjs",
     "build:react:prod": "node scripts/build-react.mjs --prod",
     "build": "npm run build:react && npm run build:css"
@@ -44,11 +43,11 @@
   "homepage": "https://github.com/INDMAME/IND_CRM_APP#readme",
   "devDependencies": {
     "@playwright/test": "^1.57.0",
-    "@tailwindcss/cli": "^4.1.18",
+    "@tailwindcss/cli": "4.3.3",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
     "esbuild": "^0.27.1",
-    "tailwindcss": "^4.1.18",
+    "tailwindcss": "4.3.3",
     "typescript": "^5.9.3"
   },
   "dependencies": {

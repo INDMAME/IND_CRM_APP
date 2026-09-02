@@ -1,4 +1,6 @@
-@import 'tailwindcss';
+@import 'tailwindcss' source(none);
+@source '../../Views';
+@source '../react/src';
 
 @theme {
   --color-primary: #00296b;

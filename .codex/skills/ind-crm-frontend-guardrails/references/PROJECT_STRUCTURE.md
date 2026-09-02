@@ -42,7 +42,7 @@
 - `Program.cs`: registro de servicios, middleware y rutas.
 - `IND_CRM_APP.csproj`: .NET 10 y `Web/wwwroot` como `WebRootPath`.
 - `package.json`: compilación y comprobaciones frontend/documentales.
-- `tailwind.config.js`: contenido, color principal y tipografía.
+- `Web/wwwroot/css/input.css`: entrada CSS canónica, fuentes analizadas y tokens de Tailwind.
 - `publish.ps1`: compila, sincroniza `Web/wwwroot` → `wwwroot` y publica en IIS cuando se solicita.
 
 ## Regla de colocación
