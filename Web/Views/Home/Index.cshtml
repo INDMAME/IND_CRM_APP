@@ -1,5 +1,7 @@
 @using IND_CRM_APP.Infrastructure.Localization
+@using System.Text.Json
 @inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+@inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider StaticAssetVersionProvider
 
 @{
     ViewData["Title"] = SR["Home_Title"];
@@ -8,6 +10,10 @@
     var environmentName = ((ViewBag.Environment ?? SR["Common_Unknown"].Value).ToString() ?? string.Empty).Trim();
     var companyName = ((ViewBag.Company ?? SR["Common_NotAvailable"].Value).ToString() ?? string.Empty).Trim();
     var environmentLabel = SR["Home_Environment"].Value;
+    var helpAssistantEnabled = ViewBag.CrmHelpAssistantEnabled is bool enabled && enabled;
+    var cultureFeature = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>();
+    var currentCulture = cultureFeature?.RequestCulture.UICulture.Name ?? "es-ES";
+    var cspNonce = Context.Items["CspNonce"]?.ToString() ?? string.Empty;
     var isDevEnvironment =
         environmentName.Equals("DEV", StringComparison.OrdinalIgnoreCase)
         || environmentName.Equals("Development", StringComparison.OrdinalIgnoreCase)
@@ -15,32 +21,122 @@
         || environmentName.StartsWith("DEV_", StringComparison.OrdinalIgnoreCase);
 }
 
-<div class="relative isolate flex-1 flex flex-col gap-8">
-    @if (isDevEnvironment)
+<div class="relative isolate flex flex-1 items-stretch py-4 md:py-8">
+    @if (helpAssistantEnabled)
     {
-        <div class="pointer-events-none absolute inset-0 z-0 flex items-center justify-center" role="status" aria-label="@($"{environmentLabel}: DEV")">
-            <span class="select-none text-[8.5rem] font-black uppercase leading-none tracking-normal text-slate-300 sm:text-[11rem] md:text-[15rem] lg:text-[18rem]" translate="no">DEV</span>
-        </div>
+        <div id="home-help-assistant-root"
+             class="relative z-10 flex min-h-0 w-full"
+             data-response-locale="@currentCulture"
+             data-environment-label="@environmentLabel"
+             data-environment-name="@environmentName"
+             data-company-name="@companyName"
+             data-is-dev="@isDevEnvironment.ToString().ToLowerInvariant()"
+             data-assistant-launcher-animated-webp="@StaticAssetVersionProvider.AddFileVersionToPath(Context!.Request.PathBase, Url!.Content("~/assets/kaloria/furnace/animated/kaloria-furnace.webp")!)"
+             data-assistant-launcher-animated-gif="@StaticAssetVersionProvider.AddFileVersionToPath(Context!.Request.PathBase, Url!.Content("~/assets/kaloria/furnace/animated/kaloria-furnace.gif")!)"
+             data-assistant-launcher-reduced-motion-png="@StaticAssetVersionProvider.AddFileVersionToPath(Context!.Request.PathBase, Url!.Content("~/assets/kaloria/furnace/static/kaloria-furnace-static.png")!)"
+             data-assistant-bot-image="@StaticAssetVersionProvider.AddFileVersionToPath(Context!.Request.PathBase, Url!.Content("~/images/kaloria_bot.png")!)"></div>
     }
-
-    <div class="relative z-10 space-y-2 pt-2">
-        <h2 class="text-2xl font-semibold text-slate-900">@SR["Home_Welcome"]</h2>
-        <p class="text-slate-700">@SR["Home_SelectLeftMenu"]</p>
-    </div>
-
-    <div class="relative z-10 w-full flex justify-center pb-6 mt-auto">
-        <div class="tech-info text-center space-y-1 leading-tight">
-            @if (!isDevEnvironment)
+    else
+    {
+        <section class="relative z-10 flex w-full flex-col overflow-hidden rounded-[var(--radius-xl)] border border-slate-200 bg-white/95 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+            @if (isDevEnvironment)
             {
-                <div>@environmentLabel: @environmentName</div>
+                <div class="pointer-events-none absolute inset-0 flex items-center justify-center" role="status" aria-label="@($"{environmentLabel}: DEV")">
+                    <span class="select-none text-[8.5rem] font-black uppercase leading-none tracking-normal text-slate-100 sm:text-[11rem] md:text-[15rem]" translate="no" aria-hidden="true">DEV</span>
+                </div>
             }
-            <div>Microsoft Navision Axapta 3.0</div>
-            <div><strong>@companyName</strong></div>
-        </div>
-    </div>
+            <div class="tech-info relative z-10 mt-auto border-t border-slate-100 px-5 py-4 text-center space-y-1 leading-tight">
+                @if (!isDevEnvironment)
+                {
+                    <div>@environmentLabel: @environmentName</div>
+                }
+                <div>Microsoft Navision Axapta 3.0</div>
+                <div><strong>@companyName</strong></div>
+            </div>
+        </section>
+    }
 </div>
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/index.css" />
-    <link rel="stylesheet" href="~/css/technical-info.css" />
+    <link rel="stylesheet" href="~/css/Index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/technical-info.css" asp-append-version="true" />
+}
+
+@if (helpAssistantEnabled)
+{
+    <script nonce="@cspNonce">
+        window.__IND_I18N__ = Object.assign(window.__IND_I18N__ || {}, @Html.Raw(JsonSerializer.Serialize(new
+        {
+            HomeHelp_CardTitle = SR["HomeHelp_CardTitle"].Value,
+            HomeHelp_CardBody = SR["HomeHelp_CardBody"].Value,
+            HomeHelp_OpenAria = SR["HomeHelp_OpenAria"].Value,
+            HomeHelp_Callout1 = SR["HomeHelp_Callout1"].Value,
+            HomeHelp_Callout2 = SR["HomeHelp_Callout2"].Value,
+            HomeHelp_Callout3 = SR["HomeHelp_Callout3"].Value,
+            HomeHelp_Suggestion1 = SR["HomeHelp_Suggestion1"].Value,
+            HomeHelp_Suggestion2 = SR["HomeHelp_Suggestion2"].Value,
+            HomeHelp_Suggestion3 = SR["HomeHelp_Suggestion3"].Value,
+            HomeHelp_ChatLoading = SR["HomeHelp_ChatLoading"].Value,
+            HomeHelp_RenderError = SR["HomeHelp_RenderError"].Value,
+            HomeHelp_PanelTitle = SR["HomeHelp_PanelTitle"].Value,
+            HomeHelp_MoveWindow = SR["HomeHelp_MoveWindow"].Value,
+            HomeHelp_ResizeWindow = SR["HomeHelp_ResizeWindow"].Value,
+            HomeHelp_Send = SR["HomeHelp_Send"].Value,
+            HomeHelp_Sending = SR["HomeHelp_Sending"].Value,
+            HomeHelp_Retry = SR["HomeHelp_Retry"].Value,
+            HomeHelp_Warnings = SR["HomeHelp_Warnings"].Value,
+            HomeHelp_InputPlaceholder = SR["HomeHelp_InputPlaceholder"].Value,
+            HomeHelp_InputPrivacyNotice = SR["HomeHelp_InputPrivacyNotice"].Value,
+            HomeHelp_EmptyTitle = SR["HomeHelp_EmptyTitle"].Value,
+            HomeHelp_EmptyBody = SR["HomeHelp_EmptyBody"].Value,
+            HomeHelp_NoContextTitle = SR["HomeHelp_NoContextTitle"].Value,
+            HomeHelp_NoContextBody = SR["HomeHelp_NoContextBody"].Value,
+            HomeHelp_NoContextMessage = SR["HomeHelp_NoContextMessage"].Value,
+            HomeHelp_CatalogLoading = SR["HomeHelp_CatalogLoading"].Value,
+            HomeHelp_CatalogError = SR["HomeHelp_CatalogError"].Value,
+            HomeHelp_CatalogEmpty = SR["HomeHelp_CatalogEmpty"].Value,
+            HomeHelp_ModuleSelectionTitle = SR["HomeHelp_ModuleSelectionTitle"].Value,
+            HomeHelp_ModuleSelectionBody = SR["HomeHelp_ModuleSelectionBody"].Value,
+            HomeHelp_ModuleSelectionLocked = SR["HomeHelp_ModuleSelectionLocked"].Value,
+            HomeHelp_ChangeModule = SR["HomeHelp_ChangeModule"].Value,
+            HomeHelp_TopicQuestionTemplate = SR["HomeHelp_TopicQuestionTemplate"].Value,
+            HomeHelp_Loading = SR["HomeHelp_Loading"].Value,
+            HomeHelp_ErrorRateLimit = SR["HomeHelp_ErrorRateLimit"].Value,
+            HomeHelp_ErrorRequest = SR["HomeHelp_ErrorRequest"].Value,
+            HomeHelp_ErrorAiUnavailable = SR["HomeHelp_ErrorAiUnavailable"].Value,
+            HomeHelp_ErrorAiRateLimit = SR["HomeHelp_ErrorAiRateLimit"].Value,
+            HomeHelp_ErrorFeatureDisabled = SR["HomeHelp_ErrorFeatureDisabled"].Value,
+            HomeHelp_ErrorKnowledgeUnavailable = SR["HomeHelp_ErrorKnowledgeUnavailable"].Value,
+            HomeHelp_ErrorRewriteRequired = SR["HomeHelp_ErrorRewriteRequired"].Value,
+            HomeHelp_ErrorReference = SR["HomeHelp_ErrorReference"].Value,
+            HomeHelp_NeedsSelection = SR["HomeHelp_NeedsSelection"].Value,
+            HomeHelp_NotDocumented = SR["HomeHelp_NotDocumented"].Value,
+            HomeHelp_SourcesLabel = SR["HomeHelp_SourcesLabel"].Value,
+            HomeHelp_SourceLoading = SR["HomeHelp_SourceLoading"].Value,
+            HomeHelp_SourceError = SR["HomeHelp_SourceError"].Value,
+            HomeHelp_Navigate = SR["HomeHelp_Navigate"].Value,
+            HomeHelp_QuickAnswer = SR["HomeHelp_QuickAnswer"].Value,
+            HomeHelp_FeedbackPrompt = SR["HomeHelp_FeedbackPrompt"].Value,
+            HomeHelp_HelpfulAria = SR["HomeHelp_HelpfulAria"].Value,
+            HomeHelp_NotHelpfulAria = SR["HomeHelp_NotHelpfulAria"].Value,
+            HomeHelp_FeedbackReasonLabel = SR["HomeHelp_FeedbackReasonLabel"].Value,
+            HomeHelp_FeedbackReasonPlaceholder = SR["HomeHelp_FeedbackReasonPlaceholder"].Value,
+            HomeHelp_FeedbackReason_incorrect = SR["HomeHelp_FeedbackReason_incorrect"].Value,
+            HomeHelp_FeedbackReason_outdated = SR["HomeHelp_FeedbackReason_outdated"].Value,
+            HomeHelp_FeedbackReason_unclear = SR["HomeHelp_FeedbackReason_unclear"].Value,
+            HomeHelp_FeedbackReason_incomplete = SR["HomeHelp_FeedbackReason_incomplete"].Value,
+            HomeHelp_FeedbackReason_permissions = SR["HomeHelp_FeedbackReason_permissions"].Value,
+            HomeHelp_FeedbackReason_other = SR["HomeHelp_FeedbackReason_other"].Value,
+            HomeHelp_FeedbackCommentLabel = SR["HomeHelp_FeedbackCommentLabel"].Value,
+            HomeHelp_FeedbackCommentPlaceholder = SR["HomeHelp_FeedbackCommentPlaceholder"].Value,
+            HomeHelp_FeedbackSubmit = SR["HomeHelp_FeedbackSubmit"].Value,
+            HomeHelp_FeedbackSending = SR["HomeHelp_FeedbackSending"].Value,
+            HomeHelp_FeedbackThanks = SR["HomeHelp_FeedbackThanks"].Value,
+            HomeHelp_FeedbackError = SR["HomeHelp_FeedbackError"].Value,
+            Common_Close = SR["Common_Close"].Value,
+            Common_NotAvailable = SR["Common_NotAvailable"].Value,
+            Api_RequestFailed = SR["Api_RequestFailed"].Value
+        })));
+    </script>
+    <script nonce="@cspNonce" type="module" src="~/js/home-help.js" asp-append-version="true"></script>
 }

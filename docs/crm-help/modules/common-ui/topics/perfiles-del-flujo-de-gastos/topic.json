@@ -1,0 +1,49 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui.perfiles-del-flujo-de-gastos",
+    "moduleId":  "common-ui",
+    "sectionNumber":  "6.4",
+    "title":  "Perfiles del flujo de gastos",
+    "summary":  "Distingue los perfiles que intervienen en el flujo de gastos.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Perfiles del flujo de gastos",
+                                  "pantalla",
+                                  "empresa activa",
+                                  "permisos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre perfiles del flujo de gastos?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "4445727D47F8623A80C7B82DD4B5DB65E7FC478C3C4174C8EE750D2830789EB1",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "6.4",
+                   "pageFromTableOfContents":  11
+               }
+}

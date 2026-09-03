@@ -14,6 +14,7 @@ import {
   LINE_REIMBURSABLE_EXPENSE_YES_VALUE,
   getExpenseLineReimbursableExpenseLabel,
   getExpenseLineReimbursableExpenseOptions,
+  isEditableExpenseLineReimbursableExpense,
   normalizeExpenseLineReimbursableExpense,
 } from "../constants/expenseReimbursableExpenseCatalog.ts";
 
@@ -218,12 +219,13 @@ const ExpenseSheetLineForm = ({
   const reimbursableExpenseValue = normalizeExpenseLineReimbursableExpense(
     isEditing ? draftReimbursableExpense : line.reimbursableExpense
   );
+  const hasEditableReimbursableExpenseValue = isEditableExpenseLineReimbursableExpense(reimbursableExpenseValue);
   const reimbursableExpenseLabel = getExpenseLineReimbursableExpenseLabel(
     isEditing ? draftReimbursableExpense : line.reimbursableExpense
   );
   const reimbursableStatusLabel = indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable");
   const hasPendingReimbursementRecalculation =
-    line.reimbursableExpense === LINE_REIMBURSABLE_EXPENSE_YES_VALUE && line.reimbursableAmount === 0;
+    !isEditing && line.reimbursableExpense === LINE_REIMBURSABLE_EXPENSE_YES_VALUE && line.reimbursableAmount === 0;
   const internationalField = isEditing ? (
     <SelectCombobox
       label={indT("ExpenseSheets_Field_International", "International")}
@@ -240,12 +242,17 @@ const ExpenseSheetLineForm = ({
       value={internacionalLabel}
     />
   );
-  const reimbursableExpenseField = isEditing ? (
+  const reimbursableExpenseField = isEditing && hasEditableReimbursableExpenseValue ? (
     <SelectCombobox
       label={reimbursableStatusLabel}
       options={reimbursableExpenseOptions}
       value={String(reimbursableExpenseValue)}
-      onChange={(value) => onDraftReimbursableExpenseChange(normalizeExpenseLineReimbursableExpense(value))}
+      onChange={(value) => {
+        const normalizedValue = normalizeExpenseLineReimbursableExpense(value);
+        if (isEditableExpenseLineReimbursableExpense(normalizedValue) && normalizedValue !== null) {
+          onDraftReimbursableExpenseChange(normalizedValue);
+        }
+      }}
       placeholder={reimbursableStatusLabel}
       allowTextInput={false}
       showSearchButton={false}

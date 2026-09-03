@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "visits.abrir-el-historial-de-visitas",
+    "moduleId":  "visits",
+    "sectionNumber":  "7.1",
+    "title":  "Abrir el historial de visitas",
+    "summary":  "Accede a la lista con el historial de visitas.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Abrir el historial de visitas",
+                                  "visitas",
+                                  "historial de visitas"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre abrir el historial de visitas?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "visits.modulo-visitas"
+                        ],
+    "routeKey":  "visits.history",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "7A3DF42DAAA4AB8F1FF972D0DA14ECB40F04ED42D86E604FC0524C2E3D2075A7",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "7.1",
+                   "pageFromTableOfContents":  12
+               }
+}

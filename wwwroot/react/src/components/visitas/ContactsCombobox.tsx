@@ -2,7 +2,11 @@ import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import FloatingList from "../commons/FloatingList.tsx";
 import Spinner from "../commons/Spinner.tsx";
-import { ChevronDownSvg, ChevronUpSvg } from "../commons/chevrons.tsx";
+import {
+  SELECT_FIELD_ACTION_BUTTON_CLASS_NAME,
+  SELECT_FIELD_ACTIONS_CLASS_NAME,
+  SelectChevron,
+} from "../commons/chevrons.tsx";
 import { fetchJson } from "../../services/apiService.ts";
 import { handleComboboxKeyDown } from "../../hooks/useComboboxKeyboard.ts";
 import { useOutsideClick } from "../../hooks/useOutsideClick.ts";
@@ -386,23 +390,25 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
               </span>
             )}
           </div>
-          <button
-            type="button"
-            className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 hover:text-slate-600"
-            aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
-            aria-expanded={open}
-            onClick={() => {
-              if (!accountNum) return;
-              if (open) {
-                setOpen(false);
-              } else {
-                ensureLoaded();
-                setOpen(true);
-              }
-            }}
-          >
-            {open ? <ChevronUpSvg className="h-5 w-5" aria-hidden="true" /> : <ChevronDownSvg className="h-5 w-5" aria-hidden="true" />}
-          </button>
+          <div className={SELECT_FIELD_ACTIONS_CLASS_NAME}>
+            <button
+              type="button"
+              className={`${SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} text-slate-500 hover:text-slate-600`}
+              aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
+              aria-expanded={open}
+              onClick={() => {
+                if (!accountNum) return;
+                if (open) {
+                  setOpen(false);
+                } else {
+                  ensureLoaded();
+                  setOpen(true);
+                }
+              }}
+            >
+              <SelectChevron open={open} />
+            </button>
+          </div>
         </div>
           <FloatingList
             anchorRef={boxRef}

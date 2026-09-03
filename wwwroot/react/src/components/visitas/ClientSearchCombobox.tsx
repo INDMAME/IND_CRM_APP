@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FloatingList from "../commons/FloatingList.tsx";
 import Spinner from "../commons/Spinner.tsx";
-import { ChevronDownSvg, ChevronUpSvg } from "../commons/chevrons.tsx";
+import {
+  SELECT_FIELD_ACTION_BUTTON_CLASS_NAME,
+  SELECT_FIELD_ACTIONS_CLASS_NAME,
+  SelectChevron,
+} from "../commons/chevrons.tsx";
 import { fetchJson } from "../../services/apiService.ts";
 import { handleComboboxKeyDown } from "../../hooks/useComboboxKeyboard.ts";
 import { useOutsideClick } from "../../hooks/useOutsideClick.ts";
@@ -301,7 +305,6 @@ const ClientSearchCombobox = ({
     : "block truncate uppercase text-[11px] text-slate-500";
   const statusClass = isCompact ? "text-xs text-slate-500 tech-info" : "text-xs text-slate-500 tech-info";
   const searchIconSize = isCompact ? "h-5 w-5" : "h-5 w-5";
-  const chevronIconSize = isCompact ? "h-5 w-5" : "h-5 w-5";
 
   const safeIdBase = idBase || (isCompact ? "history-client" : "client");
   const listId = `${safeIdBase}-options`;
@@ -349,9 +352,9 @@ const ClientSearchCombobox = ({
             aria-activedescendant={activeId}
           />
 
-          <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
+          <div className={SELECT_FIELD_ACTIONS_CLASS_NAME}>
             {(loading || blocking) && (
-              <span className="flex items-center px-2" aria-hidden="true">
+              <span className={SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} aria-hidden="true">
                 {isCompact ? <Spinner size="h-4 w-4" /> : <Spinner />}
               </span>
             )}
@@ -359,7 +362,7 @@ const ClientSearchCombobox = ({
             {showSearchIcon && (
               <button
                 type="button"
-                className="flex items-center p-1.5 text-slate-400 hover:text-slate-500"
+                className={`${SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} text-slate-400 hover:text-slate-500`}
                 onClick={requestSearchOrOpen}
                 aria-label={indT("Visits_Create_SearchClient", "Search account")}
               >
@@ -371,7 +374,7 @@ const ClientSearchCombobox = ({
 
             <button
               type="button"
-              className="flex items-center p-1.5 text-slate-500 hover:text-slate-600"
+              className={`${SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} text-slate-500 hover:text-slate-600`}
               onClick={() => {
                 if (loading || blocking) return;
                 if (open) {
@@ -387,7 +390,7 @@ const ClientSearchCombobox = ({
                   : indT("Visits_Create_ShowClientOptions", "Show client options")
               }
             >
-              {open ? <ChevronUpSvg className={chevronIconSize} /> : <ChevronDownSvg className={chevronIconSize} />}
+              <SelectChevron open={open} />
             </button>
           </div>
         </div>

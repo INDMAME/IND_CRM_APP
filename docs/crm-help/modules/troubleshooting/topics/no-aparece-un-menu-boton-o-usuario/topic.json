@@ -1,0 +1,55 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "troubleshooting.no-aparece-un-menu-boton-o-usuario",
+    "moduleId":  "troubleshooting",
+    "sectionNumber":  "12.3",
+    "title":  "No aparece un menú, botón o usuario",
+    "summary":  "Comprueba empresa, permisos y jerarquía si falta una opción.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "No aparece un menú, botón o usuario",
+                                  "problemas frecuentes",
+                                  "soporte"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre no aparece un menú, botón o usuario?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "F197C6AF49079A4F2CF7CF9371B5C9C28D9628B6C4FA5F5D0E8FFE00688B0EBC",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+                         {
+                             "id":  "troubleshooting.no-aparece-un-menu-boton-o-usuario.quick-01",
+                             "question":  "¿Por qué no aparece un menú, botón o usuario?",
+                             "answer":  "Compruebe la empresa activa y actualice la pantalla. Si la opción sigue sin aparecer, puede deberse a permisos o a la jerarquía de gestión. No utilice la sesión de otra persona.",
+                             "sourceChunkIds":  [
+                                                    "troubleshooting.no-aparece-un-menu-boton-o-usuario--01"
+                                                ]
+                         }
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "12.3",
+                   "pageFromTableOfContents":  32
+               }
+}

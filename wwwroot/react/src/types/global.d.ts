@@ -48,6 +48,17 @@ declare global {
     IND?: {
       showPermissionModal?: (opts?: Record<string, unknown>) => void;
       flashActionMark?: (payload: { type: string; durationMs: number }) => void;
+      browserState?: {
+        ready: Promise<void>;
+        isPersistenceAllowed: () => boolean;
+        getEpoch: () => number;
+        clearSensitiveState: (removeIdentityMarker?: boolean) => Promise<void>;
+        prepareForRelogin: (reason?: string) => Promise<void>;
+        completeRelogin: (targetUrl?: string) => void;
+        prepareForCompanyChange: () => void;
+        completeCompanyChange: () => void;
+        submitLogoutForm: (form: HTMLFormElement) => Promise<void>;
+      };
     };
     webkitAudioContext?: typeof AudioContext;
   }

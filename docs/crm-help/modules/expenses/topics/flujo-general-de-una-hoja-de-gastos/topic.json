@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expenses.flujo-general-de-una-hoja-de-gastos",
+    "moduleId":  "expenses",
+    "sectionNumber":  "8.1",
+    "title":  "Flujo general de una hoja de gastos",
+    "summary":  "Conoce las etapas principales de una hoja de gastos.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Flujo general de una hoja de gastos",
+                                  "hojas de gastos",
+                                  "gastos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre flujo general de una hoja de gastos?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expenses.modulo-hojas-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "279FAAE8A0AD57D3A520C86D9AD27D69410065635BB7B03237861AD041173767",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "8.1",
+                   "pageFromTableOfContents":  16
+               }
+}

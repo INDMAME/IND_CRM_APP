@@ -1,6 +1,7 @@
 @using System.Text.Json
 @using IND_CRM_APP.Infrastructure.Localization
 @inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+@inject Microsoft.AspNetCore.Mvc.ViewFeatures.IFileVersionProvider StaticAssetVersionProvider
 @{
     Layout = "~/Web/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = SR["ExpenseSheets_Title"];
@@ -9,10 +10,15 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/historial.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Historial.css" asp-append-version="true" />
 }
 
-<div id="expense-sheets-root" class="max-w-3xl mx-auto px-1 sm:px-2 pt-3 pb-4"></div>
+<div id="expense-sheets-root"
+     class="max-w-3xl mx-auto px-1 sm:px-2 pt-3 pb-4"
+     data-assistant-launcher-animated-webp="@StaticAssetVersionProvider.AddFileVersionToPath(Context!.Request.PathBase, Url!.Content("~/assets/kaloria/thinking/animated/kaloria-thinking.webp")!)"
+     data-assistant-launcher-animated-gif="@StaticAssetVersionProvider.AddFileVersionToPath(Context!.Request.PathBase, Url!.Content("~/assets/kaloria/thinking/animated/kaloria-thinking.gif")!)"
+     data-assistant-launcher-reduced-motion-png="@StaticAssetVersionProvider.AddFileVersionToPath(Context!.Request.PathBase, Url!.Content("~/assets/kaloria/thinking/static/kaloria-thinking-static.png")!)"
+     data-assistant-bot-image="@StaticAssetVersionProvider.AddFileVersionToPath(Context!.Request.PathBase, Url!.Content("~/images/kaloria_bot.png")!)"></div>
 
 @section Scripts {
     <script nonce="@cspNonce">

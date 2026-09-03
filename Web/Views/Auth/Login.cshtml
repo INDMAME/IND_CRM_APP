@@ -16,6 +16,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>@SR["Login_Title"] - IND CRM</title>
 
+    <link rel="icon" href="~/favicon.ico" asp-append-version="true" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -46,7 +48,7 @@
         <div class="w-full max-w-[360px] sm:max-w-[400px]">
             <div class="login-card bg-white border border-slate-100 rounded-2xl px-6 py-12 min-h-[460px] flex flex-col items-center">
                 <div class="flex flex-col items-center gap-4 mt-2 mb-16">
-                    <img src="~/images/insertec_sin_fondo.png" alt="Insertec" class="h-[100px] w-auto max-w-[240px] object-contain drop-shadow-lg" />
+                    <img src="~/images/insertec_sin_fondo.png" asp-append-version="true" alt="Insertec" class="h-[100px] w-auto max-w-[240px] object-contain drop-shadow-lg" />
                 </div>
 
                 @if (TempData["AuthError"] != null)
@@ -105,6 +107,7 @@
         }
     }
 
+    <script nonce="@cspNonce" src="~/js/ind-browser-state.js" asp-append-version="true"></script>
     <script nonce="@cspNonce" src="~/js/ind-action-mark.js" asp-append-version="true"></script>
 
     @{

@@ -1,6 +1,14 @@
-import React, { type KeyboardEvent as ReactKeyboardEvent, type RefObject } from "react";
+import React, {
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type KeyboardEventHandler,
+  type PointerEventHandler,
+  type RefObject,
+} from "react";
 import {
   ArrowPathIcon,
+  ArrowsPointingOutIcon,
+  Bars2Icon,
   ChatBubbleLeftRightIcon,
   PaperAirplaneIcon,
   SparklesIcon,
@@ -8,10 +16,35 @@ import {
 } from "@heroicons/react/24/outline";
 import Spinner from "../Spinner.tsx";
 import { classNames } from "../../../utils/classNames.ts";
+import AssistantLauncherButton, {
+  ASSISTANT_BOTTOM_INSET,
+  ASSISTANT_PAGE_INSET,
+  type AssistantLauncherDesktopPlacement,
+  type AssistantLauncherImageSources,
+} from "./AssistantLauncherButton.tsx";
 import ChatMessageContent from "./ChatMessageContent.tsx";
+import AssistantQuickActions, { type AssistantQuickActionsLayout } from "./AssistantQuickActions.tsx";
 import type { AssistantChatMessage, AssistantChatQuickAction, VisualizationType } from "./assistantChatTypes.ts";
 
-type AssistantChatDesktopPlacement = "content-frame" | "viewport-start";
+type AssistantChatDesktopPlacement = AssistantLauncherDesktopPlacement;
+export type AssistantChatComposerState = "enabled" | "blocked";
+
+type AssistantChatDesktopWindowHandle = {
+  ariaLabel: string;
+  onPointerDown: PointerEventHandler<HTMLElement>;
+  onPointerMove: PointerEventHandler<HTMLElement>;
+  onPointerUp: PointerEventHandler<HTMLElement>;
+  onPointerCancel: PointerEventHandler<HTMLElement>;
+  onLostPointerCapture: PointerEventHandler<HTMLElement>;
+  onKeyDown: KeyboardEventHandler<HTMLElement>;
+};
+
+export type AssistantChatDesktopWindow = {
+  panelStyle?: CSSProperties;
+  isInteracting: boolean;
+  moveHandle: AssistantChatDesktopWindowHandle;
+  resizeHandle: AssistantChatDesktopWindowHandle;
+};
 
 type AssistantChatShellProps<TActionId extends string = string> = {
   isOpen: boolean;
@@ -32,46 +65,58 @@ type AssistantChatShellProps<TActionId extends string = string> = {
   noContextBody: string;
   noContextMessage: string;
   desktopPlacement?: AssistantChatDesktopPlacement;
+  desktopWindow?: AssistantChatDesktopWindow;
   bottomInset?: string;
   botImageSrc: string;
-  contextNotice: string;
+  launcherImageSources: AssistantLauncherImageSources;
+  contextNotice: React.ReactNode;
+  headerActions?: React.ReactNode;
+  emptyStateContent?: React.ReactNode;
+  messagesHeaderContent?: React.ReactNode;
+  inputNotice?: React.ReactNode;
+  inputMaxLength?: number;
+  composerState?: AssistantChatComposerState;
   draftValue: string;
   messages: AssistantChatMessage[];
-  quickActions: AssistantChatQuickAction<TActionId>[];
+  quickActions?: AssistantChatQuickAction<TActionId>[];
+  quickActionsLayout?: AssistantQuickActionsLayout;
   messagesContainerRef: RefObject<HTMLDivElement | null>;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
+  dialogRef?: RefObject<HTMLElement | null>;
+  dialogId?: string;
+  ariaModal?: boolean;
   onToggle: () => void;
   onClose: () => void;
   onDraftChange: (value: string) => void;
   onSubmit: () => void;
-  onQuickAction: (question: string) => void;
-  onRetry: (question: string) => void;
+  onQuickAction?: (question: string) => void;
+  onRetry: (question: string, assistantMessageId?: string) => void;
   onChartTypeSelect: (messageId: string, value: VisualizationType) => void;
   onDraftKeyDown: (event: ReactKeyboardEvent<HTMLTextAreaElement>) => void;
+  renderAssistantMessageFooter?: (message: AssistantChatMessage) => React.ReactNode;
 };
 
-const ASSISTANT_PAGE_INSET = "max(12px, calc(50vw - 24rem + 12px))";
-const ASSISTANT_BOTTOM_INSET = "calc(0.75rem + env(safe-area-inset-bottom, 0px))";
 const GLOBAL_CHAT_RADIUS_CLASS = "rounded-[var(--radius-xl)]";
 const DEFAULT_PANEL_HEIGHT_CLASS =
   "h-[69vh] max-h-[69vh] lg:h-[min(640px,calc(100vh-8rem))] lg:max-h-[640px]";
 const EXPANDED_PANEL_HEIGHT_CLASS =
-  "h-[80vh] max-h-[80vh] lg:h-[min(760px,calc(100vh-5.5rem))] lg:max-h-[760px]";
+  "h-[84dvh] max-h-[calc(100dvh-1rem)] lg:h-[min(800px,calc(100dvh-4rem))] lg:max-h-[800px]";
 const LARGE_CARTESIAN_VISUAL_THRESHOLD = 8;
 const LARGE_PIE_VISUAL_THRESHOLD = 6;
 const LARGE_TABLE_VISUAL_THRESHOLD = 8;
+const LARGE_MARKDOWN_CONTENT_THRESHOLD = 360;
+const LARGE_MARKDOWN_LINE_THRESHOLD = 6;
+const LARGE_CONVERSATION_MESSAGE_THRESHOLD = 4;
 
 const DESKTOP_PLACEMENT_CLASS_NAMES: Record<
   AssistantChatDesktopPlacement,
-  { launcher: string; panel: string; closedPanel: string }
+  { panel: string; closedPanel: string }
 > = {
   "content-frame": {
-    launcher: "",
     panel: "lg:left-auto lg:right-[var(--assistant-page-inset)]",
     closedPanel: "lg:translate-x-[110%]",
   },
   "viewport-start": {
-    launcher: "lg:left-4",
     panel: "lg:left-4 lg:right-auto",
     closedPanel: "lg:-translate-x-[110%]",
   },
@@ -97,14 +142,43 @@ const shouldUseExpandedVisualLayout = (message: AssistantChatMessage["message"])
   }
 };
 
+// Expands the drawer when accumulated text, message count, or visual data needs more room.
+const shouldUseExpandedContentLayout = (messages: AssistantChatMessage[]): boolean => {
+  let markdownCharacterCount = 0;
+  let markdownLineCount = 0;
+  let settledMessageCount = 0;
+
+  for (const message of messages) {
+    if (message.state === "loading") {
+      continue;
+    }
+
+    settledMessageCount += 1;
+    if (shouldUseExpandedVisualLayout(message.message)) {
+      return true;
+    }
+
+    if (message.message.type === "markdown") {
+      const markdown = message.message.markdown.trim();
+      markdownCharacterCount += markdown.length;
+      markdownLineCount += markdown.split(/\r?\n/u).filter((line) => line.trim().length > 0).length;
+    }
+  }
+
+  return settledMessageCount >= LARGE_CONVERSATION_MESSAGE_THRESHOLD
+    || markdownCharacterCount >= LARGE_MARKDOWN_CONTENT_THRESHOLD
+    || markdownLineCount >= LARGE_MARKDOWN_LINE_THRESHOLD;
+};
+
 type AssistantChatMessageBubbleProps = {
   botImageSrc: string;
   isSending: boolean;
   message: AssistantChatMessage;
   retryLabel: string;
   warningsLabel: string;
-  onRetry: (question: string) => void;
+  onRetry: (question: string, assistantMessageId?: string) => void;
   onChartTypeSelect: (messageId: string, value: VisualizationType) => void;
+  footer?: React.ReactNode;
 };
 
 // Renders one chat bubble capable of hosting markdown, charts, tables, or pickers.
@@ -116,6 +190,7 @@ const AssistantChatMessageBubble = ({
   warningsLabel,
   onRetry,
   onChartTypeSelect,
+  footer,
 }: AssistantChatMessageBubbleProps) => {
   const warnings = Array.isArray(message.meta?.warnings) ? message.meta?.warnings : [];
   const [warningsOpen, setWarningsOpen] = React.useState(false);
@@ -168,7 +243,7 @@ const AssistantChatMessageBubble = ({
               type="button"
               className="mt-2 inline-flex items-center gap-1 rounded-[var(--radius-xl)] border border-rose-200 bg-white px-2.5 py-1.5 text-[12px] font-semibold text-rose-800 transition hover:bg-rose-100 focus:outline-hidden focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isSending}
-              onClick={() => onRetry(message.retryQuestion || "")}
+              onClick={() => onRetry(message.retryQuestion || "", message.id)}
             >
               <ArrowPathIcon className="h-3.5 w-3.5" />
               {retryLabel}
@@ -200,6 +275,8 @@ const AssistantChatMessageBubble = ({
               ) : null}
             </div>
           ) : null}
+
+          {footer ? <div className="mt-2">{footer}</div> : null}
         </div>
       </div>
     );
@@ -208,13 +285,14 @@ const AssistantChatMessageBubble = ({
   return (
     <div className="flex justify-start">
       <div className={classNames("relative w-full", shouldHideAssistantAvatar ? "max-w-full" : "max-w-[96%]")}>
-        <div
-          className={classNames(
-            "relative z-10 border px-2.5 py-2 shadow-[0_10px_24px_rgba(15,23,42,0.06)]",
-            bubbleClassName,
-            GLOBAL_CHAT_RADIUS_CLASS
-          )}
-        >
+        <div className="relative">
+          <div
+            className={classNames(
+              "relative z-10 border px-2.5 py-2 shadow-[0_10px_24px_rgba(15,23,42,0.06)]",
+              bubbleClassName,
+              GLOBAL_CHAT_RADIUS_CLASS
+            )}
+          >
           {shouldHideAssistantAvatar ? (
             <div className="w-full min-w-0 text-[12px] leading-5">
               <ChatMessageContent
@@ -264,7 +342,7 @@ const AssistantChatMessageBubble = ({
             type="button"
             className="mt-2 inline-flex items-center gap-1 rounded-[var(--radius-xl)] border border-rose-200 bg-white px-2.5 py-1.5 text-[12px] font-semibold text-rose-800 transition hover:bg-rose-100 focus:outline-hidden focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSending}
-            onClick={() => onRetry(message.retryQuestion || "")}
+            onClick={() => onRetry(message.retryQuestion || "", message.id)}
           >
             <ArrowPathIcon className="h-3.5 w-3.5" />
             {retryLabel}
@@ -296,14 +374,16 @@ const AssistantChatMessageBubble = ({
             ) : null}
           </div>
         ) : null}
+          </div>
+          <span
+            aria-hidden="true"
+            className={classNames(
+              "absolute left-[-6px] bottom-[7px] h-4 w-4 rotate-45 rounded-[4px] border",
+              bubbleTailClassName
+            )}
+          />
         </div>
-        <span
-          aria-hidden="true"
-          className={classNames(
-            "absolute left-[-6px] bottom-[7px] h-4 w-4 rotate-45 rounded-[4px] border",
-            bubbleTailClassName
-          )}
-        />
+        {footer ? <div className="relative z-10 mt-2">{footer}</div> : null}
       </div>
     </div>
   );
@@ -329,14 +409,26 @@ const AssistantChatShell = <TActionId extends string = string,>({
   noContextBody,
   noContextMessage,
   desktopPlacement = "content-frame",
+  desktopWindow,
   bottomInset = ASSISTANT_BOTTOM_INSET,
   botImageSrc,
+  launcherImageSources,
   contextNotice,
+  headerActions,
+  emptyStateContent,
+  messagesHeaderContent,
+  inputNotice,
+  inputMaxLength,
+  composerState = "enabled",
   draftValue,
   messages,
   quickActions,
+  quickActionsLayout = "inline",
   messagesContainerRef,
   textareaRef,
+  dialogRef,
+  dialogId,
+  ariaModal = false,
   onToggle,
   onClose,
   onDraftChange,
@@ -345,42 +437,44 @@ const AssistantChatShell = <TActionId extends string = string,>({
   onRetry,
   onChartTypeSelect,
   onDraftKeyDown,
+  renderAssistantMessageFooter,
 }: AssistantChatShellProps<TActionId>) => {
-  const sendDisabled = !hasContext || isSending || !toText(draftValue);
+  const composerDisabled = !hasContext || isSending || composerState === "blocked";
+  const sendDisabled = composerDisabled || !toText(draftValue);
   const hasAssistantResponse = messages.some((message) => message.role === "assistant" && message.state !== "loading");
-  const shouldExpandForVisuals = messages.some(
-    (message) => message.role === "assistant" && message.state !== "loading" && shouldUseExpandedVisualLayout(message.message)
-  );
+  const shouldExpandForContent = shouldUseExpandedContentLayout(messages);
   const desktopPlacementClassNames = DESKTOP_PLACEMENT_CLASS_NAMES[desktopPlacement];
+  const emptyStateDescription = toText(hasContext ? emptyStateBody : noContextBody);
   const assistantFloatingStyle = {
     ["--assistant-page-inset" as "--assistant-page-inset"]: ASSISTANT_PAGE_INSET,
     ["--assistant-bottom-inset" as "--assistant-bottom-inset"]: bottomInset,
   } as React.CSSProperties;
 
+  // Starts movement only from non-interactive header space.
+  const handleDesktopHeaderPointerDown = (event: React.PointerEvent<HTMLElement>) => {
+    if (!desktopWindow) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    if (target.closest?.("button, a, input, textarea, select, [contenteditable='true']")) {
+      return;
+    }
+
+    desktopWindow.moveHandle.onPointerDown(event);
+  };
+
   return (
     <>
       {showLauncher ? (
-        <button
-          type="button"
+        <AssistantLauncherButton
           aria-label={launcherAriaLabel}
           title={launcherAriaLabel}
-          data-ind-assistant-launcher="true"
-          className={classNames(
-            "fixed z-[1850] flex items-center rounded-[var(--radius-xl)] bg-transparent p-0 text-left shadow-none transition duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus:outline-hidden focus:ring-4 focus:ring-primary/20 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)]",
-            desktopPlacementClassNames.launcher
-          )}
-          style={assistantFloatingStyle}
+          imageSources={launcherImageSources}
+          desktopPlacement={desktopPlacement}
+          bottomInset={bottomInset}
           onClick={onToggle}
-        >
-          <span className="relative flex h-[60px] w-[60px] shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-xl)] border border-slate-300/95 bg-white/98 p-[2px] shadow-[0_10px_26px_rgba(148,163,184,0.24),0_3px_10px_rgba(15,23,42,0.08)] ring-1 ring-slate-100/80 backdrop-blur-sm">
-            <img
-              src={botImageSrc}
-              alt=""
-              className="h-[54px] w-[54px] scale-[1.04] rounded-[calc(var(--radius-xl)-2px)] object-contain drop-shadow-[0_6px_12px_rgba(15,23,42,0.16)]"
-              aria-hidden="true"
-            />
-          </span>
-        </button>
+        />
       ) : null}
 
       <div
@@ -398,19 +492,34 @@ const AssistantChatShell = <TActionId extends string = string,>({
         />
 
         <aside
+          id={dialogId}
+          ref={dialogRef}
           role="dialog"
-          aria-modal="false"
+          aria-modal={ariaModal}
           aria-label={title}
+          tabIndex={dialogRef ? -1 : undefined}
+          style={desktopWindow?.panelStyle}
           className={classNames(
             "absolute flex flex-col overflow-hidden rounded-[var(--radius-xl)] border border-slate-200 bg-white/96 text-[12px] shadow-[0_28px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl transition-transform duration-300 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)] [right:var(--assistant-page-inset)] lg:w-[368px]",
             desktopPlacementClassNames.panel,
-            shouldExpandForVisuals ? EXPANDED_PANEL_HEIGHT_CLASS : DEFAULT_PANEL_HEIGHT_CLASS,
+            shouldExpandForContent ? EXPANDED_PANEL_HEIGHT_CLASS : DEFAULT_PANEL_HEIGHT_CLASS,
+            desktopWindow?.isInteracting ? "select-none" : "",
             isOpen
               ? "translate-y-0 lg:translate-x-0"
               : classNames("translate-y-full lg:translate-y-0", desktopPlacementClassNames.closedPanel)
           )}
         >
-          <header className="border-b border-slate-200 bg-linear-to-r from-slate-50 via-white to-sky-50/70 px-3 py-1.5">
+          <header
+            className={classNames(
+              "border-b border-slate-200 bg-linear-to-r from-slate-50 via-white to-sky-50/70 px-3 py-1.5",
+              desktopWindow ? "lg:cursor-move lg:touch-none" : ""
+            )}
+            onPointerDown={desktopWindow ? handleDesktopHeaderPointerDown : undefined}
+            onPointerMove={desktopWindow?.moveHandle.onPointerMove}
+            onPointerUp={desktopWindow?.moveHandle.onPointerUp}
+            onPointerCancel={desktopWindow?.moveHandle.onPointerCancel}
+            onLostPointerCapture={desktopWindow?.moveHandle.onLostPointerCapture}
+          >
             <div className="flex items-center gap-2">
               {!hasAssistantResponse ? (
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-visible">
@@ -420,6 +529,21 @@ const AssistantChatShell = <TActionId extends string = string,>({
               <div className="min-w-0 flex-1">
                 <h2 className="text-[12px] font-semibold leading-4 text-primary">{title}</h2>
               </div>
+              {desktopWindow ? (
+                <button
+                  type="button"
+                  className="hidden h-7 w-7 cursor-move touch-none items-center justify-center rounded-md border border-transparent text-slate-400 transition-colors hover:border-slate-200 hover:bg-white hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 lg:inline-flex"
+                  aria-label={desktopWindow.moveHandle.ariaLabel}
+                  aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
+                  title={desktopWindow.moveHandle.ariaLabel}
+                  onPointerDown={desktopWindow.moveHandle.onPointerDown}
+                  onLostPointerCapture={desktopWindow.moveHandle.onLostPointerCapture}
+                  onKeyDown={desktopWindow.moveHandle.onKeyDown}
+                >
+                  <Bars2Icon className="h-4 w-4" aria-hidden="true" />
+                </button>
+              ) : null}
+              {headerActions}
               <button
                 type="button"
                 className="rounded-[var(--radius-xl)] border border-slate-200 bg-white p-[5px] text-slate-500 transition hover:border-slate-300 hover:text-primary focus:outline-hidden focus:ring-2 focus:ring-primary/30"
@@ -437,6 +561,12 @@ const AssistantChatShell = <TActionId extends string = string,>({
             </div>
           ) : null}
 
+          {messagesHeaderContent ? (
+            <div className="border-b border-slate-200 bg-slate-50/80 px-3 py-2">
+              {messagesHeaderContent}
+            </div>
+          ) : null}
+
           <div ref={messagesContainerRef} className="flex-1 space-y-4 overflow-y-auto px-3 py-3 lg:px-3">
             {messages.length === 0 ? (
               <div className="flex min-h-full flex-col items-center justify-start px-3 pt-5 text-center">
@@ -446,9 +576,12 @@ const AssistantChatShell = <TActionId extends string = string,>({
                 <h3 className="text-[12px] font-semibold tracking-[0.01em] text-primary">
                   {hasContext ? emptyStateTitle : noContextTitle}
                 </h3>
-                <p className="mt-2 max-w-[30ch] text-[12px] leading-5 text-slate-600">
-                  {hasContext ? emptyStateBody : noContextBody}
-                </p>
+                {emptyStateDescription ? (
+                  <p className="mt-2 max-w-[30ch] text-[12px] leading-5 text-slate-600">
+                    {emptyStateDescription}
+                  </p>
+                ) : null}
+                {hasContext ? emptyStateContent : null}
               </div>
             ) : (
               messages.map((message) => (
@@ -461,29 +594,31 @@ const AssistantChatShell = <TActionId extends string = string,>({
                   warningsLabel={warningsLabel}
                   onRetry={onRetry}
                   onChartTypeSelect={onChartTypeSelect}
+                  footer={
+                    message.role === "assistant" && message.state === "done"
+                      ? renderAssistantMessageFooter?.(message)
+                      : null
+                  }
                 />
               ))
             )}
           </div>
 
           <div className="border-t border-slate-200 bg-white/90 px-3 py-2.5 lg:px-3">
-            <div className="mb-2.5 flex gap-1.5 whitespace-nowrap">
-              {quickActions.map((action) => {
-                const Icon = action.icon || SparklesIcon;
-                return (
-                  <button
-                    key={action.id}
-                    type="button"
-                    disabled={!hasContext || isSending}
-                    className="inline-flex min-w-0 flex-1 items-center justify-start gap-1 rounded-[var(--radius-xl)] border border-slate-200 bg-slate-100 pl-1.5 pr-2 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:border-primary/20 hover:bg-slate-50 hover:text-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
-                    onClick={() => onQuickAction(action.question)}
-                  >
-                    <Icon className="h-3.5 w-3.5 shrink-0" />
-                    <span className="min-w-0 truncate tracking-[-0.01em]">{action.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            {quickActions && quickActions.length > 0 && onQuickAction ? (
+              <AssistantQuickActions
+                actions={quickActions}
+                disabled={composerDisabled}
+                layout={quickActionsLayout}
+                onSelect={onQuickAction}
+              />
+            ) : null}
+
+            {inputNotice ? (
+              <p className="mb-2 text-[10px] font-medium leading-4 text-amber-800" role="note">
+                {inputNotice}
+              </p>
+            ) : null}
 
             <div className="glass-panel shadow-card relative rounded-[var(--radius-xl)] border border-slate-200 bg-white/95 px-2.5 py-2">
               {!toText(draftValue) ? (
@@ -497,9 +632,10 @@ const AssistantChatShell = <TActionId extends string = string,>({
               <textarea
                 ref={textareaRef}
                 rows={1}
+                maxLength={inputMaxLength}
                 className="block min-h-[44px] w-full resize-none bg-transparent px-0 py-0 pr-[56px] text-[12px] leading-5 text-slate-700 placeholder:text-transparent focus:outline-hidden disabled:cursor-not-allowed disabled:text-slate-400"
                 value={draftValue}
-                disabled={!hasContext || isSending}
+                disabled={composerDisabled}
                 placeholder={inputPlaceholder}
                 aria-label={inputPlaceholder}
                 onChange={(event) => onDraftChange(event.target.value || "")}
@@ -518,6 +654,24 @@ const AssistantChatShell = <TActionId extends string = string,>({
               {!hasContext ? <p className="mt-2 text-[12px] leading-5 text-amber-900">{noContextMessage}</p> : null}
             </div>
           </div>
+
+          {desktopWindow ? (
+            <button
+              type="button"
+              className="absolute bottom-0 right-0 z-20 hidden h-6 w-6 cursor-se-resize touch-none items-center justify-center rounded-tl-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40 lg:inline-flex"
+              aria-label={desktopWindow.resizeHandle.ariaLabel}
+              aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
+              title={desktopWindow.resizeHandle.ariaLabel}
+              onPointerDown={desktopWindow.resizeHandle.onPointerDown}
+              onPointerMove={desktopWindow.resizeHandle.onPointerMove}
+              onPointerUp={desktopWindow.resizeHandle.onPointerUp}
+              onPointerCancel={desktopWindow.resizeHandle.onPointerCancel}
+              onLostPointerCapture={desktopWindow.resizeHandle.onLostPointerCapture}
+              onKeyDown={desktopWindow.resizeHandle.onKeyDown}
+            >
+              <ArrowsPointingOutIcon className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          ) : null}
         </aside>
       </div>
     </>

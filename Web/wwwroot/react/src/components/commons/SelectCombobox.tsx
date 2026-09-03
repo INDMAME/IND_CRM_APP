@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FloatingList from "./FloatingList.tsx";
-import { ChevronDownSvg, ChevronUpSvg } from "./chevrons.tsx";
+import {
+  SELECT_FIELD_ACTION_BUTTON_CLASS_NAME,
+  SELECT_FIELD_ACTIONS_CLASS_NAME,
+  SelectChevron,
+} from "./chevrons.tsx";
 import { useOutsideClick } from "../../hooks/useOutsideClick.ts";
 import { classNames } from "../../utils/classNames.ts";
 import { indT } from "../../utils/indI18n.ts";
@@ -480,11 +484,11 @@ const SelectCombobox = ({
               <span className={classNames("inline-flex items-center justify-center", selectedIconClassName)}>{selected.icon}</span>
             </span>
           ) : null}
-          <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
+          <div className={SELECT_FIELD_ACTIONS_CLASS_NAME}>
             {showSearchButton ? (
               <button
                 type="button"
-                className="flex items-center p-1.5 text-slate-400 hover:text-slate-500"
+                className={`${SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} text-slate-400 hover:text-slate-500`}
                 onClick={() => {
                   if (readOnlyMode) return;
                   if (query !== null && query.trim() && filtered.length === 0) {
@@ -503,7 +507,7 @@ const SelectCombobox = ({
             ) : null}
             <button
               type="button"
-              className="flex items-center p-1.5 text-slate-500 hover:text-slate-600"
+              className={`${SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} text-slate-500 hover:text-slate-600`}
               onClick={() => {
                 if (readOnlyMode) return;
                 if (open && query !== null && query.trim()) {
@@ -519,7 +523,7 @@ const SelectCombobox = ({
               aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
               disabled={readOnlyMode}
             >
-              {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
+              <SelectChevron open={open} />
             </button>
           </div>
         </div>

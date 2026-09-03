@@ -1,0 +1,49 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui.editar-guardar-y-cancelar",
+    "moduleId":  "common-ui",
+    "sectionNumber":  "5.1",
+    "title":  "Editar, guardar y cancelar",
+    "summary":  "Aprende cuándo editar, guardar o cancelar cambios.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Editar, guardar y cancelar",
+                                  "pantalla",
+                                  "empresa activa",
+                                  "permisos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre editar, guardar y cancelar?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "common-ui.elementos-comunes-de-la-pantalla"
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "6920353439505E59C443846CD28ECF26B31426C2AE5D7A273444892E42D35513",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "5.1",
+                   "pageFromTableOfContents":  9
+               }
+}

@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expense-approval.enlaces-recibidos-por-correo",
+    "moduleId":  "expense-approval",
+    "sectionNumber":  "10.5",
+    "title":  "Enlaces recibidos por correo",
+    "summary":  "Abre de forma segura una hoja desde un enlace de correo.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Enlaces recibidos por correo",
+                                  "aprobación de gastos",
+                                  "estados de hoja"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre enlaces recibidos por correo?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "48A4CACDDC64F71220EAA09EA340909269B07C31AD7C86FA7B3983079001F2B7",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "10.5",
+                   "pageFromTableOfContents":  28
+               }
+}

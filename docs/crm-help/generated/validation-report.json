@@ -1,0 +1,23 @@
+{
+    "schemaVersion":  "1.1",
+    "valid":  true,
+    "errors":  [
+
+               ],
+    "warnings":  [
+
+                 ],
+    "counts":  {
+                   "modules":  8,
+                   "topics":  46,
+                   "publishedTopics":  46,
+                   "chunks":  46,
+                   "quickAnswers":  6,
+                   "assets":  50,
+                   "locales":  1,
+                   "localizedTopics":  46,
+                   "localizedChunks":  46
+               },
+    "knowledgeHash":  "C1406B5DC1791E10D02702C9511C83C77E63C7FE2A02060EF9FC2BB0FCB8CCD0",
+    "bundleSha256":  "F6E04E2E58731C7AE4A51C50585CDEF2CBB192E66C87754DA93393502E32E964"
+}

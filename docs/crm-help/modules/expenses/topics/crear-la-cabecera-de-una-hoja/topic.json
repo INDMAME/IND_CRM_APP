@@ -1,0 +1,49 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expenses.crear-la-cabecera-de-una-hoja",
+    "moduleId":  "expenses",
+    "sectionNumber":  "8.4",
+    "title":  "Crear la cabecera de una hoja",
+    "summary":  "Crea los datos generales de una nueva hoja de gastos.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Crear la cabecera de una hoja",
+                                  "cabecera de una hoja nueva",
+                                  "hojas de gastos",
+                                  "gastos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre crear la cabecera de una hoja?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expenses.modulo-hojas-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "E7A1EA1A4FA1F9A76494339B57147F7E69B1DEF66E5E2692310F0066E6C315F0",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "8.4",
+                   "pageFromTableOfContents":  19
+               }
+}

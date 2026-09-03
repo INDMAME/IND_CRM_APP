@@ -1,0 +1,55 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "troubleshooting.no-se-puede-guardar",
+    "moduleId":  "troubleshooting",
+    "sectionNumber":  "12.4",
+    "title":  "No se puede guardar",
+    "summary":  "Revisa campos obligatorios y mensajes cuando no puedas guardar.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "No se puede guardar",
+                                  "problemas frecuentes",
+                                  "soporte"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre no se puede guardar?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "1B5E38E3E42EC90A636DEBC6AFE12171631BC0252170E6B006A48E45FCC77F80",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+                         {
+                             "id":  "troubleshooting.no-se-puede-guardar.quick-01",
+                             "question":  "¿Qué debo revisar si no puedo guardar?",
+                             "answer":  "Revise los campos marcados como obligatorios y los mensajes en rojo. En Visitas, compruebe Cuenta, Tipo de visita, Descripción y Comentarios. En una hoja nueva, compruebe Descripción. Divisa Reembolso la proporciona la empresa. En una línea o ticket, revise Fecha, Categoría, importes y divisa. Si el botón está bloqueado, el registro puede estar en solo lectura por su estado, por pago o por permisos.",
+                             "sourceChunkIds":  [
+                                                    "troubleshooting.no-se-puede-guardar--01"
+                                                ]
+                         }
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "12.4",
+                   "pageFromTableOfContents":  32
+               }
+}

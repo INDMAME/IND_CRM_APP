@@ -132,8 +132,20 @@ export const buildExpenseSheetLineDetailUrl = (sheetId: unknown, lineRecId: unkn
 };
 
 // Builds the canonical ticket link form URL used when a ticket detail returns to link mode.
-export const buildExpenseTicketLinkUrl = (sheetId: unknown): string => {
+export const buildExpenseTicketLinkUrl = (sheetId: unknown, targetLineRecId?: unknown): string => {
   const safeSheetId = safeText(sheetId);
   if (!safeSheetId) return "/Gastos/Tickets";
-  return `/Gastos/Tickets?action=link&hojaGastosId=${encodeURIComponent(safeSheetId)}`;
+  const safeTargetLineRecId = safeText(targetLineRecId);
+  if (!safeTargetLineRecId) {
+    return `/Gastos/Tickets?action=link&hojaGastosId=${encodeURIComponent(safeSheetId)}`;
+  }
+
+  const query = new URLSearchParams({
+    action: "link-line",
+    hojaGastosId: safeSheetId,
+    sheetLineRecId: safeTargetLineRecId,
+    lineRecId: safeTargetLineRecId,
+    origin: "expense-line",
+  });
+  return `/Gastos/Tickets?${query.toString()}`;
 };

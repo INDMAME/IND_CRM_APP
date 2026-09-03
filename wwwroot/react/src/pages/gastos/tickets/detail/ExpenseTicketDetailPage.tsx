@@ -10,6 +10,10 @@ import { configureExpenseApiAuth, getExpenseSheetDefaultCurrencyCode } from "../
 import { clearExpenseNavigationGuard, navigateToExpenseUrl, setExpenseNavigationGuard } from "../../utils/expenseNavigation.ts";
 import { isManagingOtherExpenseUser } from "../../utils/expenseManagedUserScope.ts";
 import { getExpenseGastoTypeOptions } from "../../constants/expenseGastoTypeCatalog.ts";
+import {
+  useExpenseGastoTypeWarning,
+  type ExpenseGastoTypeWarningDialogOptions,
+} from "../../hooks/useExpenseGastoTypeWarning.ts";
 import type { ExpenseSelectOption } from "../../utils/expenseSelectOptions.ts";
 import { buildExpenseSheetDetailUrl } from "../../utils/expenseTicketReturnContext.ts";
 import { readExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
@@ -160,7 +164,7 @@ const buildExpenseTicketDetailPreviewView = ({
 type ExpenseTicketLinkedSheetLineView = {
   visible: boolean;
   projectId: string;
-  reimbursableExpense: number;
+  reimbursableExpense: number | null;
   isLoading: boolean;
   errorMessage: string;
   disabled: boolean;
@@ -478,6 +482,8 @@ const useExpenseTicketDetailPageViewModel = () => {
   const lineContainerRef = useRef<HTMLDivElement | null>(null);
   const {
     autoEditMode,
+    aiDetectionPending,
+    consumeAiDetection,
     detailOrigin,
     contextSheetId,
     contextLineRecId,
@@ -521,6 +527,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     enabled: !!linkedExpenseSheetId,
     sheetId: linkedExpenseSheetId,
     lineRecId: contextLineRecId,
+    initializeMissingLine: isFromExpenseSheetCreate,
     onForbidden: showPermissionModal,
   });
   const {
@@ -909,9 +916,11 @@ const useExpenseTicketDetailPageViewModel = () => {
     linkedExpenseSheetId,
     linkedExpenseLineRecId: isFromExpenseLine ? contextLineRecId : "",
     linkedExpenseLineProjectId: linkedSheetLine.draftProjectId,
-    linkedExpenseLineProjectIdChanged: isFromExpenseLine && linkedSheetLine.projectIdChanged,
+    linkedExpenseLineProjectIdChanged:
+      (isFromExpenseLine || isFromExpenseSheetCreate) && linkedSheetLine.projectIdChanged,
     linkedExpenseLineReimbursableExpense: linkedSheetLine.draftReimbursableExpense,
-    linkedExpenseLineReimbursableExpenseChanged: isFromExpenseLine && linkedSheetLine.reimbursableExpenseChanged,
+    linkedExpenseLineReimbursableExpenseChanged:
+      (isFromExpenseLine || isFromExpenseSheetCreate) && linkedSheetLine.reimbursableExpenseChanged,
     deleteLinkedExpenseLineContext: isFromExpenseLine && linkedExpenseSheetId && contextLineRecId
       ? {
           sheetId: linkedExpenseSheetId,
@@ -947,6 +956,30 @@ const useExpenseTicketDetailPageViewModel = () => {
       setModalError,
       setStatus,
     });
+
+  const openGastoTypeWarning = useCallback(
+    (options: ExpenseGastoTypeWarningDialogOptions) => {
+      setModalError("");
+      openConfirm(options);
+    },
+    [openConfirm, setModalError]
+  );
+  const { warnForChange: warnForGastoTypeChange } = useExpenseGastoTypeWarning({
+    openWarning: openGastoTypeWarning,
+    dialogOpen: modal.open,
+    aiDetectionPending,
+    aiDetectionReady: header !== null,
+    detectedGastoType: header?.gastoType,
+    onAiDetectionHandled: consumeAiDetection,
+  });
+  const handleDraftGastoTypeChange = useCallback(
+    (value: string) => {
+      const previousValue = draftGastoType;
+      setDraftGastoType(value);
+      warnForGastoTypeChange(previousValue, value);
+    },
+    [draftGastoType, setDraftGastoType, warnForGastoTypeChange]
+  );
 
   useEffect(() => {
     if (!sheetSyncBlocked || busy) return;
@@ -1141,7 +1174,7 @@ const useExpenseTicketDetailPageViewModel = () => {
       draftUrlFile,
       draftFileName,
       setDraftDescription,
-      setDraftGastoType,
+      setDraftGastoType: handleDraftGastoTypeChange,
       setDraftCurrencyCode: handleTicketCurrencyCodeChange,
       setDraftTotalAmount,
       setDraftAmountMST: handleTicketAmountMSTChange,
@@ -1151,7 +1184,7 @@ const useExpenseTicketDetailPageViewModel = () => {
       setDraftTicketTime,
       isFromSheetLink,
       linkedLine: {
-        visible: isFromExpenseLine,
+        visible: isFromExpenseLine || isFromExpenseSheetCreate,
         projectId: linkedSheetLine.draftProjectId,
         reimbursableExpense: linkedSheetLine.draftReimbursableExpense,
         isLoading: linkedSheetLine.isLoading,

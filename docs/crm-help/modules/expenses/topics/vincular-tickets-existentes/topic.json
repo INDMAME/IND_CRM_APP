@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expenses.vincular-tickets-existentes",
+    "moduleId":  "expenses",
+    "sectionNumber":  "8.9",
+    "title":  "Vincular tickets existentes",
+    "summary":  "Selecciona y vincula tickets existentes a una hoja editable.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Vincular tickets existentes",
+                                  "hojas de gastos",
+                                  "gastos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre vincular tickets existentes?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expenses.modulo-hojas-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "79D2336C8C09766B76F80106305AE067CCEA8D635C44518EEC66B359F5D70F20",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "8.9",
+                   "pageFromTableOfContents":  23
+               }
+}

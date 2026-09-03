@@ -19,6 +19,11 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("projId")]
         public string? ProjId { get; set; }
 
+        // Distinguishes an omitted project from an explicit value, including an empty value.
+        [JsonPropertyName("projIdProvided")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public bool? ProjIdProvided { get; set; }
+
         [JsonPropertyName("voucher")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? Voucher { get; set; }

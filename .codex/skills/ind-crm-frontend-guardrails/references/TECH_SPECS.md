@@ -1,171 +1,56 @@
-# Technical Specs (IND_CRM_APP)
+# Arquitectura técnica de IND_CRM_APP
 
-## Scope and hierarchy
-- Scope: architecture, API integration, auth, permissions, localization, build system.
-- If conflict: system > .codex/AGENTS.md > this doc.
+## Plataforma y límites
 
-## Architecture summary
-- MVC + Razor is the base. React is islands only (no SPA rewrite).
-- Backend code lives under `App/` (services, infra, middleware, models, extensions).
-- Web code lives under `Web/` (controllers, views, wwwroot).
+- Aplicación ASP.NET Core MVC sobre .NET 10 con Razor y pequeñas islas React 19.
+- `IND_CRM_APP` presenta la interfaz y adapta contratos; `IND_CRM_API` y AX mantienen datos, reglas de negocio y autorización definitiva.
+- React no debe convertirse en una SPA ni asumir responsabilidades propias del servidor.
 
-## API surface (IND_CRM_API)
-- Base URL: prefer `ApiSettings__BaseUrl` or shared `INDCRM_BASE_URL`; keep `ApiSettings:BaseUrl` as a non-operational fallback in git.
-- Envelopes:
+## Consumo de IND_CRM_API
+
+- Usar los servicios existentes, especialmente `ICrmApiClient`; los controladores no construyen URLs, cabeceras ni parsean JSON manualmente.
+- Respetar los envoltorios vigentes:
   - `IndApiResponse<T>`: `Success`, `Message`, `ErrorCode`, `Data`, `Errors`, `TraceId`.
   - `IndPagedResponse<T>`: `Success`, `Message`, `Total`, `Page`, `PageSize`, `Items`, `TraceId`.
-- Controllers never build URLs/headers or parse JSON; use `ICrmApiClient`.
+- Una modificación contractual requiere revisar productor, consumidor, método HTTP, ruta, cabeceras, nombres, nulabilidad, enums, fechas, paginación y errores.
+- Para un proxy local `/api/...`: constante de ruta en `ApiRoutes.cs`, acción `Api*` con verbo explícito, ruta explícita en `Program.cs` y respuesta compatible con el envoltorio. Comprobar el verbo esperado y el 405 del verbo incorrecto.
+- Los catálogos enum procedentes de AX se consumen mediante el catálogo común; no duplicar listas ni renumerar valores.
 
-## Environment and secret configuration
-- Reuse existing system-managed keys before adding new configuration paths.
-- Keep DEV and PROD on the same configuration contract:
-  - same key names,
-  - same lookup order,
-  - different external values only.
-- Prefer `ApiSettings__BaseUrl` or shared `INDCRM_BASE_URL` for API host resolution.
-- Keep `ApiSettings:BaseUrl` in git only as a non-secret, non-operational fallback for local structure compatibility.
-- Keep the public web endpoint in machine keys:
-  - `INDCRM_WEB_BASE_URL`
-  - `INDCRM_WEB_PUBLIC_HOST`
-  - `INDCRM_WEB_PUBLIC_PORT`
-- `publish.ps1` may keep canonical DEV/PROD endpoint expectations as deployment guardrails, but runtime behavior must come from machine-level configuration and IIS bindings.
-- Never hardcode passwords, API keys, tokens, connection strings, tenant ids, or environment-specific hosts in:
-  - C# source,
-  - Razor/TS/JS source,
-  - tests,
-  - scripts,
-  - checked-in config defaults.
-- If a new credential or secret is required, extend the existing configuration abstraction instead of binding the implementation to a static literal.
+## Identidad, empresa y autorización
 
-## Internal endpoint exposure standard (mandatory)
-- Scope: any endpoint this MVC app exposes under `/api/...` for frontend consumption.
-- Route definitions:
-  - Keep canonical route constants in `App/Services/ApiHelpers/ApiRoutes.cs`.
-  - Add explicit route map in `Program.cs` with `app.MapControllerRoute(...)` per endpoint path.
-- Controller action requirements:
-  - Use dedicated API actions (for example `ApiExpenseSheetsList`) separated from page actions.
-  - Match verb attribute with caller verb exactly (`[HttpGet]`, `[HttpPost]`, etc.).
-  - For JSON POST endpoints consumed by React islands, use `[IgnoreAntiforgeryToken]` and perform token/session validation in action logic.
-  - Return wrapper-compatible payloads for consistency (`Success`, `Message`, `Data`/`Items`, `TraceId`).
-- Regression checks for each new endpoint:
-  - Expected verb must not return 404 or 405.
-  - Wrong verb should return 405 by design.
-  - Response contract must stay aligned with `IndApiResponse<T>` or `IndPagedResponse<T>`-style payloads.
+- Microsoft Entra/OIDC autentica al usuario. El servidor conserva `INDWebContext` y la empresa elegida.
+- `INDModuleAuthorizeFilter` y `INDModuleRegistry` controlan acceso a módulos.
+- `AllowSelfManagement` pertenece a la empresa seleccionada y React lo recibe a través de `AuthProvider`/`useAuthContext()`.
+- Para llamadas dependientes de empresa, resolver la empresa efectiva con la utilidad compartida de selección; una selección manual válida prevalece sobre la predeterminada.
+- La visibilidad por registro utiliza `useModuleDataVisibility`, su servicio y utilidades compartidas. El propietario funcional preferido es `OwnerAxUserId`; `CanMutate` y la política del servidor deciden mutaciones.
+- Si falta información de propietario, no asumir que el registro pertenece al usuario. La API y AX deben rechazar peticiones directas no autorizadas.
 
-## Auth and Entra context
-- OIDC is used for Microsoft Entra.
-- Context is cached in session under `INDWebContext` and keyed by OID.
-- Company selection is preserved in `INDCompanySelected` + `INDCompanySelectionSource`.
-- Module access is enforced by `INDModuleAuthorizeFilter` + `INDModuleRegistry`.
-- `AllowSelfManagement` is company-scoped and must come from the selected company in Entra context.
-- `_Layout.cshtml` injects this value into `window.__IND_ALLOW_SELF_MANAGEMENT__`, and React must consume it through `AuthProvider` -> `useAuthContext().allowSelfManagement`.
-- For Gastos context and React/session cache keys, use a composite scope `entraOid + companyId` (same user in different companies must never share cache entries).
-- `subordinates` is loaded during the Gastos management bootstrap after authenticated context is available for the selected company, not as an unconditional login-side call.
-- A valid `entraOid + companyId` cache may hydrate the UI first. The bootstrap still refreshes `/api/crm/expensesheets/subordinates`; if the refresh fails, it keeps the cached list.
+## Datos del navegador y frescura
 
-## Module data visibility and record-level security
-- Standard endpoint: `/api/crm/data-visibility/visible-users?appCode={appCode}&moduleCode={moduleCode}&includeCrmUserId={true|false}`.
-- Standard frontend objects:
-  - Hook: `Web/wwwroot/react/src/hooks/useModuleDataVisibility.ts`
-  - Service: `Web/wwwroot/react/src/services/moduleDataVisibilityService.ts`
-  - Utilities: `Web/wwwroot/react/src/utils/moduleDataVisibility.ts`
-- Standard usage:
-  - preload visible users on the Razor/MVC page when available, then pass them as `preloadedUsers`;
-  - call `useModuleDataVisibility({ enabled, companyId, axUserId, permissionsRevision, appCode, moduleCode, preloadedUsers })`;
-  - resolve record ownership with `getVisibleUserForOwner(...)`;
-  - gate mutation with `hasMutationPolicy(owner)` plus `canMutateOwner(...)`;
-  - format owner labels with `formatModuleVisibleUserLabel(...)`.
-- Cache scope must include company, AX user, permissions revision, app code, module code, and `includeCrmUserId`.
-- New modules must not create `useVisibleXUsers` clones. Extend the shared hook/service/utils only when the behavior is truly generic.
-- Strict record-level UI gating requires the record contract to expose the owner AX user id, preferably as `OwnerAxUserId`.
-- The frontend must not treat missing owner metadata as proof of ownership. Use a documented compatibility fallback only for existing flows while server/AX authorization remains authoritative.
+- El alcance canónico de estado sensible se construye con `browserStorageScope.ts`: versión + OID de Entra + empresa seleccionada.
+- No usar claves globales ni solo una clave padre para listas de subordinados, permisos, hojas o tickets.
+- Una caché válida puede pintar primero para reducir espera, pero los flujos que exigen actualidad vuelven a consultar la API. Si el refresco falla, solo se conserva el valor previo cuando el comportamiento actual lo contempla y nunca se eleva un permiso.
+- La caché del navegador no sustituye sesiones, permisos, validación ni datos actuales de la API.
+- En cierre de sesión, cambio de identidad o contexto inválido se limpian o invalidan los ámbitos correspondientes.
+- Los recursos fijos versionados —CSS, JavaScript, fuentes, iconos, imágenes decorativas y ayuda generada— pueden llevar caché larga. HTML autenticado, respuestas API y documentos/imágenes de tickets no se convierten en recursos estáticos reutilizables.
 
-## Localization
-- UI localization only. Use `App/Resources/Infrastructure/Localization/INDSharedResource.*.resx`.
-- Razor: `IStringLocalizer<INDSharedResource>`.
-- React: `window.__IND_I18N__` + `indT`.
+## Localización
 
-## AX enum catalogs
-- For AX-backed enum/select values, use the enum catalog instead of hardcoded lists.
-- Server-side consumers should call `ICrmApiClient.GetEnumCatalogByNameAsync(token, appCode, axEnumNames)` and map options by exact `AxEnumName`.
-- React/client consumers can use the local MVC proxy `/api/crm/enums/by-name?appCode=CRM&axEnumNames=Name1,Name2` through `Web/wwwroot/react/src/services/crmEnumCatalogService.ts`.
-- Before implementing a new enum field, identify the exact AX enum name. If the user did not provide it and it cannot be inferred safely from current code or API contracts, ask the user in chat for the enum name before coding.
-- Add the enum name to the owning page/module catalog request, expose the resulting options through Razor `window.__...` bootstrap data or fetch them via `fetchCrmEnumCatalogByName`, and preserve API catalog labels/descriptions as business data.
-- Use local fallback options only as defensive fallbacks, and keep fallback numeric semantics identical to AX. Never renumber numeric enum values.
-- If the same business concept uses different AX enums in different contexts (for example header versus line), treat them as separate catalogs and do not reuse one catalog or numeric mapping for the other.
+- Culturas soportadas: `es-ES` por defecto, euskera, inglés, portugués, italiano y chino simplificado.
+- Razor usa `IStringLocalizer<INDSharedResource>` y los `.resx` compartidos.
+- React/TypeScript consume el diccionario `window.__IND_I18N__` mediante `indT`.
+- Toda clave visible se añade a todas las culturas en el mismo cambio. Los datos de negocio devueltos por la API no se traducen.
 
-## React island composition standards
-- Keep page entry files thin (`CreatePage.tsx`, `DetailPage.tsx`, `HistoryPage.tsx`, system pages):
-  - compose providers,
-  - render the page/form root,
-  - mount with `mountReactIsland` + `mountWhenDocumentReady`.
-- For Visitas pages, use `components/commons/VisitasPageProviders.tsx` as the default provider wrapper.
-- Wrap complex form roots with `components/commons/AppErrorBoundary.tsx` and localized fallback text.
-- Move non-trivial side effects out of JSX trees into page-local hooks (`useHistoryFiltersState`, `useHistoryPageListeners`, `useHistoryTableEffects`, `useDetailMutations`, etc.).
-- Keep reusable UI dumb and prop-driven (`FilterButton`, `ActionButton`, `CompactPagination`, `VisitNarrativeFields`).
-- Shared assistant rule:
-  - Use `components/commons/chat/AssistantChatShell.tsx` as the standard visual shell for chatbot-style experiences.
-  - Keep module-specific request lifecycles, prompts, dataset capture, and API integration in page hooks/containers.
-  - Reuse `components/commons/chat/assistantChatTypes.ts` for message contracts so assistant UIs stay compatible across modules.
-- Reuse shared behavior helpers before adding new logic:
-  - combobox keyboard behavior: `hooks/useComboboxKeyboard.ts`
-  - text editor navigation and return flow: `utils/textEditorNavigation.ts` + `hooks/useTextEditorFields.ts`
+## Frontend y compilación
 
-## React performance guardrails (Vercel aligned)
-- Start independent async work in parallel and await late (`Promise.all` where dependencies allow it).
-- Avoid client waterfalls in hooks: do not chain fetch calls when data can be requested together.
-- Keep expensive derivations memoized only when they are truly expensive or passed to memoized children.
-- Keep effect dependencies primitive and stable; move interaction-driven logic to event handlers.
-- Deduplicate global listeners (resize, scroll, keydown) and always clean them in hook teardown.
-- Prefer derived render state over effect-driven mirror state when possible.
-- Avoid large barrel imports in hot paths; prefer direct imports for bundle control.
+- Tailwind 4 se compila desde `Web/wwwroot/css/input.css`; el estilo vigente mantiene todos los radios `sm` a `2xl` en 5 px.
+- esbuild genera entradas ESM y chunks desde `Web/wwwroot/react/src`; no editar las salidas.
+- `Web/wwwroot` es el origen canónico. `publish.ps1` refleja su contenido en el directorio raíz `wwwroot` antes de publicar.
+- La carga diferida y la paralelización se usan cuando preservan contratos; evitar cascadas de llamadas, listeners duplicados y estado espejo creado por efectos.
+- No introducir dependencias ni service workers para resolver problemas que ya cubren el versionado y las cabeceras de recursos estáticos.
 
-## Frontend security and permission gates
-- Server authorization remains the source of truth. UI permission checks are defense in depth.
-- Any edit/delete/create control must be gated by module permissions, mirroring the Visitas pattern.
-- Self-management sensitive actions must require `allowSelfManagement === true` in addition to module rights.
-- If `allowSelfManagement` is false, keep sensitive fields read-only or hidden per business rule and do not send protected payload fields in updates.
-- Destructive actions must use the site confirm modal flow (not browser-native dialogs).
-- Unsaved-change navigation warnings must use integrated app dialogs, not `beforeunload` browser popups.
-- Never handle or persist JWT tokens directly in React page state; use backend/session abstractions.
-- Validate route/query identifiers before API usage and fail safely with localized user messages.
+## Configuración
 
-## Build system
-- Tailwind CLI builds `Web/wwwroot/css/tailwind.css`.
-- esbuild bundles React islands to ESM entries in `Web/wwwroot/js` and shared chunks in `Web/wwwroot/js/chunks`.
-- Entry points are declared in `scripts/build-react.mjs` (create, detail, history, text editor, audio recorder, audio worklet).
-- Razor views that load React island bundles must use `script type="module"`.
-- JS legacy source lives in `Web/wwwroot/react/src/legacy` and is compiled to JS.
-- Root `wwwroot/` is a junction to `Web/wwwroot`. Author and review source in `Web/wwwroot/*` to avoid path drift.
-- Do not hand-edit generated files under `Web/wwwroot/js` or `Web/wwwroot/js/chunks`.
-- For deploy, use `publish.ps1` so React/CSS build, dotnet publish, IIS sync, and restart stay consistent.
-
-## Tailwind usage standard
-- Tailwind packages are v4, but this project currently standardizes on `tailwind.config.js` + CLI pipeline.
-- Keep project tokens in Tailwind config (`primary`, `Montserrat`) and current utility conventions.
-- Do not mix migration-only directives (`@theme`, `@utility`, `@variant`) in production CSS unless a full migration task is explicitly requested.
-
-## TypeScript only rule
-- All new frontend source must be TypeScript (`.ts` / `.tsx`).
-- Input-like UI components must accept a `readOnly` (or `mode`) prop and apply label/value colors locally.
-
-## Master reuse rule
-- Every new page must review existing public components first.
-- If a module needs a private component, evaluate whether it can be promoted to shared.
-- Prefer shared components for repeated UI/UX patterns; keep truly module-specific pieces private.
-
-## Encapsulation and module boundaries
-- Keep business logic inside its module; share only presentational UI when it is reusable.
-- Do not leak module-specific state into shared components (use props only).
-- Favor small, focused components and hooks with clear responsibilities.
-
-## New page checklist
-- Check shared components catalog before creating a new UI block.
-- If a private component is created, document whether it can become shared later.
-- Reuse `Spinner` and `LoadingOverlay` for loading states.
-- Always import React components with the file extension (example: `./Widget.tsx`).
-- Do not add new `.js` source files under `Web/wwwroot/react/src`.
-- Legacy JS must be migrated into `Web/wwwroot/react/src/legacy` as TS and compiled.
-
-## Last updated
-- 2026-07-13
+- Reutilizar las claves actuales para URL de API y URL pública; no fijar valores operativos o secretos en el repositorio.
+- DEV y PROD mantienen el mismo nombre y orden de resolución de claves.
+- Los valores públicos de entorno pueden documentarse una sola vez en la guía operativa correspondiente; credenciales y secretos nunca.

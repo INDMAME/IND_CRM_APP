@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expenses.editar-la-cabecera-y-las-lineas",
+    "moduleId":  "expenses",
+    "sectionNumber":  "8.10",
+    "title":  "Editar la cabecera y las líneas",
+    "summary":  "Modifica la cabecera o las líneas de una hoja editable.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Editar la cabecera y las líneas",
+                                  "hojas de gastos",
+                                  "gastos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre editar la cabecera y las líneas?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expenses.modulo-hojas-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "FF7D2D657A85B2578A5EB3E84F3C028754D79F99830385D7E18FCA6C0F0C0B5D",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "8.10",
+                   "pageFromTableOfContents":  24
+               }
+}

@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "axapta.estados-visibles-en-axapta",
+    "moduleId":  "axapta",
+    "sectionNumber":  "11.2.3",
+    "title":  "Estados visibles en Axapta",
+    "summary":  "Consulta el significado de los estados mostrados en Axapta.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Estados visibles en Axapta",
+                                  "Axapta",
+                                  "gastos en Axapta"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre estados visibles en axapta?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "axapta.gestion-del-flujo-en-axapta"
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "F88225ACF22FCF01029BD67BB6CF04F0E4F2B6DC01CB69B62BC1F68CB84CB975",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "11.2.3",
+                   "pageFromTableOfContents":  31
+               }
+}

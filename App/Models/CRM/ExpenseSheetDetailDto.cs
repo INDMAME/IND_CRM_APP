@@ -67,6 +67,9 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("OwnerName")]
         public string? OwnerName { get; set; }
 
+        [JsonPropertyName("DefaultLineProjId")]
+        public string? DefaultLineProjId { get; set; }
+
         [JsonPropertyName("lines")]
         public List<ExpenseSheetLineDto> Lines { get; set; } = new();
 

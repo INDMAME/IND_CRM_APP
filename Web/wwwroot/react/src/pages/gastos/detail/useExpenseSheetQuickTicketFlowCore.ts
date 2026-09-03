@@ -12,10 +12,17 @@ import {
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 import { resolveTicketLineAmount } from "../utils/expenseTicketLineAmount.ts";
+import {
+  canPersistSensitiveBrowserState,
+  captureSensitiveBrowserState,
+  getBrowserStorageScopeToken,
+  isSensitiveBrowserStateCurrent,
+} from "../../../utils/browserStorageScope.ts";
 
-const TICKET_IMAGE_CACHE_NAME = "ind-expense-ticket-image-v1";
+const TICKET_BROWSER_SCOPE = getBrowserStorageScopeToken() || "scope-unavailable";
+const TICKET_IMAGE_CACHE_NAME = `ind-expense-ticket-image-v2-${TICKET_BROWSER_SCOPE}`;
 const TICKET_IMAGE_CACHE_PREFIX = "/__ind_cache__/ticket-image/";
-const TICKET_TRACE_STORAGE_KEY = "expense_sheet_ticket_quick_flow_trace_v1";
+const TICKET_TRACE_STORAGE_KEY = `expense_sheet_ticket_quick_flow_trace_v2_${TICKET_BROWSER_SCOPE}`;
 
 export const MAX_TICKET_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
 export const TICKET_IMAGE_ACCEPT_ATTRIBUTE =
@@ -93,7 +100,7 @@ export type UseExpenseSheetQuickTicketFlowArgs = {
   isSheetLocked: boolean;
   linkToSheet?: boolean;
   onForbidden: () => void;
-  onCompleted?: (result: { fileId: string; linkedToSheet: boolean }) => void;
+  onCompleted?: (result: { fileId: string; linkedToSheet: boolean; processedByAI: boolean | null }) => void;
 };
 
 export type QuickFlowProgressKey =
@@ -336,11 +343,13 @@ export const buildSheetLinePayload = (
     ticket: true,
     qty: 1,
     price: effectiveTotal,
-    projId: safeText(projectId) || undefined,
+    projId: safeText(projectId),
+    projIdProvided: true,
   };
 };
 
 export const persistTraceList = (traceList: TicketTraceEntry[]): void => {
+  if (!canPersistSensitiveBrowserState()) return;
   try {
     sessionStorage.setItem(TICKET_TRACE_STORAGE_KEY, JSON.stringify(traceList));
   } catch {
@@ -349,9 +358,14 @@ export const persistTraceList = (traceList: TicketTraceEntry[]): void => {
 };
 
 export const cacheImageFile = async (cacheKey: string, file: File): Promise<void> => {
-  if (typeof window === "undefined" || !("caches" in window)) return;
+  const stateSnapshot = captureSensitiveBrowserState();
+  if (!stateSnapshot || typeof window === "undefined" || !("caches" in window)) return;
   const cache = await caches.open(TICKET_IMAGE_CACHE_NAME);
   const requestUrl = `${TICKET_IMAGE_CACHE_PREFIX}${encodeURIComponent(cacheKey)}`;
+  if (!isSensitiveBrowserStateCurrent(stateSnapshot)) {
+    await caches.delete(TICKET_IMAGE_CACHE_NAME).catch(() => false);
+    return;
+  }
   await cache.put(
     new Request(requestUrl),
     new Response(file, {
@@ -360,20 +374,47 @@ export const cacheImageFile = async (cacheKey: string, file: File): Promise<void
       },
     })
   );
+  if (!isSensitiveBrowserStateCurrent(stateSnapshot)) {
+    await cache.delete(requestUrl).catch(() => false);
+    await caches.delete(TICKET_IMAGE_CACHE_NAME).catch(() => false);
+  }
 };
 
 export const readCachedImageFile = async (cacheKey: string): Promise<Blob | null> => {
-  if (typeof window === "undefined" || !("caches" in window)) return null;
+  const stateSnapshot = captureSensitiveBrowserState();
+  if (!stateSnapshot || typeof window === "undefined" || !("caches" in window)) return null;
   const cache = await caches.open(TICKET_IMAGE_CACHE_NAME);
   const requestUrl = `${TICKET_IMAGE_CACHE_PREFIX}${encodeURIComponent(cacheKey)}`;
   const cachedResponse = await cache.match(requestUrl);
-  if (!cachedResponse) return null;
-  return cachedResponse.blob();
+  if (!cachedResponse || !isSensitiveBrowserStateCurrent(stateSnapshot)) return null;
+  const blob = await cachedResponse.blob();
+  return isSensitiveBrowserStateCurrent(stateSnapshot) ? blob : null;
 };
 
 export const removeCachedImageFile = async (cacheKey: string): Promise<void> => {
   if (typeof window === "undefined" || !("caches" in window)) return;
+  const stateSnapshot = captureSensitiveBrowserState();
+  if (!stateSnapshot) {
+    await caches.delete(TICKET_IMAGE_CACHE_NAME).catch(() => false);
+    return;
+  }
   const cache = await caches.open(TICKET_IMAGE_CACHE_NAME);
+  if (!isSensitiveBrowserStateCurrent(stateSnapshot)) {
+    await caches.delete(TICKET_IMAGE_CACHE_NAME).catch(() => false);
+    return;
+  }
   const requestUrl = `${TICKET_IMAGE_CACHE_PREFIX}${encodeURIComponent(cacheKey)}`;
   await cache.delete(requestUrl);
+  if (!isSensitiveBrowserStateCurrent(stateSnapshot)) {
+    await caches.delete(TICKET_IMAGE_CACHE_NAME).catch(() => false);
+  }
+};
+
+// Waits for a parallel cache write before removing the successful-flow recovery image.
+export const removeCachedImageFileAfterWrite = async (
+  cacheKey: string,
+  pendingWrite: Promise<void>
+): Promise<void> => {
+  await pendingWrite.catch(() => undefined);
+  await removeCachedImageFile(cacheKey);
 };

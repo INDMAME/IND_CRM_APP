@@ -1,14 +1,14 @@
 import React, { useCallback } from "react";
+import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../utils/permissions.ts";
-import { ApiFetchError } from "../../../services/apiService.ts";
 import type {
   ExpenseSheetCreateLineRequest,
   ExpenseSheetLine,
   ExpenseSheetLineUpdateRequest,
 } from "../expenseTypes.ts";
 import { parseExpenseInternationalValue } from "../constants/internationalOptions.ts";
-import { normalizeExpenseLineReimbursableExpense } from "../constants/expenseReimbursableExpenseCatalog.ts";
+import { resolveExpenseLineReimbursableExpenseForWrite } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
@@ -24,6 +24,7 @@ import {
   deleteExpenseSheetLine,
   deleteExpenseSheetTicket,
   deleteExpenseSheetTicketFile,
+  detachExpenseSheetLineTicket,
   updateExpenseSheetLine,
 } from "../utils/expenseApi.ts";
 
@@ -46,6 +47,7 @@ type UseExpenseSheetLineDetailMutationsArgs = {
   draftPrice: string;
   draftQty: string;
   draftProjectId: string;
+  draftProjectIdProvided: boolean;
   draftInternational: string;
   draftReimbursableExpense: number | null;
   draftCurrencyCode: string;
@@ -88,6 +90,7 @@ export const useExpenseSheetLineDetailMutations = ({
   draftPrice,
   draftQty,
   draftProjectId,
+  draftProjectIdProvided,
   draftInternational,
   draftReimbursableExpense,
   draftCurrencyCode,
@@ -134,7 +137,10 @@ export const useExpenseSheetLineDetailMutations = ({
     const parsedPrice = parseNumber(draftPrice);
     const parsedQty = parseNumber(draftQty);
     const parsedInternational = parseExpenseInternationalValue(draftInternational);
-    const normalizedReimbursableExpense = normalizeExpenseLineReimbursableExpense(draftReimbursableExpense);
+    const reimbursableExpenseForWrite = resolveExpenseLineReimbursableExpenseForWrite(
+      draftReimbursableExpense,
+      isCreateMode
+    );
     const parsedAmountMST = parseNumber(draftAmountMST);
     const parsedExchangeRate = parseNumber(draftExchangeRate);
     const normalizedCurrencyCode = normalizeExpenseLineCurrencyCode(draftCurrencyCode);
@@ -207,6 +213,7 @@ export const useExpenseSheetLineDetailMutations = ({
           normalizedLocalCurrencyCode,
           parsedExchangeRate
         );
+        const normalizedProjectId = String(draftProjectId || "").trim();
         const commonLinePayload = {
           transDate: normalizedDate,
           typeValue: parsedTypeValue,
@@ -215,16 +222,23 @@ export const useExpenseSheetLineDetailMutations = ({
           ticket: line?.ticket === true,
           qty: Number(parsedQty),
           price: Number(parsedPrice),
-          projId: String(draftProjectId || "").trim() || undefined,
-          reimbursableExpense: normalizedReimbursableExpense,
+          reimbursableExpense: reimbursableExpenseForWrite,
           currencyCode: normalizedCurrencyCode || undefined,
           amountMST: payloadAmountMST,
           exchRate: payloadExchangeRate,
           indAttachFiles: safeText(line?.indAttachFiles),
         };
 
-        const createLinePayload: ExpenseSheetCreateLineRequest = commonLinePayload;
-        const updateLinePayload: ExpenseSheetLineUpdateRequest = commonLinePayload;
+        const createLinePayload: ExpenseSheetCreateLineRequest = {
+          ...commonLinePayload,
+          projId: draftProjectIdProvided ? normalizedProjectId : undefined,
+          projIdProvided: draftProjectIdProvided,
+        };
+        const updateLinePayload: ExpenseSheetLineUpdateRequest = {
+          ...commonLinePayload,
+          projId: draftProjectIdProvided ? normalizedProjectId : undefined,
+          projIdProvided: draftProjectIdProvided,
+        };
 
         const response = isCreateMode
           ? await createExpenseSheet({
@@ -261,6 +275,7 @@ export const useExpenseSheetLineDetailMutations = ({
     draftCurrencyCode,
     draftExchangeRate,
     draftProjectId,
+    draftProjectIdProvided,
     draftQty,
     draftTransDate,
     draftTypeValueCode,
@@ -298,26 +313,44 @@ export const useExpenseSheetLineDetailMutations = ({
       setStatus,
       action: async () => {
         const safeLinkedTicketFileId = safeText(linkedTicketFileId);
+        const isTicketOriginLine = line?.ticket === true;
+
+        // MMS - Detach first so AX line deletion cannot cascade into the linked ticket. - 2026.08.04
         if (safeLinkedTicketFileId) {
-          try {
-            const deleteFileResponse = await deleteExpenseSheetTicketFile(safeLinkedTicketFileId);
-            if (!deleteFileResponse.Success && !isMissingTicketFileMessage(deleteFileResponse.Message)) {
-              throw new Error(deleteFileResponse.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
-            }
-          } catch (error) {
-            if (!isNotFoundError(error)) {
-              throw error;
-            }
+          const detachResponse = await detachExpenseSheetLineTicket(sheetId, lineId);
+          if (!detachResponse.Success) {
+            throw new Error(
+              detachResponse.Message ||
+                indT("ExpenseSheets_Line_Ticket_DetachFailed", "Could not detach the ticket.")
+            );
           }
 
-          try {
-            const deleteTicketResponse = await deleteExpenseSheetTicket(safeLinkedTicketFileId);
-            if (!deleteTicketResponse.Success) {
-              throw new Error(deleteTicketResponse.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
+          // MMS - Ticket-origin lines keep the legacy cleanup after the relationship is safely removed. - 2026.08.04
+          if (isTicketOriginLine) {
+            try {
+              const deleteFileResponse = await deleteExpenseSheetTicketFile(safeLinkedTicketFileId);
+              if (!deleteFileResponse.Success && !isMissingTicketFileMessage(deleteFileResponse.Message)) {
+                throw new Error(
+                  deleteFileResponse.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed.")
+                );
+              }
+            } catch (error) {
+              if (!isNotFoundError(error)) {
+                throw error;
+              }
             }
-          } catch (error) {
-            if (!isNotFoundError(error)) {
-              throw error;
+
+            try {
+              const deleteTicketResponse = await deleteExpenseSheetTicket(safeLinkedTicketFileId);
+              if (!deleteTicketResponse.Success) {
+                throw new Error(
+                  deleteTicketResponse.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed.")
+                );
+              }
+            } catch (error) {
+              if (!isNotFoundError(error)) {
+                throw error;
+              }
             }
           }
         }
@@ -338,6 +371,47 @@ export const useExpenseSheetLineDetailMutations = ({
     busy,
     canDeleteExpense,
     isDeleteLocked,
+    line,
+    lineId,
+    linkedTicketFileId,
+    setBusy,
+    setModalError,
+    setStatus,
+    sheetId,
+  ]);
+
+  const handleDetachTicket = useCallback(async () => {
+    if (busy || isCreateMode || line?.ticket === true || !safeText(linkedTicketFileId)) return false;
+    if (!canEditExpense) {
+      showPermissionModal();
+      return false;
+    }
+
+    const result = await executeExpenseMutation({
+      startStatus: indT("ExpenseSheets_Line_Ticket_Detaching", "Detaching ticket..."),
+      fallbackErrorMessage: indT("ExpenseSheets_Line_Ticket_DetachFailed", "Could not detach the ticket."),
+      setModalError,
+      setBusy,
+      setStatus,
+      action: async () => {
+        const response = await detachExpenseSheetLineTicket(sheetId, lineId);
+        if (!response.Success) {
+          throw new Error(
+            response.Message || indT("ExpenseSheets_Line_Ticket_DetachFailed", "Could not detach the ticket.")
+          );
+        }
+
+        setStatus(indT("ExpenseSheets_Line_Ticket_Detached", "Ticket detached."));
+        return true;
+      },
+    });
+
+    return result.ok;
+  }, [
+    busy,
+    canEditExpense,
+    isCreateMode,
+    line?.ticket,
     lineId,
     linkedTicketFileId,
     setBusy,
@@ -349,5 +423,6 @@ export const useExpenseSheetLineDetailMutations = ({
   return {
     handleUpdate,
     handleDelete,
+    handleDetachTicket,
   };
 };

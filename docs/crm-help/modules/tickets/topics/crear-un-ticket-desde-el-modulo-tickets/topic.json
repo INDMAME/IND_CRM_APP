@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "tickets.crear-un-ticket-desde-el-modulo-tickets",
+    "moduleId":  "tickets",
+    "sectionNumber":  "9.2",
+    "title":  "Crear un ticket desde el módulo Tickets",
+    "summary":  "Crea un justificante desde el módulo Tickets.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Crear un ticket desde el módulo Tickets",
+                                  "tickets",
+                                  "justificantes"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre crear un ticket desde el módulo tickets?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "tickets.modulo-tickets"
+                        ],
+    "routeKey":  "expenses.tickets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "B066B341610345F5F29FD54E46678F1EA8D7B21A5B9725572D26A7E0D3127B4B",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "9.2",
+                   "pageFromTableOfContents":  25
+               }
+}

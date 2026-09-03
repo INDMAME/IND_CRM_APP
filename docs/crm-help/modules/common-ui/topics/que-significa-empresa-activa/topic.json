@@ -1,0 +1,49 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui.que-significa-empresa-activa",
+    "moduleId":  "common-ui",
+    "sectionNumber":  "6.1",
+    "title":  "Qué significa empresa activa",
+    "summary":  "Entiende cómo la empresa activa determina los datos disponibles.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Qué significa empresa activa",
+                                  "pantalla",
+                                  "empresa activa",
+                                  "permisos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre qué significa empresa activa?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "3F681A1711E3E236E41BA4AC52B155D230E7502548446F0D927B7D0B164F19C0",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "6.1",
+                   "pageFromTableOfContents":  10
+               }
+}

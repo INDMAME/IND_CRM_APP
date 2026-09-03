@@ -1,0 +1,56 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "tickets.estado-del-ticket",
+    "moduleId":  "tickets",
+    "sectionNumber":  "9.3",
+    "title":  "Estado del ticket",
+    "summary":  "Distingue cuándo un ticket está pendiente o asignado.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Estado del ticket",
+                                  "tickets",
+                                  "justificantes"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre estado del ticket?",
+                                          "Necesito desvincular un ticket de una hoja"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "tickets.modulo-tickets"
+                        ],
+    "routeKey":  "expenses.tickets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "E56B3E855055A4F3EDE246274E4A077FFA8D4E1421D403C2692ACD055CE41860",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+                         {
+                             "id":  "tickets.estado-del-ticket.quick-01",
+                             "question":  "¿Qué significan los estados Pendiente y Asignado de un ticket?",
+                             "answer":  "Pendiente significa que el ticket todavía no está asignado a una hoja. Asignado significa que ya se encuentra relacionado con una hoja de gastos. No existe una opción directa para cambiar esa relación: el procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta.",
+                             "sourceChunkIds":  [
+                                                    "tickets.estado-del-ticket--01"
+                                                ]
+                         }
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "9.3",
+                   "pageFromTableOfContents":  25
+               }
+}

@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "glossary.glosario-basico",
+    "moduleId":  "glossary",
+    "sectionNumber":  "13",
+    "title":  "Glosario básico",
+    "summary":  "Consulta las definiciones de los términos utilizados en el CRM.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Glosario básico",
+                                  "glosario",
+                                  "definiciones"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre glosario básico?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "1288A7A2DC2294631884F76D26A3ABE0FBF013B8F9F63DA0896264275110B616",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "13",
+                   "pageFromTableOfContents":  32
+               }
+}

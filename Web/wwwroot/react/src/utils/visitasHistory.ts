@@ -1,9 +1,17 @@
-export const HISTORY_FILTER_KEY = "visitas_history_filter_v1";
-export const HISTORY_RETURN_FLAG_KEY = "visitas_history_return_v1";
+import {
+  canPersistSensitiveBrowserState,
+  getBrowserStorageScopeToken,
+} from "./browserStorageScope.ts";
+
+const HISTORY_SCOPE = getBrowserStorageScopeToken() || "scope-unavailable";
+
+export const HISTORY_FILTER_KEY = `visitas_history_filter_v2_${HISTORY_SCOPE}`;
+export const HISTORY_RETURN_FLAG_KEY = `visitas_history_return_v2_${HISTORY_SCOPE}`;
 
 export const isIsoDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
 
 export const hasHistoryFilterRange = (): boolean => {
+  if (!canPersistSensitiveBrowserState()) return false;
   try {
     const raw = sessionStorage.getItem(HISTORY_FILTER_KEY);
     if (!raw) return false;
@@ -15,6 +23,7 @@ export const hasHistoryFilterRange = (): boolean => {
 };
 
 export const markHistoryReturn = (): void => {
+  if (!canPersistSensitiveBrowserState()) return;
   try {
     sessionStorage.setItem(HISTORY_RETURN_FLAG_KEY, "1");
   } catch {
@@ -23,6 +32,7 @@ export const markHistoryReturn = (): void => {
 };
 
 export const setHistoryFilterForDate = (isoDate: string, force = false): void => {
+  if (!canPersistSensitiveBrowserState()) return;
   const value = String(isoDate || "").trim();
   if (!isIsoDate(value)) {
     if (hasHistoryFilterRange()) markHistoryReturn();

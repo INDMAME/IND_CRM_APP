@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import {
   EXPENSE_TICKET_LINK_FAILURE_REPAIR_INTENT,
   normalizeExpenseTicketReturnContext,
@@ -6,6 +6,7 @@ import {
   saveExpenseTicketReturnContext,
 } from "../../utils/expenseTicketReturnContext.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
+import { EXPENSE_AI_DETECTION_QUERY_PARAM } from "../../hooks/useExpenseGastoTypeWarning.ts";
 
 // Parses route context once and exposes stable flags for ticket detail flows.
 export const useExpenseTicketDetailRouteContext = () => {
@@ -14,6 +15,10 @@ export const useExpenseTicketDetailRouteContext = () => {
   const autoEditMode = useMemo(() => safeText(routeParams.get("mode")).toLowerCase() === "edit", [routeParams]);
   const routeIntent = useMemo(() => safeText(routeParams.get("intent")).toLowerCase(), [routeParams]);
   const routeOrigin = useMemo(() => safeText(routeParams.get("origin")).toLowerCase(), [routeParams]);
+  const aiDetectionPending = useMemo(
+    () => safeText(routeParams.get(EXPENSE_AI_DETECTION_QUERY_PARAM)) === "1",
+    [routeParams]
+  );
   const routeSheetId = useMemo(() => safeText(routeParams.get("sheetId")), [routeParams]);
   const routeSheetLineRecId = useMemo(
     () => safeText(routeParams.get("sheetLineRecId") || routeParams.get("lineRecId")),
@@ -35,6 +40,14 @@ export const useExpenseTicketDetailRouteContext = () => {
     saveExpenseTicketReturnContext(explicitReturnContext);
   }, [explicitReturnContext]);
 
+  // Removes the ephemeral marker after the AI category result has been handled.
+  const consumeAiDetection = useCallback(() => {
+    if (!aiDetectionPending) return;
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.delete(EXPENSE_AI_DETECTION_QUERY_PARAM);
+    window.history.replaceState(window.history.state, "", `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
+  }, [aiDetectionPending]);
+
   return useMemo(() => {
     const ticketReturnContext = resolveExpenseTicketReturnContext(fileId, explicitReturnContext);
     const detailOrigin = ticketReturnContext?.origin || routeOrigin;
@@ -48,6 +61,8 @@ export const useExpenseTicketDetailRouteContext = () => {
 
     return {
       autoEditMode,
+      aiDetectionPending,
+      consumeAiDetection,
       detailOrigin,
       contextSheetId,
       contextLineRecId,
@@ -57,5 +72,15 @@ export const useExpenseTicketDetailRouteContext = () => {
       isLinkFailureRepair,
       ticketReturnContext,
     };
-  }, [autoEditMode, explicitReturnContext, fileId, routeIntent, routeOrigin, routeSheetId, routeSheetLineRecId]);
+  }, [
+    aiDetectionPending,
+    autoEditMode,
+    consumeAiDetection,
+    explicitReturnContext,
+    fileId,
+    routeIntent,
+    routeOrigin,
+    routeSheetId,
+    routeSheetLineRecId,
+  ]);
 };

@@ -1,19 +1,23 @@
 import { makeCache } from "./makeCache.ts";
+import {
+  canPersistSensitiveBrowserState,
+  getBrowserStorageScopeToken,
+} from "./browserStorageScope.ts";
 
-const CURRENT_COMPANY = String(globalThis.__IND_SELECTED_COMPANY__ || "").trim().toUpperCase();
-const COMPANY_STORAGE_SUFFIX = CURRENT_COMPANY ? `_${CURRENT_COMPANY}` : "";
+const STORAGE_SCOPE = getBrowserStorageScopeToken() || "scope-unavailable";
 
-export const VISIT_DRAFT_KEY = `visitas_draft${COMPANY_STORAGE_SUFFIX}`;
-export const CONTACTS_STORAGE_KEY = `visitas_contacts_cache_v1${COMPANY_STORAGE_SUFFIX}`;
-export const CONTACTS_SELECTION_KEY = `visitas_contacts_selected_v1${COMPANY_STORAGE_SUFFIX}`;
+export const VISIT_DRAFT_KEY = `visitas_draft_v2_${STORAGE_SCOPE}`;
+export const CONTACTS_STORAGE_KEY = `visitas_contacts_cache_v2_${STORAGE_SCOPE}`;
+export const CONTACTS_SELECTION_KEY = `visitas_contacts_selected_v2_${STORAGE_SCOPE}`;
 export const CREATE_FRESH_PARAM = "fresh";
 
 const clientCache = makeCache<unknown[]>(10);
 const contactsCache = makeCache<unknown[]>(10);
 
-const cacheKeyWithCompany = (key: string) => `${CURRENT_COMPANY || "DEFAULT"}::${key}`;
+const cacheKeyWithScope = (key: string) => `${STORAGE_SCOPE}::${key}`;
 
 const readStorage = (key: string): Record<string, unknown> => {
+  if (!canPersistSensitiveBrowserState()) return {};
   try {
     const raw = sessionStorage.getItem(key);
     if (!raw) return {};
@@ -24,6 +28,7 @@ const readStorage = (key: string): Record<string, unknown> => {
 };
 
 const writeStorage = (key: string, data: Record<string, unknown>) => {
+  if (!canPersistSensitiveBrowserState()) return;
   try {
     sessionStorage.setItem(key, JSON.stringify(data));
   } catch {
@@ -32,21 +37,24 @@ const writeStorage = (key: string, data: Record<string, unknown>) => {
 };
 
 export const getClientCache = (query: string): unknown[] | null => {
-  const cacheKey = cacheKeyWithCompany(query);
+  if (!canPersistSensitiveBrowserState()) return null;
+  const cacheKey = cacheKeyWithScope(query);
   if (!clientCache.has(cacheKey)) return null;
   return clientCache.get(cacheKey) || null;
 };
 
 export const hasClientCache = (query: string): boolean => {
-  return clientCache.has(cacheKeyWithCompany(query));
+  return canPersistSensitiveBrowserState() && clientCache.has(cacheKeyWithScope(query));
 };
 
 export const setClientCache = (query: string, items: unknown[]): void => {
-  clientCache.set(cacheKeyWithCompany(query), items);
+  if (!canPersistSensitiveBrowserState()) return;
+  clientCache.set(cacheKeyWithScope(query), items);
 };
 
 export const getCachedContacts = (account: string): unknown[] | null => {
-  const cacheKey = cacheKeyWithCompany(account);
+  if (!canPersistSensitiveBrowserState()) return null;
+  const cacheKey = cacheKeyWithScope(account);
   if (contactsCache.has(cacheKey)) return contactsCache.get(cacheKey) || null;
   const store = readStorage(CONTACTS_STORAGE_KEY);
   const cached = store[account];
@@ -58,7 +66,8 @@ export const getCachedContacts = (account: string): unknown[] | null => {
 };
 
 export const setCachedContacts = (account: string, items: unknown[]): void => {
-  contactsCache.set(cacheKeyWithCompany(account), items);
+  if (!canPersistSensitiveBrowserState()) return;
+  contactsCache.set(cacheKeyWithScope(account), items);
   const store = readStorage(CONTACTS_STORAGE_KEY);
   store[account] = items;
   writeStorage(CONTACTS_STORAGE_KEY, store);
@@ -91,6 +100,20 @@ export const clearCreateSelectionCache = (): void => {
     sessionStorage.removeItem(CONTACTS_SELECTION_KEY);
   } catch {
     // ignore
+  }
+};
+
+// Reports whether visit creation has scoped state that can be restored.
+export const hasCreateSelectionCache = (): boolean => {
+  if (!canPersistSensitiveBrowserState()) return false;
+  try {
+    return !!(
+      sessionStorage.getItem(VISIT_DRAFT_KEY) ||
+      sessionStorage.getItem(CONTACTS_STORAGE_KEY) ||
+      sessionStorage.getItem(CONTACTS_SELECTION_KEY)
+    );
+  } catch {
+    return false;
   }
 };
 

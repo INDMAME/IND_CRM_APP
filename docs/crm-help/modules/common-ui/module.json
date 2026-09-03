@@ -1,0 +1,22 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui",
+    "title":  "Uso general, empresa y permisos",
+    "description":  "Controles comunes, empresa activa, idioma y permisos.",
+    "order":  3,
+    "aliases":  {
+                    "es-ES":  [
+                                  "pantalla",
+                                  "empresa activa",
+                                  "permisos"
+                              ]
+                },
+    "topicIds":  [
+                     "common-ui.elementos-comunes-de-la-pantalla",
+                     "common-ui.editar-guardar-y-cancelar",
+                     "common-ui.que-significa-empresa-activa",
+                     "common-ui.cambiar-el-idioma",
+                     "common-ui.permisos",
+                     "common-ui.perfiles-del-flujo-de-gastos"
+                 ]
+}

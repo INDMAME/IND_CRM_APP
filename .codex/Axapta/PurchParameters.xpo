@@ -1,0 +1,1884 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : PurchParameters unloaded at Lunes 24/08/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+
+  TABLE #PurchParameters
+    PROPERTIES
+      Name                #PurchParameters
+      Label               #@SYS22420
+      FormRef             #PurchParameters
+      TitleField1         #
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Base + default data
+      Systemtable         #No
+      ConfigurationKey    #LogisticsBasic
+      SecurityKey         #VendTables
+      MaxAccessMode       #Edit
+      CacheLookup         #Found
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Parameter
+      PrimaryIndex        #Key
+      ClusterIndex        #Key
+      ModifiedDate        #Yes
+      ModifiedTime        #Yes
+      ModifiedBy          #Yes
+      ModifiedTransactionId #No
+      CreatedDate         #No
+      CreatedTime         #No
+      CreatedBy           #No
+      CreatedTransactionId #No
+    ENDPROPERTIES
+
+    FIELDS
+      FIELD #DEL_ItemNum
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #DEL_ItemNum
+          Label               #*** OUTDATED ***
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #SysDeletedObjects30
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #PurchOurYourBothType
+              #
+            ENDARRAY
+          EnumType            #OurYourBoth
+        ENDPROPERTIES
+
+      FIELD #DeleteLine
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #DeleteLine
+          Label               #@SYS23128
+          HelpText            #@SYS10421
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #DeleteHeading
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #DeleteHeading
+          Label               #@SYS7285
+          HelpText            #@SYS3090
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #CreditError
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #CreditError
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #VendCreditError
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #OverDelivery
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #OverDelivery
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #PurchOverDelivery
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #SubDelivery
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #SubDelivery
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #PurchUnderDelivery
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #Disc
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Disc
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #PurchLineMultiLn
+              #
+            ENDARRAY
+          EnumType            #LineMultiLn
+        ENDPROPERTIES
+
+      FIELD #MarkupHeading
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #MarkupHeading
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #MarkupHeading
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #MarkupLine
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #MarkupLine
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #MarkupLine
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #Delivery2Invoice
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Delivery2Invoice
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #Delivery2Invoice
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #DocumentDate
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #DocumentDate
+          Label               #@SYS5924
+          HelpText            #@SYS10850
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #cancelPurch
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #cancelPurch
+          Label               #@SYS25642
+          HelpText            #@SYS23369
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #PromptTransfer
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #PromptTransfer
+          Label               #@SYS25478
+          HelpText            #@SYS25479
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #PurchaseType
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #PurchaseType
+          Label               #
+          HelpText            #@SYS25803
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #PurchaseType
+        ENDPROPERTIES
+
+      FIELD #DEL_PrePrintLevelPurchorder
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #DEL_PrePrintLevelPurchorder
+          Label               #*** OUTDATED ***
+          HelpText            #@SYS1770
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #SysDeletedObjects30
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #PrePrintLevel
+        ENDPROPERTIES
+
+      FIELD #PostPackingSlip
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #PostPackingSlip
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #PurchPostPackingSlip
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #AccesLevelInvoiced
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #AccesLevelInvoiced
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #SalesPurchAccesLevel
+        ENDPROPERTIES
+
+      FIELD #ReturnActionDefault
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ReturnActionDefault
+          Label               #@SYS29122
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #ReturnItem
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #PurchReturnActionId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #Key
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #Key
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #No
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #ParametersKey
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+
+      FIELD #DEL_PrintEuroAmount
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #DEL_PrintEuroAmount
+          Label               #*** OUTDATED ***
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #SysDeletedObjects30
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #PrintEuroAmount
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #DEL_itemNameAndTxt2Description
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #DEL_itemNameAndTxt2Description
+          Label               #*** OUTDATED ***
+          HelpText            #@SYS53666
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #SysDeletedObjects30
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #PurchPoolId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #PurchPoolId
+          Label               #@SYS23446
+          HelpText            #@SYS54136
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #PurchPoolId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #SettleVoucher
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #SettleVoucher
+          Label               #@SYS54360
+          HelpText            #@SYS54359
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #PurchSettlementType
+              #
+            ENDARRAY
+          EnumType            #SettlementType
+        ENDPROPERTIES
+
+      FIELD #DEL_ExternalItemOverwriteAppend
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #DEL_ExternalItemOverwriteAppend
+          Label               #*** OUTDATED ***
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #SysDeletedObjects30
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #PurchExternalItemOverwriteAppend
+              #
+            ENDARRAY
+          EnumType            #OverwriteAppend
+        ENDPROPERTIES
+
+      FIELD #DEL_DocuOnPurchOrder
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #DEL_DocuOnPurchOrder
+          Label               #*** OUTDATED ***
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #SysDeletedObjects30
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #DocuOnFormular
+        ENDPROPERTIES
+
+      FIELD #DEL_DocuTypePurchOrder
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #DEL_DocuTypePurchOrder
+          Label               #*** OUTDATED ***
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #SysDeletedObjects30
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #DocuOnFormularTypeId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #DEL_TaxSpecPrintLevel
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #DEL_TaxSpecPrintLevel
+          Label               #*** OUTDATED ***
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #SysDeletedObjects30
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #TaxSpecPrintLevel
+        ENDPROPERTIES
+
+      FIELD #SummaryErrorTolerance
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #SummaryErrorTolerance
+          Label               #@SYS57797
+          HelpText            #@SYS62159
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #ErrorTolerance
+        ENDPROPERTIES
+
+      FIELD #SummaryUpdateBy
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #SummaryUpdateBy
+          Label               #@SYS57798
+          HelpText            #@SYS68938
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #AccountOrder
+        ENDPROPERTIES
+
+      FIELD #DEL_TaxPrintTaxFreeBalance
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #DEL_TaxPrintTaxFreeBalance
+          Label               #*** OUTDATED ***
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #SysDeletedObjects30
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #TaxPrintTaxFreeBalance
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #DEL_TotalsFirstLastPage
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #DEL_TotalsFirstLastPage
+          Label               #*** OUTDATED ***
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #SysDeletedObjects30
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #TotalsFirstLast
+              #
+            ENDARRAY
+          EnumType            #FirstLast
+        ENDPROPERTIES
+
+      FIELD #DEL_PrintInvoiceVATNum
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #DEL_PrintInvoiceVATNum
+          Label               #*** OUTDATED ***
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #SysDeletedObjects30
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #PrintInvoiceVATNum
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #PostChargeAccount
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #PostChargeAccount
+          Label               #@SYP95
+          HelpText            #@SYP96
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #PrintoutEUVat
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #PrintoutEUVat
+          Label               #@DES5044
+          HelpText            #@DES5045
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+      FIELD #WSPLimitePrecioCompra
+        REAL
+        PROPERTIES
+          Type                #Real
+          Name                #WSPLimitePrecioCompra
+          Label               #% Precio Compra Admitido
+          HelpText            #Porcentaje admitido en el precio de compra respecto al precio medio. Cero indica que no hay control de precios
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #Percent
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+
+      FIELD #WSPLimiteLineaCompra
+        REAL
+        PROPERTIES
+          Type                #Real
+          Name                #WSPLimiteLineaCompra
+          Label               #Importe Máximo Línea Compra
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #Amount
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+
+      FIELD #INDLedgerAccountCampionatura
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDLedgerAccountCampionatura
+          Label               #Cuanta Contable Campionatura
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #LedgerAccount
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDNumberSeqProtocoloITA
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDNumberSeqProtocoloITA
+          Label               #Num. Protocolo ACQ. Italia
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #NumberSequenceCode
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDNumberSeqProtocoloCEE
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDNumberSeqProtocoloCEE
+          Label               #Num. Protocolo ACQ. CEE
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #NumberSequenceCode
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDNumberSeqProtocoloExtraCEE
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDNumberSeqProtocoloExtraCEE
+          Label               #Num. Protocolo ACQ. Extra CEE
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #NumberSequenceCode
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDNumberSeqProtocoloITACre
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDNumberSeqProtocoloITACre
+          Label               #Num. Protocolo ACQ. Italia Crédito
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #NumberSequenceCode
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDNumberSeqProtocoloCEECre
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDNumberSeqProtocoloCEECre
+          Label               #Num. Protocolo ACQ. CEE Crédito
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #NumberSequenceCode
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDNumberSeqProtocoloExtraCEECre
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDNumberSeqProtocoloExtraCEECre
+          Label               #Num. Protocolo ACQ. Extra CEE Crédito
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #NumberSequenceCode
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDVendAccountIST
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDVendAccountIST
+          Label               #Código Proveedor IST
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #VendAccount
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Right
+        ENDPROPERTIES
+
+      FIELD #INDInventModelGroupId_NoControlInvent
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDInventModelGroupId_NoControlInvent
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #InventModelGroupId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDProjIdVarious
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDProjIdVarious
+          Label               #Proyecto VARIOS
+          HelpText            #Marcador reservado para hojas con proyectos distintos; no puede coincidir con un proyecto real.
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #AccountNum
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Right
+        ENDPROPERTIES
+
+      FIELD #INDDefaultDimensionProyectos
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDDefaultDimensionProyectos
+          Label               #Dimensión Predeterminada para Proyectos
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #Dimension
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDLedgerAccountDebit_ParteHorario
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDLedgerAccountDebit_ParteHorario
+          Label               #Cuenta Débito (Parte Horario)
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #LedgerAccount
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDLedgerAccountCredit_ParteHorario
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDLedgerAccountCredit_ParteHorario
+          Label               #Cuenta Crédito (Parte Horario)
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #LedgerAccount
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDJournalNameIdParteHorario
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDJournalNameIdParteHorario
+          Label               #Diario para Parte Horario
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #LedgerJournalNameId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDPathBaseComprasProyectos
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDPathBaseComprasProyectos
+          Label               #Ruta Base Compras - Proyectos
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #Filename
+              #
+            ENDARRAY
+          StringSize          #260
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDLedgerAccount_AnticiposVend
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDLedgerAccount_AnticiposVend
+          Label               #Anticipos Proveedores
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #LedgerAccount
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDJournalNameId_VendInvoiceAnticipos
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDJournalNameId_VendInvoiceAnticipos
+          Label               #Diario para Facturas Anticipos Proveedores
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #LedgerJournalNameId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDLedgerAccount_AnticiposFacPendRec
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDLedgerAccount_AnticiposFacPendRec
+          Label               #Anticipos - Facturas Pendientes de Recibir
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #LedgerAccount
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #INDRecIdMex
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #INDRecIdMex
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #PurchParameters
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #PostPackingSlip
+          #PostChargeAccount
+          #DEL_ItemNum
+          #PromptTransfer
+          #PurchaseType
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #CashflowForecast
+        PROPERTIES
+          Name                #CashflowForecast
+          OldName             #@SYS5727
+          Label               #@SYS5727
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #Delivery2Invoice
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #CreditNote
+        PROPERTIES
+          Name                #CreditNote
+          OldName             #@SYS8125
+          Label               #@SYS8125
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #ReturnActionDefault
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #DefaultValues
+        PROPERTIES
+          Name                #DefaultValues
+          OldName             #@SYS21682
+          Label               #@SYS21682
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #PurchaseType
+          #ReturnActionDefault
+          #PurchPoolId
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #INDItalia
+        PROPERTIES
+          Name                #INDItalia
+          OldName             #
+          Label               #Italy Parameters
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #INDNumberSeqProtocoloITA
+          #INDNumberSeqProtocoloITACre
+          #INDNumberSeqProtocoloCEE
+          #INDNumberSeqProtocoloCEECre
+          #INDNumberSeqProtocoloExtraCEE
+          #INDNumberSeqProtocoloExtraCEECre
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #INDPurchParametersIST
+        PROPERTIES
+          Name                #INDPurchParametersIST
+          OldName             #
+          Label               #Parámetros Compra IST
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #INDVendAccountIST
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Invoice
+        PROPERTIES
+          Name                #Invoice
+          OldName             #@SYS12128
+          Label               #@SYS12128
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #DeleteLine
+          #DeleteHeading
+          #DocumentDate
+          #SettleVoucher
+          #PostChargeAccount
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #InvoiceLayout
+        PROPERTIES
+          Name                #InvoiceLayout
+          OldName             #@SYS57781
+          Label               #@SYS57781
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #DEL_PrintInvoiceVATNum
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #PackingSlip
+        PROPERTIES
+          Name                #PackingSlip
+          OldName             #@SYS11549
+          Label               #@SYS11549
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #PostPackingSlip
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #PaperFormat
+        PROPERTIES
+          Name                #PaperFormat
+          OldName             #@SYS15512
+          Label               #@SYS15512
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #DEL_PrePrintLevelPurchorder
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Posting
+        PROPERTIES
+          Name                #Posting
+          OldName             #@SYS5943
+          Label               #@SYS5943
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #SubDelivery
+          #OverDelivery
+          #AccesLevelInvoiced
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Prices
+        PROPERTIES
+          Name                #Prices
+          OldName             #@SYS12983
+          Label               #@SYS12983
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #Disc
+          #MarkupHeading
+          #MarkupLine
+          #WSPLimitePrecioCompra
+          #WSPLimiteLineaCompra
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #PrintGroup
+        PROPERTIES
+          Name                #PrintGroup
+          OldName             #@SYS920
+          Label               #@SYS920
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #PrintoutEUVat
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #PurchaseOrderLayout
+        PROPERTIES
+          Name                #PurchaseOrderLayout
+          OldName             #@SYS62372
+          Label               #@SYS62372
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #DEL_PrePrintLevelPurchorder
+          #DEL_DocuOnPurchOrder
+          #DEL_DocuTypePurchOrder
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #PurchaseParameters
+        PROPERTIES
+          Name                #PurchaseParameters
+          OldName             #@SYS22420
+          Label               #@SYS22420
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #PurchaseType
+          #DeleteLine
+          #CreditError
+          #DeleteHeading
+          #OverDelivery
+          #SubDelivery
+          #DocumentDate
+          #AccesLevelInvoiced
+          #PromptTransfer
+          #cancelPurch
+          #PurchPoolId
+          #SettleVoucher
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #SummaryUpdate
+        PROPERTIES
+          Name                #SummaryUpdate
+          OldName             #@SYS57755
+          Label               #@SYS57755
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #SummaryUpdateBy
+          #SummaryErrorTolerance
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+
+    INDICES
+      #Key
+      PROPERTIES
+        Name                #Key
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+
+      INDEXFIELDS
+        #Key
+      ENDINDEXFIELDS
+
+    ENDINDICES
+    REFERENCES
+    ENDREFERENCES
+
+    DELETEACTIONS
+    ENDDELETEACTIONS
+
+    METHODS
+      Version: 3
+      SOURCE #delete
+        #void delete()
+        #{
+        #    throw error("@SYS23721");
+        #}
+      ENDSOURCE
+      SOURCE #Update
+        #void update()
+        #{
+        #    ProjId  oldMarker;
+        #    ProjId    rawMarker;
+        #    ProjId  newMarker;
+        #    ProjTable projTable;
+        #    boolean   markerChanged;
+        #    boolean migrateMarker;
+        #    ;
+        #
+        #    oldMarker = this.orig().INDProjIdVarious;
+        #    rawMarker = this.INDProjIdVarious;
+        #    markerChanged = rawMarker != oldMarker;
+        #    newMarker = strLRTrim(rawMarker);
+        #
+        #    //MMS - Ajustes CRM - 2026.08.24
+        #    // Valida solo cambios del marcador para no bloquear otros ajustes antes de configurarlo.
+        #    if (markerChanged)
+        #    {
+        #        this.INDProjIdVarious = newMarker;
+        #
+        #        if (!newMarker)
+        #            throw error("El marcador de varios proyectos es obligatorio.");
+        #
+        #        projTable = ProjTable::find(newMarker);
+        #
+        #        if (projTable.RecId)
+        #            throw error(strFmt("El marcador %1 no puede coincidir con un proyecto real.", newMarker));
+        #    }
+        #
+        #    //MMS - Ajustes CRM - 2026.08.24
+        #    // No migra un valor antiguo vacio porque representa cabeceras sin proyecto.
+        #    migrateMarker = markerChanged &&
+        #                    oldMarker &&
+        #                    newMarker &&
+        #                    oldMarker != newMarker;
+        #
+        #    ttsbegin;
+        #
+        #    if (migrateMarker)
+        #    {
+        #        CRMHojaGastosTable::migrateVariousProjectMarker(
+        #            oldMarker,
+        #            newMarker
+        #        );
+        #    }
+        #
+        #    super();
+        #
+        #    ttscommit;
+        #
+        #    flush PurchParameters;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateField
+        #//MMS - Ajustes CRM - 2026.08.24
+        #// Informa al usuario al editar un marcador vacio o coincidente con un proyecto real.
+        #public boolean validateField(fieldId _fieldIdToCheck)
+        #{
+        #    boolean   ret;
+        #    ProjId    marker;
+        #    ProjTable projTable;
+        #    ;
+        #
+        #    ret = super(_fieldIdToCheck);
+        #
+        #    if (ret && _fieldIdToCheck == fieldNum(PurchParameters, INDProjIdVarious))
+        #    {
+        #        marker = strLRTrim(this.INDProjIdVarious);
+        #
+        #        if (!marker)
+        #        {
+        #            ret = checkFailed("El marcador de varios proyectos es obligatorio.");
+        #        }
+        #        else
+        #        {
+        #            projTable = ProjTable::find(marker);
+        #
+        #            if (projTable.RecId)
+        #                ret = checkFailed(strFmt("El marcador %1 no puede coincidir con un proyecto real.", marker));
+        #        }
+        #    }
+        #
+        #    return ret;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #allowedNumSeqGroup
+        #static container  allowedNumSeqGroup()
+        #{
+        #// Market Pack - France & Italy - Begin
+        #    container allowed;
+        #
+        #    allowed = [PurchParameters::numRefPurchInvoiceId(   ).dataTypeId,
+        #               PurchParameters::numRefPurchCreditNoteId().dataTypeId ];
+        #
+        #    if (new DictFeatureKey(FeatureKeyNum(NumberSequenceGroupVoucher)).enabled())
+        #    {
+        #        allowed += [PurchParameters::numRefPurchInvoiceVoucher(   ).dataTypeId,
+        #                    PurchParameters::numRefPurchCreditNoteVoucher().dataTypeId ];
+        #    }
+        #
+        #    if (new DictFeatureKey(FeatureKeyNum(NumberSequenceGroupPackingslip)).enabled())
+        #    {
+        #        allowed += PurchParameters::numRefPurchPackingSlipId().dataTypeId;
+        #
+        #        if (new DictFeatureKey(FeatureKeyNum(NumberSequenceGroupVoucher)).enabled())
+        #        {
+        #            allowed += PurchParameters::numRefPurchPackingSlipVoucher().dataTypeId;
+        #        }
+        #    }
+        #
+        #    return  allowed;
+        #// Market Pack - France & Italy - End
+        #
+        #}
+      ENDSOURCE
+      SOURCE #createNumberSeqGroupRef
+        #static void  createNumberSeqGroupRef(NumberSequenceGroup  numberSequenceGroup)
+        #{;
+        #    NumberSequenceGroupRef::createNumberSeqGroupRef(PurchParameters::allowedNumSeqGroup(), numberSequenceGroup.numberSequenceGroupId);
+        #}
+      ENDSOURCE
+      SOURCE #exist
+        #static boolean exist()
+        #{
+        #    return (select firstonly recId from purchParameters).recId != 0;
+        #}
+      ENDSOURCE
+      SOURCE #find
+        #static client server PurchParameters  find(boolean _forupdate = false)
+        #{
+        #    PurchParameters parameter;
+        #
+        #    parameter.selectForUpdate(_forupdate);
+        #
+        #    select firstonly parameter
+        #        index Key
+        #        where parameter.key == 0;
+        #
+        #    if (!parameter && !parameter.isTmp())
+        #    {
+        #        Company::createParameter(parameter);
+        #        NumberSeqReference::construct(PurchParameters::numberSeqModule()).load();
+        #        PurchSummaryParameters::initiateAll();
+        #    }
+        #
+        #    return parameter;
+        #}
+      ENDSOURCE
+      SOURCE #nameAndOrDescription
+        #static ItemFreeTxt nameAndOrDescription(InventTable _inventTable, LanguageId _languageId)
+        #{
+        #    ItemName    itemName;
+        #    ItemFreeTxt itemTxt;
+        #    ;
+        #    itemName = _inventTable.itemName;
+        #    itemTxt  = _inventTable.txt(_languageId);
+        #
+        #    if  (itemTxt)
+        #    {
+        #        if (vendFormletterParameters::find().itemNameAndTxt2Description)
+        #        {
+        #            return    itemName + '\n' + itemTxt;
+        #        }
+        #
+        #        return itemTxt;
+        #    }
+        #    return itemName;
+        #}
+      ENDSOURCE
+      SOURCE #numberSeqModule
+        #static client server featureKey  numberSeqModule()
+        #{
+        #    return NumberSeqReference_PurchaseOrder::numberSeqModule();
+        #}
+      ENDSOURCE
+      SOURCE #numberSeqReference
+        #static client server NumberSeqReference  numberSeqReference()
+        #{
+        #    return NumberSeqReference::construct(PurchParameters::numberSeqModule());
+        #}
+      ENDSOURCE
+      SOURCE #numRefPedCompraInterno
+        #static client server NumberSequenceReference  numRefPedCompraInterno()
+        #{
+        #    return NumberSeqReference::findReference(typeId2ExtendedTypeId(typeid(WSPPurchIdInterno)));
+        #}
+      ENDSOURCE
+      SOURCE #numRefPurchaseOrderId
+        #static client server NumberSequenceReference  numRefPurchaseOrderId()
+        #{
+        #    return NumberSeqReference::findReference(typeId2ExtendedTypeId(typeid(PurchaseOrderId)));
+        #}
+      ENDSOURCE
+      SOURCE #numRefPurchCreditNoteId
+        #static client server NumberSequenceReference  numRefPurchCreditNoteId()
+        #{
+        #    return NumberSeqReference::findReference(typeId2ExtendedTypeId(typeid(purchInternalCreditNoteId)));
+        #}
+      ENDSOURCE
+      SOURCE #numRefPurchCreditNoteVoucher
+        #static client server NumberSequenceReference  numRefPurchCreditNoteVoucher()
+        #{
+        #    return NumberSeqReference::findReference(typeId2ExtendedTypeId(typeid(purchCreditNoteVoucher)));
+        #}
+      ENDSOURCE
+      SOURCE #numRefPurchId
+        #static client server NumberSequenceReference  numRefPurchId()
+        #{
+        #    return NumberSeqReference::findReference(typeId2ExtendedTypeId(typeid(PurchId)));
+        #}
+      ENDSOURCE
+      SOURCE #numRefPurchInvoiceId
+        #static client server NumberSequenceReference  numRefPurchInvoiceId()
+        #{
+        #    return NumberSeqReference::findReference(typeId2ExtendedTypeId(typeid(PurchInternalInvoiceId)));
+        #}
+      ENDSOURCE
+      SOURCE #numRefPurchInvoiceVoucher
+        #static client server NumberSequenceReference  numRefPurchInvoiceVoucher()
+        #{
+        #    return NumberSeqReference::findReference(typeId2ExtendedTypeId(typeid(purchInvoiceVoucher)));
+        #}
+      ENDSOURCE
+      SOURCE #numRefPurchPackingSlipId
+        #static client server NumberSequenceReference  numRefPurchPackingSlipId()
+        #{
+        #    return NumberSeqReference::findReference(typeId2ExtendedTypeId(typeid(PurchInternalPackingSlipId)));
+        #}
+      ENDSOURCE
+      SOURCE #numRefPurchPackingSlipVoucher
+        #static client server NumberSequenceReference  numRefPurchPackingSlipVoucher()
+        #{
+        #    return NumberSeqReference::findReference(typeId2ExtendedTypeId(typeid(purchPackingSlipVoucher)));
+        #}
+      ENDSOURCE
+      SOURCE #numRefReceiptsListId
+        #static client server NumberSequenceReference  numRefReceiptsListId()
+        #{
+        #    return NumberSeqReference::findReference(typeId2ExtendedTypeId(typeid(receiptsListId)));
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+
+
+***Element: END

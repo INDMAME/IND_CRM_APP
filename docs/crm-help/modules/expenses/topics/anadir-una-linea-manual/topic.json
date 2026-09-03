@@ -1,0 +1,55 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expenses.anadir-una-linea-manual",
+    "moduleId":  "expenses",
+    "sectionNumber":  "8.6",
+    "title":  "Añadir una línea manual",
+    "summary":  "Añade y completa una línea de gasto manual.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Añadir una línea manual",
+                                  "meter un gasto",
+                                  "imputar un gasto",
+                                  "registrar un gasto",
+                                  "introducir un gasto",
+                                  "hojas de gastos",
+                                  "gastos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre añadir una línea manual?",
+                                          "¿Cómo debo meter un gasto?",
+                                          "¿Cómo debo imputar un gasto en una hoja?",
+                                          "¿Cómo registro un gasto manual?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expenses.modulo-hojas-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.7.1",
+    "contentHash":  "DDF0CA4D343846348A1868BB0A27D70907C9EAFF2C59AE25FC623521E5C9F87D",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "8.6",
+                   "pageFromTableOfContents":  20
+               }
+}

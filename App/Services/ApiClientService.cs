@@ -900,6 +900,135 @@ namespace IND_CRM_APP.Services
             return BuildApiResponse<object>(result, "GetHealthPing");
         }
 
+        // Gets the localized CRM help catalog without requiring company or AX identity headers.
+        public async Task<ApiTransportResponse<CrmHelpCatalogDto>> GetHelpCatalogAsync(
+            string token,
+            string responseLocale,
+            CancellationToken cancellationToken = default)
+        {
+            PrepareRequestHeaders(
+                token,
+                "GetHelpCatalog",
+                requireCompany: false,
+                includeCompanyHeader: false,
+                includeAxUserHeader: false);
+
+            var safeLocale = EscapeQueryValue(NormalizeOptionalText(responseLocale) ?? "es-ES");
+            var result = await SendGetAsync(ApiRoutes.HelpCatalogByLocale(safeLocale), cancellationToken);
+            return new ApiTransportResponse<CrmHelpCatalogDto>
+            {
+                Response = BuildApiResponse<CrmHelpCatalogDto>(result, "GetHelpCatalog"),
+                StatusCode = result.StatusCode,
+                Headers = result.Headers
+            };
+        }
+
+        // Gets one localized CRM help topic for direct source inspection.
+        public async Task<ApiTransportResponse<CrmHelpTopicDto>> GetHelpTopicAsync(
+            string token,
+            string topicId,
+            string responseLocale,
+            CancellationToken cancellationToken = default)
+        {
+            PrepareRequestHeaders(
+                token,
+                "GetHelpTopic",
+                requireCompany: false,
+                includeCompanyHeader: false,
+                includeAxUserHeader: false);
+
+            var safeTopicId = EscapePathSegment(NormalizeOptionalText(topicId));
+            var safeLocale = EscapeQueryValue(NormalizeOptionalText(responseLocale) ?? "es-ES");
+            var result = await SendGetAsync(ApiRoutes.HelpTopic(safeTopicId, safeLocale), cancellationToken);
+            return new ApiTransportResponse<CrmHelpTopicDto>
+            {
+                Response = BuildApiResponse<CrmHelpTopicDto>(result, "GetHelpTopic"),
+                StatusCode = result.StatusCode,
+                Headers = result.Headers
+            };
+        }
+
+        // Asks the CRM help service using only bounded page-local conversation context.
+        public async Task<ApiTransportResponse<CrmHelpAskResponseData>> AskCrmHelpAsync(
+            string token,
+            CrmHelpAskRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            PrepareRequestHeaders(
+                token,
+                "AskCrmHelp",
+                requireCompany: false,
+                includeCompanyHeader: false,
+                includeAxUserHeader: false);
+
+            request ??= new CrmHelpAskRequest();
+            var payload = new CrmHelpAskRequest
+            {
+                Question = NormalizeOptionalText(request.Question) ?? string.Empty,
+                ResponseLocale = NormalizeOptionalText(request.ResponseLocale) ?? "es-ES",
+                SelectedTopicId = NormalizeOptionalText(request.SelectedTopicId),
+                SelectedModuleId = NormalizeOptionalText(request.SelectedModuleId) ?? string.Empty,
+                AnswerInstructions = CrmHelpAnswerInstructions.Value,
+                ClientInteractionId = NormalizeOptionalText(request.ClientInteractionId) ?? string.Empty,
+                History = (request.History ?? new List<CrmHelpHistoryMessage>())
+                    .Where(item => item != null)
+                    .Select(item => new CrmHelpHistoryMessage
+                    {
+                        Role = NormalizeOptionalText(item.Role) ?? string.Empty,
+                        Content = NormalizeOptionalText(item.Content) ?? string.Empty
+                    })
+                    .Where(item => !string.IsNullOrWhiteSpace(item.Role) && !string.IsNullOrWhiteSpace(item.Content))
+                    .ToList()
+            };
+
+            _logger.LogInformation(
+                "CRM help ask request. QuestionLength: {QuestionLength}. Locale: {Locale}. SelectedModuleId: {SelectedModuleId}. HasSelectedTopic: {HasSelectedTopic}. HistoryCount: {HistoryCount}.",
+                payload.Question.Length,
+                payload.ResponseLocale,
+                payload.SelectedModuleId,
+                !string.IsNullOrWhiteSpace(payload.SelectedTopicId),
+                payload.History.Count);
+
+            var result = await SendPostJsonAsync(ApiRoutes.HelpAsk, payload, cancellationToken);
+            return new ApiTransportResponse<CrmHelpAskResponseData>
+            {
+                Response = BuildApiResponse<CrmHelpAskResponseData>(result, "AskCrmHelp"),
+                StatusCode = result.StatusCode,
+                Headers = result.Headers
+            };
+        }
+
+        // Submits signed CRM help feedback without logging its free-text content.
+        public async Task<ApiTransportResponse<CrmHelpFeedbackResponseData>> SubmitCrmHelpFeedbackAsync(
+            string token,
+            CrmHelpFeedbackRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            PrepareRequestHeaders(
+                token,
+                "SubmitCrmHelpFeedback",
+                requireCompany: false,
+                includeCompanyHeader: false,
+                includeAxUserHeader: false);
+
+            request ??= new CrmHelpFeedbackRequest();
+            var payload = new CrmHelpFeedbackRequest
+            {
+                FeedbackToken = NormalizeOptionalText(request.FeedbackToken) ?? string.Empty,
+                Helpful = request.Helpful,
+                Reason = NormalizeOptionalText(request.Reason),
+                Comment = NormalizeOptionalText(request.Comment)
+            };
+
+            var result = await SendPostJsonAsync(ApiRoutes.HelpFeedback, payload, cancellationToken);
+            return new ApiTransportResponse<CrmHelpFeedbackResponseData>
+            {
+                Response = BuildApiResponse<CrmHelpFeedbackResponseData>(result, "SubmitCrmHelpFeedback"),
+                StatusCode = result.StatusCode,
+                Headers = result.Headers
+            };
+        }
+
         // Gets configured AX enum options by enum name for the active company.
         public async Task<PagedApiResponse<CrmEnumCatalogDto>> GetEnumCatalogByNameAsync(
             string token,
@@ -1364,6 +1493,72 @@ namespace IND_CRM_APP.Services
             return BuildApiResponse<object>(result, "UpdateExpenseSheetLine");
         }
 
+        // MMS - Preserves the upstream envelope and HTTP status when attaching a ticket. - 2026.08.04
+        public async Task<ApiTransportResponse<ExpenseSheetLineTicketResultDto>> AttachExpenseSheetLineTicketAsync(
+            string token,
+            string hojaGastosId,
+            string lineRecId,
+            ExpenseSheetLineTicketRequest req,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default)
+        {
+            PrepareRequestHeaders(
+                token,
+                "AttachExpenseSheetLineTicket",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
+
+            var safeSheetId = EscapePathSegment(hojaGastosId);
+            var safeLineId = EscapePathSegment(lineRecId);
+            var payload = new ExpenseSheetLineTicketRequest
+            {
+                FileId = NormalizeOptionalText(req?.FileId) ?? string.Empty
+            };
+            var result = await SendPutJsonAsync(
+                ApiRoutes.ExpenseSheetLineTicket(safeSheetId, safeLineId),
+                payload,
+                cancellationToken);
+
+            return new ApiTransportResponse<ExpenseSheetLineTicketResultDto>
+            {
+                Response = BuildApiResponse<ExpenseSheetLineTicketResultDto>(result, "AttachExpenseSheetLineTicket"),
+                StatusCode = result.StatusCode,
+                Headers = result.Headers
+            };
+        }
+
+        // MMS - Preserves the upstream envelope and HTTP status when detaching a ticket. - 2026.08.04
+        public async Task<ApiTransportResponse<ExpenseSheetLineTicketResultDto>> DetachExpenseSheetLineTicketAsync(
+            string token,
+            string hojaGastosId,
+            string lineRecId,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default)
+        {
+            PrepareRequestHeaders(
+                token,
+                "DetachExpenseSheetLineTicket",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
+
+            var safeSheetId = EscapePathSegment(hojaGastosId);
+            var safeLineId = EscapePathSegment(lineRecId);
+            var result = await SendDeleteAsync(
+                ApiRoutes.ExpenseSheetLineTicket(safeSheetId, safeLineId),
+                cancellationToken);
+
+            return new ApiTransportResponse<ExpenseSheetLineTicketResultDto>
+            {
+                Response = BuildApiResponse<ExpenseSheetLineTicketResultDto>(result, "DetachExpenseSheetLineTicket"),
+                StatusCode = result.StatusCode,
+                Headers = result.Headers
+            };
+        }
+
         // Propagates the current header reimbursement value through the dedicated upstream endpoint.
         public async Task<ApiResponse<object>> PropagateExpenseSheetReimbursableExpenseAsync(
             string token,
@@ -1383,6 +1578,28 @@ namespace IND_CRM_APP.Services
                 ApiRoutes.ExpenseSheetReimbursableExpensePropagate(safeSheetId),
                 "{}");
             return BuildApiResponse<object>(result, "PropagateExpenseSheetReimbursableExpense");
+        }
+
+        // Propagates an optional project target through the dedicated upstream endpoint.
+        public async Task<ApiResponse<object>> PropagateExpenseSheetProjectDefaultAsync(
+            string token,
+            string hojaGastosId,
+            ExpenseSheetProjectDefaultPropagationRequest? request = null,
+            string? axUserIdOverride = null)
+        {
+            PrepareRequestHeaders(
+                token,
+                "PropagateExpenseSheetProjectDefault",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
+
+            var safeSheetId = EscapePathSegment(hojaGastosId);
+            var result = await SendPostAsync(
+                ApiRoutes.ExpenseSheetProjectDefaultPropagate(safeSheetId),
+                Serialize(request ?? new ExpenseSheetProjectDefaultPropagationRequest()));
+            return BuildApiResponse<object>(result, "PropagateExpenseSheetProjectDefault");
         }
 
         public async Task<ApiResponse<object>> DeleteExpenseSheetLineAsync(

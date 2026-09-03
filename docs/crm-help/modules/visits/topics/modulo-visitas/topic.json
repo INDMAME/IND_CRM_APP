@@ -1,0 +1,54 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "visits.modulo-visitas",
+    "moduleId":  "visits",
+    "sectionNumber":  "7",
+    "title":  "Módulo Visitas",
+    "summary":  "Descubre qué permite consultar y gestionar el módulo Visitas.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Módulo Visitas",
+                                  "Visitas",
+                                  "visitas",
+                                  "historial de visitas"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre módulo visitas?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "visits.abrir-el-historial-de-visitas",
+                            "visits.filtrar-el-historial",
+                            "visits.crear-una-visita-paso-1-cuenta-y-contactos",
+                            "visits.crear-una-visita-paso-2-datos-de-la-visita",
+                            "visits.editor-de-texto-y-dictado",
+                            "visits.consultar-editar-o-eliminar-una-visita"
+                        ],
+    "routeKey":  "visits.history",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "4F730397BEA22E67F1161E3C46B7407EE7B7D66E5472A2D398B9E81B53234060",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "7",
+                   "pageFromTableOfContents":  12
+               }
+}

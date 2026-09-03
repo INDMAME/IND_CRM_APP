@@ -11,6 +11,7 @@ import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
 import {
   getEditableExpenseReimbursableExpenseOptions,
   getExpenseReimbursableExpenseLabel,
+  isEditableExpenseReimbursableExpense,
   normalizeExpenseReimbursableExpense,
 } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import {
@@ -122,18 +123,22 @@ const ExpenseSheetHeaderForm = ({
   const reimbursableExpenseValue = normalizeExpenseReimbursableExpense(
     isEditing ? draftReimbursableExpense : header.reimbursableExpense
   );
-  const hasEditableReimbursableExpenseValue = reimbursableExpenseOptions.some(
-    (option) => Number(option.value) === reimbursableExpenseValue
-  );
+  const hasEditableReimbursableExpenseValue = isEditableExpenseReimbursableExpense(reimbursableExpenseValue);
+  const hasKnownReimbursableExpenseValue = reimbursableExpenseValue !== null;
   const reimbursableExpenseLabel = getExpenseReimbursableExpenseLabel(
-    isEditing ? reimbursableExpenseValue : header.reimbursableExpense
+    isEditing ? draftReimbursableExpense : header.reimbursableExpense
   );
   const selectedReimbursableExpenseOption = React.useMemo(
     () =>
-      hasEditableReimbursableExpenseValue
-        ? undefined
-        : { value: String(reimbursableExpenseValue), text: reimbursableExpenseLabel },
-    [hasEditableReimbursableExpenseValue, reimbursableExpenseLabel, reimbursableExpenseValue]
+      hasKnownReimbursableExpenseValue && !hasEditableReimbursableExpenseValue
+        ? { value: String(reimbursableExpenseValue), text: reimbursableExpenseLabel }
+        : undefined,
+    [
+      hasEditableReimbursableExpenseValue,
+      hasKnownReimbursableExpenseValue,
+      reimbursableExpenseLabel,
+      reimbursableExpenseValue,
+    ]
   );
   // Status comment is now edited only in the status transition popup.
   const statusCommentValue = safeText(header.estadoComentarios);
@@ -199,7 +204,7 @@ const ExpenseSheetHeaderForm = ({
     </div>
   );
   const reimbursableExpenseField =
-    isEditing && canEditHeaderFields ? (
+    isEditing && canEditHeaderFields && hasKnownReimbursableExpenseValue ? (
       <div className={ALIGNED_FIELD_CONTAINER_CLASS_NAME}>
         {reimbursableExpenseLabelContent}
         <SelectCombobox
@@ -208,7 +213,12 @@ const ExpenseSheetHeaderForm = ({
           options={reimbursableExpenseOptions}
           selectedOption={selectedReimbursableExpenseOption}
           value={String(reimbursableExpenseValue)}
-          onChange={(value) => onDraftReimbursableExpenseChange(normalizeExpenseReimbursableExpense(value))}
+          onChange={(value) => {
+            const normalizedValue = normalizeExpenseReimbursableExpense(value);
+            if (isEditableExpenseReimbursableExpense(normalizedValue) && normalizedValue !== null) {
+              onDraftReimbursableExpenseChange(normalizedValue);
+            }
+          }}
           readOnly={!isEditing || !canEditHeaderFields}
           disabled={!isEditing || !canEditHeaderFields}
           idBase="expense-sheet-reimbursable-expense"

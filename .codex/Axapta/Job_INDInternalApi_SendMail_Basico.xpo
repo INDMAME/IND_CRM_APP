@@ -8,14 +8,12 @@ Formatversion: 1
   JOBVERSION 1
 
   SOURCE #Job_INDInternalApi_SendMail_Basico
+    #//MMS - Integra la prueba basica de correo con el wrapper central V2 - 2026.08.12
     #static void Job_INDInternalApi_SendMail_Basico(Args _args)
     #{
-    #    COM     clientt;
     #    INDDefaultParameters defaultParameters = INDDefaultParameters::find();
     #
     #    str     baseUrl         = defaultParameters.InternalAPIUrlService;
-    #    str     apiUser         = defaultParameters.APIUserId;
-    #    str     apiPassword     = defaultParameters.INDAPIIntServiceUser().Password;
     #
     #    str     fromEmail       = "i.jauregi@insertec.biz";
     #    str     fromName        = "";
@@ -31,66 +29,60 @@ Formatversion: 1
     #    str     correlationId;
     #    str     aggregateId;
     #    str     idempotencyKey;
-    #    str     healthJson;
     #    boolean online;
     #    boolean sent;
     #    ;
     #
-    #    correlationId  = strFmt("ax-mail-basic-sendmailex-%1-%2", today(), timeNow());
+    #    correlationId  = strFmt("ax-mail-basic-%1-%2", today(), timeNow());
     #    aggregateId    = strFmt("%1-%2", today(), timeNow());
-    #    idempotencyKey = strFmt("AX-MailBasicSendMailEx:%1", aggregateId);
+    #    idempotencyKey = strFmt("AX-MailBasicTest:%1", aggregateId);
+    #
+    #    //MMS - Detiene la prueba antes de la red si falta un buzon aprobado - 2026.08.12
+    #    if (fromEmail == "" || toEmails == "")
+    #    {
+    #        error("Configure fromEmail y toEmails con buzones de prueba aprobados antes de ejecutar el job.");
+    #        return;
+    #    }
     #
     #    try
     #    {
-    #        clientt = new COM("IND.InternalApiClient");
-    #
-    #        healthJson = clientt.GetApiHealthStatusJson(baseUrl, correlationId);
-    #        info(strFmt("Health JSON: %1", healthJson));
-    #
-    #        online = clientt.IsApiOnline(baseUrl, correlationId);
+    #        online = INDInternalApiClientServer::isApiOnline(baseUrl, correlationId);
     #        if (!online)
     #        {
-    #            error("IND_INTERNAL_API is not online from AOS.");
-    #            clientt = null;
+    #            error("La API interna no está online o no responde desde Axapta.");
     #            return;
     #        }
     #
-    #        sent = clientt.SendMailEx(
-    #            baseUrl,
-    #            apiUser,
-    #            apiPassword,
+    #        sent = INDInternalApiClientServer::sendInternalApiMailEx(
+    #            company,
     #            fromEmail,
     #            fromName,
     #            toEmails,
     #            ccEmails,
     #            bccEmails,
     #            replyToEmails,
-    #            "Prueba basica mail SendMailEx desde Axapta",
-    #            "<p>Prueba basica de envio desde Axapta usando SendMailEx.</p>",
-    #            "Prueba basica de envio desde Axapta usando SendMailEx.",
+    #            "Prueba básica mail IND_INTERNAL_API desde Axapta",
+    #            "<p>Prueba básica de envío desde Axapta usando IND_INTERNAL_API.</p>",
+    #            "Prueba básica de envío desde Axapta usando IND_INTERNAL_API.",
     #            attachmentFilePaths,
     #            false,
     #            "normal",
-    #            company,
-    #            "AXAPTA",
     #            "ManualSmokeTest",
-    #            "MailBasicSendMailExSmokeTest",
+    #            "MailBasicSmokeTest",
     #            "ManualTest",
     #            aggregateId,
     #            idempotencyKey,
     #            correlationId);
     #
     #        if (sent)
-    #            info("SendMailEx OK. Microsoft Graph accepted the request.");
+    #            info("SendMail OK. Microsoft Graph aceptó la petición.");
     #        else
-    #            error("SendMailEx returned false. Review internal.mail.send, Graph settings and API logs.");
+    #            error("SendMail devolvió false. Revisar scope, permisos Graph, configuración y logs de la API.");
     #    }
     #    catch (Exception::Error)
     #    {
-    #        error("Error executing basic COM IND.InternalApiClient SendMailEx smoke test.");
+    #        error("Error ejecutando la prueba básica mediante el cliente COM V2 central.");
     #    }
-    #
-    #    clientt = null;
     #}
   ENDSOURCE
 

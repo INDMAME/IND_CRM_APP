@@ -1,0 +1,49 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui.elementos-comunes-de-la-pantalla",
+    "moduleId":  "common-ui",
+    "sectionNumber":  "5",
+    "title":  "Elementos comunes de la pantalla",
+    "summary":  "Reconoce los controles y mensajes que se repiten en toda la aplicación.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Elementos comunes de la pantalla",
+                                  "pantalla",
+                                  "empresa activa",
+                                  "permisos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre elementos comunes de la pantalla?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "common-ui.editar-guardar-y-cancelar"
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "6FA94D31739BA8345CC5A61EED9CBE55B33DB1DAB326D2FCCDFB795889213E56",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "5",
+                   "pageFromTableOfContents":  8
+               }
+}

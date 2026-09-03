@@ -14,13 +14,17 @@ import { saveExpenseSheetCreatedReturnContext } from "../utils/expenseSheetCreat
 import { saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
 import { clearExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
 import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
-import { normalizeExpenseReimbursableExpense } from "../constants/expenseReimbursableExpenseCatalog.ts";
+import {
+  isEditableExpenseReimbursableExpense,
+  normalizeExpenseReimbursableExpense,
+} from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
 import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
 import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
 import { useExpenseSheetQuickTicketFlow } from "./useExpenseSheetQuickTicketFlow.ts";
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
-import { LinkTicketIcon, NewLineIcon, NewTicketIcon } from "./ExpenseSheetDetailIcons.tsx";
+import { LinkTicketIcon, NewLineIcon, NewTicketIcon } from "../components/ExpenseSheetActionIcons.tsx";
+import { EXPENSE_AI_DETECTION_QUERY_PARAM } from "../hooks/useExpenseGastoTypeWarning.ts";
 
 const LINES_PAGE_SIZE = 6;
 const EXPENSE_STATUS_APPROVAL_REQUESTED = 1;
@@ -282,7 +286,6 @@ export const useExpenseSheetDetailPageController = () => {
     currentProjectId: safeText(header?.projId),
     currentEstadoComentarios: safeText(header?.estadoComentarios),
     currentExpenseSheetStatus: header?.expenseSheetStatus,
-    currentLines: lines,
     exchangeRateBaseCurrency,
     onCreateSuccess: (createdSheetId) => {
       createdSheetIdRef.current = safeText(createdSheetId);
@@ -323,10 +326,10 @@ export const useExpenseSheetDetailPageController = () => {
         return;
       }
 
-      const shouldConfirmPropagation =
-        !isCreateMode && isEditing && canEditHeaderFieldsCurrent && lines.length > 0;
+      const shouldPersistAtomically =
+        !isCreateMode && isEditing && canEditHeaderFieldsCurrent;
 
-      if (!shouldConfirmPropagation) {
+      if (!shouldPersistAtomically) {
         setDraftProjectId(nextValue);
         setConfirmedProjectId(nextValue);
         return;
@@ -338,6 +341,11 @@ export const useExpenseSheetDetailPageController = () => {
       }
 
       setDraftProjectId(nextValue);
+      if (lines.length === 0) {
+        void handleConfirmProjectPropagation(nextValue);
+        return;
+      }
+
       openConfirm({
         title: indT("ExpenseSheets_Detail_PropagateProject_Title", "Update lines"),
         message: indT(
@@ -371,6 +379,8 @@ export const useExpenseSheetDetailPageController = () => {
     (value: number) => {
       const nextValue = normalizeExpenseReimbursableExpense(value);
       const previousValue = normalizeExpenseReimbursableExpense(draftReimbursableExpense);
+      if (!isEditableExpenseReimbursableExpense(nextValue) || nextValue === null) return;
+      if (!isCreateMode && previousValue === null) return;
       if (nextValue === previousValue) return;
 
       const shouldConfirmPropagation =
@@ -430,8 +440,10 @@ export const useExpenseSheetDetailPageController = () => {
     !isCreateMode &&
     isEditing &&
     canEditHeaderFieldsCurrent &&
-    lines.length > 0 &&
     safeText(draftProjectId) !== safeText(confirmedProjectId);
+
+  const shouldConfirmPendingProjectPropagation =
+    hasPendingProjectPropagation && lines.length > 0;
 
   const handlePendingProjectPropagationCancel = useCallback(() => {
     if (!hasPendingProjectPropagation) return;
@@ -447,16 +459,18 @@ export const useExpenseSheetDetailPageController = () => {
     return handleUpdate();
   }, [draftProjectId, handleConfirmProjectPropagation, handleUpdate, hasPendingProjectPropagation]);
 
-  const projectPropagationSaveTitle = hasPendingProjectPropagation
+  const projectPropagationSaveTitle = shouldConfirmPendingProjectPropagation
     ? indT("ExpenseSheets_Detail_PropagateProject_Title", "Update lines")
     : undefined;
-  const projectPropagationSaveMessage = hasPendingProjectPropagation
+  const projectPropagationSaveMessage = shouldConfirmPendingProjectPropagation
     ? indT(
         "ExpenseSheets_Detail_PropagateProject_Body",
         "The projects on all lines will be updated. Do you want to continue?"
       )
     : undefined;
-  const projectPropagationSaveConfirmText = hasPendingProjectPropagation ? indT("Confirm_Yes", "OK") : undefined;
+  const projectPropagationSaveConfirmText = shouldConfirmPendingProjectPropagation
+    ? indT("Confirm_Yes", "OK")
+    : undefined;
 
   const handleOpenLineDetail = useCallback(
     async (lineRecId: string) => {
@@ -637,6 +651,9 @@ export const useExpenseSheetDetailPageController = () => {
         mode: "edit",
         origin: "sheet-create",
       });
+      if (result?.processedByAI === true) {
+        query.set(EXPENSE_AI_DETECTION_QUERY_PARAM, "1");
+      }
       if (currentSheetId) {
         saveExpenseTicketReturnContext({
           fileId: createdFileId,

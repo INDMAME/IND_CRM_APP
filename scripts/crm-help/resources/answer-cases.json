@@ -1,0 +1,229 @@
+[
+    {
+        "id":  "answer-common-ui.cambiar-el-idioma",
+        "question":  "¿Cómo cambio el idioma del CRM?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "common-ui.cambiar-el-idioma",
+        "expectedTopicIds":  [
+                                 "common-ui.cambiar-el-idioma"
+                             ],
+        "sourceChunkIds":  [
+                               "common-ui.cambiar-el-idioma--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "common-ui.cambiar-el-idioma--01"
+                                   ],
+        "requiredFacts":  [
+                              "Debe abrirse el menú lateral y pulsarse el nombre de usuario.",
+                              "Debe elegirse el idioma desde Idiomas.",
+                              "Debe esperarse a que la pantalla vuelva a cargarse."
+                          ],
+        "forbiddenClaims":  [
+                                "El asistente ya ha cambiado el idioma por el usuario.",
+                                "No es necesario esperar a que la pantalla se recargue."
+                            ]
+    },
+    {
+        "id":  "answer-tickets.estado-del-ticket",
+        "question":  "¿Qué significan los estados Pendiente y Asignado de un ticket?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "tickets.estado-del-ticket",
+        "expectedTopicIds":  [
+                                 "tickets.estado-del-ticket"
+                             ],
+        "sourceChunkIds":  [
+                               "tickets.estado-del-ticket--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "tickets.estado-del-ticket--01"
+                                   ],
+        "requiredFacts":  [
+                              "Pendiente significa que el ticket todavía no está asignado a una hoja.",
+                              "Asignado significa que el ticket ya está relacionado con una hoja de gastos.",
+                              "No existe una opción directa para cambiar la relación del ticket.",
+                              "El procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta."
+                          ],
+        "forbiddenClaims":  [
+                                "Existe un botón documentado para desvincular directamente el ticket.",
+                                "El asistente ya ha cambiado la relación del ticket."
+                            ]
+    },
+    {
+        "id":  "answer-troubleshooting.no-aparece-un-menu-boton-o-usuario",
+        "question":  "¿Por qué no aparece un menú, botón o usuario?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "troubleshooting.no-aparece-un-menu-boton-o-usuario",
+        "expectedTopicIds":  [
+                                 "troubleshooting.no-aparece-un-menu-boton-o-usuario"
+                             ],
+        "sourceChunkIds":  [
+                               "troubleshooting.no-aparece-un-menu-boton-o-usuario--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "troubleshooting.no-aparece-un-menu-boton-o-usuario--01"
+                                   ],
+        "requiredFacts":  [
+                              "Debe comprobarse la empresa activa y actualizarse la pantalla.",
+                              "La ausencia puede deberse a permisos o a la jerarquía de gestión.",
+                              "No debe utilizarse la sesión de otra persona."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe usarse la sesión de otra persona para continuar.",
+                                "La ausencia del control confirma siempre un error de la aplicación."
+                            ]
+    },
+    {
+        "id":  "answer-troubleshooting.no-se-puede-guardar",
+        "question":  "¿Qué debo revisar si no puedo guardar?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "troubleshooting.no-se-puede-guardar",
+        "expectedTopicIds":  [
+                                 "troubleshooting.no-se-puede-guardar"
+                             ],
+        "sourceChunkIds":  [
+                               "troubleshooting.no-se-puede-guardar--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "troubleshooting.no-se-puede-guardar--01"
+                                   ],
+        "requiredFacts":  [
+                              "Deben revisarse los campos obligatorios y los mensajes en rojo.",
+                              "En visitas deben comprobarse Cuenta, Tipo de visita, Descripción y Comentarios; en líneas o tickets, Fecha, Categoría, importes y divisa.",
+                              "Un botón bloqueado puede deberse al estado, al pago o a los permisos."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe omitirse la validación de los campos obligatorios.",
+                                "El asistente ya ha guardado el registro."
+                            ]
+    },
+    {
+        "id":  "answer-troubleshooting.la-imagen-del-ticket-no-se-procesa",
+        "question":  "¿Qué hago si la imagen del ticket no se procesa?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "troubleshooting.la-imagen-del-ticket-no-se-procesa",
+        "expectedTopicIds":  [
+                                 "troubleshooting.la-imagen-del-ticket-no-se-procesa"
+                             ],
+        "sourceChunkIds":  [
+                               "troubleshooting.la-imagen-del-ticket-no-se-procesa--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "troubleshooting.la-imagen-del-ticket-no-se-procesa--01"
+                                   ],
+        "requiredFacts":  [
+                              "Debe comprobarse el formato y el límite indicado por la aplicación.",
+                              "La nueva foto debe tener luz uniforme, no recortar datos y evitar reflejos.",
+                              "Reintentar carga debe utilizarse una sola vez; si queda un ticket parcial, debe anotarse su identificador."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe reintentarse la carga indefinidamente.",
+                                "El asistente ha procesado la imagen."
+                            ]
+    },
+    {
+        "id":  "answer-troubleshooting.que-informacion-enviar-a-soporte",
+        "question":  "¿Qué información debo enviar a soporte?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "troubleshooting.que-informacion-enviar-a-soporte",
+        "expectedTopicIds":  [
+                                 "troubleshooting.que-informacion-enviar-a-soporte"
+                             ],
+        "sourceChunkIds":  [
+                               "troubleshooting.que-informacion-enviar-a-soporte--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "troubleshooting.que-informacion-enviar-a-soporte--01"
+                                   ],
+        "requiredFacts":  [
+                              "Deben indicarse usuario corporativo sin contraseña, empresa activa, módulo y acción.",
+                              "Deben añadirse identificador disponible, fecha y hora aproximadas y el mensaje completo.",
+                              "La captura no debe mostrar contraseñas, códigos de acceso ni datos innecesarios."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe enviarse la contraseña a soporte.",
+                                "La captura debe incluir códigos de acceso."
+                            ]
+    },
+    {
+        "id":  "answer-expense-approval.undo-approval-destination",
+        "question":  "¿A qué estado vuelve una hoja al deshacer una aprobación?",
+        "responseLocale":  "es-ES",
+        "selectedModuleId":  "expense-approval",
+        "expectedResolution":  "answered",
+        "expectedTopicId":  "expense-approval.flujo-general-de-estados",
+        "expectedTopicIds":  [
+                                 "expense-approval.flujo-general-de-estados",
+                                 "expense-approval.acciones-del-propietario",
+                                 "expense-approval.acciones-del-responsable"
+                             ],
+        "sourceChunkIds":  [
+                               "expense-approval.flujo-general-de-estados--01",
+                               "expense-approval.acciones-del-propietario--01",
+                               "expense-approval.acciones-del-responsable--01"
+                           ],
+        "requiredSourceChunkIds":  [
+                                       "expense-approval.flujo-general-de-estados--01"
+                                   ],
+        "requiredFacts":  [
+                              "Un responsable que deshace la aprobación de la hoja de un subordinado la devuelve a Aprobación solicitada.",
+                              "El propietario con autogestión que deshace la aprobación de su propia hoja la devuelve a Borrador.",
+                              "El destino depende del perfil y de quién sea el propietario."
+                          ],
+        "forbiddenClaims":  [
+                                "Deshacer aprobación siempre devuelve la hoja a Aprobación solicitada.",
+                                "Deshacer aprobación siempre devuelve la hoja a Borrador."
+                            ]
+    },
+    {
+        "id":  "answer-not-documented-sign-in",
+        "question":  "¿Cómo entro o inicio sesión en el CRM?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "notDocumented",
+        "expectedTopicId":  null,
+        "expectedTopicIds":  [
+
+                             ],
+        "sourceChunkIds":  [
+
+                           ],
+        "requiredSourceChunkIds":  [
+
+                                   ],
+        "requiredFacts":  [
+                              "Debe indicarse que el acceso y el inicio de sesión no están documentados en esta base de ayuda."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe proporcionarse un procedimiento para abrir o iniciar sesión en el CRM.",
+                                "El asistente ha iniciado la sesión por el usuario."
+                            ]
+    },
+    {
+        "id":  "answer-not-documented-password-reset",
+        "question":  "¿Cómo restablezco mi contraseña corporativa?",
+        "responseLocale":  "es-ES",
+        "expectedResolution":  "notDocumented",
+        "expectedTopicId":  null,
+        "expectedTopicIds":  [
+
+                             ],
+        "sourceChunkIds":  [
+
+                           ],
+        "requiredSourceChunkIds":  [
+
+                                   ],
+        "requiredFacts":  [
+                              "Debe indicarse que el procedimiento de restablecimiento de contraseña no está documentado en esta base de ayuda."
+                          ],
+        "forbiddenClaims":  [
+                                "Debe proporcionarse un procedimiento de restablecimiento no presente en la documentación.",
+                                "El asistente ha restablecido o conoce la contraseña del usuario."
+                            ]
+    }
+]

@@ -11,11 +11,16 @@ import ExpenseSheetLineForm from "../components/ExpenseSheetLineForm.tsx";
 import ExpenseTicketLinesList from "../components/ExpenseTicketLinesList.tsx";
 import { getExpenseInternationalLabel, getExpenseInternationalOptions } from "../constants/internationalOptions.ts";
 import { parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
+import { resolveExpenseLineReimbursableAmountPreview } from "../utils/expenseLineReimbursement.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { navigateToExpenseUrl, reloadExpensePage } from "../utils/expenseNavigation.ts";
 import { appendExpenseTicketReturnQuery, saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
 import { getExpenseGastoTypeOptions } from "../constants/expenseGastoTypeCatalog.ts";
+import {
+  useExpenseGastoTypeWarning,
+  type ExpenseGastoTypeWarningDialogOptions,
+} from "../hooks/useExpenseGastoTypeWarning.ts";
 import { areExpenseNumericInputsEquivalent, formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 import {
   calculateExpenseLineAmountMSTForCurrency,
@@ -39,11 +44,14 @@ import { useExpenseSheetLineDetailConfirmDialog } from "./useExpenseSheetLineDet
 import { useExpenseSheetLineDetailState } from "./useExpenseSheetLineDetailState.ts";
 import { useExpenseSheetLineTicketPreview } from "./useExpenseSheetLineTicketPreview.ts";
 import ExpenseSheetLineDetailView from "./ExpenseSheetLineDetailView.tsx";
+import ExpenseSheetLineTicketFab from "./ExpenseSheetLineTicketFab.tsx";
 import { useExpenseSheetLineTypeValidation } from "./useExpenseSheetLineTypeValidation.ts";
 import { useExpenseTicketDetailState } from "../tickets/detail/useExpenseTicketDetailState.ts";
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
 
 const LINKED_TICKET_LINES_PAGE_SIZE = 6;
+const LINE_TICKET_FAB_BASELINE_BOTTOM_PX = 24;
+const LINE_TICKET_FAB_WITH_NAVIGATOR_BOTTOM_PX = 98;
 
 const pagedSlice = <T,>(items: T[], page: number, pageSize: number): T[] => {
   if (!items.length) return [];
@@ -88,6 +96,7 @@ const ExpenseSheetLineDetailContent = () => {
   } = useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canViewLinkedTicketLines = canAccess("GASTOS_TICKETS", "View");
+  const canManageExpenseLineTicket = canAccess("GASTOS_HOJA_GASTO", "Edit") && canViewLinkedTicketLines;
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const lineId = safeText(window.__EXPENSE_LINE_ID__);
   const lineMode = safeText(window.__EXPENSE_LINE_MODE__).toLowerCase();
@@ -127,6 +136,7 @@ const ExpenseSheetLineDetailContent = () => {
     draftPrice,
     draftQty,
     draftProjectId,
+    draftProjectIdProvided,
     draftInternational,
     draftReimbursableExpense,
     draftCurrencyCode,
@@ -136,6 +146,8 @@ const ExpenseSheetLineDetailContent = () => {
     isFuelPriceLoading,
     fuelPriceMessage,
     fuelPriceMessageIsError,
+    isManagingOtherUser,
+    isCurrentUserExpenseOwner,
     isSheetLocked,
     isLineEditLocked,
     isLineDeleteLocked,
@@ -245,11 +257,18 @@ const ExpenseSheetLineDetailContent = () => {
     () => formatAmountWithCurrency(displayAmountMST, localCurrencyCode),
     [displayAmountMST, localCurrencyCode]
   );
+  const displayedReimbursableAmount = isEditing
+    ? resolveExpenseLineReimbursableAmountPreview(
+        draftReimbursableExpense,
+        parseDecimalInput(draftAmountMST),
+        line?.reimbursableAmount
+      )
+    : line?.reimbursableAmount ?? null;
   const reimbursableAmountText = useMemo(
-    () => formatAmountWithCurrency(line?.reimbursableAmount ?? null, localCurrencyCode),
-    [line?.reimbursableAmount, localCurrencyCode]
+    () => formatAmountWithCurrency(displayedReimbursableAmount, localCurrencyCode),
+    [displayedReimbursableAmount, localCurrencyCode]
   );
-  const projectValue = safeText(line?.projId || header?.projId);
+  const projectValue = safeText(line?.projId);
   const sheetDescription = safeText(header?.description) || "-";
   const internacionalLabel = getExpenseInternationalLabel(line?.internacional);
   const linkedTicketFileIdValue = safeText(linkedTicketFileId);
@@ -703,7 +722,27 @@ const ExpenseSheetLineDetailContent = () => {
     setStatus,
   });
 
-  const { handleUpdate, handleDelete } = useExpenseSheetLineDetailMutations({
+  const openGastoTypeWarning = useCallback(
+    (options: ExpenseGastoTypeWarningDialogOptions) => {
+      setModalError("");
+      openConfirm(options);
+    },
+    [openConfirm, setModalError]
+  );
+  const { warnForChange: warnForGastoTypeChange } = useExpenseGastoTypeWarning({
+    openWarning: openGastoTypeWarning,
+    dialogOpen: modal.open,
+  });
+  const handleDraftTypeValueCodeChangeWithWarning = useCallback(
+    (value: string) => {
+      const previousValue = draftTypeValueCode;
+      handleDraftTypeValueCodeChange(value);
+      warnForGastoTypeChange(previousValue, value);
+    },
+    [draftTypeValueCode, handleDraftTypeValueCodeChange, warnForGastoTypeChange]
+  );
+
+  const { handleUpdate, handleDelete, handleDetachTicket } = useExpenseSheetLineDetailMutations({
     busy,
     isEditing,
     isCreateMode,
@@ -722,6 +761,7 @@ const ExpenseSheetLineDetailContent = () => {
     draftPrice,
     draftQty,
     draftProjectId,
+    draftProjectIdProvided,
     draftInternational,
     draftReimbursableExpense,
     draftCurrencyCode,
@@ -810,6 +850,99 @@ const ExpenseSheetLineDetailContent = () => {
     });
   }, [isEditing, linkedTicketReturnContext]);
 
+  // MMS - Opens the existing ticket list in single-line attachment mode. - 2026.08.04
+  const handleOpenExistingTicketLink = useCallback(() => {
+    if (
+      !sheetId ||
+      !lineId ||
+      isCreateMode ||
+      isEditing ||
+      busy ||
+      hasLinkedTicket ||
+      line?.ticket === true ||
+      !canEditExpenseCurrent ||
+      isSheetLocked ||
+      !canManageExpenseLineTicket ||
+      isManagingOtherUser ||
+      !isCurrentUserExpenseOwner
+    ) {
+      return;
+    }
+    const query = new URLSearchParams({
+      action: "link-line",
+      hojaGastosId: sheetId,
+      sheetLineRecId: lineId,
+      lineRecId: lineId,
+      origin: "expense-line",
+    });
+    navigateToExpenseUrl(`/Gastos/Tickets?${query.toString()}`, {
+      askConfirmation: false,
+      bypassGuardOnce: true,
+    });
+  }, [
+    busy,
+    canEditExpenseCurrent,
+    canManageExpenseLineTicket,
+    hasLinkedTicket,
+    isCreateMode,
+    isEditing,
+    isManagingOtherUser,
+    isCurrentUserExpenseOwner,
+    isSheetLocked,
+    line?.ticket,
+    lineId,
+    sheetId,
+  ]);
+
+  const handleOpenDetachTicketConfirm = useCallback(() => {
+    if (
+      !hasLinkedTicket ||
+      line?.ticket === true ||
+      busy ||
+      isEditing ||
+      !canEditExpenseCurrent ||
+      isSheetLocked ||
+      !canManageExpenseLineTicket ||
+      isManagingOtherUser ||
+      !isCurrentUserExpenseOwner
+    ) {
+      return;
+    }
+    setModalError("");
+    setStatus("");
+    openConfirm({
+      title: indT("ExpenseSheets_Line_Ticket_DetachTitle", "Detach ticket"),
+      message: indT(
+        "ExpenseSheets_Line_Ticket_DetachBody",
+        "The expense line, ticket and photo will be kept. The ticket will return to pending status."
+      ),
+      confirmText: indT("ExpenseSheets_Line_Ticket_DetachButton", "Detach ticket"),
+      cancelText: indT("Common_Cancel", "Cancel"),
+      onConfirm: async () => {
+        const detached = await handleDetachTicket();
+        if (!detached) return false;
+        invalidateCachedListForRefetch();
+        reloadExpensePage();
+        return true;
+      },
+    });
+  }, [
+    busy,
+    canEditExpenseCurrent,
+    canManageExpenseLineTicket,
+    handleDetachTicket,
+    hasLinkedTicket,
+    invalidateCachedListForRefetch,
+    isEditing,
+    isManagingOtherUser,
+    isCurrentUserExpenseOwner,
+    isSheetLocked,
+    line?.ticket,
+    openConfirm,
+    setModalError,
+    setStatus,
+  ]);
+
   const handleOpenLinkedTicketLine = useCallback(
     (ticketLineRecId: string) => {
       if (!linkedTicketReturnContext) return;
@@ -879,6 +1012,18 @@ const ExpenseSheetLineDetailContent = () => {
         onLast={handleNavigateLastLine}
       />
     ) : null;
+  const canManageLineTicketLink =
+    !isCreateMode &&
+    !isEditing &&
+    canEditExpenseCurrent &&
+    !isManagingOtherUser &&
+    isCurrentUserExpenseOwner &&
+    !isSheetLocked &&
+    canManageExpenseLineTicket &&
+    line?.ticket !== true;
+  const lineTicketFabBottom = lineNavigator
+    ? LINE_TICKET_FAB_WITH_NAVIGATOR_BOTTOM_PX
+    : LINE_TICKET_FAB_BASELINE_BOTTOM_PX;
 
   const linkedTicketLinesSection =
     showLinkedTicketLines ? (
@@ -949,7 +1094,7 @@ const ExpenseSheetLineDetailContent = () => {
           qtyInvalid={qtyInvalid}
           onDraftDescriptionChange={handleDraftDescriptionChange}
           onDraftTransDateChange={handleLineTransDateChange}
-          onDraftTypeValueCodeChange={handleDraftTypeValueCodeChange}
+          onDraftTypeValueCodeChange={handleDraftTypeValueCodeChangeWithWarning}
           onDraftPriceChange={handleLinePriceChange}
           onDraftQtyChange={handleLineQtyChange}
           onDraftAmountCurrencyChange={handleLineAmountCurrencyChange}
@@ -964,6 +1109,14 @@ const ExpenseSheetLineDetailContent = () => {
           showLinkedTicketField={hasLinkedTicket}
           onOpenLinkedTicket={handleOpenLinkedTicket}
         />
+        {canManageLineTicketLink ? (
+          <ExpenseSheetLineTicketFab
+            action={hasLinkedTicket ? "detach" : "link"}
+            bottom={lineTicketFabBottom}
+            disabled={busy}
+            onAction={hasLinkedTicket ? handleOpenDetachTicketConfirm : handleOpenExistingTicketLink}
+          />
+        ) : null}
         {linkedTicketLinesSection}
       </>
     ) : null;

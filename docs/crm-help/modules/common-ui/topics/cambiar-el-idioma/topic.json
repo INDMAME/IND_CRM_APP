@@ -1,0 +1,56 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui.cambiar-el-idioma",
+    "moduleId":  "common-ui",
+    "sectionNumber":  "6.2",
+    "title":  "Cambiar el idioma",
+    "summary":  "Cambia el idioma de la aplicación desde tu perfil.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Cambiar el idioma",
+                                  "pantalla",
+                                  "empresa activa",
+                                  "permisos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre cambiar el idioma?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "C6F45E49B12D974394AF1483554F63E7EE4825C7785CF61AE7664EC46DC905E1",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+                         {
+                             "id":  "common-ui.cambiar-el-idioma.quick-01",
+                             "question":  "¿Cómo cambio el idioma del CRM?",
+                             "answer":  "1. Abra el menú lateral y pulse su nombre de usuario. 2. Pulse Idiomas y elija el idioma que desea utilizar. 3. Espere a que la pantalla vuelva a cargarse.",
+                             "sourceChunkIds":  [
+                                                    "common-ui.cambiar-el-idioma--01"
+                                                ]
+                         }
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "6.2",
+                   "pageFromTableOfContents":  11
+               }
+}

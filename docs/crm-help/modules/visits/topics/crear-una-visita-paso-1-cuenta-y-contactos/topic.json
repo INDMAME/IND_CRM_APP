@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "visits.crear-una-visita-paso-1-cuenta-y-contactos",
+    "moduleId":  "visits",
+    "sectionNumber":  "7.3",
+    "title":  "Crear una visita: paso 1, cuenta y contactos",
+    "summary":  "Selecciona la cuenta y los contactos de una nueva visita.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Crear una visita: paso 1, cuenta y contactos",
+                                  "visitas",
+                                  "historial de visitas"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre crear una visita: paso 1, cuenta y contactos?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "visits.modulo-visitas"
+                        ],
+    "routeKey":  "visits.history",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "2D5DAFEA962FE668D0731F0533F0957CA9E813FC5087B0E868541E7DA894A843",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "7.3",
+                   "pageFromTableOfContents":  13
+               }
+}

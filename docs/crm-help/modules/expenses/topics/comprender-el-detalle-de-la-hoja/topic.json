@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expenses.comprender-el-detalle-de-la-hoja",
+    "moduleId":  "expenses",
+    "sectionNumber":  "8.5",
+    "title":  "Comprender el detalle de la hoja",
+    "summary":  "Identifica los datos generales, líneas y acciones del detalle.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Comprender el detalle de la hoja",
+                                  "hojas de gastos",
+                                  "gastos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre comprender el detalle de la hoja?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expenses.modulo-hojas-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "C00971481568876C802C0C9E3637D50901049F1E83E31F13D0C9B6C8B5C8B062",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "8.5",
+                   "pageFromTableOfContents":  19
+               }
+}

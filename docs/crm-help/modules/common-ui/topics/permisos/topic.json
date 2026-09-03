@@ -1,0 +1,49 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui.permisos",
+    "moduleId":  "common-ui",
+    "sectionNumber":  "6.3",
+    "title":  "Permisos",
+    "summary":  "Comprende cómo los permisos afectan a menús, datos y acciones.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Permisos",
+                                  "pantalla",
+                                  "empresa activa",
+                                  "permisos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre permisos?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "CE56E21F593B595637B5C9624C32C603CF34D0C7E8A1BE466B99617E9FA625EC",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "6.3",
+                   "pageFromTableOfContents":  11
+               }
+}

@@ -1,8 +1,14 @@
 ﻿import React, { useCallback, useEffect, useRef } from "react";
 import { getSessionValueWithExpiry, removeSessionValueWithExpiry, setSessionValueWithExpiry } from "../../../utils/sessionExpiry.ts";
+import { getBrowserStorageScopeToken } from "../../../utils/browserStorageScope.ts";
 
 const EDIT_MODE_TTL_MS = 6 * 60 * 60 * 1000;
 const DETAIL_DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
+const VISIT_DETAIL_SCOPE = getBrowserStorageScopeToken() || "scope-unavailable";
+
+const buildVisitDetailStorageKey = (prefix: string, value: string): string => {
+  return `${prefix}_v2_${VISIT_DETAIL_SCOPE}_${encodeURIComponent(value)}`;
+};
 
 type UseDetailEditSessionArgs = {
   actividadId: string;
@@ -80,9 +86,9 @@ export const useDetailEditSession = ({
 
   const syncEditModeOnEntry = useCallback(() => {
     const baseId = actividadId || recId || "default";
-    const key = `ind_visit_edit_${baseId}`;
+    const key = buildVisitDetailStorageKey("ind_visit_edit", baseId);
     const returnKey = `${key}_return`;
-    const draftKey = `ind_visit_draft_${baseId}`;
+    const draftKey = buildVisitDetailStorageKey("ind_visit_draft", baseId);
     editModeKeyRef.current = key;
 
     try {
@@ -128,7 +134,7 @@ export const useDetailEditSession = ({
   }, [syncEditModeOnEntry]);
 
   useEffect(() => {
-    const key = `ind_visit_draft_${actividadId || recId || "default"}`;
+    const key = buildVisitDetailStorageKey("ind_visit_draft", actividadId || recId || "default");
     draftKeyRef.current = key;
   }, [actividadId, recId]);
 

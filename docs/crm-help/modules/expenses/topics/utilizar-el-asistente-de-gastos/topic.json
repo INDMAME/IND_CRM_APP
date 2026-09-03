@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expenses.utilizar-el-asistente-de-gastos",
+    "moduleId":  "expenses",
+    "sectionNumber":  "8.3.1",
+    "title":  "Utilizar el Asistente de gastos",
+    "summary":  "Consulta hojas cargadas con ayuda del Asistente de gastos.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Utilizar el Asistente de gastos",
+                                  "hojas de gastos",
+                                  "gastos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre utilizar el asistente de gastos?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expenses.buscar-y-filtrar-hojas"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "A13D56642CDC135385AD1C61015B7E4655646D350A006E88E8C8818A256B86A2",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "8.3.1",
+                   "pageFromTableOfContents":  18
+               }
+}

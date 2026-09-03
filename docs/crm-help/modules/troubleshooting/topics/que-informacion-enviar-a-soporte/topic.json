@@ -1,0 +1,55 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "troubleshooting.que-informacion-enviar-a-soporte",
+    "moduleId":  "troubleshooting",
+    "sectionNumber":  "12.6",
+    "title":  "Qué información enviar a soporte",
+    "summary":  "Prepara los datos útiles que soporte necesita para investigar.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Qué información enviar a soporte",
+                                  "problemas frecuentes",
+                                  "soporte"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre qué información enviar a soporte?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "0044C90D96A92A9E063C271EC19117614160D654300AABB71EFFB4B95AE252B3",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+                         {
+                             "id":  "troubleshooting.que-informacion-enviar-a-soporte.quick-01",
+                             "question":  "¿Qué información debo enviar a soporte?",
+                             "answer":  "Su nombre de usuario corporativo, sin contraseña. Empresa activa. Módulo y acción que estaba realizando. Identificador de la visita, hoja o ticket cuando exista. Fecha y hora aproximadas. Texto completo del mensaje de error. Captura que no muestre contraseñas, códigos de acceso ni datos innecesarios.",
+                             "sourceChunkIds":  [
+                                                    "troubleshooting.que-informacion-enviar-a-soporte--01"
+                                                ]
+                         }
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "12.6",
+                   "pageFromTableOfContents":  32
+               }
+}

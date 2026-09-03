@@ -18,6 +18,8 @@ import type {
   ExpenseSheetDraftResponse,
   ExpenseSheetHeaderUpdateRequest,
   ExpenseSheetLineDto,
+  ExpenseSheetLineTicketRequest,
+  ExpenseSheetLineTicketResultDto,
   ExpenseSheetLineUpdateRequest,
   ExpenseSheetLineUpdateResponseData,
   ExpenseSheetListApiRequest,
@@ -91,26 +93,12 @@ import {
   toExpenseSheetLineReimbursableExpense,
   toExpenseSheetReimbursableExpense,
 } from "./expenseSheetTotals.ts";
+import {
+  resolveExistingExpenseProjectIdFromPages,
+  type ExpenseProjectCatalogPage,
+} from "./expenseProjectValidation.ts";
 
-type ProjectDropdownOption = {
-  value?: string;
-  Value?: string;
-  text?: string;
-  Text?: string;
-  projId?: string;
-  ProjId?: string;
-  name?: string;
-  Name?: string;
-  description?: string;
-  Description?: string;
-};
-
-type ProjectDropdownResponse = {
-  total?: number;
-  Total?: number;
-  items?: ProjectDropdownOption[];
-  Items?: ProjectDropdownOption[];
-};
+type ProjectDropdownResponse = ExpenseProjectCatalogPage;
 
 type LegacyExpenseListItem = {
   hojaGastosId?: unknown;
@@ -1422,6 +1410,34 @@ export const propagateExpenseSheetReimbursableExpense = async (
   return normalizeApiResponse(response);
 };
 
+// Atomically updates the header project and every line, preserving an explicit blank value.
+export const propagateExpenseSheetProjectDefault = async (
+  hojaGastosId: string,
+  projectId: string,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<null>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeSheetId = encodeURIComponent(String(hojaGastosId || "").trim());
+  if (!safeSheetId) {
+    throw new ApiFetchError(indT("Api_RequestFailed", "Request failed."));
+  }
+
+  const response = await fetchJson<IndApiResponse<null>>(
+    `/api/crm/expensesheets/${safeSheetId}/project-default/propagate`,
+    {
+      ...options,
+      method: "POST",
+      headers: buildExpenseHeaders(context, options, true),
+      body: JSON.stringify({
+        projId: safeText(projectId),
+        projIdProvided: true,
+      }),
+    }
+  );
+
+  return normalizeApiResponse(response);
+};
+
 // Deletes a full expense sheet using /api/crm/expensesheets/{hojaGastosId}/lines/0?deleteWholeSheet=true.
 export const deleteExpenseSheet = async (
   hojaGastosId: string,
@@ -1484,6 +1500,60 @@ export const updateExpenseSheetLine = async (
       method: "PUT",
       headers: buildExpenseHeaders(context, options, true),
       body: JSON.stringify(normalizedPayload),
+    }
+  );
+
+  return normalizeApiResponse(response);
+};
+
+// MMS - Attaches an existing ticket to a manual line through the atomic endpoint. - 2026.08.04
+export const attachExpenseSheetLineTicket = async (
+  hojaGastosId: string,
+  lineRecId: string,
+  payload: ExpenseSheetLineTicketRequest,
+  options?: ExpenseTicketListFetchOptions
+): Promise<IndApiResponse<ExpenseSheetLineTicketResultDto>> => {
+  const { axUserIdOverride, ...baseOptions } = options || {};
+  const context = await ensureExpenseApiContext(baseOptions);
+  const safeSheetId = encodeURIComponent(safeText(hojaGastosId));
+  const safeLineId = encodeURIComponent(safeText(lineRecId));
+  const safeFileId = safeText(payload?.fileId);
+  if (!safeSheetId || !safeLineId || !safeFileId) {
+    throw new ApiFetchError(indT("Api_RequestFailed", "Request failed."));
+  }
+
+  const response = await fetchJson<IndApiResponse<ExpenseSheetLineTicketResultDto>>(
+    `/api/crm/expensesheets/${safeSheetId}/lines/${safeLineId}/ticket`,
+    {
+      ...baseOptions,
+      method: "PUT",
+      headers: buildTicketListHeaders(context, baseOptions, axUserIdOverride),
+      body: JSON.stringify({ fileId: safeFileId }),
+    }
+  );
+
+  return normalizeApiResponse(response);
+};
+
+// MMS - Detaches a ticket while preserving the line, ticket header, and file. - 2026.08.04
+export const detachExpenseSheetLineTicket = async (
+  hojaGastosId: string,
+  lineRecId: string,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<ExpenseSheetLineTicketResultDto>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeSheetId = encodeURIComponent(safeText(hojaGastosId));
+  const safeLineId = encodeURIComponent(safeText(lineRecId));
+  if (!safeSheetId || !safeLineId) {
+    throw new ApiFetchError(indT("Api_RequestFailed", "Request failed."));
+  }
+
+  const response = await fetchJson<IndApiResponse<ExpenseSheetLineTicketResultDto>>(
+    `/api/crm/expensesheets/${safeSheetId}/lines/${safeLineId}/ticket`,
+    {
+      ...options,
+      method: "DELETE",
+      headers: buildExpenseHeaders(context, options),
     }
   );
 
@@ -2121,7 +2191,7 @@ export const deleteExpenseSheetTicket = async (
   const context = await ensureExpenseApiContext(options);
   const safeFileId = encodeURIComponent(String(fileId || "").trim());
   const query = new URLSearchParams();
-  if (Number.isInteger(Number(lineRecId)) && Number(lineRecId) > 0) {
+  if (Number.isInteger(Number(lineRecId)) && Number(lineRecId) !== 0) {
     query.set("lineRecId", String(lineRecId));
   }
 
@@ -2320,5 +2390,19 @@ export const fetchExpenseProjects = async (
       method: "GET",
       ...options,
     }
+  );
+};
+
+// Resolves an exact project id through the existing company-scoped project catalog.
+export const fetchExistingExpenseProjectId = async (
+  projectId: string,
+  options?: ApiFetchOptions
+): Promise<string> => {
+  const normalizedProjectId = String(projectId || "").trim();
+  if (!normalizedProjectId) return "";
+
+  return resolveExistingExpenseProjectIdFromPages(
+    normalizedProjectId,
+    (page, pageSize) => fetchExpenseProjects(normalizedProjectId, page, pageSize, options)
   );
 };

@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "tickets.abrir-y-filtrar-tickets",
+    "moduleId":  "tickets",
+    "sectionNumber":  "9.1",
+    "title":  "Abrir y filtrar tickets",
+    "summary":  "Accede a la lista de tickets y aplica filtros.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Abrir y filtrar tickets",
+                                  "tickets",
+                                  "justificantes"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre abrir y filtrar tickets?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "tickets.modulo-tickets"
+                        ],
+    "routeKey":  "expenses.tickets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "7ED811F824A4CADADBA3AEFE80A83EA71674F069570D90E969CAB5E94B354AA8",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "9.1",
+                   "pageFromTableOfContents":  24
+               }
+}

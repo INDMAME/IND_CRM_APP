@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : INDPersonaTable unloaded at Lunes 22/06/2026
+; Navision Axapta Table : INDPersonaTable unloaded at Lunes 24/08/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -314,7 +314,7 @@ Formatversion: 1
           HelpText            #
           GroupPrompt         #
           SaveContents        #Yes
-          Mandatory           #No
+          Mandatory           #Yes
           AllowEditOnCreate   #Yes
           AllowEdit           #Yes
           Visible             #Yes
@@ -471,6 +471,31 @@ Formatversion: 1
           EnumType            #NoYes
         ENDPROPERTIES
         
+      FIELD #PersonalEmail
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #PersonalEmail
+          Label               #Email personal
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #Email
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+
     ENDFIELDS
     GROUPS
       GROUP #AutoReport
@@ -523,6 +548,8 @@ Formatversion: 1
           #AliasNickname
           #ContractType
           #UserId
+          #Email
+          #PersonalEmail
           #StartDate
           #Blocked
           #AllowSelfManagement

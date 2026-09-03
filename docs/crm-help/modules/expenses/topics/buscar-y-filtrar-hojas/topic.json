@@ -1,0 +1,49 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expenses.buscar-y-filtrar-hojas",
+    "moduleId":  "expenses",
+    "sectionNumber":  "8.3",
+    "title":  "Buscar y filtrar hojas",
+    "summary":  "Encuentra hojas de gastos mediante búsqueda y filtros.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Buscar y filtrar hojas",
+                                  "hojas de gastos",
+                                  "gastos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre buscar y filtrar hojas?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expenses.modulo-hojas-de-gastos",
+                            "expenses.utilizar-el-asistente-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "34B0A7B6F45A92EEA6D6D6216F0FB38E3859D8F8817CD294773B6D985B223C92",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "8.3",
+                   "pageFromTableOfContents":  17
+               }
+}

@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "visits.consultar-editar-o-eliminar-una-visita",
+    "moduleId":  "visits",
+    "sectionNumber":  "7.6",
+    "title":  "Consultar, editar o eliminar una visita",
+    "summary":  "Abre una visita para consultar, editar o eliminar sus datos.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Consultar, editar o eliminar una visita",
+                                  "visitas",
+                                  "historial de visitas"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre consultar, editar o eliminar una visita?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "visits.modulo-visitas"
+                        ],
+    "routeKey":  "visits.history",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "337E322870A88E0D8F577DD0F9BE83722ADD6ACD641E77B402F78C2A0F3B23C7",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "7.6",
+                   "pageFromTableOfContents":  15
+               }
+}

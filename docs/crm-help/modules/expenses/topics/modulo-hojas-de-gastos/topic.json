@@ -1,0 +1,58 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expenses.modulo-hojas-de-gastos",
+    "moduleId":  "expenses",
+    "sectionNumber":  "8",
+    "title":  "Módulo Hojas de gastos",
+    "summary":  "Descubre cómo se organizan las hojas y sus líneas de gasto.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Módulo Hojas de gastos",
+                                  "Hojas de gastos",
+                                  "hojas de gastos",
+                                  "gastos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre módulo hojas de gastos?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expenses.flujo-general-de-una-hoja-de-gastos",
+                            "expenses.abrir-la-lista-de-hojas",
+                            "expenses.buscar-y-filtrar-hojas",
+                            "expenses.crear-la-cabecera-de-una-hoja",
+                            "expenses.comprender-el-detalle-de-la-hoja",
+                            "expenses.anadir-una-linea-manual",
+                            "expenses.divisas-e-importes-de-una-linea",
+                            "expenses.crear-un-ticket-desde-una-hoja",
+                            "expenses.vincular-tickets-existentes",
+                            "expenses.editar-la-cabecera-y-las-lineas"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "FBA8676DA188A1F03675185DF2B43CF5B0CE51A5DFBD0EA13B7A5344394AD321",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "8",
+                   "pageFromTableOfContents":  16
+               }
+}

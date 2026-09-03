@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
 import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
+import type { AssistantLauncherImageSources } from "../../../components/commons/chat/AssistantLauncherButton.tsx";
 import { useAuthContext } from "../../../context/AuthContext.tsx";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
@@ -49,6 +50,11 @@ import {
 const PAGE_SIZE = 6;
 const FLOATING_BASELINE_BOTTOM_PX = 24;
 
+type ExpenseSheetsPageProps = {
+  assistantBotImageSrc: string;
+  assistantLauncherImageSources: AssistantLauncherImageSources;
+};
+
 // Initializes auth seed for expense API calls before island effects run.
 const bootstrapExpenseApiAuth = () => {
   configureExpenseApiAuth({
@@ -58,7 +64,7 @@ const bootstrapExpenseApiAuth = () => {
   });
 };
 
-const ExpenseSheetsPageContent = () => {
+const ExpenseSheetsPageContent = ({ assistantBotImageSrc, assistantLauncherImageSources }: ExpenseSheetsPageProps) => {
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const timelineContainerRef = React.useRef<HTMLDivElement | null>(null);
@@ -761,7 +767,12 @@ const ExpenseSheetsPageContent = () => {
         labels={paginationLabels}
       />
 
-      <ExpenseSheetsAssistant context={assistantContext} isListLoading={isLoading} />
+      <ExpenseSheetsAssistant
+        botImageSrc={assistantBotImageSrc}
+        context={assistantContext}
+        isListLoading={isLoading}
+        launcherImageSources={assistantLauncherImageSources}
+      />
 
       {canCreateExpense ? (
         <FloatingActionButton
@@ -778,10 +789,13 @@ const ExpenseSheetsPageContent = () => {
 };
 
 // Main page entry for expense sheets list.
-const ExpenseSheetsPage = () => {
+const ExpenseSheetsPage = ({ assistantBotImageSrc, assistantLauncherImageSources }: ExpenseSheetsPageProps) => {
   return (
     <VisitasPageProviders enableExpenseManagement>
-      <ExpenseSheetsPageContent />
+      <ExpenseSheetsPageContent
+        assistantBotImageSrc={assistantBotImageSrc}
+        assistantLauncherImageSources={assistantLauncherImageSources}
+      />
     </VisitasPageProviders>
   );
 };
@@ -790,7 +804,19 @@ const mount = () => {
   bootstrapExpenseApiAuth();
   const rootEl = document.getElementById("expense-sheets-root");
   if (!rootEl) return;
-  mountReactIsland(rootEl, <ExpenseSheetsPage />);
+  const assistantBotImageSrc = rootEl.dataset.assistantBotImage || "/images/kaloria_bot.png";
+  const assistantLauncherImageSources: AssistantLauncherImageSources = {
+    animatedWebp: rootEl.dataset.assistantLauncherAnimatedWebp || "",
+    animatedGif: rootEl.dataset.assistantLauncherAnimatedGif || "",
+    reducedMotionPng: rootEl.dataset.assistantLauncherReducedMotionPng || "",
+  };
+  mountReactIsland(
+    rootEl,
+    <ExpenseSheetsPage
+      assistantBotImageSrc={assistantBotImageSrc}
+      assistantLauncherImageSources={assistantLauncherImageSources}
+    />
+  );
 };
 
 mountWhenDocumentReady(mount);

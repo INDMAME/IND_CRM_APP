@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: FRM
 
-; Navision Axapta Forms unloaded at Miércoles 29/07/2026
+; Navision Axapta Forms unloaded at Lunes 24/08/2026
 ; --------------------------------------------------------------------------------
 FRMVERSION 5
 
@@ -2838,7 +2838,7 @@ FORM #CRMHojaGastosTable
                               DataField           #
                               Mandatory           #No
                               ArrayIndex          #0
-                              DataMethod          #TotalAmountMST
+                              DataMethod          #TotalBrutoAmountMST
                               SearchMode          #None
                             ENDPROPERTIES
                             

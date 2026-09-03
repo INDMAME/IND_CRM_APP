@@ -1,0 +1,49 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "visits.filtrar-el-historial",
+    "moduleId":  "visits",
+    "sectionNumber":  "7.2",
+    "title":  "Filtrar el historial",
+    "summary":  "Busca visitas aplicando los filtros del historial.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Filtrar el historial",
+                                  "visitas",
+                                  "historial de visitas"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre filtrar el historial?",
+                                          "¿Puedo filtrar el historial de visitas por cliente y fecha?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "visits.modulo-visitas"
+                        ],
+    "routeKey":  "visits.history",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "DBBF689D922263B14893B7B257A888A26C674E6148921D4A28669846483F5866",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "7.2",
+                   "pageFromTableOfContents":  13
+               }
+}
