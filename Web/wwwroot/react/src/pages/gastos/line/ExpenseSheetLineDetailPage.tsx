@@ -21,7 +21,7 @@ import {
   useExpenseGastoTypeWarning,
   type ExpenseGastoTypeWarningDialogOptions,
 } from "../hooks/useExpenseGastoTypeWarning.ts";
-import { areExpenseNumericInputsEquivalent, formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
+import { areExpenseNumericInputsEquivalent, formatExpenseInputNumber, parseExpenseExchangeRateInput } from "../utils/expenseNumberFormat.ts";
 import {
   calculateExpenseLineAmountMSTForCurrency,
   calculateExpenseLineExchangeRateForCurrency,
@@ -230,6 +230,7 @@ const ExpenseSheetLineDetailContent = () => {
     return formatExpenseInputNumber(value, {
       minimumFractionDigits: 7,
       maximumFractionDigits: 7,
+      preferDecimalSeparator: true,
       useGrouping: true,
       fallback: "",
     });
@@ -450,7 +451,7 @@ const ExpenseSheetLineDetailContent = () => {
       const exchangeRate = resolveExpenseLineExchangeRateForCurrency(
         normalizedCurrencyCode,
         localCurrencyCode,
-        parseDecimalInput(exchangeRateRaw)
+        parseExpenseExchangeRateInput(exchangeRateRaw)
       );
       const nextAmountMST =
         amount != null
@@ -565,7 +566,7 @@ const ExpenseSheetLineDetailContent = () => {
       const exchangeRate = resolveExpenseLineExchangeRateForCurrency(
         draftCurrencyCode,
         localCurrencyCode,
-        parseDecimalInput(effectiveExchangeRate)
+        parseExpenseExchangeRateInput(effectiveExchangeRate)
       );
       const sameReimbursementCurrency = isExpenseLineSameReimbursementCurrency(draftCurrencyCode, localCurrencyCode);
       if (sameReimbursementCurrency && amountMSTManualEditRef.current) {

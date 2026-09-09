@@ -1,8 +1,8 @@
 ﻿using IND_CRM_APP.Middleware;
+using IND_CRM_APP.Extensions;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
-using Microsoft.AspNetCore.Diagnostics;
 using IND_CRM_APP.Infrastructure.Security.Auth;
 using IND_CRM_APP.Infrastructure.Security.Filters;
 using IND_CRM_APP.Infrastructure.Performance;
@@ -332,21 +332,7 @@ var app = builder.Build();
 // -----------------------------
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler(errorApp =>
-    {
-        errorApp.Run(async context =>
-        {
-            var feature = context.Features.Get<IExceptionHandlerPathFeature>();
-            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-
-            if (feature?.Error != null)
-            {
-                logger.LogError(feature.Error, "Unhandled exception on path: {Path}", feature.Path);
-            }
-
-            context.Response.Redirect("/Shared/Error");
-        });
-    });
+    app.UseExceptionHandler("/Shared/Error");
 
     app.UseHsts();
 }
@@ -384,9 +370,9 @@ app.Use(async (context, next) =>
 
 app.UseStaticAssetDelivery(app.Environment.WebRootFileProvider);
 app.UseRequestLocalization(app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value);
+// Register before routing so status re-execution resolves its error endpoint again.
+app.UseCrmStatusCodePages();
 app.UseRouting();
-// Friendly 404 page for missing routes.
-app.UseStatusCodePagesWithReExecute("/Home/NotFound", "?code={0}");
 app.UseCookiePolicy();
 app.UseSession();
 app.UseAuthentication();

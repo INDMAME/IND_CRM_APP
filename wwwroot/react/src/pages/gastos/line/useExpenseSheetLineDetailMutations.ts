@@ -10,6 +10,7 @@ import type {
 import { parseExpenseInternationalValue } from "../constants/internationalOptions.ts";
 import { resolveExpenseLineReimbursableExpenseForWrite } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
+import { parseExpenseExchangeRateInput } from "../utils/expenseNumberFormat.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 import { executeExpenseMutation, parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
@@ -142,7 +143,7 @@ export const useExpenseSheetLineDetailMutations = ({
       isCreateMode
     );
     const parsedAmountMST = parseNumber(draftAmountMST);
-    const parsedExchangeRate = parseNumber(draftExchangeRate);
+    const parsedExchangeRate = parseExpenseExchangeRateInput(draftExchangeRate);
     const normalizedCurrencyCode = normalizeExpenseLineCurrencyCode(draftCurrencyCode);
     const normalizedLocalCurrencyCode = normalizeExpenseLineCurrencyCode(localCurrencyCode);
     const normalizedDescription = String(draftDescription || "").trim();

@@ -1,0 +1,235 @@
+using System.Net;
+using System.Reflection;
+using System.Text.Json;
+using IND_CRM_APP.Controllers;
+using IND_CRM_APP.Services;
+using IND_CRM_APP.Models.CRM;
+using IND_CRM_APP.Models.Shared;
+using IND_CRM_APP.Infrastructure.Localization;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging.Abstractions;
+
+var verified = 0;
+foreach (var legacy in new[] { false, true })
+{
+    foreach (var metadata in new[] { false, true })
+    {
+        var scenario = Create();
+        scenario.Api.Deletion.Response.Data!.MetadataAvailable = metadata;
+        var json = Check(await Delete(scenario.Controller, legacy), 200, legacy, true);
+        Require(json.GetProperty(legacy ? "data" : "Data").GetProperty("MetadataAvailable").GetBoolean() == metadata, "Origin metadata was changed");
+        Require(scenario.Api.Calls.SequenceEqual(new[] { "GetExpenseSheetDeletionAsync", "GetExpenseSheetDetailAsync", "DeleteExpenseSheetWithTicketsAsync" }), "Initial deletion must validate first and never pre-detach assets");
+        verified++;
+    }
+
+    var retry = Create();
+    retry.Api.Progress.Response.Data = new() { Exists = true, SheetDeleted = true };
+    retry.Api.Deletion = Transport(409, false, new() { Exists = true, SheetDeleted = true }, "CRM_EXPENSESHEET_CLEANUP_PENDING");
+    var pending = Check(await Delete(retry.Controller, legacy), 409, legacy, false);
+    Require(pending.GetProperty(legacy ? "errorCode" : "ErrorCode").GetString() == "CRM_EXPENSESHEET_CLEANUP_PENDING", "Pending cleanup lost error code");
+    Require(!retry.Controller.TempData.ContainsKey("IND_ActionMark_Type"), "Pending cleanup must not show delete success");
+    retry.Api.Deletion = Transport(200, true, new() { Exists = true, SheetDeleted = true, Complete = true });
+    Check(await Delete(retry.Controller, legacy), 200, legacy, true);
+    Require(!retry.Api.Calls.Contains("GetExpenseSheetDetailAsync"), "Cleanup retry must not require a deleted header");
+    Require(retry.Api.Calls.Count(name => name == "DeleteExpenseSheetWithTicketsAsync") == 2, "Cleanup retry was not forwarded");
+    verified++;
+
+    var lostCommit = Create();
+    lostCommit.Api.Progress.Response.Data = new() { Exists = true, DeleteAttempted = true };
+    Check(await Delete(lostCommit.Controller, legacy), 200, legacy, true);
+    Require(!lostCommit.Api.Calls.Contains("GetExpenseSheetDetailAsync"), "A lost commit response must be reconciled by the authorized durable operation");
+    verified++;
+
+    var deniedJournal = Create();
+    deniedJournal.Api.Progress = Transport(403, false, null, "AUTH_FORBIDDEN");
+    Check(await Delete(deniedJournal.Controller, legacy), 403, legacy, false);
+    Require(deniedJournal.Api.Calls.SequenceEqual(new[] { "GetExpenseSheetDeletionAsync" }), "Denied progress must stop deletion");
+    verified++;
+
+    var deniedDelete = Create();
+    deniedDelete.Api.Deletion = Transport(403, false, null, "AUTH_FORBIDDEN");
+    Check(await Delete(deniedDelete.Controller, legacy), 403, legacy, false);
+    Require(!deniedDelete.Controller.TempData.ContainsKey("IND_ActionMark_Type"), "Rejected deletion must not show success");
+    verified++;
+
+    var deniedActor = Create();
+    deniedActor.Controller.Request.Headers["X-IND-AxUserId"] = "OUTSIDE";
+    Check(await Delete(deniedActor.Controller, legacy), 403, legacy, false);
+    Require(deniedActor.Api.Calls.SequenceEqual(new[] { "GetExpenseSheetSubordinatesAsync" }), "Unvalidated actor reached durable endpoints");
+    verified++;
+
+    var deniedOwner = Create();
+    deniedOwner.Api.Sheet.OwnerAxUserId = "OTHER";
+    deniedOwner.Api.Sheet.UserId = "OTHER";
+    Check(await Delete(deniedOwner.Controller, legacy), 403, legacy, false);
+    Require(!deniedOwner.Api.Calls.Contains("DeleteExpenseSheetWithTicketsAsync"), "Owner guard was bypassed before initial deletion");
+    verified++;
+
+    var paid = Create();
+    paid.Api.Sheet.ExpenseSheetStatus = 4;
+    Check(await Delete(paid.Controller, legacy), 409, legacy, false);
+    Require(!paid.Api.Calls.Contains("DeleteExpenseSheetWithTicketsAsync"), "Paid sheet reached delete");
+    verified++;
+
+    var malformed = Create();
+    malformed.Api.Progress = Transport(200, true, null);
+    Check(await Delete(malformed.Controller, legacy), 502, legacy, false);
+    Require(!malformed.Api.Calls.Contains("DeleteExpenseSheetWithTicketsAsync"), "Malformed progress permitted deletion");
+    verified++;
+
+    var incomplete = Create();
+    incomplete.Api.Deletion = Transport(200, true, new() { Exists = true, SheetDeleted = true, Complete = false });
+    Check(await Delete(incomplete.Controller, legacy), 409, legacy, false);
+    verified++;
+}
+
+var lineOnly = Create();
+Check(await lineOnly.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 200, false, true);
+Require(lineOnly.Api.Calls.SequenceEqual(new[] { "GetExpenseSheetDetailAsync", "DeleteExpenseSheetLineAsync" }), "Line-only behavior changed");
+Require(lineOnly.Api.LineDeleteArguments![2]?.ToString() == "123" && Equals(lineOnly.Api.LineDeleteArguments[3], false) && Equals(lineOnly.Api.LineDeleteArguments[4], 0), "Line-only arguments changed");
+verified++;
+
+var http = new DefaultHttpContext();
+http.Features.Set<ISessionFeature>(new SessionFeature { Session = new FakeSession() });
+foreach (var entry in new Dictionary<string, string> { ["INDCompanySelected"] = "ES01", ["AxUser"] = "OWNER", ["ENTRAOID"] = "test-oid", ["INDContextVersion"] = "7", ["INDPermissionsRevision"] = "revision", ["INDContextToken"] = "signed-context" }) http.Session.SetString(entry.Key, entry.Value);
+var handler = new RecordingHandler();
+var client = new ApiClientService(new HttpClient(handler), new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["ApiSettings:BaseUrl"] = "https://api.test", ["IND_ENV"] = "DEV" }).Build(), new FakeToken(), new HttpContextAccessor { HttpContext = http }, new FakeEnvironment(), NullLogger<ApiClientService>.Instance);
+var deletionTransport = await client.DeleteExpenseSheetWithTicketsAsync("bearer", "HG 1", "FUNCTIONAL");
+Require(deletionTransport.StatusCode == HttpStatusCode.Conflict && deletionTransport.Response.Data is { SheetDeleted: true, Complete: false }, "Durable client lost pending status or progress");
+var progressTransport = await client.GetExpenseSheetDeletionAsync("bearer", "HG 1");
+Require(progressTransport.StatusCode == HttpStatusCode.OK && progressTransport.Response.Data is { Exists: false }, "Progress client did not decode the contract");
+Require(handler.Requests[0].Path == "/api/crm/expensesheets/HG%201/with-tickets" && handler.Requests[0].Method == "DELETE", "Wrong durable route");
+Require(handler.Requests[1].Path == "/api/crm/expensesheets/HG%201/deletion" && handler.Requests[1].Method == "GET", "Wrong progress route");
+foreach (var request in handler.Requests) {
+    Require(request.Headers["X-IND-Company"] == "ES01" && request.Headers["Authorization"] == "Bearer bearer", "Company or bearer context lost");
+    Require(request.Headers["X-IND-EntraOid"] == "test-oid" && request.Headers["X-IND-Context-Token"] == "signed-context" && request.Headers["X-IND-Context-Version"] == "7" && request.Headers["X-IND-Permissions-Revision"] == "revision", "Signed identity context lost");
+}
+Require(handler.Requests[0].Headers["X-IND-AxUserId"] == "FUNCTIONAL" && handler.Requests[1].Headers["X-IND-AxUserId"] == "OWNER", "Functional user override leaked or disappeared");
+verified++;
+Console.WriteLine($"Verified {verified} durable deletion cases.");
+
+// Invokes both existing public whole-sheet routes, preserving legacy response casing.
+static Task<IActionResult> Delete(GastosController controller, bool legacy) => legacy
+    ? controller.DeleteExpenseSheet(" HG-1 ", true)
+    : controller.ApiExpenseSheetLineDelete(" HG-1 ", "0", true, 2);
+
+static ApiTransportResponse<ExpenseSheetDeletionProgressDto> Transport(int status, bool success, ExpenseSheetDeletionProgressDto? data, string? errorCode = null) => new() {
+    StatusCode = (HttpStatusCode)status, Response = new() { Success = success, Data = data, ErrorCode = errorCode, Message = "Public message", TraceId = "trace-1" }
+};
+
+// Creates the real controller with own-draft context and API calls that fail on unexpected mutations.
+static (GastosController Controller, FakeApi Api) Create() {
+    var apiClient = DispatchProxy.Create<ICrmApiClient, FakeApi>();
+    var api = (FakeApi)(object)apiClient;
+    var auth = DispatchProxy.Create<IIndAuthContextService, FakeAuth>();
+    var http = new DefaultHttpContext();
+    http.Features.Set<ISessionFeature>(new SessionFeature { Session = new FakeSession() });
+    http.Session.SetString("AxUser", "OWNER");
+    http.Session.SetString("INDCompanySelected", "ES01");
+    var controller = new GastosController(apiClient, new FakeToken(), NullLogger<GastosController>.Instance, null!, null!, auth, new FakeLocalizer()) {
+        ControllerContext = new ControllerContext { HttpContext = http },
+        TempData = new TempDataDictionary(http, new FakeTempData())
+    };
+    return (controller, api);
+}
+
+// Checks response status and public success state without relying on private implementation.
+static JsonElement Check(IActionResult result, int status, bool legacy, bool success) {
+    object? value;
+    int actualStatus;
+    if (result is JsonResult json) { value = json.Value; actualStatus = json.StatusCode ?? 200; }
+    else if (result is ObjectResult item) { value = item.Value; actualStatus = item.StatusCode ?? 200; }
+    else throw new Exception("Unexpected action result");
+    Require(actualStatus == status, $"Expected HTTP {status}, got {actualStatus}: {JsonSerializer.Serialize(value)}");
+    var payload = JsonSerializer.SerializeToElement(value);
+    Require(payload.GetProperty(legacy ? "success" : "Success").GetBoolean() == success, "Wrong public success state");
+    return payload;
+}
+
+static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
+
+// Accepts only expected controller operations, making accidental pre-detach or blob deletion fail.
+public class FakeApi : DispatchProxy {
+    public List<string> Calls { get; } = new();
+    public object?[]? LineDeleteArguments { get; private set; }
+    public ExpenseSheetDetailDto Sheet { get; } = new() { HojaGastosId = "HG-1", OwnerAxUserId = "OWNER", UserId = "OWNER", ExpenseSheetStatus = 0, Lines = new() { new() { RecId = "123", FileId = "FILE-1", Ticket = true } } };
+    public ApiTransportResponse<ExpenseSheetDeletionProgressDto> Progress { get; set; } = new() { Response = new() { Success = true, Data = new() } };
+    public ApiTransportResponse<ExpenseSheetDeletionProgressDto> Deletion { get; set; } = new() { Response = new() { Success = true, Data = new() { Exists = true, SheetDeleted = true, Complete = true, MetadataAvailable = true } } };
+    protected override object? Invoke(MethodInfo? method, object?[]? args) {
+        Calls.Add(method!.Name);
+        if (method.Name == "GetExpenseSheetDeletionAsync") return Task.FromResult(Progress);
+        if (method.Name == "DeleteExpenseSheetWithTicketsAsync") return Task.FromResult(Deletion);
+        if (method.Name == "GetExpenseSheetDetailAsync") return Task.FromResult(new PagedApiResponse<ExpenseSheetDetailDto> { Success = true, Items = new[] { Sheet } });
+        if (method.Name == "GetExpenseSheetSubordinatesAsync") return Task.FromResult(new PagedApiResponse<ExpenseSheetSubordinateDto> { Success = true, Items = Array.Empty<ExpenseSheetSubordinateDto>() });
+        if (method.Name == "DeleteExpenseSheetLineAsync") { LineDeleteArguments = args; return Task.FromResult(new ApiResponse<object> { Success = true }); }
+        throw new Exception("Unexpected API mutation: " + method.Name);
+    }
+}
+
+// Provides a signed-in company owner; API progress independently authorizes durable retries.
+public class FakeAuth : DispatchProxy {
+    private readonly IndWebContext context = new() { Header = new() { AxUserId = "OWNER" }, Companies = new() { new() { CompanyId = "ES01", CrmUserId = "OWNER", AllowSelfManagement = true } } };
+    protected override object? Invoke(MethodInfo? method, object?[]? args) => method!.Name switch {
+        "GetCachedContext" => context,
+        "GetSelectedCompanyId" => "ES01",
+        "EnsureContextAsync" => Task.FromResult(new IndAuthContextResult { Success = true, Context = context }),
+        _ => throw new Exception("Unexpected auth operation")
+    };
+}
+
+public sealed class FakeToken : ITokenSessionService {
+    public (string? Token, DateTime? ExpiresUtc) GetToken() => ("test-token", DateTime.UtcNow.AddHours(1));
+    public void SetToken(string token, DateTime? expiresUtc = null) { }
+    public void Clear() { }
+}
+public sealed class FakeLocalizer : IStringLocalizer<INDSharedResource> {
+    public LocalizedString this[string name] => new(name, name);
+    public LocalizedString this[string name, params object[] args] => this[name];
+    public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) => Array.Empty<LocalizedString>();
+}
+public sealed class FakeSession : ISession {
+    private readonly Dictionary<string, byte[]> values = new();
+    public bool IsAvailable => true;
+    public string Id => "test-session";
+    public IEnumerable<string> Keys => values.Keys;
+    public void Clear() => values.Clear();
+    public Task CommitAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public Task LoadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public void Remove(string key) => values.Remove(key);
+    public void Set(string key, byte[] value) => values[key] = value;
+    public bool TryGetValue(string key, out byte[] value) => values.TryGetValue(key, out value!);
+}
+public sealed class SessionFeature : ISessionFeature {
+    public ISession Session { get; set; } = null!;
+}
+public sealed class FakeTempData : ITempDataProvider {
+    public IDictionary<string, object> LoadTempData(HttpContext context) => new Dictionary<string, object>();
+    public void SaveTempData(HttpContext context, IDictionary<string, object> values) { }
+}
+public sealed class FakeEnvironment : IHostEnvironment {
+    public string EnvironmentName { get; set; } = "Development";
+    public string ApplicationName { get; set; } = "DeletionTests";
+    public string ContentRootPath { get; set; } = Directory.GetCurrentDirectory();
+    public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
+}
+public sealed class RecordingHandler : HttpMessageHandler {
+    public List<(string Method, string Path, Dictionary<string, string> Headers)> Requests { get; } = new();
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
+        Requests.Add((request.Method.Method, request.RequestUri!.AbsolutePath, request.Headers.ToDictionary(header => header.Key, header => string.Join(",", header.Value))));
+        var deleting = request.Method == HttpMethod.Delete;
+        return Task.FromResult(new HttpResponseMessage(deleting ? HttpStatusCode.Conflict : HttpStatusCode.OK) { Content = new StringContent(deleting
+            ? "{\"Success\":false,\"ErrorCode\":\"CRM_EXPENSESHEET_CLEANUP_PENDING\",\"Data\":{\"Exists\":true,\"SheetDeleted\":true,\"Complete\":false}}"
+            : "{\"Success\":true,\"Data\":{\"Exists\":false,\"SheetDeleted\":false,\"Complete\":false}}") });
+    }
+}
+
+namespace IND_CRM_APP.Controllers {
+    // Unrelated view navigation references this key; no link action is exercised here.
+    public static class ExpenseSheetLinkController {
+        public const string ActingUserTempDataKey = "ExpenseSheetLinkActingUserId";
+    }
+}

@@ -19,6 +19,7 @@ import {
   areExpenseNumericInputsEquivalent,
   formatExpenseInputNumber,
   parseExpenseNumericInput,
+  parseExpenseExchangeRateInput,
 } from "../../utils/expenseNumberFormat.ts";
 import type { ExpenseTicketDetailHeader } from "./expenseTicketDetailTypes.ts";
 
@@ -107,6 +108,7 @@ const formatEditableExchangeRate = (value: number | string | null | undefined): 
   return formatExpenseInputNumber(value, {
     minimumFractionDigits: 7,
     maximumFractionDigits: 7,
+    preferDecimalSeparator: true,
     useGrouping: true,
     fallback: "",
   });
@@ -127,7 +129,7 @@ const buildAmountMSTPatchFromExchangeRate = (
   const parsedExchangeRate = resolveExpenseLineExchangeRateForCurrency(
     currencyCode,
     reimbursementCurrencyCode,
-    parseExpenseNumericInput(exchangeRate)
+    parseExpenseExchangeRateInput(exchangeRate)
   );
   const nextAmountMST =
     parsedTotalAmount != null
@@ -176,7 +178,7 @@ const resolveExchangeRateForSettlement = (
     return formatEditableExchangeRate(100);
   }
 
-  const parsedExchangeRate = parseExpenseNumericInput(exchangeRate);
+  const parsedExchangeRate = parseExpenseExchangeRateInput(exchangeRate);
   if (parsedExchangeRate != null && parsedExchangeRate > 0) {
     return exchangeRate;
   }
@@ -667,7 +669,7 @@ export const useExpenseTicketDetailEditor = ({
     const normalizedCurrencyCode = String(state.draft.currencyCode || "").trim().toUpperCase();
     const parsedTotalAmount = parseExpenseNumericInput(state.draft.totalAmount);
     const parsedAmountMST = parseExpenseNumericInput(state.draft.amountMST);
-    const parsedExchangeRate = parseExpenseNumericInput(state.draft.exchangeRate);
+    const parsedExchangeRate = parseExpenseExchangeRateInput(state.draft.exchangeRate);
     const descriptionIsValid = !!normalizedDescription;
     const gastoTypeIsValid = isValidRequiredGastoType(state.draft.gastoType);
     const currencyIsValid = !!normalizedCurrencyCode;

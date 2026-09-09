@@ -188,6 +188,7 @@ const createCoordinatorHarness = ({
   hub = new BroadcastHub(),
   pathname = "/Home/Index",
   csrfToken = "csrf-token",
+  page = "",
   fetchImpl,
 } = {}) => {
   const listeners = new Map();
@@ -210,7 +211,7 @@ const createCoordinatorHarness = ({
   }
 
   const document = {
-    body: { appendChild: () => {} },
+    body: { dataset: { indPage: page }, appendChild: () => {} },
     createElement: (tagName) => (tagName === "form" ? new MockHtmlFormElement() : {}),
     querySelector: (selector) => (selector === 'meta[name="csrf-token"]' ? { content: csrfToken } : null),
     querySelectorAll: () => [],
@@ -502,6 +503,20 @@ test("login without an identity clears state but does not redirect in a loop", a
   assert.equal(sessionStorage.getItem("visitas_history_filter_v1"), null);
   assert.deepEqual(harness.location.replaceCalls, []);
 });
+
+for (const pathname of ["/", "/?returnUrl=%2FHome%2FIndex", "/Auth", "/Auth/Login"]) {
+  test(`marked login at ${pathname} clears private state without forcing relogin`, async () => {
+    const localStorage = new MockStorage([["ind_browser_identity_v1", "old-user"]]);
+    const harness = createCoordinatorHarness({
+      oid: "", company: "", pathname, page: "login", csrfToken: "", localStorage,
+    });
+    await harness.window.IND.browserState.ready;
+    assert.equal(localStorage.getItem("ind_browser_identity_v1"), null);
+    assert.equal(harness.window.IND.browserState.isPersistenceAllowed(), false);
+    assert.equal(harness.fetchCalls.length, 0);
+    assert.deepEqual(harness.location.replaceCalls, []);
+  });
+}
 
 test("an authenticated page with no identity clears the server session before Login", async () => {
   const harness = createCoordinatorHarness({ oid: "", company: "ceu", pathname: "/Home/Index" });

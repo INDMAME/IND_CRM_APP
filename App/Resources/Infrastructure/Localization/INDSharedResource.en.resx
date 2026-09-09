@@ -1856,4 +1856,10 @@
   <data name="HomeHelp_CatalogSearchLabel" xml:space="preserve"><value>Search help topics</value></data>
   <data name="HomeHelp_CatalogSearchPlaceholder" xml:space="preserve"><value>Search topics…</value></data>
   <data name="HomeHelp_CatalogEmpty" xml:space="preserve"><value>No matching topics.</value></data>
+  <data name="Visits_Create_PartialRetry" xml:space="preserve">
+    <value>Activity {0} was created, but some contacts are pending. Retry without changing the form to complete the same activity. {1}</value>
+  </data>
+  <data name="Visits_Create_PartialChanged" xml:space="preserve">
+    <value>Activity {0} already exists. Restore the original form values to retry pending contacts, or edit the activity from history.</value>
+  </data>
 </root>

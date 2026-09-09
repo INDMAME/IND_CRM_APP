@@ -1602,6 +1602,56 @@ namespace IND_CRM_APP.Services
             return BuildApiResponse<object>(result, "PropagateExpenseSheetProjectDefault");
         }
 
+        // Forwards durable deletion with the selected company and validated functional actor.
+        public async Task<ApiTransportResponse<ExpenseSheetDeletionProgressDto>> DeleteExpenseSheetWithTicketsAsync(
+            string token,
+            string hojaGastosId,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default)
+        {
+            PrepareRequestHeaders(
+                token,
+                "DeleteExpenseSheetWithTickets",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
+            var result = await SendDeleteAsync(
+                ApiRoutes.ExpenseSheetWithTickets(EscapePathSegment(hojaGastosId)),
+                cancellationToken);
+            return new ApiTransportResponse<ExpenseSheetDeletionProgressDto>
+            {
+                Response = BuildApiResponse<ExpenseSheetDeletionProgressDto>(result, "DeleteExpenseSheetWithTickets"),
+                StatusCode = result.StatusCode,
+                Headers = result.Headers
+            };
+        }
+
+        // Reads durable progress with the same signed request context used for deletion.
+        public async Task<ApiTransportResponse<ExpenseSheetDeletionProgressDto>> GetExpenseSheetDeletionAsync(
+            string token,
+            string hojaGastosId,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default)
+        {
+            PrepareRequestHeaders(
+                token,
+                "GetExpenseSheetDeletion",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
+            var result = await SendGetAsync(
+                ApiRoutes.ExpenseSheetDeletion(EscapePathSegment(hojaGastosId)),
+                cancellationToken);
+            return new ApiTransportResponse<ExpenseSheetDeletionProgressDto>
+            {
+                Response = BuildApiResponse<ExpenseSheetDeletionProgressDto>(result, "GetExpenseSheetDeletion"),
+                StatusCode = result.StatusCode,
+                Headers = result.Headers
+            };
+        }
+
         public async Task<ApiResponse<object>> DeleteExpenseSheetLineAsync(
             string token,
             string hojaGastosId,

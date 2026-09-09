@@ -123,6 +123,7 @@ const formatEditableExchangeRate = (value: number | null | undefined): string =>
   return formatExpenseInputNumber(value, {
     minimumFractionDigits: 7,
     maximumFractionDigits: 7,
+    preferDecimalSeparator: true,
     useGrouping: true,
     fallback: "",
   });

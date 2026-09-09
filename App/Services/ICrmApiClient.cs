@@ -224,6 +224,22 @@ namespace IND_CRM_APP.Services
             string? axUserIdOverride = null
         );
 
+        // Deletes a whole sheet through the durable upstream cleanup operation.
+        Task<ApiTransportResponse<ExpenseSheetDeletionProgressDto>> DeleteExpenseSheetWithTicketsAsync(
+            string token,
+            string hojaGastosId,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default
+        );
+
+        // Reads authorized progress so cleanup can resume after the sheet is gone.
+        Task<ApiTransportResponse<ExpenseSheetDeletionProgressDto>> GetExpenseSheetDeletionAsync(
+            string token,
+            string hojaGastosId,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default
+        );
+
         Task<ApiResponse<object>> DeleteExpenseSheetLineAsync(
             string token,
             string hojaGastosId,

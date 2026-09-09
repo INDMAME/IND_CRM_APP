@@ -34,6 +34,13 @@ namespace IND_CRM_APP.Middleware
 
         public async Task Invoke(HttpContext context)
         {
+            // Error rendering must remain available when token refresh itself has failed.
+            if (context.GetEndpoint()?.Metadata.GetMetadata<IndErrorEndpointAttribute>() != null)
+            {
+                await _next(context);
+                return;
+            }
+
             var path = context.Request.Path.Value ?? string.Empty;
             var lowerPath = path.ToLowerInvariant();
 

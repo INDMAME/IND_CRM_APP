@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using IND_CRM_APP.Infrastructure.Security.Auth;
 
 namespace IND_CRM_APP.Middleware
 {
@@ -32,6 +33,13 @@ namespace IND_CRM_APP.Middleware
         /// </summary>
         public async Task Invoke(HttpContext context)
         {
+            // An error response cannot change company or perform a business operation.
+            if (context.GetEndpoint()?.Metadata.GetMetadata<IndErrorEndpointAttribute>() != null)
+            {
+                await _next(context);
+                return;
+            }
+
             var expectedCompanyId = context.Request.Headers[ExpectedCompanyHeader].ToString();
             var selectedCompanyId = context.Session.GetString(SelectedCompanySessionKey);
 

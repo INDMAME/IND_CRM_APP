@@ -23,7 +23,7 @@ using System.Xml.Linq;
 namespace IND_CRM_APP.Controllers
 {
     // Controller for expense sheet pages and read endpoints.
-    public class GastosController : BaseMvcController
+    public partial class GastosController : BaseMvcController
     {
         private readonly ILogger<GastosController> _logger;
         private readonly ICrmEnumCatalog _crmEnumCatalog;
@@ -1991,27 +1991,20 @@ namespace IND_CRM_APP.Controllers
             if (actingUser.Error != null)
                 return actingUser.Error;
             var requestAxUserId = actingUser.AxUserId;
+            if (resolvedDeleteWholeSheet)
+                return await ExecuteExpenseSheetDeletionAsync(token, safeSheetId, requestAxUserId, nameof(ApiExpenseSheetLineDelete));
+
             var mutationGuard = await ValidateExpenseSheetMutationAsync(
                 token,
                 safeSheetId,
                 requestAxUserId,
                 nameof(ApiExpenseSheetLineDelete),
-                resolvedDeleteWholeSheet ? ExpenseSheetMutationType.DeleteSheet : ExpenseSheetMutationType.LineMutation);
+                ExpenseSheetMutationType.LineMutation);
             if (!mutationGuard.Allowed)
                 return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
 
             try
             {
-                if (resolvedDeleteWholeSheet)
-                {
-                    var cleanupResult = await CleanupExpenseSheetLinkedTicketsBeforeDeleteAsync(
-                        token,
-                        safeSheetId,
-                        requestAxUserId);
-                    if (cleanupResult != null)
-                        return cleanupResult;
-                }
-
                 var response = await _apiClient.DeleteExpenseSheetLineAsync(
                     token,
                     safeSheetId,
@@ -2048,193 +2041,6 @@ namespace IND_CRM_APP.Controllers
                     _sr["Api_RequestFailed"].Value,
                     "UNHANDLED_ERROR");
             }
-        }
-
-        // MMS - Detaches every linked line and only cleans ticket-origin assets during whole-sheet deletion. - 2026.08.04
-        private async Task<IActionResult?> CleanupExpenseSheetLinkedTicketsBeforeDeleteAsync(
-            string token,
-            string hojaGastosId,
-            string? axUserIdOverride)
-        {
-            var detailResult = await _apiClient.GetExpenseSheetDetailAsync(token, hojaGastosId, axUserIdOverride);
-            var sheet = SelectSheet(detailResult.GetAnyItems(), hojaGastosId);
-            if (sheet == null)
-            {
-                _logger.LogWarning(
-                    "Skipping whole sheet delete because linked ticket files could not be discovered. hojaGastosId={HojaGastosId} traceId={TraceId}",
-                    hojaGastosId,
-                    detailResult.TraceId ?? string.Empty);
-                return CreateApiResponse(
-                    new
-                    {
-                        Success = false,
-                        Message = detailResult.GetMessageOrDefault(_sr["Api_RequestFailed"].Value),
-                        ErrorCode = detailResult.ErrorCode ?? "DELETE_FILE_DISCOVERY_FAILED",
-                        Data = (object?)null,
-                        Errors = Array.Empty<object>(),
-                        TraceId = detailResult.TraceId
-                    },
-                    StatusCodes.Status502BadGateway);
-            }
-
-            var linkedLines = (sheet.Lines ?? new List<ExpenseSheetLineDto>())
-                .Select(line => (
-                    LineRecId: NormalizeOptionalText(ResolveLineRecId(line)),
-                    FileId: NormalizeOptionalText(line.FileId),
-                    IsTicketOrigin: line.Ticket == true))
-                .Where(item => !string.IsNullOrWhiteSpace(item.FileId))
-                .ToList();
-            if (linkedLines.Count == 0)
-                return null;
-
-            if (linkedLines.Any(item => string.IsNullOrWhiteSpace(item.LineRecId)))
-            {
-                _logger.LogWarning(
-                    "Stopping whole sheet delete because a linked ticket line has no record id. hojaGastosId={HojaGastosId}",
-                    hojaGastosId);
-                return CreateApiCommandError(
-                    StatusCodes.Status409Conflict,
-                    _sr["ExpenseSheets_Detail_DeleteFailed"].Value,
-                    "DETACH_TICKET_LINE_ID_MISSING");
-            }
-
-            linkedLines = linkedLines
-                .GroupBy(item => item.LineRecId!, StringComparer.OrdinalIgnoreCase)
-                .Select(group => group.First())
-                .ToList();
-
-            _logger.LogInformation(
-                "Detaching {Count} linked ticket lines before deleting expense sheet {HojaGastosId}.",
-                linkedLines.Count,
-                hojaGastosId);
-
-            foreach (var linkedLine in linkedLines)
-            {
-                var transport = await _apiClient.DetachExpenseSheetLineTicketAsync(
-                    token,
-                    hojaGastosId,
-                    linkedLine.LineRecId!,
-                    axUserIdOverride,
-                    HttpContext.RequestAborted);
-                var response = transport.Response;
-                if (response.Success)
-                    continue;
-
-                _logger.LogWarning(
-                    "Linked ticket detach failed before whole sheet delete. hojaGastosId={HojaGastosId} lineRecId={LineRecId} fileId={FileId} errorCode={ErrorCode} traceId={TraceId} message={Message}",
-                    hojaGastosId,
-                    linkedLine.LineRecId,
-                    linkedLine.FileId,
-                    response.ErrorCode ?? string.Empty,
-                    response.TraceId ?? string.Empty,
-                    response.Message ?? string.Empty);
-
-                var statusCode = (int)transport.StatusCode;
-                if (statusCode < StatusCodes.Status400BadRequest)
-                    statusCode = StatusCodes.Status409Conflict;
-                return CreateApiResponse(
-                    new
-                    {
-                        Success = false,
-                        Message = response.GetMessageOrDefault(_sr["ExpenseSheets_Detail_DeleteFailed"].Value),
-                        ErrorCode = response.ErrorCode ?? "DETACH_TICKET_FAILED",
-                        Data = response.Data,
-                        Errors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>(),
-                        TraceId = response.TraceId
-                    },
-                    statusCode);
-            }
-
-            // MMS - Manual-line associations keep their detached ticket and photo in Pending state. - 2026.08.04
-            var ticketOriginFileIds = linkedLines
-                .GroupBy(item => item.FileId!, StringComparer.OrdinalIgnoreCase)
-                .Where(group => group.All(item => item.IsTicketOrigin))
-                .Select(group => group.Key)
-                .ToList();
-            var preservedManualTicketCount = linkedLines
-                .Where(item => !item.IsTicketOrigin)
-                .Select(item => item.FileId!)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Count();
-
-            _logger.LogInformation(
-                "Deleting {DeleteCount} ticket-origin files and tickets before deleting expense sheet {HojaGastosId}; preserving {PreservedCount} manual-line tickets.",
-                ticketOriginFileIds.Count,
-                hojaGastosId,
-                preservedManualTicketCount);
-
-            foreach (var fileId in ticketOriginFileIds)
-            {
-                try
-                {
-                    var response = await _apiClient.DeleteExpenseSheetTicketFileAsync(token, fileId);
-                    if (!response.Success && !CanIgnoreMissingTicketFileResponse(response))
-                    {
-                        _logger.LogWarning(
-                            "Linked ticket file cleanup failed before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId} errorCode={ErrorCode} traceId={TraceId} message={Message}",
-                            hojaGastosId,
-                            fileId,
-                            response.ErrorCode ?? string.Empty,
-                            response.TraceId ?? string.Empty,
-                            response.Message ?? string.Empty);
-
-                        return CreateApiResponse(
-                            new
-                            {
-                                Success = false,
-                                Message = response.GetMessageOrDefault(_sr["ExpenseSheets_Detail_DeleteFailed"].Value),
-                                ErrorCode = response.ErrorCode ?? "DELETE_FILE_FAILED",
-                                Data = (object?)null,
-                                Errors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>(),
-                                TraceId = response.TraceId
-                            },
-                            StatusCodes.Status409Conflict);
-                    }
-                }
-                catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-                {
-                    _logger.LogInformation(
-                        "Linked ticket file was already missing before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId}",
-                        hojaGastosId,
-                        fileId);
-                }
-
-                try
-                {
-                    var response = await _apiClient.DeleteExpenseSheetTicketAsync(token, fileId);
-                    if (!response.Success && !CanIgnoreMissingExpenseSheetTicketResponse(response))
-                    {
-                        _logger.LogWarning(
-                            "Linked ticket cleanup failed before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId} errorCode={ErrorCode} traceId={TraceId} message={Message}",
-                            hojaGastosId,
-                            fileId,
-                            response.ErrorCode ?? string.Empty,
-                            response.TraceId ?? string.Empty,
-                            response.Message ?? string.Empty);
-
-                        return CreateApiResponse(
-                            new
-                            {
-                                Success = false,
-                                Message = response.GetMessageOrDefault(_sr["ExpenseSheets_Detail_DeleteFailed"].Value),
-                                ErrorCode = response.ErrorCode ?? "DELETE_TICKET_FAILED",
-                                Data = (object?)null,
-                                Errors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>(),
-                                TraceId = response.TraceId
-                            },
-                            StatusCodes.Status409Conflict);
-                    }
-                }
-                catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-                {
-                    _logger.LogInformation(
-                        "Linked ticket was already missing before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId}",
-                        hojaGastosId,
-                        fileId);
-                }
-            }
-
-            return null;
         }
 
         // API route used by React clients for /api/crm/expensesheets/tickets.
@@ -4215,57 +4021,24 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
-        // Deletes a whole expense sheet using the upstream delete route with deleteWholeSheet flag.
+        // Deletes a whole sheet through the same durable operation used by React clients.
         [HttpDelete("Gastos/DeleteExpenseSheet/{hojaGastosId}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteExpenseSheet(string hojaGastosId, [FromQuery] bool IND_SetActionMark = false)
         {
-            try
-            {
-                var token = GetToken();
-                if (string.IsNullOrWhiteSpace(token))
-                    return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
+            var safeSheetId = NormalizeOptionalText(hojaGastosId);
+            if (string.IsNullOrWhiteSpace(safeSheetId))
+                return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
-                if (string.IsNullOrWhiteSpace(hojaGastosId))
-                    return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
-
-                var actingUser = await ResolveExpenseActingUserForJsonAsync(token, nameof(DeleteExpenseSheet));
-                if (actingUser.Error != null)
-                    return actingUser.Error;
-                var requestAxUserId = actingUser.AxUserId;
-                var mutationGuard = await ValidateExpenseSheetMutationAsync(
-                    token,
-                    hojaGastosId.Trim(),
-                    requestAxUserId,
-                    nameof(DeleteExpenseSheet),
-                    ExpenseSheetMutationType.DeleteSheet);
-                if (!mutationGuard.Allowed)
-                    return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
-                var response = await _apiClient.DeleteExpenseSheetLineAsync(
-                    token,
-                    hojaGastosId.Trim(),
-                    "0",
-                    deleteWholeSheet: true,
-                    deleteMode: 2,
-                    axUserIdOverride: requestAxUserId);
-
-                if (IND_SetActionMark && response.Success)
-                {
-                    TempData.INDSetActionMarkDanger();
-                }
-
-                return Json(new { success = response.Success, message = response.Message, data = response.Data });
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Upstream API error in DeleteExpenseSheet");
-                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unhandled error in DeleteExpenseSheet");
-                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
-            }
+            var actingUser = await ResolveExpenseActingUserForJsonAsync(token, nameof(DeleteExpenseSheet));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            return await ExecuteExpenseSheetDeletionAsync(
+                token, safeSheetId, actingUser.AxUserId, nameof(DeleteExpenseSheet),
+                legacyResponse: true, setActionMark: IND_SetActionMark);
         }
 
         // API route used by React clients for /api/crm/projects/list.

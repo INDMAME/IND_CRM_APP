@@ -1856,4 +1856,10 @@
   <data name="HomeHelp_CatalogSearchLabel" xml:space="preserve"><value>搜索帮助主题</value></data>
   <data name="HomeHelp_CatalogSearchPlaceholder" xml:space="preserve"><value>搜索主题…</value></data>
   <data name="HomeHelp_CatalogEmpty" xml:space="preserve"><value>没有匹配的主题。</value></data>
+  <data name="Visits_Create_PartialRetry" xml:space="preserve">
+    <value>活动 {0} 已创建，但部分联系人尚未添加。请保持表单不变并重试，以完成同一活动。{1}</value>
+  </data>
+  <data name="Visits_Create_PartialChanged" xml:space="preserve">
+    <value>活动 {0} 已存在。请恢复表单的原始值后重试添加待处理的联系人，或从历史记录中编辑该活动。</value>
+  </data>
 </root>

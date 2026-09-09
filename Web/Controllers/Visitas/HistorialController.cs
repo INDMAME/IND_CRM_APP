@@ -168,8 +168,8 @@ namespace IND_CRM_APP.Controllers
                 // Call API client (maps to api/crm/activities/list)
                 var result = await GetActivitiesWithRecoveryAsync(token, filter);
 
-                if (result == null)
-                    return Json(new { total = 0, items = Array.Empty<object>() });
+                if (result == null || !result.Success)
+                    return CreateActivitiesQueryError(result);
 
                 var itemsList = result.GetAnyItems()?.ToList() ?? new List<ActivityDto>();
 
@@ -221,6 +221,26 @@ namespace IND_CRM_APP.Controllers
                 _logger.LogError(ex, "Unexpected error in GetActivities");
                 return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Error interno del servidor" });
             }
+        }
+
+        // Keeps failed upstream queries distinct from successful empty history results.
+        private IActionResult CreateActivitiesQueryError(PagedApiResponse<ActivityDto>? result)
+        {
+            _logger.LogWarning(
+                "Activity history query failed after recovery. ErrorCode={ErrorCode}; TraceId={TraceId}; Message={Message}",
+                result?.ErrorCode ?? string.Empty,
+                result?.TraceId ?? string.Empty,
+                result?.Message ?? string.Empty);
+
+            var message = _sr["Api_RequestFailed"].Value;
+            return StatusCode(StatusCodes.Status502BadGateway, new
+            {
+                success = false,
+                message,
+                error = message,
+                errorCode = NormalizeOptionalText(result?.ErrorCode) ?? "UPSTREAM_ERROR",
+                traceId = result?.TraceId
+            });
         }
 
         // Helper to normalize date string

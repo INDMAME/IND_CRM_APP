@@ -190,6 +190,9 @@ function Sync-WebWwwrootMirror {
         throw "Refusing to sync web roots outside repository '$repoRoot'."
     }
 
+    Assert-RegularPublishPath -Path $sourcePath -CheckChildren
+    Assert-RegularPublishPath -Path $targetPath -CheckChildren
+
     Write-Host ("Syncing static assets: {0} -> {1}" -f $sourcePath, $targetPath)
     robocopy $sourcePath $targetPath /MIR /NFL /NDL /NJH /NJS /NP /R:1 /W:1
     $rc = $LASTEXITCODE
@@ -221,6 +224,9 @@ function Invoke-CleanIisDeploy {
     if (-not [System.StringComparer]::OrdinalIgnoreCase.Equals($resolvedTargetPath, $resolvedCanonicalTargetPath)) {
         throw "Refusing clean IIS deploy to unexpected path '$resolvedTargetPath'."
     }
+
+    Assert-RegularPublishPath -Path $resolvedSourcePath -CheckChildren
+    Assert-RegularPublishPath -Path $resolvedTargetPath -CheckChildren
 
     foreach ($requiredFile in @("IND_CRM_APP.dll", "IND_CRM_APP.runtimeconfig.json", "web.config")) {
         $requiredPath = Join-Path $resolvedSourcePath $requiredFile
@@ -262,27 +268,162 @@ function Resolve-PublishOutputPath {
     }
     $resolvedOutputPath = [System.IO.Path]::GetFullPath($candidateOutputPath).TrimEnd("\")
 
-    if ([System.StringComparer]::OrdinalIgnoreCase.Equals($resolvedOutputPath, $resolvedRepositoryRoot)) {
-        throw "Refusing to clean publish output because it resolves to the repository root."
+    $allowedOutputRoot = Join-Path $resolvedRepositoryRoot ".publish_tmp"
+    if (-not [System.StringComparer]::OrdinalIgnoreCase.Equals($resolvedOutputPath, $allowedOutputRoot) -and
+        -not $resolvedOutputPath.StartsWith($allowedOutputRoot + "\", [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Publish output must be '.publish_tmp' or a custom directory beneath it. Refusing '$resolvedOutputPath'."
     }
 
-    if (-not $resolvedOutputPath.StartsWith($resolvedRepositoryRoot + "\", [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw "Refusing to clean publish output outside repository '$resolvedRepositoryRoot'."
-    }
-
+    Assert-RegularPublishPath -Path $resolvedOutputPath -CheckChildren
     return $resolvedOutputPath
+}
+
+function Assert-RegularPublishPath {
+    # Rejects links before recursive cleanup or mirroring can cross a trusted directory.
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+        [switch]$CheckChildren
+    )
+
+    $resolvedPath = [System.IO.Path]::GetFullPath($Path).TrimEnd("\")
+    if ($resolvedPath -match '(^|[\\/])\.git([\\/]|$)') {
+        throw "Publish paths cannot include Git metadata: '$resolvedPath'."
+    }
+
+    $ancestorPath = $resolvedPath
+    while (-not [string]::IsNullOrWhiteSpace($ancestorPath)) {
+        if (Test-Path -LiteralPath $ancestorPath -ErrorAction Stop) {
+            $item = Get-Item -LiteralPath $ancestorPath -Force -ErrorAction Stop
+            if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                throw "Publish paths cannot traverse a reparse point: '$ancestorPath'."
+            }
+        }
+        $ancestorPath = [System.IO.Path]::GetDirectoryName($ancestorPath)
+    }
+
+    if ($CheckChildren -and (Test-Path -LiteralPath $resolvedPath -PathType Container)) {
+        $pendingDirectories = New-Object 'System.Collections.Generic.Stack[string]'
+        $pendingDirectories.Push($resolvedPath)
+        while ($pendingDirectories.Count -gt 0) {
+            foreach ($item in Get-ChildItem -LiteralPath $pendingDirectories.Pop() -Force -ErrorAction Stop) {
+                if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0 -or $item.Name -eq '.git') {
+                    throw "Publish directory contains a link or Git metadata: '$($item.FullName)'."
+                }
+                if ($item.PSIsContainer) {
+                    $pendingDirectories.Push($item.FullName)
+                }
+            }
+        }
+    }
 }
 
 function Clear-PublishOutput {
     # Removes stale local publish files before creating a fresh deploy package.
     param(
         [Parameter(Mandatory = $true)]
-        [string]$ResolvedOutputPath
+        [string]$ResolvedOutputPath,
+        [Parameter(Mandatory = $true)]
+        [string]$RepositoryRoot
     )
 
-    if (Test-Path -LiteralPath $resolvedOutputPath) {
-        Write-Host ("Cleaning local publish output: {0}" -f $resolvedOutputPath)
-        Remove-Item -LiteralPath $resolvedOutputPath -Recurse -Force
+    $safeOutputPath = Resolve-PublishOutputPath -OutputPath $ResolvedOutputPath -RepositoryRoot $RepositoryRoot
+    if (Test-Path -LiteralPath $safeOutputPath) {
+        Write-Host ("Cleaning local publish output: {0}" -f $safeOutputPath)
+        Remove-Item -LiteralPath $safeOutputPath -Recurse -Force -ErrorAction Stop
+    }
+}
+
+function Invoke-CrmAppCmd {
+    # Uses the native IIS tool consistently in Windows PowerShell and PowerShell 7.
+    param([Parameter(Mandatory = $true)][string[]]$Arguments)
+
+    $appCmdPath = Join-Path $env:windir "System32\inetsrv\appcmd.exe"
+    if (-not (Test-Path -LiteralPath $appCmdPath -PathType Leaf)) {
+        throw "IIS appcmd.exe is unavailable."
+    }
+    $output = & $appCmdPath @Arguments 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw "IIS command failed with exit code ${LASTEXITCODE}: $($output -join ' ')"
+    }
+    return ($output -join [Environment]::NewLine).Trim()
+}
+
+function Get-CrmIisDeploymentTarget {
+    # Confirms the CRM root and exclusive pool before touching deployed files or state.
+    param([Parameter(Mandatory = $true)][string]$CanonicalTargetPath)
+
+    $siteName = "IND_CRM_APP"
+    $poolName = "IND_CRM_APP"
+    $appName = "$siteName/"
+    [xml]$applications = Invoke-CrmAppCmd -Arguments @("list", "app", "/xml")
+    [xml]$virtualDirectories = Invoke-CrmAppCmd -Arguments @("list", "vdir", "/xml")
+    $application = @($applications.appcmd.APP | Where-Object { $_.'APP.NAME' -eq $appName })
+    $rootDirectory = @($virtualDirectories.appcmd.VDIR | Where-Object { $_.'APP.NAME' -eq $appName -and $_.path -eq '/' })
+    if ($application.Count -ne 1 -or $application[0].'SITE.NAME' -ne $siteName -or
+        $application[0].'APPPOOL.NAME' -ne $poolName -or $rootDirectory.Count -ne 1) {
+        throw "The canonical CRM IIS site, application or pool could not be verified."
+    }
+    $resolvedPhysicalPath = [System.IO.Path]::GetFullPath(
+        [Environment]::ExpandEnvironmentVariables($rootDirectory[0].physicalPath)).TrimEnd("\")
+    $expectedPhysicalPath = [System.IO.Path]::GetFullPath($CanonicalTargetPath).TrimEnd("\")
+    if (-not [System.StringComparer]::OrdinalIgnoreCase.Equals($resolvedPhysicalPath, $expectedPhysicalPath)) {
+        throw "CRM IIS physical path '$resolvedPhysicalPath' does not match '$expectedPhysicalPath'."
+    }
+    $sharedApplications = @($applications.appcmd.APP | Where-Object {
+        $_.'APPPOOL.NAME' -eq $poolName -and $_.'APP.NAME' -ne $appName
+    })
+    if ($sharedApplications.Count -gt 0) {
+        throw "CRM application pool is shared with another application. Scoped deployment is blocked."
+    }
+    Assert-RegularPublishPath -Path $resolvedPhysicalPath -CheckChildren
+    $poolState = Invoke-CrmAppCmd -Arguments @("list", "apppool", $poolName, "/text:state")
+    if ($poolState -notin @("Started", "Stopped")) {
+        throw "CRM application pool has an unexpected or transitional state '$poolState'."
+    }
+    return [pscustomobject]@{ PoolName = $poolName; State = $poolState }
+}
+
+function Set-CrmIisPoolState {
+    # Waits for the requested state and treats command or transition failures as deployment failures.
+    param(
+        [Parameter(Mandatory = $true)][string]$PoolName,
+        [Parameter(Mandatory = $true)][ValidateSet("Started", "Stopped")][string]$State
+    )
+
+    $currentState = Invoke-CrmAppCmd -Arguments @("list", "apppool", $PoolName, "/text:state")
+    if ($currentState -eq $State) { return }
+    $verb = if ($State -eq "Started") { "start" } else { "stop" }
+    Invoke-CrmAppCmd -Arguments @($verb, "apppool", "/apppool.name:$PoolName") | Out-Null
+    $deadline = [DateTime]::UtcNow.AddSeconds(30)
+    do {
+        $currentState = Invoke-CrmAppCmd -Arguments @("list", "apppool", $PoolName, "/text:state")
+        if ($currentState -eq $State) { return }
+        Start-Sleep -Milliseconds 250
+    } while ([DateTime]::UtcNow -lt $deadline)
+    throw "CRM application pool '$PoolName' did not reach '$State'. Last state: '$currentState'."
+}
+
+function Invoke-CrmScopedIisDeploy {
+    # Restores only a previously running CRM pool, including when copying fails.
+    param(
+        [Parameter(Mandatory = $true)][string]$SourcePath,
+        [Parameter(Mandatory = $true)][string]$CanonicalTargetPath,
+        [bool]$RestartPool = $true
+    )
+
+    $target = Get-CrmIisDeploymentTarget -CanonicalTargetPath $CanonicalTargetPath
+    $restoreRunningPool = $RestartPool -and $target.State -eq "Started"
+    try {
+        if ($restoreRunningPool) {
+            Set-CrmIisPoolState -PoolName $target.PoolName -State "Stopped"
+        }
+        Invoke-CleanIisDeploy -SourcePath $SourcePath -TargetPath $CanonicalTargetPath -CanonicalTargetPath $CanonicalTargetPath
+    }
+    finally {
+        if ($restoreRunningPool) {
+            Set-CrmIisPoolState -PoolName $target.PoolName -State "Started"
+        }
     }
 }
 
@@ -414,7 +555,7 @@ Sync-WebWwwrootMirror
 
 # Publish the project directly to avoid solution-level output warnings.
 $ResolvedOutputPath = Resolve-PublishOutputPath -OutputPath $OutputPath -RepositoryRoot $PSScriptRoot
-Clear-PublishOutput -ResolvedOutputPath $ResolvedOutputPath
+Clear-PublishOutput -ResolvedOutputPath $ResolvedOutputPath -RepositoryRoot $PSScriptRoot
 dotnet publish $ProjectPath -c $Configuration -o $ResolvedOutputPath
 if ($LASTEXITCODE -ne 0) {
     throw "Publish failed with exit code $LASTEXITCODE."
@@ -430,18 +571,5 @@ if (-not (Test-Path -LiteralPath $StaticChunkRetentionScriptPath -PathType Leaf)
     -PublishOutputPath $ResolvedOutputPath `
     -IisPath $IisPath
 
-if ($RestartIis) {
-    iisreset /stop
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to stop IIS."
-    }
-}
-
-try {
-    Invoke-CleanIisDeploy -SourcePath $ResolvedOutputPath -TargetPath $IisPath -CanonicalTargetPath $CanonicalIisPath
-}
-finally {
-    if ($RestartIis) {
-        iisreset /start
-    }
-}
+# Keep the existing switch name while limiting restarts to the verified CRM pool.
+Invoke-CrmScopedIisDeploy -SourcePath $ResolvedOutputPath -CanonicalTargetPath $CanonicalIisPath -RestartPool ([bool]$RestartIis)

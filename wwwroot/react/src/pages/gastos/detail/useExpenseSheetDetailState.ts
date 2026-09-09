@@ -127,6 +127,7 @@ export const useExpenseSheetDetailState = ({
       formatExpenseInputNumber(nextHeader?.exchRate, {
         minimumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
         maximumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
+        preferDecimalSeparator: true,
         useGrouping: true,
         fallback: "",
       })
@@ -294,6 +295,7 @@ export const useExpenseSheetDetailState = ({
   const exchangeRateValue = formatExpenseInputNumber(safeText(header?.exchRate), {
     minimumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
     maximumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
+    preferDecimalSeparator: true,
     useGrouping: true,
     fallback: "",
   });

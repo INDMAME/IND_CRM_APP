@@ -454,8 +454,10 @@ class BrowserStateCoordinator {
     }
   }
 
+  // Recognizes the rendered login view regardless of its route alias.
   private isLoginPage(): boolean {
-    return window.location.pathname.toLowerCase().startsWith("/auth/login");
+    return document.body?.dataset.indPage === "login" ||
+      window.location.pathname.toLowerCase().startsWith("/auth/login");
   }
 }
 

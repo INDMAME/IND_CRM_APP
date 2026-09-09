@@ -7,6 +7,7 @@ import {
 const STORAGE_SCOPE = getBrowserStorageScopeToken() || "scope-unavailable";
 
 export const VISIT_DRAFT_KEY = `visitas_draft_v2_${STORAGE_SCOPE}`;
+export const VISIT_CREATE_PROGRESS_KEY = `visitas_create_progress_v2_${STORAGE_SCOPE}`;
 export const CONTACTS_STORAGE_KEY = `visitas_contacts_cache_v2_${STORAGE_SCOPE}`;
 export const CONTACTS_SELECTION_KEY = `visitas_contacts_selected_v2_${STORAGE_SCOPE}`;
 export const CREATE_FRESH_PARAM = "fresh";
@@ -96,6 +97,7 @@ export const clearStoredSelection = (account: string): void => {
 export const clearCreateSelectionCache = (): void => {
   try {
     sessionStorage.removeItem(VISIT_DRAFT_KEY);
+    sessionStorage.removeItem(VISIT_CREATE_PROGRESS_KEY);
     sessionStorage.removeItem(CONTACTS_STORAGE_KEY);
     sessionStorage.removeItem(CONTACTS_SELECTION_KEY);
   } catch {

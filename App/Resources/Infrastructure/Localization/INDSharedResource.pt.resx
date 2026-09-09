@@ -1856,4 +1856,10 @@
   <data name="HomeHelp_FeedbackSending" xml:space="preserve"><value>A enviar…</value></data>
   <data name="HomeHelp_FeedbackThanks" xml:space="preserve"><value>Obrigado. A sua avaliação foi guardada.</value></data>
   <data name="HomeHelp_FeedbackError" xml:space="preserve"><value>Não foi possível guardar a avaliação. Tente novamente.</value></data>
+  <data name="Visits_Create_PartialRetry" xml:space="preserve">
+    <value>A atividade {0} foi criada, mas existem contactos pendentes. Tente novamente sem alterar o formulário para concluir a mesma atividade. {1}</value>
+  </data>
+  <data name="Visits_Create_PartialChanged" xml:space="preserve">
+    <value>A atividade {0} já existe. Restaure os valores originais do formulário para tentar novamente os contactos pendentes, ou edite a atividade no histórico.</value>
+  </data>
 </root>

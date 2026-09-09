@@ -45,6 +45,7 @@ const MONEY_INPUT_FORMAT = {
 const EXCHANGE_RATE_INPUT_FORMAT = {
   minimumFractionDigits: 7,
   maximumFractionDigits: 7,
+  preferDecimalSeparator: true,
   useGrouping: true,
   fallback: "",
 };
@@ -116,6 +117,7 @@ const ExpenseCurrencySettlementFields = ({
   const companyAmountDisplayLabel = safeText(companyAmountLabel) || formatExpenseAmountLabel(normalizedCompanyAmountCurrencyCode);
   const expenseCurrencyLabel = normalizedExpenseCurrencyCode || indT("Common_NotAvailable", "N/A");
   const exchangeRateReferenceValue = formatExpenseInputNumber(effectiveExchangeRate, {
+    preferDecimalSeparator: true,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
     useGrouping: true,

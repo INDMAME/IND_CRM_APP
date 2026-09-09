@@ -1856,4 +1856,10 @@
   <data name="HomeHelp_FeedbackSending" xml:space="preserve"><value>Bidaltzen…</value></data>
   <data name="HomeHelp_FeedbackThanks" xml:space="preserve"><value>Eskerrik asko. Zure balorazioa gorde da.</value></data>
   <data name="HomeHelp_FeedbackError" xml:space="preserve"><value>Ezin izan da balorazioa gorde. Saiatu berriro.</value></data>
+  <data name="Visits_Create_PartialRetry" xml:space="preserve">
+    <value>{0} jarduera sortu da, baina kontaktu batzuk falta dira. Saiatu berriro formularioa aldatu gabe jarduera bera osatzeko. {1}</value>
+  </data>
+  <data name="Visits_Create_PartialChanged" xml:space="preserve">
+    <value>{0} jarduera badago. Berrezarri formularioaren jatorrizko balioak falta diren kontaktuekin berriro saiatzeko, edo editatu jarduera historialetik.</value>
+  </data>
 </root>

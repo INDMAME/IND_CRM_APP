@@ -1149,6 +1149,8 @@ Formatversion: 1
         #                    line.Description   = lineDescr;
         #                    line.Internacional = internacional ? NoYes::Yes : NoYes::No;
         #                    line.FileId        = fileId;
+        #                    // Record digital origin only at creation, after the ticket and owner were validated.
+        #                    line.INDCreatedFromTicket = fileId ? NoYes::Yes : NoYes::No;
         #
         #                    line.Price    = price;
         #                    line.Qty      = qty;
@@ -1926,6 +1928,8 @@ Formatversion: 1
         #//  - _data[3] = hojaId
         #//  - _data[4] = lineRecId (puede ser 0 si deleteWholeSheet = 1)
         #//  - _data[5] = deleteWholeSheet (0/1)
+        #//  - _data[6] = expected lines container of [RecId text, FileId, CreatedFromTicket 0/1] (optional)
+        #//  - _data[7] = guardSnapshot (optional 0/1; validates the inventory before deleting)
         #static server container deleteExpenseSheetLine(container _data)
         #{
         #    DataAreaId       companyId;
@@ -1935,6 +1939,15 @@ Formatversion: 1
         #    CRMHojaGastosId  hojaId;
         #    RecId            lineRecId;
         #    int              deleteWholeSheet;
+        #    boolean          guardSnapshot;
+        #    container        expectedLines;
+        #    container        expectedLine;
+        #    container        expectedRecIds;
+        #    RecId            expectedLineRecId;
+        #    INDFileId        expectedFileId;
+        #    int              expectedCreatedFromTicket;
+        #    int              expectedIndex;
+        #    int              currentLineCount;
         #
         #    CRMHojaGastosTable header;
         #    CRMHojaGastosLine  line;
@@ -1956,6 +1969,15 @@ Formatversion: 1
         #    hojaId            = conPeek(_data, 3);
         #    lineRecId         = conPeek(_data, 4);
         #    deleteWholeSheet  = conPeek(_data, 5);
+        #    guardSnapshot = false;
+        #    if (conLen(_data) >= 7)
+        #    {
+        #        guardSnapshot = conPeek(_data, 7) == 1;
+        #        if (guardSnapshot)
+        #            expectedLines = conPeek(_data, 6);
+        #    }
+        #    if (guardSnapshot && !deleteWholeSheet)
+        #        return INDCRMUtilityService::buildHeader(false, 'Conflicto: inventario incompatible con una linea individual.', conNull());
         #
         #    if (!hojaId)
         #        return INDCRMUtilityService::buildHeader(false, 'HojaGastosId es obligatorio.', conNull());
@@ -1995,6 +2017,59 @@ Formatversion: 1
         #            // Modo: elimina toda la hoja (cabecera + todas las lineas)
         #            if (deleteWholeSheet)
         #            {
+        #                // Validate the durable inventory while all sheet mutations share the header lock.
+        #                if (guardSnapshot)
+        #                {
+        #                    if (header.ExpenseSheetStatus != INDExpenseSheetStatus::Draft || header.Voucher != '')
+        #                    {
+        #                        ttsabort;
+        #                        return INDCRMUtilityService::buildHeader(false, 'Conflicto: la hoja debe estar en Draft y sin Voucher.', conNull());
+        #                    }
+        #
+        #                    currentLineCount = 0;
+        #                    while select forupdate line
+        #                        where line.UserId       == crmUserId
+        #                           && line.HojaGastosId == hojaId
+        #                    {
+        #                        currentLineCount++;
+        #                    }
+        #                    if (currentLineCount != conLen(expectedLines))
+        #                    {
+        #                        ttsabort;
+        #                        return INDCRMUtilityService::buildHeader(false, 'Conflicto: las lineas de la hoja han cambiado; actualiza y reintenta.', conNull());
+        #                    }
+        #
+        #                    expectedRecIds = conNull();
+        #                    for (expectedIndex = 1; expectedIndex <= conLen(expectedLines); expectedIndex++)
+        #                    {
+        #                        expectedLine = conPeek(expectedLines, expectedIndex);
+        #                        if (conLen(expectedLine) != 3)
+        #                        {
+        #                            ttsabort;
+        #                            return INDCRMUtilityService::buildHeader(false, 'Conflicto: inventario de lineas incompleto.', conNull());
+        #                        }
+        #                        expectedLineRecId = conPeek(expectedLine, 1);
+        #                        expectedFileId = conPeek(expectedLine, 2);
+        #                        expectedCreatedFromTicket = conPeek(expectedLine, 3);
+        #                        if (!expectedLineRecId || conFind(expectedRecIds, expectedLineRecId) ||
+        #                            (expectedCreatedFromTicket != 0 && expectedCreatedFromTicket != 1))
+        #                        {
+        #                            ttsabort;
+        #                            return INDCRMUtilityService::buildHeader(false, 'Conflicto: inventario de lineas invalido.', conNull());
+        #                        }
+        #                        expectedRecIds += [expectedLineRecId];
+        #                        select firstonly forupdate line
+        #                            where line.RecId        == expectedLineRecId
+        #                               && line.UserId       == crmUserId
+        #                               && line.HojaGastosId == hojaId;
+        #                        if (!line.RecId || line.FileId != expectedFileId || any2int(line.INDCreatedFromTicket) != expectedCreatedFromTicket)
+        #                        {
+        #                            ttsabort;
+        #                            return INDCRMUtilityService::buildHeader(false, 'Conflicto: las asociaciones de la hoja han cambiado; actualiza y reintenta.', conNull());
+        #                        }
+        #                    }
+        #                }
+        #
         #                while select forupdate line
         #                    where line.UserId       == crmUserId
         #                       && line.HojaGastosId == hojaId
@@ -2077,6 +2152,8 @@ Formatversion: 1
         #//  - _data[2] = axUserId
         #//  - _data[3] = fileId
         #//  - _data[4] = lineRecId (opcional; si se informa, elimina solo una linea de ticket)
+        #//  - _data[5] = expectedBlobUrl (optional cleanup inventory)
+        #//  - _data[6] = cleanupOnly (optional 0/1; requires no linked expense line and the same URL)
         #static server container deleteExpenseSheetTicket(container _data)
         #{
         #    DataAreaId          companyId;
@@ -2086,6 +2163,8 @@ Formatversion: 1
         #    RecId               lineRecId;
         #    int                 startLine;
         #    str                 msg;
+        #    str                 expectedBlobUrl;
+        #    boolean             cleanupOnly;
         #
         #    INDTicketInfoTable  ticketHeader;
         #    INDTicketInfoLine   ticketLine;
@@ -2107,6 +2186,17 @@ Formatversion: 1
         #
         #    if (conLen(_data) >= 4)
         #        lineRecId = conPeek(_data, 4);
+        #
+        #    // Optional cleanup guard; public callers keep the original three or four fields.
+        #    expectedBlobUrl = '';
+        #    cleanupOnly = false;
+        #    if (conLen(_data) >= 5)
+        #        expectedBlobUrl = conPeek(_data, 5);
+        #    if (conLen(_data) >= 6)
+        #        cleanupOnly = conPeek(_data, 6) == 1;
+        #
+        #    if (cleanupOnly && lineRecId)
+        #        return INDCRMUtilityService::buildHeader(false, 'Conflicto: limpieza incompatible con una linea individual.', conNull());
         #
         #    if (!fileId)
         #        return INDCRMUtilityService::buildHeader(false, 'FileId es obligatorio.', conNull());
@@ -2132,6 +2222,28 @@ Formatversion: 1
         #            {
         #                ttsabort;
         #                return INDCRMUtilityService::buildHeader(false, 'Ticket no encontrado.', conNull());
+        #            }
+        #
+        #            // Linking and file updates lock this header, so both guards precede every delete.
+        #            if (cleanupOnly)
+        #            {
+        #                select firstonly expenseLine
+        #                    where expenseLine.FileId == ticketHeader.FileId;
+        #                if (expenseLine.RecId)
+        #                {
+        #                    ttsabort;
+        #                    return INDCRMUtilityService::buildHeader(false, 'Ticket vinculado a una linea de gastos; limpieza cancelada.', conNull());
+        #                }
+        #
+        #                select firstonly forupdate docuRef
+        #                    where docuRef.RefTableId == tableNum(INDTicketInfoTable)
+        #                       && docuRef.RefRecId   == ticketHeader.RecId
+        #                       && docuRef.INDFileId  == ticketHeader.FileId;
+        #                if (strCmp(docuRef.INDURLFile, expectedBlobUrl) != 0)
+        #                {
+        #                    ttsabort;
+        #                    return INDCRMUtilityService::buildHeader(false, 'Conflicto: el archivo del ticket ha cambiado; limpieza cancelada.', conNull());
+        #                }
         #            }
         #
         #            if (lineRecId)
@@ -2571,7 +2683,10 @@ Formatversion: 1
         #                         strFmt("%1", line.AmountMST),
         #                         strFmt("%1", line.ExchRate),
         #                         //MMS - Anade el importe MST reembolsable derivado a la estructura heredada de la linea - 2026.07.29
-        #                         strFmt("%1", line.ReimbursableAmount)
+        #                         strFmt("%1", line.ReimbursableAmount),
+        #                         // Keep the paper-ticket flag separate from persisted digital creation origin.
+        #                         strFmt("%1", any2int(line.Ticket)),
+        #                         strFmt("%1", any2int(line.INDCreatedFromTicket))
         #                       ];
         #
         #            linesOut = conIns(linesOut, conLen(linesOut) + 1, lineRow);
@@ -3984,6 +4099,9 @@ Formatversion: 1
         #            }
         #            }
         #
+        #            // Attaching a ticket to an existing line does not create digital origin.
+        #            if (!alreadyLinked)
+        #                line.INDCreatedFromTicket = NoYes::No;
         #            line.FileId = fileId;
         #            line.Qty = 1;
         #            line.Price = ticketHeader.TotalAmount;
@@ -5162,6 +5280,7 @@ Formatversion: 1
         #            }
         #
         #            line.FileId = '';
+        #            line.INDCreatedFromTicket = NoYes::No;
         #            line.update();
         #
         #            if (ticketHeader.RecId)

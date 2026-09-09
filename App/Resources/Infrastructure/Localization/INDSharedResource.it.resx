@@ -1856,4 +1856,10 @@
   <data name="HomeHelp_FeedbackSending" xml:space="preserve"><value>Invio…</value></data>
   <data name="HomeHelp_FeedbackThanks" xml:space="preserve"><value>Grazie. La tua valutazione è stata salvata.</value></data>
   <data name="HomeHelp_FeedbackError" xml:space="preserve"><value>Non è stato possibile salvare la valutazione. Riprova.</value></data>
+  <data name="Visits_Create_PartialRetry" xml:space="preserve">
+    <value>L'attività {0} è stata creata, ma alcuni contatti sono ancora da aggiungere. Riprova senza modificare il modulo per completare la stessa attività. {1}</value>
+  </data>
+  <data name="Visits_Create_PartialChanged" xml:space="preserve">
+    <value>L'attività {0} esiste già. Ripristina i valori originali del modulo per riprovare i contatti mancanti, oppure modifica l'attività dalla cronologia.</value>
+  </data>
 </root>

@@ -166,10 +166,11 @@ test("publish validates retention and runs it between artifact creation and IIS 
   const publishSource = readFileSync(join(repoRoot, "publish.ps1"), "utf8");
   const publishIndex = publishSource.indexOf("dotnet publish $ProjectPath");
   const retentionIndex = publishSource.indexOf("scripts\\preserve-static-chunks.ps1");
-  const deployIndex = publishSource.lastIndexOf("Invoke-CleanIisDeploy -SourcePath");
+  const deployIndex = publishSource.lastIndexOf("Invoke-CrmScopedIisDeploy -SourcePath");
 
   assert.match(publishSource, /npm run test:static-chunks/u);
   assert.ok(publishIndex >= 0, "dotnet publish command is missing");
   assert.ok(retentionIndex > publishIndex, "chunk retention must run after dotnet publish");
   assert.ok(deployIndex > retentionIndex, "chunk retention must run before IIS mirroring");
+  assert.match(publishSource, /Invoke-CleanIisDeploy -SourcePath \$SourcePath -TargetPath \$CanonicalTargetPath/u);
 });

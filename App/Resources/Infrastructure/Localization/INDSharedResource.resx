@@ -1856,4 +1856,10 @@
   <data name="HomeHelp_CatalogSearchLabel" xml:space="preserve"><value>Buscar temas de ayuda</value></data>
   <data name="HomeHelp_CatalogSearchPlaceholder" xml:space="preserve"><value>Buscar temas…</value></data>
   <data name="HomeHelp_CatalogEmpty" xml:space="preserve"><value>No hay temas coincidentes.</value></data>
+  <data name="Visits_Create_PartialRetry" xml:space="preserve">
+    <value>La actividad {0} ya se ha creado, pero quedan contactos pendientes. Reintenta sin cambiar el formulario para completar la misma actividad. {1}</value>
+  </data>
+  <data name="Visits_Create_PartialChanged" xml:space="preserve">
+    <value>La actividad {0} ya existe. Restaura los valores originales del formulario para reintentar los contactos pendientes, o edita la actividad desde el historial.</value>
+  </data>
 </root>

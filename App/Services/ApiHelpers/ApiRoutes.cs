@@ -72,6 +72,14 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public static string ExpenseSheetById(string safeId) =>
             $"api/crm/expensesheets/{safeId}";
 
+        // Builds the durable whole-sheet and ticket cleanup route.
+        public static string ExpenseSheetWithTickets(string safeId) =>
+            $"{ExpenseSheetById(safeId)}/with-tickets";
+
+        // Builds the authorized durable deletion progress route.
+        public static string ExpenseSheetDeletion(string safeId) =>
+            $"{ExpenseSheetById(safeId)}/deletion";
+
         // Builds the expense sheet line route.
         public static string ExpenseSheetLine(string safeSheetId, string safeLineId) =>
             $"api/crm/expensesheets/{safeSheetId}/lines/{safeLineId}";

@@ -187,7 +187,8 @@ namespace IND_CRM_APP.Controllers
             try
             {
                 LogAuthContextSnapshot("ApiEntraContext before EnsureContextAsync", _authContext.GetCachedContext(), requestedAppCode);
-                var contextResult = await _authContext.EnsureContextAsync();
+                // Recovery callers need a new signed context even while the local cache is unexpired.
+                var contextResult = await _authContext.EnsureContextAsync(forceRefresh: true);
                 if (!contextResult.Success || contextResult.Context == null)
                 {
                     var (statusCode, errorCode) = ResolveContextFailure(contextResult.ErrorCode, contextResult.Message);

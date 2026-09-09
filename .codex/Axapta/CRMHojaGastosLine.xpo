@@ -1058,6 +1058,30 @@ Formatversion: 1
           FieldUpdate         #Absolute
         ENDPROPERTIES
         
+      FIELD #INDCreatedFromTicket
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #INDCreatedFromTicket
+          Label               #Creada desde ticket digital
+          HelpText            #Origen digital registrado solo al crear la linea desde un ticket validado
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #No
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
     ENDFIELDS
     GROUPS
       GROUP #AutoReport
@@ -1813,6 +1837,7 @@ Formatversion: 1
         #    this.Description        = "";
         #    this.Internacional      = _hojaGastosLine.Internacional;
         #    this.Ticket             = NoYes::No;
+        #    this.INDCreatedFromTicket = NoYes::No;
         #    this.Factura            = NoYes::No;
         #    this.Qty                = 0;
         #    this.Price              = 0;
@@ -1869,6 +1894,8 @@ Formatversion: 1
         #{
         #    ;
         #    super();
+        #    // Existing and manual lines never acquire digital origin by inference.
+        #    this.INDCreatedFromTicket = NoYes::No;
         #
         #    //MMS - Las lineas nuevas son reembolsables salvo que se excluyan explicitamente - 2026.07.29
         #    this.ReimbursableExpense = INDReimbursableExpenseLines::Yes;
@@ -2698,6 +2725,12 @@ Formatversion: 1
         #    // Bloquea la cabecera antes de cambiar la linea para serializar los recalculos.
         #    ttsbegin;
         #    hojaGastosTable = this.HojaGastosTable(true);
+        #
+        #    // Preserve creation origin only while the original digital association stays unchanged.
+        #    if (!this.FileId || this.FileId != this.orig().FileId)
+        #        this.INDCreatedFromTicket = NoYes::No;
+        #    else
+        #        this.INDCreatedFromTicket = this.orig().INDCreatedFromTicket;
         #
         #    this.Ticket = this.Ticket ? NoYes::Yes : NoYes::No;  //INDMMS_ExternalCRM - 2026.02.26
         #

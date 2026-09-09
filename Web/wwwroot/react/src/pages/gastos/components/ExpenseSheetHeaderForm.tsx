@@ -19,7 +19,7 @@ import {
   normalizeExpenseExchangeRateMode,
 } from "../constants/exchangeRateEntryModeCatalog.ts";
 import { normalizeDescriptionText, safeText } from "../utils/expenseUiUtils.ts";
-import { formatExpenseNumber, parseExpenseNumericInput } from "../utils/expenseNumberFormat.ts";
+import { formatExpenseNumber, parseExpenseExchangeRateInput } from "../utils/expenseNumberFormat.ts";
 
 type ExpenseSheetHeaderFormMode = {
   isCreateMode: boolean;
@@ -143,8 +143,8 @@ const ExpenseSheetHeaderForm = ({
   // Status comment is now edited only in the status transition popup.
   const statusCommentValue = safeText(header.estadoComentarios);
   const showStatusCommentField = !isCreateMode && statusCommentMode !== "hidden";
-  const parsedDraftExchangeRate = parseExpenseNumericInput(draftExchangeRate);
-  const parsedOfficialRawRate = parseExpenseNumericInput(officialExchangeRateRawValue);
+  const parsedDraftExchangeRate = parseExpenseExchangeRateInput(draftExchangeRate);
+  const parsedOfficialRawRate = parseExpenseExchangeRateInput(officialExchangeRateRawValue);
   const baseExchangeRateValue =
     parsedDraftExchangeRate != null
       ? parsedDraftExchangeRate

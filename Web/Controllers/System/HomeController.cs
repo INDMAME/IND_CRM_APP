@@ -4,6 +4,8 @@ using IND_CRM_APP.Infrastructure.Localization;
 using IND_CRM_APP.Models.CRM;
 using IND_CRM_APP.Models.Shared;
 using Microsoft.Extensions.Localization;
+using Microsoft.AspNetCore.Authorization;
+using IND_CRM_APP.Infrastructure.Security.Auth;
 
 namespace IND_CRM_APP.Controllers
 {
@@ -196,13 +198,16 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
-        // Shows a friendly 404 page for missing routes.
-        [HttpGet]
+        // Renders navigation errors without replacing their original status or loading business context.
+        [AcceptVerbs("GET", "HEAD")]
+        [AllowAnonymous]
+        [IndErrorEndpoint]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult NotFound(int? code = null)
         {
-            Response.StatusCode = 404;
-            ViewData["StatusCode"] = code ?? 404;
-            return View("NotFound");
+            var status = code is >= 400 and <= 599 ? code.Value : StatusCodes.Status404NotFound;
+            Response.StatusCode = status;
+            return View("~/Web/Views/Shared/HttpError.cshtml", status);
         }
 
         // Reads the help flag with a false default when configuration is missing.

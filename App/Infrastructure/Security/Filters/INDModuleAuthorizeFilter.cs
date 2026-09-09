@@ -127,6 +127,9 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
         // Allows Auth/Login even when it is reached via the default "/" route.
         private static bool IsBypassAction(ActionExecutingContext context)
         {
+            if (context.ActionDescriptor.EndpointMetadata.OfType<IndErrorEndpointAttribute>().Any())
+                return true;
+
             if (context?.ActionDescriptor?.RouteValues == null)
                 return false;
 
