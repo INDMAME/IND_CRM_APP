@@ -6,7 +6,7 @@ import type { ExpenseSheetHeader } from "../expenseTypes.ts";
 import ExpenseSheetHeaderCurrencySection from "./ExpenseSheetHeaderCurrencySection.tsx";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
-import { formatExpenseAmountLabel } from "../expenseFormatters.ts";
+import { formatExpenseAmountLabel, formatExpenseReimbursableAmountLabel } from "../expenseFormatters.ts";
 import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
 import {
   getEditableExpenseReimbursableExpenseOptions,
@@ -66,6 +66,7 @@ type ExpenseSheetHeaderFormProps = {
 const EXCHANGE_RATE_MODE_PREFIX_PATTERN = /^T\.?C\.?\s*/i;
 const ALIGNED_FIELD_CONTAINER_CLASS_NAME = "space-y-1.5";
 const ALIGNED_FIELD_LABEL_CLASS_NAME = "form-label font-semibold inline-flex h-6 items-center leading-none";
+const AMOUNT_FIELD_LABEL_CLASS_NAME = "form-label font-semibold inline-flex min-h-6 items-center leading-tight";
 
 // Pure presentational header form for expense sheet detail/create screens.
 const ExpenseSheetHeaderForm = ({
@@ -316,20 +317,20 @@ const ExpenseSheetHeaderForm = ({
           <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Project", "Project")} value={projectValue} />
         ) : null}
         {!isCreateMode ? (
-          <div className="grid grid-cols-2 items-start gap-3 md:col-span-2 md:gap-4">
+          <div className="grid grid-cols-2 items-end gap-3 md:col-span-2 md:gap-4">
             <ExpenseReadOnlyField
               label={companyAmountLabel}
               value={grossAmountText}
               valueAlign="right"
               containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
-              labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
+              labelClassName={AMOUNT_FIELD_LABEL_CLASS_NAME}
             />
             <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
+              label={formatExpenseReimbursableAmountLabel(exchangeRateBaseCurrency)}
               value={reimbursableAmountText}
               valueAlign="right"
               containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
-              labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
+              labelClassName={AMOUNT_FIELD_LABEL_CLASS_NAME}
             />
           </div>
         ) : null}

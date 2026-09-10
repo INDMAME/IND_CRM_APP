@@ -742,9 +742,11 @@ const ExpenseSheetsPageContent = ({ assistantBotImageSrc, assistantLauncherImage
             return (
               <div key={id || `${ownerId}-${voucher}-${item.createdDate}`} className="timeline-item">
                 <ExpenseTimelineCard
+                  layout="header"
                   dateParts={dateParts}
                   title={description || "-"}
                   subtitle={ownerSubtitle}
+                  subtitleClassName="expense-sheet-card__subtitle expense-sheet-card__owner"
                   amountText={grossAmountText}
                   onOpen={() => goToDetail(id, ownerAxUserId)}
                   titleClassName="expense-sheet-card__title timeline-name"

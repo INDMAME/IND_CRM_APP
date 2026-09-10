@@ -17,6 +17,7 @@ type CompactPaginationProps = {
   labels?: PaginationLabels;
   className?: string;
   loading?: boolean;
+  scrollTargetRef?: React.RefObject<HTMLElement | null>;
 };
 
 const DEFAULT_WINDOW = 6;
@@ -27,11 +28,18 @@ type PaginationLockWindow = Window & {
   __indPaginationPrevTouchAction?: string;
 };
 
-// Forces document-level pagination changes to start from the top of the page.
-const scrollPageToTop = () => {
+// Starts pagination at the supplied section or at the top of the document.
+const scrollToPaginationStart = (target?: HTMLElement | null) => {
   if (typeof window === "undefined" || typeof document === "undefined") return;
 
   const applyScroll = () => {
+    if (target) {
+      if (!target.isConnected) return;
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: "start", behavior: "auto" });
+      return;
+    }
+
     const scrollingElement = document.scrollingElement;
     if (scrollingElement) {
       scrollingElement.scrollTop = 0;
@@ -49,9 +57,9 @@ const scrollPageToTop = () => {
   window.requestAnimationFrame(applyScroll);
 };
 
-// Compact pagination with 6-page window and edge controls.
+// Compact pagination with a 6-page window and four persistent edge controls.
 const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
-  ({ totalPages, currentPage, pageWindow = DEFAULT_WINDOW, onPageChange, labels, className, loading }, ref) => {
+  ({ totalPages, currentPage, pageWindow = DEFAULT_WINDOW, onPageChange, labels, className, loading, scrollTargetRef }, ref) => {
     const safeTotal = Math.max(0, totalPages || 0);
     const safeCurrent = Math.min(Math.max(1, currentPage || 1), safeTotal || 1);
     const windowSize = Math.max(1, pageWindow || DEFAULT_WINDOW);
@@ -61,8 +69,6 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
     const showPageSpinner = hasLoadingSignal && isPageTransitionPending;
 
     const showPagination = safeTotal > 1;
-    const showEdgeNav = safeTotal > windowSize;
-    const canJumpToStart = safeCurrent > windowSize;
     const canGoPrev = safeCurrent > 1;
     const canGoNext = safeCurrent < safeTotal;
 
@@ -77,8 +83,8 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
       if (!hasLoadingSignal || !isPageTransitionPending) return;
       if (isLoading) return;
       setIsPageTransitionPending(false);
-      scrollPageToTop();
-    }, [hasLoadingSignal, isLoading, isPageTransitionPending]);
+      scrollToPaginationStart(scrollTargetRef?.current);
+    }, [hasLoadingSignal, isLoading, isPageTransitionPending, scrollTargetRef]);
 
     useEffect(() => {
       if (!showPageSpinner) return;
@@ -113,7 +119,7 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
       if (hasLoadingSignal) {
         setIsPageTransitionPending(true);
       }
-      scrollPageToTop();
+      scrollToPaginationStart(scrollTargetRef?.current);
       onPageChange(page);
     };
 
@@ -142,42 +148,38 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
             className || ""
           )}
         >
-          <div className="flex items-center gap-1 justify-start">
-            {showEdgeNav && canJumpToStart && (
-              <button
-                type="button"
-                className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 hover:text-primary transition"
-                aria-label={labels?.first}
-                disabled={isLoading}
-                onClick={(e) => {
-                  e.preventDefault();
-                  requestPageChange(1);
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5" />
-                </svg>
-              </button>
-            )}
-            {showEdgeNav && canGoPrev && (
-              <button
-                type="button"
-                className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 hover:text-primary transition"
-                aria-label={labels?.prev}
-                disabled={isLoading}
-                onClick={(e) => {
-                  e.preventDefault();
-                  requestPageChange(safeCurrent - 1);
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-                </svg>
-              </button>
-            )}
+          <div className="flex items-center gap-1 justify-start [@media(max-width:360px)]:col-start-1 [@media(max-width:360px)]:row-start-2">
+            <button
+              type="button"
+              className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 enabled:hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition"
+              aria-label={labels?.first}
+              disabled={isLoading || !canGoPrev}
+              onClick={(e) => {
+                e.preventDefault();
+                requestPageChange(1);
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 enabled:hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition"
+              aria-label={labels?.prev}
+              disabled={isLoading || !canGoPrev}
+              onClick={(e) => {
+                e.preventDefault();
+                requestPageChange(safeCurrent - 1);
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+              </svg>
+            </button>
           </div>
 
-          <div className="flex items-center justify-center gap-1 min-w-0 flex-nowrap">
+          <div className="flex flex-wrap items-center justify-center gap-1 min-w-0 [@media(max-width:360px)]:col-span-3 [@media(max-width:360px)]:row-start-1">
             {pageNumbers.map((page) => {
               const isActive = page === safeCurrent;
               return (
@@ -203,39 +205,35 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
             })}
           </div>
 
-          <div className="flex items-center gap-1 justify-end">
-            {showEdgeNav && canGoNext && (
-              <button
-                type="button"
-                className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 hover:text-primary transition"
-                aria-label={labels?.next}
-                disabled={isLoading}
-                onClick={(e) => {
-                  e.preventDefault();
-                  requestPageChange(safeCurrent + 1);
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                </svg>
-              </button>
-            )}
-            {showEdgeNav && canGoNext && (
-              <button
-                type="button"
-                className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 hover:text-primary transition"
-                aria-label={labels?.last}
-                disabled={isLoading}
-                onClick={(e) => {
-                  e.preventDefault();
-                  requestPageChange(safeTotal);
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
-                </svg>
-              </button>
-            )}
+          <div className="flex items-center gap-1 justify-end [@media(max-width:360px)]:col-start-3 [@media(max-width:360px)]:row-start-2">
+            <button
+              type="button"
+              className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 enabled:hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition"
+              aria-label={labels?.next}
+              disabled={isLoading || !canGoNext}
+              onClick={(e) => {
+                e.preventDefault();
+                requestPageChange(safeCurrent + 1);
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 enabled:hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed transition"
+              aria-label={labels?.last}
+              disabled={isLoading || !canGoNext}
+              onClick={(e) => {
+                e.preventDefault();
+                requestPageChange(safeTotal);
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
+              </svg>
+            </button>
           </div>
         </div>
       </>

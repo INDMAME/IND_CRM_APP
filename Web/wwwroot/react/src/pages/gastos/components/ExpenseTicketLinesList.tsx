@@ -1,7 +1,7 @@
 import React from "react";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
 import { indT } from "../../../utils/indI18n.ts";
-import { normalizeCardTitleText, type ExpenseDateParts } from "../utils/expenseUiUtils.ts";
+import { normalizeCardTitleText } from "../utils/expenseUiUtils.ts";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import { formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import type { ExpenseTicketDetailLine } from "../tickets/detail/expenseTicketDetailTypes.ts";
@@ -35,22 +35,16 @@ const formatQtyValue = (value: number | null): string => {
   });
 };
 
-const EMPTY_DATE_PARTS: ExpenseDateParts = {
-  year: "--",
-  month: "--",
-  day: "--",
-};
-
-const TICKET_LINE_DATE_PANEL_ICON = (
+const TICKET_LINE_ICON = (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="1"
+    strokeWidth="1.5"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="size-10 text-[#00296be0]"
+    className="size-6 text-[#00296be0]"
     aria-hidden="true"
   >
     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -80,7 +74,7 @@ const ExpenseTicketLinesList = ({
       {visibleLines.length === 0 ? (
         <div className="timeline-box timeline-empty" data-empty-text={indT("Tickets_Detail_NoLines", "No lines for this ticket.")} />
       ) : (
-        <div ref={containerRef} className="timeline-box">
+        <div ref={containerRef} className="timeline-box expense-card-lines">
           {visibleLines.map((line) => {
             const amountText = formatAmountWithCurrency(line.totalAmount, currencyCode);
             const qtyText = formatQtyValue(line.qty);
@@ -96,8 +90,8 @@ const ExpenseTicketLinesList = ({
             return (
               <div key={lineKey} className="timeline-item">
                 <ExpenseTimelineCard
-                  dateParts={EMPTY_DATE_PARTS}
-                  datePanelContent={TICKET_LINE_DATE_PANEL_ICON}
+                  layout="line"
+                  leadingIcon={TICKET_LINE_ICON}
                   title={title}
                   subtitle={subtitle}
                   subtitleClassName="expense-sheet-card__subtitle expense-line-card__meta text-left"

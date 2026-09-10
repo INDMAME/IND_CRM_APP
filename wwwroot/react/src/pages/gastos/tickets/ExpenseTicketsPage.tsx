@@ -21,7 +21,7 @@ import ExpenseTicketLinkBulkSummary, {
 import ExpenseTicketsFiltersPanel from "../components/ExpenseTicketsFiltersPanel.tsx";
 import ExpenseQuickTicketProgressOverlay from "../components/ExpenseQuickTicketProgressOverlay.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
-import { getExpenseTicketStatusLabel } from "../constants/expenseTicketStatusCatalog.ts";
+import { getExpenseTicketStatusBadgeClassName, getExpenseTicketStatusLabel } from "../constants/expenseTicketStatusCatalog.ts";
 import {
   configureExpenseApiAuth,
   getExpenseSheetDefaultCurrencyCode,
@@ -2056,6 +2056,7 @@ const ExpenseTicketsPageContent = () => {
                 data-ticket-file-id={fileId || undefined}
               >
                 <ExpenseTimelineCard
+                  layout="header"
                   dateParts={dateParts}
                   title={title}
                   subtitle={cardSubtitle}
@@ -2063,6 +2064,7 @@ const ExpenseTicketsPageContent = () => {
                   onOpen={() => openTicketDetail(fileId)}
                   titleClassName="expense-ticket-card__title timeline-name"
                   statusLabel={statusLabel}
+                  statusClassName={statusCode === null ? undefined : getExpenseTicketStatusBadgeClassName(statusCode)}
                   statusIcon={baseStatusIcons}
                   statusIconClassName="expense-ticket-card__status-icons"
                 />

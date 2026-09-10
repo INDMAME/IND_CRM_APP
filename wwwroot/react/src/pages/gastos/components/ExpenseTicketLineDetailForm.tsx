@@ -2,7 +2,8 @@ import React from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import {
   formatAmountWithCurrency,
-  formatExpenseAmountLabel,
+  formatExpenseOriginalAmountLabel,
+  formatExpenseReimbursableAmountLabel,
 } from "../expenseFormatters.ts";
 import type { ExpenseTicketDetailHeader, ExpenseTicketDetailLine } from "../tickets/detail/expenseTicketDetailTypes.ts";
 import {
@@ -180,7 +181,7 @@ const ExpenseTicketLineDetailForm = ({
           </div>
 
           <ExpenseReadOnlyField
-            label={formatExpenseAmountLabel(header.currencyCode)}
+            label={formatExpenseOriginalAmountLabel(header.currencyCode)}
             value={amountText || "-"}
             valueAlign="right"
             fullWidth
@@ -193,7 +194,7 @@ const ExpenseTicketLineDetailForm = ({
                 value={reimbursableStatusText}
               />
               <ExpenseReadOnlyField
-                label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
+                label={formatExpenseReimbursableAmountLabel(companyCurrencyCode)}
                 value={reimbursableAmountText}
                 valueAlign="right"
               />
