@@ -4,17 +4,21 @@
     "moduleId":  "glossary",
     "sectionNumber":  "13",
     "title":  "Glosario básico",
-    "summary":  "Consulta las definiciones de los términos utilizados en el CRM.",
+    "summary":  "Consulte términos de la interfaz, de los registros y de la relación entre tickets y hojas.",
     "aliases":  {
                     "es-ES":  [
                                   "Glosario básico",
                                   "glosario",
-                                  "definiciones"
+                                  "definiciones",
+                                  "solo lectura",
+                                  "modo edición",
+                                  "campo obligatorio"
                               ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre glosario básico?"
+                                          "¿Qué significa modo edición o solo lectura?",
+                                          "¿Dónde consulto el significado de los términos del manual?"
                                       ]
                         },
     "audiences":  [
@@ -28,8 +32,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.7.0",
-    "contentHash":  "1288A7A2DC2294631884F76D26A3ABE0FBF013B8F9F63DA0896264275110B616",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "B5CAC99F4F72BB57A991BA7E2BB3558903CDB59E437FB709F69874CAB8EB1677",
     "assets":  [
 
                ],

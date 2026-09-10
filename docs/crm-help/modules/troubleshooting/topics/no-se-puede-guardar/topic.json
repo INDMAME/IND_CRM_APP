@@ -4,17 +4,20 @@
     "moduleId":  "troubleshooting",
     "sectionNumber":  "12.4",
     "title":  "No se puede guardar",
-    "summary":  "Revisa campos obligatorios y mensajes cuando no puedas guardar.",
+    "summary":  "Revise los campos y el modo de edición, lea el error y compruebe el resultado antes de repetir la operación.",
     "aliases":  {
                     "es-ES":  [
                                   "No se puede guardar",
-                                  "problemas frecuentes",
-                                  "soporte"
+                                  "error al guardar",
+                                  "Guardar bloqueado",
+                                  "campos obligatorios",
+                                  "validación del formulario"
                               ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre no se puede guardar?"
+                                          "¿Qué debo revisar si no puedo guardar?",
+                                          "¿Qué hago si no sé si se han guardado mis cambios?"
                                       ]
                         },
     "audiences":  [
@@ -28,8 +31,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.7.0",
-    "contentHash":  "1B5E38E3E42EC90A636DEBC6AFE12171631BC0252170E6B006A48E45FCC77F80",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "7AA739968AAC642C48356B65BD2E5EEFDD1C3E03A1B664528E1AB377A312B957",
     "assets":  [
 
                ],

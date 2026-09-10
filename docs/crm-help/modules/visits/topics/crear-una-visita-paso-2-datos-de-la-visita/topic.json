@@ -1,48 +1,49 @@
 {
-    "schemaVersion":  "1.0",
-    "id":  "visits.crear-una-visita-paso-2-datos-de-la-visita",
-    "moduleId":  "visits",
-    "sectionNumber":  "7.4",
-    "title":  "Crear una visita: paso 2, datos de la visita",
-    "summary":  "Completa y confirma los datos de una nueva visita.",
-    "aliases":  {
-                    "es-ES":  [
-                                  "Crear una visita: paso 2, datos de la visita",
-                                  "visitas",
-                                  "historial de visitas"
-                              ]
-                },
-    "sampleQuestions":  {
-                            "es-ES":  [
-                                          "¿Dónde encuentro información sobre crear una visita: paso 2, datos de la visita?"
-                                      ]
-                        },
-    "audiences":  [
-                      "authenticated-crm-user"
-                  ],
-    "prerequisiteTopicIds":  [
-
-                             ],
-    "relatedTopicIds":  [
-                            "visits.modulo-visitas"
-                        ],
-    "routeKey":  "visits.history",
-    "status":  "published",
-    "contentVersion":  "1.7.0",
-    "contentHash":  "F732F3F69550B78A7FD13C5D5EF7D7F4D4012524501030A977DD871D24FE2D24",
-    "assets":  [
-
-               ],
-    "quickAnswers":  [
-
-                     ],
-    "translationCoverage":  {
-                                "es-ES":  "source"
-                            },
-    "source":  {
-                   "path":  "docs/exports/Manual App CRM 1.5.docx",
-                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
-                   "sectionNumber":  "7.4",
-                   "pageFromTableOfContents":  14
-               }
+    "schemaVersion": "1.0",
+    "id": "visits.crear-una-visita-paso-2-datos-de-la-visita",
+    "moduleId": "visits",
+    "sectionNumber": "7.4",
+    "title": "Crear una visita: paso 2, datos de la visita",
+    "summary": "Completa y confirma los datos de una nueva visita.",
+    "aliases": {
+        "es-ES": [
+            "Crear una visita: paso 2, datos de la visita",
+            "visitas",
+            "historial de visitas",
+            "¿Qué diferencia hay entre Descripción, Comentarios, Antecedentes y Conclusiones de una visita?",
+            "¿Qué medio de contacto aparece por defecto al crear una visita?",
+            "¿Cómo elijo entre visita Comercial y Técnica?",
+            "¿Puedo seleccionar manualmente la fecha de la visita?"
+        ]
+    },
+    "sampleQuestions": {
+        "es-ES": [
+            "¿Qué diferencia hay entre Descripción, Comentarios, Antecedentes y Conclusiones de una visita?",
+            "¿Qué medio de contacto aparece por defecto al crear una visita?",
+            "¿Cómo elijo entre visita Comercial y Técnica?",
+            "¿Puedo seleccionar manualmente la fecha de la visita?"
+        ]
+    },
+    "audiences": [
+        "authenticated-crm-user"
+    ],
+    "prerequisiteTopicIds": [],
+    "relatedTopicIds": [
+        "visits.modulo-visitas"
+    ],
+    "routeKey": "visits.history",
+    "status": "published",
+    "contentVersion": "2.0.1",
+    "contentHash": "48B9E7D9351E56A7BEDDE3348C5D146905183CAD9DEB82366634656F9E5F6402",
+    "assets": [],
+    "quickAnswers": [],
+    "translationCoverage": {
+        "es-ES": "source"
+    },
+    "source": {
+        "path": "docs/exports/Manual App CRM 1.5.docx",
+        "sha256": "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+        "sectionNumber": "7.4",
+        "pageFromTableOfContents": 14
+    }
 }

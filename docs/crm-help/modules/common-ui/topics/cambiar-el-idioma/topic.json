@@ -4,18 +4,20 @@
     "moduleId":  "common-ui",
     "sectionNumber":  "6.2",
     "title":  "Cambiar el idioma",
-    "summary":  "Cambia el idioma de la aplicación desde tu perfil.",
+    "summary":  "Seleccione el idioma de la interfaz y compruebe el cambio después de la recarga.",
     "aliases":  {
                     "es-ES":  [
                                   "Cambiar el idioma",
-                                  "pantalla",
-                                  "empresa activa",
-                                  "permisos"
+                                  "idioma del CRM",
+                                  "Idiomas",
+                                  "menú de usuario",
+                                  "interfaz en español"
                               ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre cambiar el idioma?"
+                                          "¿Cómo cambio el idioma del CRM?",
+                                          "¿Se traducen mis descripciones cuando cambio de idioma?"
                                       ]
                         },
     "audiences":  [
@@ -29,8 +31,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.7.0",
-    "contentHash":  "C6F45E49B12D974394AF1483554F63E7EE4825C7785CF61AE7664EC46DC905E1",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "05E0DD5E71CB6ABA791D63C7DF87B7C0E0683BD7B96B3097638A93FA21426C8D",
     "assets":  [
 
                ],
@@ -38,7 +40,7 @@
                          {
                              "id":  "common-ui.cambiar-el-idioma.quick-01",
                              "question":  "¿Cómo cambio el idioma del CRM?",
-                             "answer":  "1. Abra el menú lateral y pulse su nombre de usuario. 2. Pulse Idiomas y elija el idioma que desea utilizar. 3. Espere a que la pantalla vuelva a cargarse.",
+                             "answer":  "Guarde o cancele las ediciones pendientes. Abra el menú lateral, pulse su nombre de usuario y entre en Idiomas. Seleccione el idioma y espere a que la pantalla vuelva a cargarse. Compruebe la selección en el menú de usuario; los datos de negocio escritos por los usuarios no se traducen.",
                              "sourceChunkIds":  [
                                                     "common-ui.cambiar-el-idioma--01"
                                                 ]

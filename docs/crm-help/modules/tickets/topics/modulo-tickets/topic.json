@@ -4,18 +4,20 @@
     "moduleId":  "tickets",
     "sectionNumber":  "9",
     "title":  "Módulo Tickets",
-    "summary":  "Descubre qué contiene un ticket y cómo se relaciona con una hoja.",
+    "summary":  "Distinga la creación del ticket, la revisión de sus datos y su vinculación a una hoja.",
     "aliases":  {
                     "es-ES":  [
                                   "Módulo Tickets",
                                   "Tickets",
-                                  "tickets",
-                                  "justificantes"
+                                  "justificantes de gasto",
+                                  "imagen y datos del ticket",
+                                  "revisión de tickets"
                               ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre módulo tickets?"
+                                          "¿Para qué sirve el módulo Tickets?",
+                                          "¿Crear un ticket, revisarlo y vincularlo son pasos diferentes?"
                                       ]
                         },
     "audiences":  [
@@ -31,8 +33,8 @@
                         ],
     "routeKey":  "expenses.tickets",
     "status":  "published",
-    "contentVersion":  "1.7.0",
-    "contentHash":  "FB15CD9F9029A19E134590C616564B75C91145CB69F2E2B22D1BE2D618234C4B",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "1BB142BBDCE0FA944EDBA8458639189D757937D6CAC6FBDE993746221238F854",
     "assets":  [
 
                ],

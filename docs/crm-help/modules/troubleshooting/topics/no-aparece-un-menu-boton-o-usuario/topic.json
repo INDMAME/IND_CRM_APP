@@ -4,17 +4,20 @@
     "moduleId":  "troubleshooting",
     "sectionNumber":  "12.3",
     "title":  "No aparece un menú, botón o usuario",
-    "summary":  "Comprueba empresa, permisos y jerarquía si falta una opción.",
+    "summary":  "Compruebe empresa, estado, propietario y permisos cuando falte una opción o un usuario.",
     "aliases":  {
                     "es-ES":  [
                                   "No aparece un menú, botón o usuario",
-                                  "problemas frecuentes",
-                                  "soporte"
+                                  "falta un botón",
+                                  "no aparece un usuario",
+                                  "opción oculta",
+                                  "no veo un menú"
                               ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre no aparece un menú, botón o usuario?"
+                                          "¿Por qué no aparece un menú, botón o usuario?",
+                                          "¿Qué reviso si no veo a una persona que debo gestionar?"
                                       ]
                         },
     "audiences":  [
@@ -28,8 +31,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.7.0",
-    "contentHash":  "F197C6AF49079A4F2CF7CF9371B5C9C28D9628B6C4FA5F5D0E8FFE00688B0EBC",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "2A0D7D46956AEA508015D00C6772E22DBF46B60A2BB22ED77CD2C0073A4DBF0B",
     "assets":  [
 
                ],
@@ -37,7 +40,7 @@
                          {
                              "id":  "troubleshooting.no-aparece-un-menu-boton-o-usuario.quick-01",
                              "question":  "¿Por qué no aparece un menú, botón o usuario?",
-                             "answer":  "Compruebe la empresa activa y actualice la pantalla. Si la opción sigue sin aparecer, puede deberse a permisos o a la jerarquía de gestión. No utilice la sesión de otra persona.",
+                             "answer":  "Guarde o cancele cualquier edición pendiente, compruebe la empresa activa y vuelva a abrir la pantalla. Revise el estado del registro y si es propio o de otra persona. Si busca un usuario, compruebe la jerarquía de gestión autorizada. Si la opción sigue sin aparecer, puede deberse a permisos o a la configuración de la compañía; envíe a soporte la pantalla, la empresa y la acción esperada. No utilice la sesión de otra persona.",
                              "sourceChunkIds":  [
                                                     "troubleshooting.no-aparece-un-menu-boton-o-usuario--01"
                                                 ]

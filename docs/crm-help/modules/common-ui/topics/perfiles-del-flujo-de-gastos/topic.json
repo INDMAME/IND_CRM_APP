@@ -4,18 +4,20 @@
     "moduleId":  "common-ui",
     "sectionNumber":  "6.4",
     "title":  "Perfiles del flujo de gastos",
-    "summary":  "Distingue los perfiles que intervienen en el flujo de gastos.",
+    "summary":  "Identifique los perfiles del flujo de gastos y compruebe de quién es la hoja antes de actuar.",
     "aliases":  {
                     "es-ES":  [
                                   "Perfiles del flujo de gastos",
-                                  "pantalla",
-                                  "empresa activa",
-                                  "permisos"
+                                  "usuario estándar",
+                                  "usuario aprobador",
+                                  "usuario pagador",
+                                  "jerarquía de responsabilidad"
                               ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre perfiles del flujo de gastos?"
+                                          "¿Qué perfiles intervienen en el flujo de gastos?",
+                                          "¿Qué debo comprobar antes de revisar la hoja de otra persona?"
                                       ]
                         },
     "audiences":  [
@@ -29,8 +31,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.7.0",
-    "contentHash":  "4445727D47F8623A80C7B82DD4B5DB65E7FC478C3C4174C8EE750D2830789EB1",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "911286225FB39B3B526382FB642F07441E3564CC1DE43F9F98C18695CA74C3DC",
     "assets":  [
 
                ],

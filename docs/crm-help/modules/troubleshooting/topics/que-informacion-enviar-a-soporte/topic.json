@@ -4,17 +4,20 @@
     "moduleId":  "troubleshooting",
     "sectionNumber":  "12.6",
     "title":  "Qué información enviar a soporte",
-    "summary":  "Prepara los datos útiles que soporte necesita para investigar.",
+    "summary":  "Prepare una incidencia con empresa, registro, acción, mensaje y resultado esperado.",
     "aliases":  {
                     "es-ES":  [
                                   "Qué información enviar a soporte",
-                                  "problemas frecuentes",
-                                  "soporte"
+                                  "comunicar incidencia",
+                                  "datos para soporte",
+                                  "mensaje de error",
+                                  "canal interno de soporte"
                               ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre qué información enviar a soporte?"
+                                          "¿Qué información debo enviar a soporte?",
+                                          "¿Cómo describo una incidencia de un ticket creado parcialmente?"
                                       ]
                         },
     "audiences":  [
@@ -28,8 +31,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.7.0",
-    "contentHash":  "0044C90D96A92A9E063C271EC19117614160D654300AABB71EFFB4B95AE252B3",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "A7C905908F24A08F9DC4A58742B786335064EF27928EDB96B6A9BFC72DED5FE8",
     "assets":  [
 
                ],
@@ -37,7 +40,7 @@
                          {
                              "id":  "troubleshooting.que-informacion-enviar-a-soporte.quick-01",
                              "question":  "¿Qué información debo enviar a soporte?",
-                             "answer":  "Su nombre de usuario corporativo, sin contraseña. Empresa activa. Módulo y acción que estaba realizando. Identificador de la visita, hoja o ticket cuando exista. Fecha y hora aproximadas. Texto completo del mensaje de error. Captura que no muestre contraseñas, códigos de acceso ni datos innecesarios.",
+                             "answer":  "Envíe por el canal interno de soporte su usuario corporativo sin contraseña, empresa activa, pantalla y acción, identificador del registro, fecha y hora y texto completo del error. Explique qué esperaba obtener y qué ocurrió. Añada una captura pertinente sin contraseñas, códigos de acceso ni datos innecesarios. Si el ticket se creó parcialmente, indique esa circunstancia y conserve su identificador.",
                              "sourceChunkIds":  [
                                                     "troubleshooting.que-informacion-enviar-a-soporte--01"
                                                 ]

@@ -4,18 +4,20 @@
     "moduleId":  "common-ui",
     "sectionNumber":  "5",
     "title":  "Elementos comunes de la pantalla",
-    "summary":  "Reconoce los controles y mensajes que se repiten en toda la aplicación.",
+    "summary":  "Identifique las zonas de la pantalla, los controles y los mensajes de la aplicación.",
     "aliases":  {
                     "es-ES":  [
                                   "Elementos comunes de la pantalla",
-                                  "pantalla",
-                                  "empresa activa",
-                                  "permisos"
+                                  "barra superior",
+                                  "menú lateral",
+                                  "botón flotante",
+                                  "mensajes de confirmación"
                               ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre elementos comunes de la pantalla?"
+                                          "¿Para qué sirven los botones y zonas de la pantalla?",
+                                          "¿Cómo distingo un mensaje de progreso de una confirmación?"
                                       ]
                         },
     "audiences":  [
@@ -29,8 +31,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.7.0",
-    "contentHash":  "6FA94D31739BA8345CC5A61EED9CBE55B33DB1DAB326D2FCCDFB795889213E56",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "9C8F118FDB78FFD4DE0D9412E799FD79BE68B9BD29A4CB05AD5C0AA66657D506",
     "assets":  [
 
                ],

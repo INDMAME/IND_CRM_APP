@@ -4,18 +4,20 @@
     "moduleId":  "common-ui",
     "sectionNumber":  "6.3",
     "title":  "Permisos",
-    "summary":  "Comprende cómo los permisos afectan a menús, datos y acciones.",
+    "summary":  "Distinga acceso, consulta y acciones permitidas para cada empresa y registro.",
     "aliases":  {
                     "es-ES":  [
                                   "Permisos",
-                                  "pantalla",
-                                  "empresa activa",
-                                  "permisos"
+                                  "acceso al módulo",
+                                  "permiso de consulta",
+                                  "acciones autorizadas",
+                                  "permisos por empresa"
                               ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre permisos?"
+                                          "¿Poder consultar una hoja significa que puedo editarla?",
+                                          "¿Los permisos son iguales en todas las empresas?"
                                       ]
                         },
     "audiences":  [
@@ -29,8 +31,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.7.0",
-    "contentHash":  "CE56E21F593B595637B5C9624C32C603CF34D0C7E8A1BE466B99617E9FA625EC",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "D22564218EF6A68FB499C9C09852CC4EE7CBEF6987E39970505C40FACD229E91",
     "assets":  [
 
                ],

@@ -4,18 +4,20 @@
     "moduleId":  "common-ui",
     "sectionNumber":  "6.1",
     "title":  "Qué significa empresa activa",
-    "summary":  "Entiende cómo la empresa activa determina los datos disponibles.",
+    "summary":  "Compruebe la empresa activa y cambie a una compañía autorizada antes de trabajar con sus datos.",
     "aliases":  {
                     "es-ES":  [
                                   "Qué significa empresa activa",
-                                  "pantalla",
                                   "empresa activa",
-                                  "permisos"
+                                  "cambiar de empresa",
+                                  "Compañías",
+                                  "compañía seleccionada"
                               ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre qué significa empresa activa?"
+                                          "¿Cómo cambio la empresa activa?",
+                                          "¿Cambiar de empresa traslada un registro que ya he creado?"
                                       ]
                         },
     "audiences":  [
@@ -29,8 +31,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.7.0",
-    "contentHash":  "3F681A1711E3E236E41BA4AC52B155D230E7502548446F0D927B7D0B164F19C0",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "8F574FFAC5270157B162827C9B28897702FB9DD3EE3FDCF48CFD25B441247D3D",
     "assets":  [
 
                ],

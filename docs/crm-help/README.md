@@ -2,6 +2,8 @@
 
 Esta carpeta es la fuente canónica mantenible del asistente de ayuda. El archivo `docs/exports/Manual App CRM 1.5.docx` se conserva intacto como entrada histórica de la migración; la aplicación no debe leer ni indexar el DOCX en tiempo de ejecución.
 
+La edición documental 2.0 incorpora la salida Word desde esta misma fuente. `manual/publication.json` define el orden, los pilotos y las capturas revisadas; `manual/introduction.es-ES.md` aporta los contenidos de acceso exclusivos del documento; `manual/editorial.es-ES.md` define las plantillas. Consulte [el flujo de exportación](manual/README.md) para generar un entregable nuevo sin sobrescribir versiones previas. La preparación local del Word y los bundles no publica los cambios en la web.
+
 La migración 1.5 comprobó 65 secciones lógicas. Se publican 46 temas con contenido útil. Los contenidos introductorios y de acceso se retiraron porque el Manual se consulta desde una sesión ya iniciada. Los encabezados 3, 4, 6, 11 y 12 no tenían cuerpo propio y se mantienen únicamente como agrupación, evitando temas seleccionables vacíos.
 
 ## Estructura

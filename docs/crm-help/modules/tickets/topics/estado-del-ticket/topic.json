@@ -4,18 +4,22 @@
     "moduleId":  "tickets",
     "sectionNumber":  "9.3",
     "title":  "Estado del ticket",
-    "summary":  "Distingue cuándo un ticket está pendiente o asignado.",
+    "summary":  "Distinga Pendiente y Asignado y revise una relación incorrecta mediante las acciones admitidas.",
     "aliases":  {
                     "es-ES":  [
                                   "Estado del ticket",
-                                  "tickets",
-                                  "justificantes"
+                                  "ticket pendiente",
+                                  "ticket asignado",
+                                  "Desvincular ticket",
+                                  "ticket en hoja incorrecta",
+                                  "reasignar ticket"
                               ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre estado del ticket?",
-                                          "Necesito desvincular un ticket de una hoja"
+                                          "¿Qué significan los estados Pendiente y Asignado de un ticket?",
+                                          "Necesito desvincular un ticket de una hoja",
+                                          "¿Cómo corrijo un ticket vinculado a la hoja equivocada?"
                                       ]
                         },
     "audiences":  [
@@ -29,8 +33,8 @@
                         ],
     "routeKey":  "expenses.tickets",
     "status":  "published",
-    "contentVersion":  "1.7.0",
-    "contentHash":  "E56B3E855055A4F3EDE246274E4A077FFA8D4E1421D403C2692ACD055CE41860",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "E895D0B4668AF8A9BEA33B862574B2F8C0F4F6242DF1C76B72135958A413B159",
     "assets":  [
 
                ],
@@ -38,7 +42,7 @@
                          {
                              "id":  "tickets.estado-del-ticket.quick-01",
                              "question":  "¿Qué significan los estados Pendiente y Asignado de un ticket?",
-                             "answer":  "Pendiente significa que el ticket todavía no está asignado a una hoja. Asignado significa que ya se encuentra relacionado con una hoja de gastos. No existe una opción directa para cambiar esa relación: el procedimiento documentado consiste en eliminar el ticket, volver a cargar el justificante y vincularlo a la hoja correcta.",
+                             "answer":  "Pendiente significa que el ticket todavía no está asignado a una hoja; Asignado significa que ya está relacionado con una. Para corregir una relación, revise la hoja y su línea. Utilice Desvincular ticket únicamente si la acción está disponible para esa línea, su estado y sus permisos; conserva la línea, el ticket y la foto. Compruebe después que el ticket aparece Pendiente antes de vincularlo expresamente al destino correcto. Si no puede desvincularlo, consulte a soporte. Eliminar puede borrar el archivo, el ticket y la línea vinculada; no es un sustituto de desvincular. La desvinculación no cambia automáticamente el ticket a otra hoja.",
                              "sourceChunkIds":  [
                                                     "tickets.estado-del-ticket--01"
                                                 ]

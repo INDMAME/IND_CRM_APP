@@ -2,12 +2,27 @@
 
 <!-- Fuente: Manual App CRM 1.5.docx, sección 12.5. -->
 
-1. Compruebe que la imagen corresponde a un formato admitido y que no supera el límite indicado por la aplicación.
+## Objetivo
 
-2. Si usa cámara, conceda permiso solo cuando el navegador lo solicite para el CRM.
+Continuar una captura interrumpida sin duplicar tickets.
 
-3. Tome una nueva fotografía con luz uniforme, sin recortar datos y evitando reflejos.
+## Antes de empezar
 
-4. Si aparece Reintentar carga, utilícelo una sola vez y espere.
+Lea si el mensaje rechaza la imagen o indica un ticket creado parcialmente. Anote cualquier identificador antes de cerrar.
 
-5. Si se creó un ticket parcial, anote su identificador antes de cerrar el mensaje.
+## Pasos
+
+1. Compruebe el formato y el límite de tamaño indicado por la aplicación.
+2. Para usar cámara, conceda el permiso que solicite el navegador para el CRM; como alternativa, pulse **Elegir imagen**.
+3. Si la foto es ilegible, repítala con luz uniforme, sin reflejos ni datos recortados.
+4. Espere mientras haya progreso y respete el tiempo de espera indicado antes de reintentar.
+5. Si aparece **Reintentar carga**, úselo una sola vez y espere el resultado.
+6. Si se creó un ticket parcial, búsquelo por su identificador en **Tickets** y revise sus datos e imagen.
+
+## Resultado y comprobación
+
+Abra el ticket, compruebe la imagen y continúe la revisión. Si era parcial, verifique que conserva el mismo identificador.
+
+## Variantes e incidencias
+
+Si no puede continuar, envíe a soporte mensaje, identificador, fecha y hora. No repita cargas hasta aclarar si ya existe un registro. La ausencia de **Reintentar carga** no justifica otra copia: la recuperación depende del punto de interrupción.

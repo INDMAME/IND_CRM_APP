@@ -4,18 +4,20 @@
     "moduleId":  "common-ui",
     "sectionNumber":  "5.1",
     "title":  "Editar, guardar y cancelar",
-    "summary":  "Aprende cuándo editar, guardar o cancelar cambios.",
+    "summary":  "Edite los campos permitidos, confirme el guardado y distinga qué cambios descarta Cancelar.",
     "aliases":  {
                     "es-ES":  [
                                   "Editar, guardar y cancelar",
-                                  "pantalla",
-                                  "empresa activa",
-                                  "permisos"
+                                  "modo edición",
+                                  "descartar cambios",
+                                  "cambios sin guardar",
+                                  "confirmar guardado"
                               ]
                 },
     "sampleQuestions":  {
                             "es-ES":  [
-                                          "¿Dónde encuentro información sobre editar, guardar y cancelar?"
+                                          "¿Cómo edito y guardo un registro?",
+                                          "¿Cancelar deshace los cambios que ya he guardado?"
                                       ]
                         },
     "audiences":  [
@@ -29,8 +31,8 @@
                         ],
     "routeKey":  null,
     "status":  "published",
-    "contentVersion":  "1.7.0",
-    "contentHash":  "6920353439505E59C443846CD28ECF26B31426C2AE5D7A273444892E42D35513",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "7045DEB41C3CF10B1FA612643A5B42793BAA87D97CB2C5AA41BDEB83E7FAAD6A",
     "assets":  [
 
                ],
