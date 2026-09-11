@@ -226,6 +226,35 @@ try
             accessor.HttpContext = null;
         }
     }
+    // Uses the real company controller and session store with delayed upstream context responses.
+    foreach (var reverse in new[] { false, true })
+    {
+        var store = app.Services.GetRequiredService<Microsoft.AspNetCore.Session.ISessionStore>();
+        var key = "controller-choices-" + reverse;
+        ISession OpenChoiceSession() => store.Create(key, TimeSpan.FromHours(2), TimeSpan.FromSeconds(10), () => true, false);
+        var seed = new DefaultHttpContext { Session = OpenChoiceSession() };
+        SeedFreshCache(seed);
+        await seed.Session.CommitAsync();
+        var contexts = new[]
+        {
+            new DefaultHttpContext { Session = OpenChoiceSession() },
+            new DefaultHttpContext { Session = OpenChoiceSession() }
+        };
+        var choices = contexts.Select((context, index) => new ChoiceAuthContext(context, index + 2)).ToArray();
+        var controllers = contexts.Select((context, index) => new INDCompanyController(choices[index],
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<INDCompanyController>.Instance)
+            { ControllerContext = new ControllerContext { HttpContext = context } }).ToArray();
+        var firstChoice = controllers[0].SetCompany("B", null);
+        var lastChoice = controllers[1].SetCompany("C", null);
+        choices[reverse ? 1 : 0].Ready.SetResult();
+        await (reverse ? lastChoice : firstChoice);
+        choices[reverse ? 0 : 1].Ready.SetResult();
+        await (reverse ? firstChoice : lastChoice);
+        Check(OpenChoiceSession().GetString("INDCompanySelected") == "C", "Controller lost the last explicit company choice");
+        Check(choices[1].Remembered == "C", "Last controller preference does not match its committed choice");
+        if (reverse) Check(choices[0].Remembered == "C", "Late controller wrote an obsolete company preference");
+    }
+    Console.WriteLine("Verified real company controller ordering and committed browser preferences.");
     Console.WriteLine("Verified exception recovery, anonymous errors, antiforgery and fresh signed context.");
 }
 finally
@@ -289,5 +318,40 @@ public class FakeApi : DispatchProxy
             }),
             _ => throw new InvalidOperationException("Unexpected upstream operation: " + method?.Name)
         };
+    }
+}
+
+// Delays only the upstream lookup; the controller, merge and persisted choice remain production code.
+public sealed class ChoiceAuthContext(HttpContext http, long contextVersion) : IIndAuthContextService
+{
+    public TaskCompletionSource Ready { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public string? Remembered { get; private set; }
+
+    public IndWebContext GetCachedContext() => new()
+    {
+        EntraOid = "test-user", ContextVersion = contextVersion,
+        Header = new() { Success = true, AxUserId = "test-ax", DefaultCompany = "TEST" },
+        Companies = new() { new() { CompanyId = "TEST" }, new() { CompanyId = "B" }, new() { CompanyId = "C" } }
+    };
+
+    public async Task<IndAuthContextResult> EnsureContextAsync(bool forceRefresh = false)
+    {
+        await Ready.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        var context = GetCachedContext();
+        http.Session.SetString("INDContextVersion", contextVersion.ToString());
+        http.Session.SetString("INDContextToken", "choice-" + contextVersion);
+        http.Session.SetString("INDWebContext", JsonSerializer.Serialize(context));
+        return new() { Success = true, Context = context };
+    }
+
+    public Task EnsureFreshContextForRequestAsync() => Task.CompletedTask;
+    public string? GetSelectedCompanyId(IndWebContext? context) => http.Session.GetString("INDCompanySelected");
+    public void RememberSelectedCompanyPreference(string companyId) => Remembered = companyId;
+    public void ClearSelectedCompanyPreference() => Remembered = null;
+    public void ClearContextCache(bool preserveCompanySelection = false)
+    {
+        http.Session.Remove("INDContextVersion");
+        http.Session.Remove("INDContextToken");
+        http.Session.Remove("INDWebContext");
     }
 }

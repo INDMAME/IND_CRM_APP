@@ -400,12 +400,14 @@
             function bindCompanyForms() {
                 const forms = document.querySelectorAll(".ind-company-form");
                 if (!forms.length) return;
+                let latestCompanyRequest = 0;
 
                 forms.forEach((form) => {
                     if (form.dataset.indBound === "true") return;
                     form.dataset.indBound = "true";
                     form.addEventListener("submit", (event) => {
                         event.preventDefault();
+                        const requestVersion = ++latestCompanyRequest;
                         const browserState = window.IND && window.IND.browserState;
                         browserState?.prepareForCompanyChange?.();
                         const payload = new FormData(form);
@@ -415,6 +417,7 @@
                             headers: { "X-Requested-With": "XMLHttpRequest" }
                         })
                             .then((res) => {
+                                if (requestVersion !== latestCompanyRequest) return;
                                 if (!res.ok) throw new Error("Company change failed.");
                                 if (typeof window.__indBypassNavigationGuardOnce === "function") {
                                     window.__indBypassNavigationGuardOnce();
@@ -423,6 +426,7 @@
                                 window.location.replace("/");
                             })
                             .catch(() => {
+                                if (requestVersion !== latestCompanyRequest) return;
                                 if (typeof window.__indBypassNavigationGuardOnce === "function") {
                                     window.__indBypassNavigationGuardOnce();
                                 }

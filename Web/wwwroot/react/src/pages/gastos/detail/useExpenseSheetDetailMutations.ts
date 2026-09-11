@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useRef } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../utils/permissions.ts";
 import type { ExpenseSheetCreateRequest } from "../expenseTypes.ts";
@@ -92,6 +92,7 @@ export const useExpenseSheetDetailMutations = ({
   setStatus,
   setIsEditing,
 }: UseExpenseSheetDetailMutationsArgs) => {
+  const confirmedCreatedSheetIdRef = useRef("");
   const handleUpdate = useCallback(async () => {
     if (busy || !isEditing) return false;
     if (!isCreateMode && isEditLocked) return false;
@@ -100,6 +101,12 @@ export const useExpenseSheetDetailMutations = ({
     if (!canProceed) {
       showPermissionModal();
       return false;
+    }
+
+    // A blocked page handoff retries opening the confirmed sheet, never its creation.
+    if (isCreateMode && confirmedCreatedSheetIdRef.current) {
+      onCreateSuccess(confirmedCreatedSheetIdRef.current);
+      return true;
     }
 
     const payloadResult = buildExpenseSheetFullUpdatePayload({
@@ -151,6 +158,7 @@ export const useExpenseSheetDetailMutations = ({
             throw new Error(indT("Api_RequestFailed", "Request failed."));
           }
 
+          confirmedCreatedSheetIdRef.current = createdSheetId;
           onCreateSuccess(createdSheetId);
           setStatus(indT("Common_Save", "Save"));
           return true;

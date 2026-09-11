@@ -53,12 +53,14 @@ test("SetCompany refreshes authorization before writing and rejects unknown comp
   const refreshIndex = companyController.indexOf("EnsureContextAsync(forceRefresh: true)");
   const denialIndex = companyController.indexOf("StatusCodes.Status403Forbidden");
   const sessionWriteIndex = companyController.indexOf('Session.SetString("INDCompanySelected"');
-  const preferenceWriteIndex = companyController.indexOf("RememberSelectedCompanyPreference(trimmed)");
+  const commitIndex = companyController.indexOf("await HttpContext.Session.CommitAsync(");
+  const preferenceWriteIndex = companyController.indexOf("RememberSelectedCompanyPreference(committedCompany)");
 
   assert.ok(validationIndex >= 0);
   assert.ok(refreshIndex > validationIndex);
   assert.ok(denialIndex > refreshIndex && denialIndex < sessionWriteIndex);
   assert.ok(sessionWriteIndex > denialIndex);
-  assert.ok(preferenceWriteIndex > denialIndex);
+  assert.ok(commitIndex > sessionWriteIndex);
+  assert.ok(preferenceWriteIndex > commitIndex);
   assert.match(companyController, /authorizedCompany == null[\s\S]*EnsureContextAsync\(forceRefresh: true\)[\s\S]*authorizedCompany == null/u);
 });

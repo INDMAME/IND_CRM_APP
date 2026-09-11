@@ -1864,4 +1864,13 @@
   </data>
   <data name="ExpenseSheets_Assistant_SourceTooLarge" xml:space="preserve"><value>Narrow the filters before asking: the assistant supports up to 6000 expense sheets and 4 MB of data.</value></data>
   <data name="ExpenseSheets_Assistant_SourceChanged" xml:space="preserve"><value>The expense list changed while loading. Refresh the list and try again.</value></data>
+  <data name="TextEditor_SaveFailed" xml:space="preserve">
+    <value>Could not save the text in this browser. Copy the text or try again before leaving.</value>
+  </data>
+  <data name="Expense_ContextSaveFailed" xml:space="preserve">
+    <value>Could not preserve the selected user in this browser. Try again before opening another page.</value>
+  </data>
+  <data name="ExpenseSheets_CreatedOpenPending" xml:space="preserve">
+    <value>Expense sheet {0} was created. Save again to open it.</value>
+  </data>
 </root>

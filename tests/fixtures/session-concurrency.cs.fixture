@@ -86,6 +86,64 @@ Equal("3", Open("refresh").GetString("INDContextVersion"), "latest signed contex
 Equal("context-three", Open("refresh").GetString("INDContextToken"), "signed context token matches version");
 Equal("context-json-three", Open("refresh").GetString("INDWebContext"), "signed context JSON matches version");
 
+// Explicit choices are ordered when accepted, independently of response completion.
+void SelectCompany(ISession session, string company, long revision, long contextVersion)
+{
+    session.SetString("INDCompanySelected", company);
+    session.SetString("INDCompanySelectionSource", "user");
+    session.SetString("INDCompanySelectionRevision", revision.ToString());
+    session.SetString("INDContextVersion", contextVersion.ToString());
+    session.SetString("INDContextToken", "context-" + company);
+}
+
+foreach (var reverseCompletion in new[] { false, true })
+{
+    var key = "explicit-choices-" + reverseCompletion;
+    await Seed(key);
+    var chooseB = Open(key);
+    var chooseC = Open(key);
+    await chooseB.LoadAsync();
+    await chooseC.LoadAsync();
+    SelectCompany(chooseB, "B", 100, 2);
+    SelectCompany(chooseC, "C", 101, 3);
+    await (reverseCompletion ? chooseC : chooseB).CommitAsync();
+    await (reverseCompletion ? chooseB : chooseC).CommitAsync();
+    Equal("C", Open(key).GetString("INDCompanySelected"), "last explicit company choice survives either completion order");
+    Equal("101", Open(key).GetString("INDCompanySelectionRevision"), "latest explicit choice revision is retained");
+}
+
+await Seed("return-to-current-company");
+var leaveA = Open("return-to-current-company");
+var chooseAAgain = Open("return-to-current-company");
+await leaveA.LoadAsync();
+await chooseAAgain.LoadAsync();
+SelectCompany(leaveA, "B", 200, 2);
+SelectCompany(chooseAAgain, "A", 201, 1);
+await leaveA.CommitAsync();
+await chooseAAgain.CommitAsync();
+Equal("A", Open("return-to-current-company").GetString("INDCompanySelected"), "choosing the current company cancels an earlier pending switch");
+Equal(null, Open("return-to-current-company").GetString("INDContextToken"), "a newer choice never restores an older signed context");
+
+await Seed("choice-after-logout");
+var pendingChoice = Open("choice-after-logout");
+SelectCompany(pendingChoice, "C", 300, 3);
+var explicitLogout = Open("choice-after-logout");
+explicitLogout.Clear();
+await explicitLogout.CommitAsync();
+await pendingChoice.CommitAsync();
+Equal(null, Open("choice-after-logout").GetString("ENTRAOID"), "a pending explicit choice cannot resurrect logout");
+
+await Seed("choice-after-signin");
+var formerUserChoice = Open("choice-after-signin");
+SelectCompany(formerUserChoice, "C", 400, 3);
+var newUser = Open("choice-after-signin");
+newUser.Clear();
+newUser.SetString("ENTRAOID", "different-user");
+newUser.SetString("INDCompanySelected", "D");
+await newUser.CommitAsync();
+await formerUserChoice.CommitAsync();
+Equal("D", Open("choice-after-signin").GetString("INDCompanySelected"), "explicit choices cannot cross an identity change");
+
 await Seed("company-refresh");
 var delayedSwitch = Open("company-refresh");
 var concurrentRefresh = Open("company-refresh");

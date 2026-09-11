@@ -1,6 +1,8 @@
 import React, { useCallback } from "react";
 import RemoteSearchCombobox, { type RemoteSearchOption } from "../../../components/commons/RemoteSearchCombobox.tsx";
 import { fetchExpenseProjects } from "../utils/expenseApi.ts";
+import { getExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
+import { captureSensitiveBrowserState } from "../../../utils/browserStorageScope.ts";
 
 type ExpenseProjectFilterInputProps = {
   label: string;
@@ -59,6 +61,7 @@ const ExpenseProjectFilterInput = ({
   containerClassName,
   labelClassName,
 }: ExpenseProjectFilterInputProps) => {
+  const queryScope = JSON.stringify([captureSensitiveBrowserState(), getExpenseActingUserOverride()]);
   const loadOptions = useCallback(async (term: string, signal: AbortSignal): Promise<RemoteSearchOption[]> => {
     const response = await fetchExpenseProjects(term, 1, SEARCH_PAGE_SIZE, {
       signal,
@@ -82,6 +85,7 @@ const ExpenseProjectFilterInput = ({
 
   return (
     <RemoteSearchCombobox
+      queryScope={queryScope}
       label={label}
       placeholder={placeholder}
       value={value}

@@ -15,7 +15,8 @@ internal static class SessionStateMerge
         "Username", "Company", "Environment"
     ];
     private static readonly string[] TokenKeys = ["Token", "TokenExpires"];
-    private static readonly HashSet<string> GroupedKeys = new(ContextKeys.Concat(TokenKeys), StringComparer.Ordinal);
+    private static readonly HashSet<string> GroupedKeys = new(
+        ContextKeys.Concat(TokenKeys).Append(CompanySelectionRevision.Key), StringComparer.Ordinal);
     private const string ActivityKey = "INDContextLastActivityUtc";
 
     // Copies bytes because callers and the framework own the source buffers.
@@ -35,12 +36,20 @@ internal static class SessionStateMerge
         return original.Count == current.Count && original.Keys.All(key => Same(original, current, key));
     }
 
-    // Committed identity/company changes and logout always win over an earlier request.
+    // Logout and identity changes win; explicit company choices use their accepted order.
     internal static bool Apply(Dictionary<string, byte[]> original, Dictionary<string, byte[]> desired,
         ISession latest, bool cleared)
     {
         var current = Snapshot(latest);
-        if (!Matches(original, current, BoundaryKeys) || (original.Count > 0 && current.Count == 0))
+        if (!Same(original, current, "ENTRAOID") || (original.Count > 0 && current.Count == 0))
+            return false;
+
+        var selectionRevision = ReadLong(desired, CompanySelectionRevision.Key);
+        var explicitSelection = selectionRevision > ReadLong(original, CompanySelectionRevision.Key);
+        var latestSelection = explicitSelection && Same(original, desired, "ENTRAOID") &&
+            selectionRevision > ReadLong(current, CompanySelectionRevision.Key);
+        if ((explicitSelection && !latestSelection) ||
+            (!Matches(original, current, BoundaryKeys) && !latestSelection))
             return false;
 
         if (cleared)
@@ -51,7 +60,8 @@ internal static class SessionStateMerge
             return true;
         }
 
-        var boundaryChanged = !Matches(original, desired, BoundaryKeys);
+        var boundaryChanged = !Matches(original, desired, BoundaryKeys) ||
+            (latestSelection && !Matches(current, desired, BoundaryKeys));
         var contextSuperseded = boundaryChanged && ReadVersion(desired) < ReadVersion(current);
         var canReplaceContext = boundaryChanged || Matches(original, current, ContextKeys) ||
             ReadVersion(desired) > ReadVersion(current);
@@ -68,10 +78,13 @@ internal static class SessionStateMerge
         }
         else
         {
-            MergeGroup(original, desired, latest, ContextKeys, canReplaceContext);
+            MergeGroup(original, desired, latest, ContextKeys, canReplaceContext,
+                latestSelection && !Matches(current, desired, ContextKeys));
         }
         MergeGroup(original, desired, latest, TokenKeys,
             !contextSuperseded && (boundaryChanged || Matches(original, current, TokenKeys)));
+        if (latestSelection)
+            Write(latest, desired, CompanySelectionRevision.Key);
 
         foreach (var key in original.Keys.Union(desired.Keys, StringComparer.Ordinal))
         {
@@ -95,9 +108,9 @@ internal static class SessionStateMerge
 
     // Replaces an entire signed group to avoid combining fields from different refreshes.
     private static void MergeGroup(Dictionary<string, byte[]> original, Dictionary<string, byte[]> desired,
-        ISession latest, string[] keys, bool allowed)
+        ISession latest, string[] keys, bool allowed, bool force = false)
     {
-        if (!allowed || Matches(original, desired, keys))
+        if (!allowed || (!force && Matches(original, desired, keys)))
             return;
         foreach (var key in keys)
             Write(latest, desired, key);
@@ -126,7 +139,11 @@ internal static class SessionStateMerge
 
     // Fresh context versions come from the existing API contract.
     private static long ReadVersion(Dictionary<string, byte[]> values)
-        => values.TryGetValue("INDContextVersion", out var value) &&
+        => ReadLong(values, "INDContextVersion");
+
+    // Missing legacy metadata is older than an explicitly recorded selection.
+    private static long ReadLong(Dictionary<string, byte[]> values, string key)
+        => values.TryGetValue(key, out var value) &&
            long.TryParse(Encoding.UTF8.GetString(value), NumberStyles.Integer, CultureInfo.InvariantCulture, out var version)
             ? version : 0;
 

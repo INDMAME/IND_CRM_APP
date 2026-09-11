@@ -1864,4 +1864,13 @@
   </data>
   <data name="ExpenseSheets_Assistant_SourceTooLarge" xml:space="preserve"><value>Mugatu iragazkiak galdetu aurretik: laguntzaileak gehienez 6000 gastu-orri eta 4 MB datu onartzen ditu.</value></data>
   <data name="ExpenseSheets_Assistant_SourceChanged" xml:space="preserve"><value>Gastu-zerrenda aldatu egin da kargatzean. Eguneratu zerrenda eta saiatu berriro.</value></data>
+  <data name="TextEditor_SaveFailed" xml:space="preserve">
+    <value>Ezin izan da testua arakatzaile honetan gorde. Kopiatu testua edo saiatu berriro irten aurretik.</value>
+  </data>
+  <data name="Expense_ContextSaveFailed" xml:space="preserve">
+    <value>Ezin izan da hautatutako erabiltzailea arakatzaile honetan gorde. Saiatu berriro beste orri bat ireki aurretik.</value>
+  </data>
+  <data name="ExpenseSheets_CreatedOpenPending" xml:space="preserve">
+    <value>{0} gastu-orria sortu da. Sakatu Gorde berriro irekitzeko.</value>
+  </data>
 </root>

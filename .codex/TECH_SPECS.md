@@ -19,12 +19,12 @@
 ## Identidad, empresa y autorización
 
 - Microsoft Entra/OIDC autentica al usuario. El servidor conserva `INDWebContext` y la empresa elegida.
-- `ConcurrentSessionStore` conserva el formato y proveedor de sesión de ASP.NET Core. Coordina únicamente recarga, mezcla y guardado mediante bloqueos acotados del proceso; las peticiones a la API continúan en paralelo. Fusiona claves independientes, mantiene juntos los campos de contexto firmado y descarta escrituras anteriores a un cambio de identidad, empresa o cierre de sesión. Esta coordinación corresponde al proveedor local de memoria, no a múltiples procesos con un almacén distribuido.
+- `ConcurrentSessionStore` conserva el formato y proveedor de sesión de ASP.NET Core. Coordina únicamente recarga, mezcla y guardado mediante bloqueos acotados del proceso; las peticiones a la API continúan en paralelo. Fusiona claves independientes, mantiene juntos los campos de contexto firmado y descarta escrituras anteriores a un cambio de identidad, empresa o cierre de sesión. Las selecciones explícitas de empresa llevan una revisión monotónica reservada antes de consultar la API: prevalece la última selección autorizada, sin recuperar contextos firmados anteriores ni atravesar un cierre de sesión o cambio de identidad. El controlador confirma la mezcla antes de guardar la preferencia del navegador y la interfaz solo navega por la última solicitud. Esta coordinación corresponde al proveedor local de memoria, no a múltiples procesos con un almacén distribuido.
 - `IndAuthContextService` reutiliza el contexto deserializado dentro de la petición y registra actividad como máximo cada 30 segundos; un cambio del JSON o su eliminación invalida esa lectura.
 - `INDModuleAuthorizeFilter` y `INDModuleRegistry` controlan acceso a módulos.
 - `AllowSelfManagement` pertenece a la empresa seleccionada y React lo recibe a través de `AuthProvider`/`useAuthContext()`.
 - Para llamadas dependientes de empresa, resolver la empresa efectiva con la utilidad compartida de selección; una selección manual válida prevalece sobre la predeterminada.
-- La visibilidad por registro utiliza `useModuleDataVisibility`, su servicio y utilidades compartidas. El propietario funcional preferido es `OwnerAxUserId`; `CanMutate` y la política del servidor deciden mutaciones.
+- La visibilidad por registro utiliza `useModuleDataVisibility`, su servicio y utilidades compartidas. Una precarga confirmada, incluso vacía, sustituye el valor anterior; una precarga fallida o vacía sin confirmación elimina la caché anterior y vuelve a consultar. El propietario funcional preferido es `OwnerAxUserId`; `CanMutate` y la política del servidor deciden mutaciones.
 - Si falta información de propietario, no asumir que el registro pertenece al usuario. La API y AX deben rechazar peticiones directas no autorizadas.
 
 ## Datos del navegador y frescura
@@ -33,7 +33,7 @@
 - No usar claves globales ni solo una clave padre para listas de subordinados, permisos, hojas o tickets.
 - Una caché válida puede pintar primero para reducir espera, pero los flujos que exigen actualidad vuelven a consultar la API. Si el refresco falla, solo se conserva el valor previo cuando el comportamiento actual lo contempla y nunca se eleva un permiso.
 - La caché del navegador no sustituye sesiones, permisos, validación ni datos actuales de la API.
-- Los helpers de `sessionExpiry.ts` guardan valor y caducidad conjuntamente, aceptan lectura del formato anterior y notifican si una escritura falla. Las limpiezas automáticas eliminan estados vencidos; no expulsan borradores vigentes para liberar cuota.
+- Los helpers de `sessionExpiry.ts` guardan valor y caducidad conjuntamente, aceptan lectura del formato anterior y notifican si una escritura falla. El editor conserva el texto y bloquea el regreso si no puede guardar los valores necesarios. El actor de Gastos vive en memoria dentro de la identidad y revisión del navegador; la persistencia permite recuperarlo tras navegar. Si no puede recuperarse el mismo actor, la navegación se detiene con un aviso; el usuario propio no necesita un override cuando se confirma su eliminación. Una hoja ya creada conserva su identificador para reintentar abrirla sin repetir el alta. Las limpiezas automáticas eliminan estados vencidos; no expulsan borradores vigentes para liberar cuota.
 - En cierre de sesión, cambio de identidad o contexto inválido se limpian o invalidan los ámbitos correspondientes.
 - Los recursos fijos versionados —CSS, JavaScript, fuentes, iconos, imágenes decorativas y ayuda generada— pueden llevar caché larga. HTML autenticado, respuestas API y documentos/imágenes de tickets no se convierten en recursos estáticos reutilizables.
 

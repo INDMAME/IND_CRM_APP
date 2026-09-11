@@ -1864,4 +1864,13 @@
   </data>
   <data name="ExpenseSheets_Assistant_SourceTooLarge" xml:space="preserve"><value>提问前请缩小筛选范围：助手最多支持 6000 张费用报销单和 4 MB 数据。</value></data>
   <data name="ExpenseSheets_Assistant_SourceChanged" xml:space="preserve"><value>费用列表在加载期间发生了变化。请刷新列表后重试。</value></data>
+  <data name="TextEditor_SaveFailed" xml:space="preserve">
+    <value>无法在此浏览器中保存文本。离开前请复制文本或重试。</value>
+  </data>
+  <data name="Expense_ContextSaveFailed" xml:space="preserve">
+    <value>无法在此浏览器中保留所选用户。打开其他页面前请重试。</value>
+  </data>
+  <data name="ExpenseSheets_CreatedOpenPending" xml:space="preserve">
+    <value>费用单 {0} 已创建。请再次点击保存以打开。</value>
+  </data>
 </root>

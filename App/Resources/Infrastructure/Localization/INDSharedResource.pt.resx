@@ -1864,4 +1864,13 @@
   </data>
   <data name="ExpenseSheets_Assistant_SourceTooLarge" xml:space="preserve"><value>Restrinja os filtros antes de perguntar: o assistente suporta até 6000 folhas de despesas e 4 MB de dados.</value></data>
   <data name="ExpenseSheets_Assistant_SourceChanged" xml:space="preserve"><value>A lista de despesas mudou durante o carregamento. Atualize a lista e tente novamente.</value></data>
+  <data name="TextEditor_SaveFailed" xml:space="preserve">
+    <value>Não foi possível guardar o texto neste navegador. Copie o texto ou tente novamente antes de sair.</value>
+  </data>
+  <data name="Expense_ContextSaveFailed" xml:space="preserve">
+    <value>Não foi possível manter o utilizador selecionado neste navegador. Tente novamente antes de abrir outra página.</value>
+  </data>
+  <data name="ExpenseSheets_CreatedOpenPending" xml:space="preserve">
+    <value>A folha de despesas {0} foi criada. Prima Guardar novamente para a abrir.</value>
+  </data>
 </root>

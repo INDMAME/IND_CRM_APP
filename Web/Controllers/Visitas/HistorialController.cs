@@ -318,6 +318,7 @@ namespace IND_CRM_APP.Controllers
         // Preloads visible visit owners so React can render the filter in the correct state.
         private async Task<List<DataVisibilityVisibleUserDto>> LoadVisibleVisitUsersForViewAsync(string token)
         {
+            ViewBag.VisibleVisitUsersSucceeded = false;
             try
             {
                 var result = await GetVisibleUsersWithRecoveryAsync(
@@ -326,13 +327,18 @@ namespace IND_CRM_APP.Controllers
                     DataVisibilityVisitsModuleCode,
                     includeCrmUserId: true);
 
-                return result.GetAnyItems()
+                if (!result.Success)
+                    return new List<DataVisibilityVisibleUserDto>();
+
+                var users = result.GetAnyItems()
                     .Select(NormalizeVisibleUser)
                     .Where(x => !string.IsNullOrWhiteSpace(x.AxUserId))
                     .GroupBy(x => x.AxUserId, StringComparer.OrdinalIgnoreCase)
                     .Select(x => x.First())
                     .OrderBy(x => string.IsNullOrWhiteSpace(x.Name) ? x.AxUserId : x.Name, StringComparer.OrdinalIgnoreCase)
                     .ToList();
+                ViewBag.VisibleVisitUsersSucceeded = true;
+                return users;
             }
             catch (Exception ex)
             {

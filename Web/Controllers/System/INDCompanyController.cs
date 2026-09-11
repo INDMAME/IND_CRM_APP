@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
+using IND_CRM_APP.Infrastructure.Session;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -30,6 +31,7 @@ namespace IND_CRM_APP.Controllers
             var currentSelectionSource = HttpContext.Session.GetString("INDCompanySelectionSource");
             var currentAxUser = HttpContext.Session.GetString("AxUser");
             var trimmed = companyId?.Trim();
+            var selectionRevision = CompanySelectionRevision.Create();
             var cachedContext = _authContext.GetCachedContext();
 
             if (!string.IsNullOrWhiteSpace(trimmed))
@@ -85,9 +87,9 @@ namespace IND_CRM_APP.Controllers
 
             if (!string.IsNullOrWhiteSpace(trimmed))
             {
+                CompanySelectionRevision.Record(HttpContext.Session, selectionRevision);
                 HttpContext.Session.SetString("INDCompanySelected", trimmed);
                 HttpContext.Session.SetString("INDCompanySelectionSource", "user");
-                _authContext.RememberSelectedCompanyPreference(trimmed);
             }
 
             if (changed)
@@ -113,6 +115,15 @@ namespace IND_CRM_APP.Controllers
                     NormalizeLogValue(trimmed),
                     NormalizeLogValue(HttpContext.Session.GetString("INDCompanySelected")),
                     NormalizeLogValue(HttpContext.Session.GetString("AxUser")));
+            }
+
+            if (!string.IsNullOrWhiteSpace(trimmed))
+            {
+                // Persist the merged choice before writing its browser preference.
+                await HttpContext.Session.CommitAsync(HttpContext.RequestAborted);
+                var committedCompany = HttpContext.Session.GetString("INDCompanySelected");
+                if (!string.IsNullOrWhiteSpace(committedCompany))
+                    _authContext.RememberSelectedCompanyPreference(committedCompany);
             }
 
             // Always send users to Home after a company change to avoid stale pages.

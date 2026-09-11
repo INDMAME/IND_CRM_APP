@@ -7,6 +7,7 @@ import {
   type ExpenseTicketReturnContext,
 } from "../../utils/expenseTicketReturnContext.ts";
 import { toExpenseIsoDate } from "../../utils/expenseApiDateUtils.ts";
+import { navigateToExpenseUrl } from "../../utils/expenseNavigation.ts";
 
 type UseExpenseTicketDetailBackNavigationArgs = {
   fileId: string;
@@ -86,8 +87,7 @@ export const useExpenseTicketDetailBackNavigation = ({
         if (shouldReturnToTicketList) {
           rearmExpenseTicketsReturnState();
         }
-        window.__indBypassNavigationGuardOnce?.();
-        window.location.replace(nativeBackUrl);
+        navigateToExpenseUrl(nativeBackUrl, { replace: true });
       };
 
       if (typeof window.__indRequestNavigation === "function") {

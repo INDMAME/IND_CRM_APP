@@ -386,8 +386,7 @@ const useExpenseTicketLineDetailViewModel = () => {
         return;
       }
 
-      window.__indBypassNavigationGuardOnce?.();
-      window.location.replace(preferredTicketDetailUrl);
+      navigateToExpenseUrl(preferredTicketDetailUrl, { replace: true });
     };
 
     backButton?.addEventListener("click", handleTopbarBack, true);

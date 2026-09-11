@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { getSessionJsonWithExpiry, setSessionJsonWithExpiry } from "../utils/sessionExpiry.ts";
 import { getExpenseScopeToken } from "../pages/gastos/utils/expenseScope.ts";
 import { normalizeExpenseSheetSubordinates } from "../pages/gastos/utils/expenseSubordinateMapper.ts";
-import { clearExpenseActingUserOverride } from "../pages/gastos/utils/expenseActingUser.ts";
+import { clearExpenseActingUserOverride, setExpenseActingSignedInUser } from "../pages/gastos/utils/expenseActingUser.ts";
 
 export type AccessLevel = "View" | "Edit" | "Add" | "FullAccess";
 export type AuthManagedUser = {
@@ -378,6 +378,10 @@ export const AuthProvider = ({
     const normalizedCurrent = normalizeText(currentAxUserId);
     return subordinates.filter((entry) => !normalizedCurrent || !isSameUser(entry.axUserId, normalizedCurrent));
   }, [currentAxUserId, subordinates]);
+
+  useEffect(() => {
+    setExpenseActingSignedInUser(currentAxUserId);
+  }, [currentAxUserId, company]);
 
   const setSelectedManagedUserId = useCallback(
     (userId: string) => {

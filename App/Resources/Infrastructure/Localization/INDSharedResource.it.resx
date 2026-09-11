@@ -1864,4 +1864,13 @@
   </data>
   <data name="ExpenseSheets_Assistant_SourceTooLarge" xml:space="preserve"><value>Restringi i filtri prima di chiedere: l’assistente supporta fino a 6000 note spese e 4 MB di dati.</value></data>
   <data name="ExpenseSheets_Assistant_SourceChanged" xml:space="preserve"><value>L’elenco delle spese è cambiato durante il caricamento. Aggiorna l’elenco e riprova.</value></data>
+  <data name="TextEditor_SaveFailed" xml:space="preserve">
+    <value>Impossibile salvare il testo in questo browser. Copia il testo o riprova prima di uscire.</value>
+  </data>
+  <data name="Expense_ContextSaveFailed" xml:space="preserve">
+    <value>Impossibile conservare l&apos;utente selezionato in questo browser. Riprova prima di aprire un&apos;altra pagina.</value>
+  </data>
+  <data name="ExpenseSheets_CreatedOpenPending" xml:space="preserve">
+    <value>Il foglio spese {0} è stato creato. Premi di nuovo Salva per aprirlo.</value>
+  </data>
 </root>
