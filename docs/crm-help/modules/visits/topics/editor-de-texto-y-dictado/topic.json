@@ -1,0 +1,46 @@
+{
+    "schemaVersion": "1.0",
+    "id": "visits.editor-de-texto-y-dictado",
+    "moduleId": "visits",
+    "sectionNumber": "7.5",
+    "title": "Editor de texto y dictado",
+    "summary": "Escribe o dicta comentarios, antecedentes y conclusiones.",
+    "aliases": {
+        "es-ES": [
+            "Editor de texto y dictado",
+            "visitas",
+            "historial de visitas",
+            "¿Guardar el texto del editor guarda también la visita?",
+            "¿El dictado sustituye el texto anterior?",
+            "Dictar comentarios de una visita con el micrófono"
+        ]
+    },
+    "sampleQuestions": {
+        "es-ES": [
+            "¿Guardar el texto del editor guarda también la visita?",
+            "¿El dictado sustituye el texto anterior?"
+        ]
+    },
+    "audiences": [
+        "authenticated-crm-user"
+    ],
+    "prerequisiteTopicIds": [],
+    "relatedTopicIds": [
+        "visits.modulo-visitas"
+    ],
+    "routeKey": "visits.history",
+    "status": "published",
+    "contentVersion": "2.0.1",
+    "contentHash": "0A50F719FDF3CB222EDBF4B75DDAEBE6CD2BD8383B78D97589A2F4C58426381D",
+    "assets": [],
+    "quickAnswers": [],
+    "translationCoverage": {
+        "es-ES": "source"
+    },
+    "source": {
+        "path": "docs/exports/Manual App CRM 1.5.docx",
+        "sha256": "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+        "sectionNumber": "7.5",
+        "pageFromTableOfContents": 15
+    }
+}

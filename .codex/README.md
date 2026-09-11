@@ -1,36 +1,31 @@
-# .codex documentation map
+# Normas de trabajo de IND_CRM_APP
 
-## Purpose
-- Single index of all `.md` instruction files in this folder.
-- Keep this updated when adding or renaming docs.
+Esta carpeta contiene únicamente reglas vigentes. No debe utilizarse como bitácora, archivo histórico ni almacén de prompts temporales.
 
-## Hierarchy
-- system instructions
-- `.codex/AGENTS.md`
-- grouped context docs (listed below)
+## Jerarquía
 
-## Files
-- `AGENTS.md`: global project rules, architecture, UI standards, and workflow expectations.
-- `UI_GUIDE.md`: UI rules, interaction patterns, dropdowns, action mark, and editor behaviors.
-- `COMPONENT_CONTRACTS.md`: component contracts and readOnly color templates.
-- `TECH_SPECS.md`: architecture, API surface, auth/context, localization, build system.
-- `QUALITY_CHECKLIST.md`: build, validation, and publish checks.
-- `PROJECT_STRUCTURE.md`: folder map + master instruction for future work.
-- `SKILL_ROUTING.md`: trigger-based routing map for installed skills and execution order.
-- `.codex/skills/ind-crm-frontend-guardrails/SKILL.md`: reusable project-local skill entrypoint that routes repo work to the correct `.codex` references.
+1. Instrucciones del sistema y del usuario.
+2. `AGENTS.md`, con las reglas generales del repositorio.
+3. El documento temático aplicable.
+4. El código y los contratos ejecutados actualmente, que deciden cualquier duda entre documentos del mismo nivel.
 
-## Maintenance
-- Root `.codex/*.md` files and `.codex/config.toml` are the source of truth.
-- Sync local skill references after any `.codex` edit: `npm run sync:skill:local:references`.
-- Pre-commit also runs local reference sync automatically.
-- Keep docs ASCII-only.
-- Use i18n keys for UI copy; examples are copy references only.
-- Keep the local skill thin: workflow and trigger logic in `SKILL.md`, detailed rules in root `.codex/*.md`.
-- Keep project style sovereignty explicit: external Tailwind helper skills are advisory and cannot override local design rules.
-- Keep module guardrails explicit for both `visitas` and `gastos` flows, promoting shared components only when contracts match.
-- Keep only one project-local skill path: `.codex/skills/ind-crm-frontend-guardrails`.
-- Move all shared helper skills to: `C:\Users\marco.meza\.codex\skills`.
-- Add a `Last updated` line when a doc changes.
+## Mapa temático
 
-## Last updated
-- 2026-03-27
+| Documento | Responsabilidad única |
+|---|---|
+| `AGENTS.md` | Forma de trabajo, estabilidad, seguridad y publicación. |
+| `PROJECT_STRUCTURE.md` | Propiedad y ubicación de archivos. |
+| `TECH_SPECS.md` | Arquitectura, API, identidad, contexto, caché, localización y compilación. |
+| `UI_GUIDE.md` | Diseño, accesibilidad e interacción. |
+| `COMPONENT_CONTRACTS.md` | Contratos de componentes compartidos. |
+| `QUALITY_CHECKLIST.md` | Validaciones proporcionales al cambio. |
+| `AX_XPO_WORKFLOW.md` | Metodología común de AX/XPO con `IND_CRM_API`. |
+| `SKILL_ROUTING.md` | Selección de skills especializadas. |
+
+## Mantenimiento
+
+- La documentación se redacta en español y describe el estado vigente, no la cronología de cambios.
+- No se crean documentos con fechas para registrar cada tarea. El historial pertenece a Git.
+- Un concepto se explica en un solo documento; los demás enlazan al propietario.
+- Los `.xpo` canónicos pertenecen a `IND_CRM_API`; este proyecto conserva una copia sincronizada.
+- Tras cambiar `.codex/*.md` o `.codex/config.toml`, ejecutar `npm run sync:skill:local:references` y `npm run check:codex:references`.

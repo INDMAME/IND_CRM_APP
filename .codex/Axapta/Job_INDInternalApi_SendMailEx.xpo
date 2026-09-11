@@ -8,14 +8,12 @@ Formatversion: 1
   JOBVERSION 1
 
   SOURCE #Job_INDInternalApi_SendMailEx
+    #//MMS - Integra la prueba extendida de correo con el wrapper central V2 - 2026.08.12
     #static void Job_INDInternalApi_SendMailEx(Args _args)
     #{
-    #    COM     clientt;
     #    INDDefaultParameters defaultParameters = INDDefaultParameters::find();
     #
     #    str     baseUrl         = defaultParameters.InternalAPIUrlService;
-    #    str     apiUser         = defaultParameters.APIUserId;
-    #    str     apiPassword     = defaultParameters.INDAPIIntServiceUser().Password;
     #
     #    str     fromEmail       = "i.jauregi@insertec.biz";
     #    str     fromName        = "Axapta Mail Test";
@@ -23,7 +21,7 @@ Formatversion: 1
     #    str     ccEmails        = "";
     #    str     bccEmails       = "";
     #    str     replyToEmails   = "";
-    #    str     company         = "LAN";
+    #    str     company         = curext();
     #
     #    // Staged absolute paths separated by semicolon. Empty means no attachments.
     #    str     attachmentFilePaths = "";
@@ -33,7 +31,6 @@ Formatversion: 1
     #    str     idempotencyKey;
     #    str     htmlBody;
     #    str     textBody;
-    #    str     healthJson;
     #    boolean online;
     #    boolean sent;
     #    ;
@@ -42,29 +39,28 @@ Formatversion: 1
     #    aggregateId    = strFmt("%1-%2", today(), timeNow());
     #    idempotencyKey = strFmt("AX-MailExtendedSmokeTest:%1", aggregateId);
     #
+    #    //MMS - Detiene la prueba antes de la red si falta un buzon aprobado - 2026.08.12
+    #    if (fromEmail == "" || toEmails == "")
+    #    {
+    #        error("Configure fromEmail y toEmails con buzones de prueba aprobados antes de ejecutar el job.");
+    #        return;
+    #    }
+    #
     #    htmlBody = "<p>Prueba extendida de envio desde Axapta usando IND_INTERNAL_API.</p>" +
-    #               "<p>Este envio prueba CC, BCC, Reply-To, saveToSentItems, importance y attachmentFilePaths.</p>";
+    #               "<p>Este envio prueba CC, BCC, Reply-To, saveToSentItems e importance.</p>";
     #    textBody = "Prueba extendida de envio desde Axapta usando IND_INTERNAL_API.";
     #
     #    try
     #    {
-    #        clientt = new COM("IND.InternalApiClient");
-    #
-    #        healthJson = clientt.GetApiHealthStatusJson(baseUrl, correlationId);
-    #        info(strFmt("Health JSON: %1", healthJson));
-    #
-    #        online = clientt.IsApiOnline(baseUrl, correlationId);
+    #        online = INDInternalApiClientServer::isApiOnline(baseUrl, correlationId);
     #        if (!online)
     #        {
-    #            error("IND_INTERNAL_API is not online from AOS.");
-    #            clientt = null;
+    #            error("IND_INTERNAL_API no esta online o no responde desde AOS.");
     #            return;
     #        }
     #
-    #        sent = clientt.SendMailEx(
-    #            baseUrl,
-    #            apiUser,
-    #            apiPassword,
+    #        sent = INDInternalApiClientServer::sendInternalApiMailEx(
+    #            company,
     #            fromEmail,
     #            fromName,
     #            toEmails,
@@ -77,8 +73,6 @@ Formatversion: 1
     #            attachmentFilePaths,
     #            false,
     #            "high",
-    #            company,
-    #            "AXAPTA",
     #            "ManualSmokeTest",
     #            "MailExtendedSmokeTest",
     #            "ManualTest",
@@ -87,16 +81,14 @@ Formatversion: 1
     #            correlationId);
     #
     #        if (sent)
-    #            info("SendMailEx OK. Microsoft Graph accepted the request.");
+    #            info("SendMailEx OK. Microsoft Graph acepto la peticion.");
     #        else
-    #            error("SendMailEx returned false. Review internal.mail.send, Graph settings and API logs.");
+    #            error("SendMailEx devolvio false. Revisar permisos, scope internal.mail.send, configuracion Graph y logs de la API.");
     #    }
     #    catch (Exception::Error)
     #    {
-    #        error("Error executing COM IND.InternalApiClient SendMailEx smoke test.");
+    #        error("Error ejecutando la prueba extendida mediante el cliente COM V2 central.");
     #    }
-    #
-    #    clientt = null;
     #}
   ENDSOURCE
 

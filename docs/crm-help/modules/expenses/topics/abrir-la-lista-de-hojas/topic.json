@@ -1,0 +1,42 @@
+{
+    "schemaVersion": "1.0",
+    "id": "expenses.abrir-la-lista-de-hojas",
+    "moduleId": "expenses",
+    "sectionNumber": "8.2",
+    "title": "Abrir la lista de hojas",
+    "summary": "Accede a la lista de hojas de gastos.",
+    "aliases": {
+        "es-ES": [
+            "Abrir la lista de hojas",
+            "hojas de gastos",
+            "gastos"
+        ]
+    },
+    "sampleQuestions": {
+        "es-ES": [
+            "¿Dónde encuentro información sobre abrir la lista de hojas?"
+        ]
+    },
+    "audiences": [
+        "authenticated-crm-user"
+    ],
+    "prerequisiteTopicIds": [],
+    "relatedTopicIds": [
+        "expenses.modulo-hojas-de-gastos"
+    ],
+    "routeKey": "expenses.sheets",
+    "status": "published",
+    "contentVersion": "2.0.1",
+    "contentHash": "57E16EDCEC5F2F10898CB53B7461A5808CB8E1C2E64327390A04DEA333C0BE01",
+    "assets": [],
+    "quickAnswers": [],
+    "translationCoverage": {
+        "es-ES": "source"
+    },
+    "source": {
+        "path": "docs/exports/Manual App CRM 1.5.docx",
+        "sha256": "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+        "sectionNumber": "8.2",
+        "pageFromTableOfContents": 16
+    }
+}

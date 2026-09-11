@@ -28,6 +28,8 @@ import {
 import { normalizeExpenseSheetsCachedItems } from "../Web/wwwroot/react/src/pages/gastos/list/useExpenseSheetsFilterCache.ts";
 import { buildExpenseSheetsVisualizationFallbackMessages } from "../Web/wwwroot/react/src/pages/gastos/list/expenseSheetsVisualizationFallback.ts";
 import {
+  DEFAULT_LINE_REIMBURSABLE_EXPENSE,
+  DEFAULT_REIMBURSABLE_EXPENSE,
   LINE_REIMBURSABLE_EXPENSE_NO_VALUE,
   LINE_REIMBURSABLE_EXPENSE_YES_VALUE,
   REIMBURSABLE_EXPENSE_BOTH_VALUE,
@@ -36,6 +38,12 @@ import {
   getExpenseLineReimbursableExpenseLabel,
   getExpenseLineReimbursableExpenseOptions,
   getExpenseReimbursableExpenseOptions,
+  isEditableExpenseLineReimbursableExpense,
+  isEditableExpenseReimbursableExpense,
+  normalizeExpenseLineReimbursableExpense,
+  normalizeExpenseReimbursableExpense,
+  resolveExpenseLineReimbursableExpenseForWrite,
+  resolveExpenseReimbursableExpenseForWrite,
 } from "../Web/wwwroot/react/src/pages/gastos/constants/expenseReimbursableExpenseCatalog.ts";
 import { formatUserNameWithId } from "../Web/wwwroot/react/src/utils/userLabels.ts";
 import {
@@ -57,6 +65,13 @@ import { fetchExpenseSheetListSourceJson } from "../Web/wwwroot/react/src/pages/
 import { getVisibleReimbursableTotal } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseVisibleTotals.ts";
 import { toNullableNumber } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseApiTransforms.ts";
 import { formatExpenseAmountLabel } from "../Web/wwwroot/react/src/pages/gastos/expenseFormatters.ts";
+import { resolveExpenseLineReimbursableAmountPreview } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseLineReimbursement.ts";
+import { resolveExpenseQuickDateFilterFromRange } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseQuickDateFilterState.ts";
+import { buildExpenseTicketLinkInitialSnapshot } from "../Web/wwwroot/react/src/pages/gastos/tickets/expenseTicketLinkFilterSnapshot.ts";
+import {
+  getExpenseTicketLinkBulkUnresolvedIds,
+  resolveExpenseTicketLinkBulkOutcome,
+} from "../Web/wwwroot/react/src/pages/gastos/components/ExpenseTicketLinkBulkSummary.tsx";
 import {
   normalizeCardTitleText,
   normalizeDescriptionText,
@@ -69,6 +84,7 @@ import type {
   ExpenseSheetCreateResponseData,
   ExpenseSheetDetailDto,
   ExpenseSheetListItemDto,
+  ExpenseSheetTicketLinkBulkResultDto,
   ExpenseSheetTicketDetailDto,
   IndPagedResponse,
 } from "../Web/wwwroot/react/src/pages/gastos/expenseTypes.ts";
@@ -84,6 +100,54 @@ assert.equal(normalizeCardTitleText("", ""), "");
 assert.equal(normalizeCardTitleText("", "") || "HG000080", "HG000080");
 assert.equal(normalizeCardTitleText("", "") || "FACTURA.JPG", "FACTURA.JPG");
 assert.equal(normalizeDescriptionText("  pRUEBA de PROYECTO  ", ""), "Prueba De Proyecto");
+const completeTicketLinkResult: ExpenseSheetTicketLinkBulkResultDto = {
+  expenseSheetId: "000366",
+  requestedCount: 1,
+  linkedCount: 1,
+  skippedCount: 0,
+  failedCount: 0,
+  linkedTicketIds: ["F000000060"],
+  skipped: [],
+  failed: [],
+};
+assert.equal(resolveExpenseTicketLinkBulkOutcome(completeTicketLinkResult), "complete");
+assert.equal(
+  resolveExpenseTicketLinkBulkOutcome({
+    ...completeTicketLinkResult,
+    requestedCount: 2,
+    failedCount: 1,
+    failed: [{ ticketId: "F000000061", reason: "Invalid currency snapshot" }],
+  }),
+  "partial"
+);
+assert.equal(
+  resolveExpenseTicketLinkBulkOutcome({
+    ...completeTicketLinkResult,
+    linkedCount: 0,
+    linkedTicketIds: [],
+    failedCount: 1,
+    failed: [{ ticketId: "F000000060", reason: "Invalid currency snapshot" }],
+  }),
+  "no-success"
+);
+assert.deepEqual(
+  getExpenseTicketLinkBulkUnresolvedIds({
+    ...completeTicketLinkResult,
+    linkedCount: 0,
+    linkedTicketIds: [],
+    skippedCount: 2,
+    failedCount: 2,
+    failed: [
+      { ticketId: " f000000060 ", reason: "Invalid currency snapshot" },
+      { ticketId: "F000000060", reason: "Duplicate result" },
+    ],
+    skipped: [
+      { ticketId: "f000000061", reason: "Already linked" },
+      { ticketId: "", reason: "Missing identifier" },
+    ],
+  }),
+  ["F000000060", "F000000061"]
+);
 assert.equal(toNullableNumber(null), null);
 assert.equal(toNullableNumber(""), null);
 assert.equal(toNullableNumber(0), 0);
@@ -278,6 +342,32 @@ assert.equal(REIMBURSABLE_EXPENSE_NO_VALUE, 1);
 assert.equal(REIMBURSABLE_EXPENSE_BOTH_VALUE, 2);
 assert.equal(LINE_REIMBURSABLE_EXPENSE_YES_VALUE, 0);
 assert.equal(LINE_REIMBURSABLE_EXPENSE_NO_VALUE, 1);
+assert.equal(normalizeExpenseReimbursableExpense(null), null);
+assert.equal(normalizeExpenseReimbursableExpense(undefined), null);
+assert.equal(normalizeExpenseReimbursableExpense(""), null);
+assert.equal(normalizeExpenseReimbursableExpense(false), null);
+assert.equal(normalizeExpenseReimbursableExpense(99), null);
+assert.equal(normalizeExpenseReimbursableExpense(null, DEFAULT_REIMBURSABLE_EXPENSE), 0);
+assert.equal(isEditableExpenseReimbursableExpense(0), true);
+assert.equal(isEditableExpenseReimbursableExpense(1), true);
+assert.equal(isEditableExpenseReimbursableExpense(2), false);
+assert.equal(isEditableExpenseReimbursableExpense(null), false);
+assert.equal(normalizeExpenseLineReimbursableExpense(null), null);
+assert.equal(normalizeExpenseLineReimbursableExpense(2), null);
+assert.equal(normalizeExpenseLineReimbursableExpense(false), null);
+assert.equal(normalizeExpenseLineReimbursableExpense(null, DEFAULT_LINE_REIMBURSABLE_EXPENSE), 0);
+assert.equal(isEditableExpenseLineReimbursableExpense(0), true);
+assert.equal(isEditableExpenseLineReimbursableExpense(1), true);
+assert.equal(isEditableExpenseLineReimbursableExpense(2), false);
+assert.equal(resolveExpenseReimbursableExpenseForWrite(null, true), 0);
+assert.equal(resolveExpenseReimbursableExpenseForWrite(2, true), 2);
+assert.equal(resolveExpenseReimbursableExpenseForWrite(2, false), undefined);
+assert.equal(resolveExpenseReimbursableExpenseForWrite(null, false), undefined);
+assert.equal(resolveExpenseReimbursableExpenseForWrite(0, false), 0);
+assert.equal(resolveExpenseLineReimbursableExpenseForWrite(null, true), 0);
+assert.equal(resolveExpenseLineReimbursableExpenseForWrite(2, false), undefined);
+assert.equal(resolveExpenseLineReimbursableExpenseForWrite(null, false), undefined);
+assert.equal(resolveExpenseLineReimbursableExpenseForWrite(1, false), 1);
 assert.equal(getExpenseLineReimbursableExpenseLabel(null), "-");
 assert.equal(getExpenseLineReimbursableExpenseLabel(2), "-");
 assert.deepEqual(
@@ -371,7 +461,7 @@ const exactUsdFixture = normalizeDetailPagedResponse({
     {
       HojaGastosId: "HG000080",
       TotalGrossAmountMST: 108.11,
-      TotalReimbursableAmount: 0,
+      TotalReimbursableAmount: 108.11,
       TotalAmountMST: 108.11,
       Lines: [
         {
@@ -379,7 +469,7 @@ const exactUsdFixture = normalizeDetailPagedResponse({
           ReimbursableExpense: 0,
           CurrencyCode: "USD",
           AmountMST: 108.11,
-          ReimbursableAmount: 0,
+          ReimbursableAmount: 108.11,
           TotalAmountCurrency: 100,
           TotalAmountMST: 108.11,
         },
@@ -391,7 +481,7 @@ const exactUsdMappedLine = mapExpenseSheetLine(exactUsdFixture.Items[0]?.Lines?.
 assert.equal(exactUsdMappedLine.amount, 100);
 assert.equal(exactUsdMappedLine.currencyCode, "USD");
 assert.equal(exactUsdMappedLine.amountMST, 108.11);
-assert.equal(exactUsdMappedLine.reimbursableAmount, 0);
+assert.equal(exactUsdMappedLine.reimbursableAmount, 108.11);
 assert.equal(exactUsdMappedLine.reimbursableExpense, 0);
 
 const camelCaseExpenseFixture = normalizeDetailPagedResponse({
@@ -661,6 +751,24 @@ assert.equal(camelTicketLines[0]?.reimbursableAmount, 0);
 assert.equal(camelTicketLines[1]?.reimbursableExpense, 1);
 assert.equal(camelTicketLines[1]?.reimbursableAmount, null);
 
+assert.equal(resolveExpenseLineReimbursableAmountPreview(LINE_REIMBURSABLE_EXPENSE_YES_VALUE, 125.45), 125.45);
+assert.equal(resolveExpenseLineReimbursableAmountPreview(LINE_REIMBURSABLE_EXPENSE_NO_VALUE, 125.45), 0);
+assert.equal(resolveExpenseLineReimbursableAmountPreview(LINE_REIMBURSABLE_EXPENSE_YES_VALUE, 0), 0);
+assert.equal(resolveExpenseLineReimbursableAmountPreview(LINE_REIMBURSABLE_EXPENSE_YES_VALUE, null), null);
+assert.equal(resolveExpenseLineReimbursableAmountPreview(null, 125.45), null);
+assert.equal(resolveExpenseLineReimbursableAmountPreview(null, 125.45, 42), 42);
+
+const fixedLinkSnapshot = buildExpenseTicketLinkInitialSnapshot("AX-USER", new Date(2026, 7, 5, 12, 0, 0));
+assert.equal(fixedLinkSnapshot.fromDate, "2026-05-08");
+assert.equal(fixedLinkSnapshot.toDate, "2026-08-05");
+assert.equal(fixedLinkSnapshot.managedUserId, "AX-USER");
+assert.equal(fixedLinkSnapshot.statusFilter, 0);
+const currentLinkSnapshot = buildExpenseTicketLinkInitialSnapshot();
+assert.equal(
+  resolveExpenseQuickDateFilterFromRange(currentLinkSnapshot.fromDate, currentLinkSnapshot.toDate),
+  "days-90"
+);
+
 const repositoryRoot = process.cwd();
 const ticketModelsSource = readFileSync(
   path.join(repositoryRoot, "App", "Models", "CRM", "ExpenseSheetTicketModels.cs"),
@@ -674,6 +782,44 @@ const gastosControllerSource = readFileSync(
   path.join(repositoryRoot, "Web", "Controllers", "Gastos", "GastosController.cs"),
   "utf8"
 );
+const moduleAuthorizeFilterSource = readFileSync(
+  path.join(
+    repositoryRoot,
+    "App",
+    "Infrastructure",
+    "Security",
+    "Filters",
+    "INDModuleAuthorizeFilter.cs"
+  ),
+  "utf8"
+);
+const expenseSheetServiceXpoSource = readFileSync(
+  path.join(repositoryRoot, ".codex", "Axapta", "INDCRMExpenseSheetService.xpo"),
+  "utf8"
+);
+const expenseSheetTableXpoSource = readFileSync(
+  path.join(repositoryRoot, ".codex", "Axapta", "CRMHojaGastosTable.xpo"),
+  "utf8"
+);
+const expenseSheetLineXpoSource = readFileSync(
+  path.join(repositoryRoot, ".codex", "Axapta", "CRMHojaGastosLine.xpo"),
+  "latin1"
+);
+const expenseSheetLineFormXpoSource = readFileSync(
+  path.join(repositoryRoot, ".codex", "Axapta", "CRMHojaGastosLineForm.xpo"),
+  "latin1"
+);
+const extractXpoSourceBlock = (source: string, marker: string, endMarker: string): string => {
+  const start = source.indexOf(marker);
+  assert.ok(start >= 0, `Missing XPO marker: ${marker}`);
+
+  const end = source.indexOf(endMarker, start + marker.length);
+  assert.ok(end > start, `Missing XPO end marker after: ${marker}`);
+
+  return source.slice(start, end);
+};
+const extractXpoMethodSource = (source: string, methodName: string): string =>
+  extractXpoSourceBlock(source, `SOURCE #${methodName}`, "ENDSOURCE");
 const readExpenseComponentSource = (fileName: string): string => readFileSync(
   path.join(repositoryRoot, "Web", "wwwroot", "react", "src", "pages", "gastos", "components", fileName),
   "utf8"
@@ -682,6 +828,114 @@ const ticketLineFormSource = readExpenseComponentSource("ExpenseTicketLineDetail
 const expenseSheetHeaderFormSource = readExpenseComponentSource("ExpenseSheetHeaderForm.tsx");
 const expenseSheetLineFormSource = readExpenseComponentSource("ExpenseSheetLineForm.tsx");
 const expenseCurrencySettlementFieldsSource = readExpenseComponentSource("ExpenseCurrencySettlementFields.tsx");
+const expenseSheetDetailPageControllerSource = readFileSync(
+  path.join(
+    repositoryRoot,
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "detail",
+    "useExpenseSheetDetailPageController.tsx"
+  ),
+  "utf8"
+);
+const expenseTicketDetailPageSource = readFileSync(
+  path.join(
+    process.cwd(),
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "tickets",
+    "detail",
+    "ExpenseTicketDetailPage.tsx"
+  ),
+  "utf8"
+);
+const expenseTicketLinkedSheetLineSource = readFileSync(
+  path.join(
+    process.cwd(),
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "tickets",
+    "detail",
+    "useExpenseTicketLinkedSheetLine.ts"
+  ),
+  "utf8"
+);
+const expenseSheetLineDetailPageSource = readFileSync(
+  path.join(
+    repositoryRoot,
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "line",
+    "ExpenseSheetLineDetailPage.tsx"
+  ),
+  "utf8"
+);
+const expenseTicketsPageSource = readFileSync(
+  path.join(
+    repositoryRoot,
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "tickets",
+    "ExpenseTicketsPage.tsx"
+  ),
+  "utf8"
+);
+const expenseTicketLinkBulkSummarySource = readFileSync(
+  path.join(
+    repositoryRoot,
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "components",
+    "ExpenseTicketLinkBulkSummary.tsx"
+  ),
+  "utf8"
+);
+const expenseApiClientSource = readFileSync(
+  path.join(repositoryRoot, "Web", "wwwroot", "react", "src", "pages", "gastos", "utils", "expenseApi.ts"),
+  "utf8"
+);
+const expenseTicketsListDataSource = readFileSync(
+  path.join(
+    repositoryRoot,
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "tickets",
+    "useExpenseTicketsListData.ts"
+  ),
+  "utf8"
+);
+const confirmDialogSource = readFileSync(
+  path.join(repositoryRoot, "Web", "wwwroot", "react", "src", "hooks", "useConfirmDialog.ts"),
+  "utf8"
+);
 const ticketProxyMapperStart = gastosControllerSource.indexOf(
   "private static object ToExpenseSheetTicketApiDetailLine"
 );
@@ -706,12 +960,308 @@ assert.match(
   expenseSheetHeaderFormSource,
   /label=\{indT\("ExpenseSheets_Field_Status"[\s\S]*?containerClassName=\{ALIGNED_FIELD_CONTAINER_CLASS_NAME\}[\s\S]*?labelClassName=\{ALIGNED_FIELD_LABEL_CLASS_NAME\}/
 );
+assert.match(
+  expenseSheetHeaderFormSource,
+  /isEditing\s*&&\s*canEditHeaderFields\s*&&\s*hasKnownReimbursableExpenseValue/
+);
+assert.match(expenseSheetHeaderFormSource, /selectedOption=\{selectedReimbursableExpenseOption\}/);
+assert.match(
+  expenseSheetDetailPageControllerSource,
+  /previousValue\s*===\s*null[\s\S]*?ExpenseSheets_Detail_PropagateReimbursable_Title[\s\S]*?handlePropagateReimbursableExpenseToLines\(nextValue\)/
+);
+assert.doesNotMatch(
+  expenseSheetDetailPageControllerSource,
+  /isEditableExpenseReimbursableExpense\(previousValue\)/
+);
+assert.match(
+  expenseSheetLineFormSource,
+  /isEditing\s*&&\s*hasEditableReimbursableExpenseValue/
+);
+assert.match(gastosControllerSource, /CanUpdateExpenseSheetHeaderReimbursableExpense\([\s\S]*?snapshot\.ReimbursableExpense/);
+assert.match(
+  gastosControllerSource,
+  /IsEditableExpenseSheetHeaderReimbursableExpense\(storedReimbursableExpense\)\s*\|\|\s*storedReimbursableExpense\s*==\s*ExpenseSheetReimbursableBoth/
+);
+assert.match(
+  moduleAuthorizeFilterSource,
+  /reimbursable-expense\/propagate[\s\S]*?return IndAccessRights\.Edit;[\s\S]*?return IndAccessRights\.Add;/
+);
+assert.match(
+  expenseSheetServiceXpoSource,
+  /!INDCRMExpenseSheetService::isWritableReimbursableExpense\(reimbursableExpense\)/
+);
+assert.doesNotMatch(
+  expenseSheetServiceXpoSource,
+  /isWritableReimbursableExpense\(any2int\(header\.ReimbursableExpense\)\)/
+);
+assert.match(
+  expenseSheetTableXpoSource,
+  /SOURCE #updateReimbursableExpenseInLines[\s\S]*?hojaGastosLine\.ReimbursableExpense\s*=\s*any2int\(this\.ReimbursableExpense\);[\s\S]*?hojaGastosLine\.recalculateReimbursableAmount\(\);[\s\S]*?INDProjCostRevenueTable::CreateProjCostFromCommon\(hojaGastosLine\);/
+);
+assert.match(
+  expenseSheetLineXpoSource,
+  /SOURCE #recalculateReimbursableAmount[\s\S]*?INDReimbursableExpenseLines::Yes[\s\S]*?this\.ReimbursableAmount\s*=\s*this\.AmountMST;[\s\S]*?this\.ReimbursableAmount\s*=\s*0;/
+);
+const requiresManualExchangeRateSource = extractXpoMethodSource(
+  expenseSheetLineFormXpoSource,
+  "requiresManualExchangeRate"
+);
+const expenseSheetLineFormClassDeclarationSource = extractXpoMethodSource(
+  expenseSheetLineFormXpoSource,
+  "classDeclaration"
+);
+const refreshExchangeRateEditStateSource = extractXpoMethodSource(
+  expenseSheetLineFormXpoSource,
+  "refreshExchangeRateEditState"
+);
+const expenseSheetLineFormWriteSource = extractXpoMethodSource(expenseSheetLineFormXpoSource, "write");
+const expenseSheetLineFormValidateWriteSource = extractXpoMethodSource(
+  expenseSheetLineFormXpoSource,
+  "validateWrite"
+);
+const expenseSheetLineFormCreateSource = extractXpoMethodSource(expenseSheetLineFormXpoSource, "create");
+const expenseSheetLineFormRereadSource = extractXpoMethodSource(expenseSheetLineFormXpoSource, "reread");
+const expenseSheetLineTableUpdateSource = extractXpoMethodSource(expenseSheetLineXpoSource, "update");
+
+assert.match(requiresManualExchangeRateSource, /CompanyInfo::standardCurrency\(\)/);
+assert.match(expenseSheetLineFormClassDeclarationSource, /boolean\s+manualExchangeRatePending;/);
+assert.match(expenseSheetLineFormClassDeclarationSource, /RecId\s+manualExchangeRatePendingRecId;/);
+assert.match(
+  requiresManualExchangeRateSource,
+  /isForeignCurrency\s*&&[\s\S]*?!CRMHojaGastosLine\.RecId\s*\|\|[\s\S]*?CRMHojaGastosLine\.Currency\s*!=\s*originalLine\.Currency/
+);
+assert.match(
+  requiresManualExchangeRateSource,
+  /manualExchangeRatePending\s*&&\s*manualExchangeRatePendingRecId\s*==\s*CRMHojaGastosLine\.RecId/
+);
+assert.match(
+  requiresManualExchangeRateSource,
+  /CRMHojaGastosLine\.ExchRate\s*!=\s*originalLine\.ExchRate/
+);
+assert.match(
+  refreshExchangeRateEditStateSource,
+  /if\s*\(_resetExchangeRate\)[\s\S]*?manualExchangeRatePending\s*=\s*hasCurrency\s*&&\s*!isCompanyCurrency;[\s\S]*?ExchRate\s*=\s*isCompanyCurrency\s*\?\s*100\s*:\s*0;/
+);
+assert.match(
+  refreshExchangeRateEditStateSource,
+  /manualExchangeRatePending\s*&&\s*manualExchangeRatePendingRecId\s*!=\s*CRMHojaGastosLine\.RecId[\s\S]*?manualExchangeRatePending\s*=\s*false;/
+);
+assert.match(
+  refreshExchangeRateEditStateSource,
+  /manualExchangeRateRequired\s*&&\s*CRMHojaGastosLine\.ExchRate\s*<=\s*0[\s\S]*?CRMHojaGastosLine\.AmountMST\s*=\s*0;/
+);
+assert.match(
+  refreshExchangeRateEditStateSource,
+  /FieldNum\(CRMHojaGastosLine, ExchRate\)\)\.mandatory\(manualExchangeRateRequired\)/
+);
+assert.match(
+  refreshExchangeRateEditStateSource,
+  /FieldNum\(CRMHojaGastosLine, AmountMST\)\)\.allowEdit\(!manualExchangeRateRequired\)/
+);
+for (const fieldName of ["Qty", "Price", "Amount", "ExchRate", "AmountMST"]) {
+  const fieldSource = extractXpoSourceBlock(
+    expenseSheetLineFormXpoSource,
+    `DATAFIELD ${fieldName}`,
+    "ENDDATAFIELD"
+  );
+  assert.match(
+    fieldSource,
+    /SOURCE #modified[\s\S]*?element\.refreshExchangeRateEditState\(\);/,
+    `${fieldName}.modified must preserve the pending manual exchange-rate state`
+  );
+}
+const amountMSTFieldSource = extractXpoSourceBlock(
+  expenseSheetLineFormXpoSource,
+  "DATAFIELD AmountMST",
+  "ENDDATAFIELD"
+);
+const priceFieldSource = extractXpoSourceBlock(
+  expenseSheetLineFormXpoSource,
+  "DATAFIELD Price",
+  "ENDDATAFIELD"
+);
+assert.match(
+  amountMSTFieldSource,
+  /requiresManualExchangeRate\(\)[\s\S]*?CRMHojaGastosLine\.AmountMST\s*=\s*0;[\s\S]*?return;[\s\S]*?super\(\);/
+);
+assert.doesNotMatch(priceFieldSource, /AmountMST cannot provide an automatic rate/);
+assert.match(
+  expenseSheetLineFormCreateSource,
+  /InitFromPreviousLine\(hojaActual\);[\s\S]*?element\.refreshExchangeRateEditState\(true\);/
+);
+assert.match(
+  expenseSheetLineFormValidateWriteSource,
+  /requiresManualExchangeRate\(\)\s*&&\s*CRMHojaGastosLine\.ExchRate\s*<=\s*0[\s\S]*?checkFailed\(strFmt/
+);
+assert.ok(
+  expenseSheetLineFormValidateWriteSource.indexOf("requiresManualExchangeRate()") <
+    expenseSheetLineFormValidateWriteSource.indexOf("ret = super();"),
+  "manual exchange-rate validation must run before inherited currency validation"
+);
+assert.match(
+  expenseSheetLineFormWriteSource,
+  /requiresManualExchangeRate\(\)\s*&&\s*CRMHojaGastosLine\.ExchRate\s*>\s*0[\s\S]*?CRMHojaGastosLine\.AmountMST\s*=\s*0;[\s\S]*?super\(\);/
+);
+assert.match(
+  expenseSheetLineFormRereadSource,
+  /super\(\);[\s\S]*?manualExchangeRatePending\s*=\s*false;[\s\S]*?manualExchangeRatePendingRecId\s*=\s*0;/
+);
+assert.match(expenseSheetLineFormWriteSource, /super\(\);[\s\S]*?this\.reread\(\);/);
+assert.match(
+  expenseSheetLineTableUpdateSource,
+  /this\.Currency\s*!=\s*this\.orig\(\)\.Currency\s*&&[\s\S]*?this\.ExchRate\s*==\s*this\.orig\(\)\.ExchRate\s*&&[\s\S]*?\(this\.ExchRate\s*<=\s*0\s*\|\|\s*this\.AmountMST\s*!=\s*0\)/
+);
+assert.match(
+  gastosControllerSource,
+  /IsEditableExpenseSheetHeaderReimbursableExpense\([\s\S]*?mutationGuard\.Snapshot\?\.ReimbursableExpense/
+);
+assert.match(
+  gastosControllerSource,
+  /NormalizeExpenseSheetHeaderReimbursableExpenseForCreate\([\s\S]*?ExpenseSheetReimbursableYes/
+);
+assert.match(
+  gastosControllerSource,
+  /ReimbursableExpense\s*=\s*IsEditableExpenseSheetHeaderReimbursableExpense\(snapshot\.ReimbursableExpense\)[\s\S]*?\?\s*snapshot\.ReimbursableExpense[\s\S]*?:\s*null/
+);
 assert.match(expenseSheetLineFormSource, /betweenAmountsAndCurrency=\{reimbursementSection\}/);
+assert.match(expenseSheetLineDetailPageSource, /resolveExpenseLineReimbursableAmountPreview/);
+assert.match(expenseSheetLineDetailPageSource, /<ExpenseSheetLineTicketFab/);
+assert.match(
+  expenseSheetLineDetailPageSource,
+  /const handleLineSaveSuccess[\s\S]*?reloadExpensePage\(\)/
+);
+assert.match(expenseTicketsPageSource, /buildExpenseTicketLinkInitialSnapshot/);
+assert.doesNotMatch(expenseTicketsPageSource, /ExpenseTicketLineTargetSummary/);
+assert.match(expenseTicketDetailPageSource, /visible:\s*isFromExpenseLine \|\| isFromExpenseSheetCreate/);
+assert.match(
+  expenseTicketDetailPageSource,
+  /initializeMissingLine:\s*isFromExpenseSheetCreate/
+);
+assert.equal(
+  (
+    expenseTicketDetailPageSource.match(
+      /\(isFromExpenseLine \|\| isFromExpenseSheetCreate\) && linkedSheetLine\.(?:projectIdChanged|reimbursableExpenseChanged)/g
+    ) || []
+  ).length,
+  2
+);
+assert.match(
+  expenseTicketLinkedSheetLineSource,
+  /resolveNewExpenseLineProjectCandidate\([\s\S]*?defaultLineProjectId[\s\S]*?initialProjectId/
+);
+assert.match(
+  expenseTicketLinkedSheetLineSource,
+  /initialReimbursableExpense[\s\S]*DEFAULT_LINE_REIMBURSABLE_EXPENSE/
+);
 const settlementCompanyAmountIndex = expenseCurrencySettlementFieldsSource.indexOf('id={companyAmountInputId}');
 const settlementMiddleContentIndex = expenseCurrencySettlementFieldsSource.indexOf('{betweenAmountsAndCurrency ?');
 const settlementCurrencyIndex = expenseCurrencySettlementFieldsSource.indexOf('<ExpenseCurrencyFilterSelect');
 assert.ok(settlementCompanyAmountIndex >= 0);
 assert.ok(settlementMiddleContentIndex > settlementCompanyAmountIndex);
 assert.ok(settlementCurrencyIndex > settlementMiddleContentIndex);
+
+const bulkFlowStart = expenseTicketsPageSource.indexOf("const runTicketLinkFlow = useCallback");
+const bulkFlowEnd = expenseTicketsPageSource.indexOf("useLayoutEffect(() =>", bulkFlowStart);
+assert.ok(bulkFlowStart >= 0 && bulkFlowEnd > bulkFlowStart);
+const bulkFlowSource = expenseTicketsPageSource.slice(bulkFlowStart, bulkFlowEnd);
+const bulkApiStart = expenseApiClientSource.indexOf("export const linkExpenseSheetTicketsBulk");
+const bulkApiEnd = expenseApiClientSource.indexOf("// Loads one ticket detail", bulkApiStart);
+assert.ok(bulkApiStart >= 0 && bulkApiEnd > bulkApiStart);
+const bulkApiSource = expenseApiClientSource.slice(bulkApiStart, bulkApiEnd);
+const bulkSummaryUsageStart = expenseTicketsPageSource.indexOf("<ExpenseTicketLinkBulkSummary");
+assert.ok(bulkSummaryUsageStart >= 0);
+const bulkSummaryUsageSource = expenseTicketsPageSource.slice(
+  Math.max(0, bulkSummaryUsageStart - 700),
+  bulkSummaryUsageStart + 700
+);
+
+//MMS - Characterizes bulk ticket-link outcomes before changing production behavior - 2026.08.24
+const bulkLinkContractFailures: string[] = [];
+const recordBulkLinkContract = (condition: boolean, message: string) => {
+  if (!condition) bulkLinkContractFailures.push(message);
+};
+
+recordBulkLinkContract(
+  (bulkFlowSource.match(/navigateToExpenseUrl\(buildExpenseSheetDetailUrl\(linkSheetId\)/g) || []).length === 1,
+  "full success must navigate to the expense sheet exactly once"
+);
+recordBulkLinkContract(
+  !/if\s*\(\s*result\.linkedCount\s*>\s*0\s*\)\s*\{[\s\S]{0,1800}?navigateToExpenseUrl\(buildExpenseSheetDetailUrl/.test(
+    bulkFlowSource
+  ),
+  "a partial result must not navigate merely because linkedCount is positive"
+);
+recordBulkLinkContract(
+  /const\s+hasBulkIssues\s*=\s*result\.failedCount\s*>\s*0\s*\|\|\s*result\.skippedCount\s*>\s*0/.test(
+    bulkFlowSource
+  ),
+  "bulk flow must distinguish complete success from partial or failed outcomes"
+);
+recordBulkLinkContract(
+  /getExpenseTicketLinkBulkUnresolvedIds\(result\)[\s\S]{0,2500}?restoreLinkTicketSelection\(/.test(bulkFlowSource),
+  "partial and failed outcomes must retain the unresolved ticket ids for retry"
+);
+recordBulkLinkContract(
+  /if\s*\(\s*hasBulkIssues\s*\)\s*\{[\s\S]{0,3000}?await\s+loadList\(/.test(bulkFlowSource),
+  "partial and failed outcomes must refresh the link list from the server"
+);
+recordBulkLinkContract(
+  /if\s*\(\s*hasBulkIssues\s*\)\s*\{[\s\S]{0,3500}?resetList\("bulk-link-server-refresh"\);\s*await\s+loadList\(1,\s*activeFilters\)/.test(
+    bulkFlowSource
+  ),
+  "partial and failed outcomes must reload page one after the pending-ticket total shrinks"
+);
+recordBulkLinkContract(
+  (bulkFlowSource.match(/resetList\("bulk-link-server-refresh"\);\s*await\s+loadList\(/g) || []).length === 2,
+  "every post-link refresh must invalidate an older in-flight list request first"
+);
+recordBulkLinkContract(
+  !/if\s*\(\s*hasBulkIssues\s*\)\s*\{[\s\S]{0,3000}?(?:navigateToExpenseUrl|clearTicketSelection)\(/.test(
+    bulkFlowSource
+  ),
+  "partial and all-failed outcomes must keep the summary visible and remain on the ticket list"
+);
+recordBulkLinkContract(
+  /failedLinkTicketIds\.has\(fileId\.toUpperCase\(\)\)/.test(expenseTicketsPageSource) &&
+    /EXPENSE_TICKET_LINK_FAILURE_REPAIR_INTENT/.test(expenseTicketsPageSource),
+  "all-failed results must keep the failed ticket repair-and-retry path"
+);
+recordBulkLinkContract(
+  /expenseSheetId:\s*safeText\(payload\?\.expenseSheetId\)/.test(bulkApiSource) &&
+    /selectionMode/.test(bulkApiSource) &&
+    /ticketIds/.test(bulkApiSource) &&
+    /body:\s*JSON\.stringify\(safePayload\)/.test(bulkApiSource) &&
+    !/\b(?:TotalAmount|TotalAmountMST|AmountMST|ExchRate|totalAmount|totalAmountMST|amountMST|exchRate)\b/.test(
+      bulkApiSource
+    ),
+  "bulk request serialization must contain identifiers or filters but no authoritative monetary fields"
+);
+recordBulkLinkContract(
+  /confirmInFlightRef\s*=\s*useRef\(false\)/.test(confirmDialogSource) &&
+    /if\s*\(confirmInFlightRef\.current\)\s*return/.test(confirmDialogSource) &&
+    /confirmInFlightRef\.current\s*=\s*true/.test(confirmDialogSource),
+  "confirm dialog must block repeated submissions before React busy state is committed"
+);
+recordBulkLinkContract(
+  /fetchExpenseSheetTicketLinkList\(payload/.test(expenseTicketsListDataSource) &&
+    /setItems\(mappedItems\)/.test(expenseTicketsListDataSource),
+  "post-link ticket data must be replaced with the refreshed server response"
+);
+recordBulkLinkContract(
+  /aria-live=(?:"polite"|"assertive")/.test(
+    `${expenseTicketLinkBulkSummarySource}\n${bulkSummaryUsageSource}`
+  ) &&
+    /aria-atomic="true"/.test(`${expenseTicketLinkBulkSummarySource}\n${bulkSummaryUsageSource}`) &&
+    /tabIndex=\{-1\}/.test(`${expenseTicketLinkBulkSummarySource}\n${bulkSummaryUsageSource}`),
+  "bulk result summary must be an accessible live-region focus target"
+);
+recordBulkLinkContract(
+  /linkBulkSummaryRef/.test(expenseTicketsPageSource) &&
+    /linkBulkSummaryRef\.current\?*\.focus\(/.test(expenseTicketsPageSource) &&
+    /modal\.open/.test(expenseTicketsPageSource),
+  "bulk result summary must receive focus after the confirmation modal closes"
+);
+
+assert.deepEqual(bulkLinkContractFailures, [], "Expense ticket bulk-link UI contracts are incomplete");
 
 console.log("[ok] Gastos regression rules passed.");

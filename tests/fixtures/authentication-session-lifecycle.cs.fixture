@@ -1,0 +1,369 @@
+using IND_CRM_APP.Infrastructure.Session;
+using IND_CRM_APP.Infrastructure.Security.Auth;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Session;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
+using System.Collections.Concurrent;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+
+var checks = 0;
+void Check(bool value, string scenario)
+{
+    if (!value) throw new Exception(scenario);
+    checks++;
+}
+var work = new ConcurrentDictionary<string, PendingWork>();
+var codes = new ConcurrentDictionary<string, (string Oid, string Nonce)>();
+using var rsa = RSA.Create(2048);
+var signingKey = new RsaSecurityKey(rsa) { KeyId = "test-key" };
+var builder = WebApplication.CreateBuilder();
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole().SetMinimumLevel(LogLevel.Warning);
+builder.WebHost.UseUrls("http://127.0.0.1:0");
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddMemoryCache();
+builder.Services.AddSession();
+builder.Services.AddSingleton<ISessionStore, ConcurrentSessionStore>();
+builder.Services.AddSingleton<AuthenticationSessionRegistry>();
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+}).AddCookie(options =>
+{
+    options.Cookie.Name = "IND_CRM_APP.Auth";
+    options.Events.OnValidatePrincipal = AuthenticationSessionEvents.ValidateCookie;
+}).AddOpenIdConnect(options =>
+{
+    options.ClientId = "test-client";
+    options.ClientSecret = "test-secret";
+    options.RequireHttpsMetadata = false;
+    options.ResponseType = "code";
+    options.CallbackPath = "/signin-oidc";
+    options.Configuration = new OpenIdConnectConfiguration
+    {
+        Issuer = "https://identity.test",
+        AuthorizationEndpoint = "https://identity.test/authorize",
+        TokenEndpoint = "https://identity.test/token"
+    };
+    options.Configuration.SigningKeys.Add(signingKey);
+    options.Backchannel = new HttpClient(new IdentityProvider(codes, signingKey));
+    options.Events.OnRedirectToIdentityProvider = context =>
+    {
+        AuthenticationSessionEvents.BeginLogin(context);
+        return Task.CompletedTask;
+    };
+    options.Events.OnTicketReceived = AuthenticationSessionEvents.CompleteLogin;
+});
+await using var app = builder.Build();
+app.Use(async (http, next) =>
+{
+    AuthenticationSessionRequest.PrepareResponse(http);
+    await next(http);
+});
+app.UseSession();
+app.UseAuthentication();
+app.UseMiddleware<AuthenticationSessionMiddleware>();
+app.MapGet("/Auth/Login", (HttpContext http) => Results.Text("login:" + http.Session.GetString("__ControllerTempData")));
+app.MapGet("/Auth/EntraLogin", () => Results.Challenge(new AuthenticationProperties { RedirectUri = "/read" },
+    [OpenIdConnectDefaults.AuthenticationScheme]));
+app.MapGet("/read", (HttpContext http) => Results.Json(new
+{
+    oid = http.Session.GetString("ENTRAOID"),
+    company = http.Session.GetString("INDCompanySelected"),
+    token = http.Session.GetString("INDContextToken"),
+    key = AuthenticationSessionRequest.GetIdentity(http) is { } identity ? AuthenticationSessionMiddleware.CacheKey(identity) : "",
+    family = AuthenticationSessionRequest.GetIdentity(http)?.Family,
+    revision = AuthenticationSessionRequest.GetIdentity(http)?.Revision
+}));
+app.MapPost("/set", (HttpContext http) =>
+{
+    http.Session.SetString("INDCompanySelected", http.Request.Query["company"].ToString());
+    http.Session.SetString("INDContextToken", "fresh-login-context");
+    return Results.Ok();
+});
+app.MapPost("/logout", async (HttpContext http) =>
+{
+    if (AuthenticationSessionRequest.TryClose(http))
+    {
+        http.Session.Clear();
+        await http.SignOutAsync();
+        http.Session.SetString("__ControllerTempData", "logout-marker");
+    }
+    return Results.Ok();
+});
+app.MapPost("/slow", async (HttpContext http) =>
+{
+    var pending = work[http.Request.Query["id"].ToString()];
+    var oid = http.Session.GetString("ENTRAOID");
+    http.Session.SetString("INDCompanySelected", "B");
+    CompanySelectionRevision.Record(http.Session, CompanySelectionRevision.Create());
+    pending.Entered.TrySetResult();
+    await pending.Finish.Task.WaitAsync(TimeSpan.FromSeconds(20));
+    if (http.Request.Query.ContainsKey("logout"))
+    {
+        if (AuthenticationSessionRequest.TryClose(http))
+        {
+            http.Session.Clear();
+            await http.SignOutAsync();
+        }
+    }
+    else
+    {
+        await http.Session.CommitAsync();
+        // Simulate a preference prepared by an upstream service before final header checks.
+        http.Response.Cookies.Append("IND_CRM_APP.SelectedCompany", "old-preference");
+    }
+    return Results.Text(oid + ":" + http.Session.GetString("ENTRAOID"));
+});
+app.MapPost("/legacy", async (HttpContext http) =>
+{
+    // Old cookies trigger the framework's real sliding renewal on their next request.
+    var legacyOid = http.Request.Query["oid"].FirstOrDefault() ?? "legacy-user";
+    var principal = new ClaimsPrincipal(new ClaimsIdentity([new Claim("oid", legacyOid)], "test"));
+    await http.SignInAsync(principal, new AuthenticationProperties
+    {
+        IssuedUtc = DateTimeOffset.UtcNow.AddDays(-9), ExpiresUtc = DateTimeOffset.UtcNow.AddDays(5)
+    });
+    return Results.Ok();
+});
+await app.StartAsync();
+try
+{
+    var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
+    using var client = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false })
+    { BaseAddress = new Uri(address), Timeout = TimeSpan.FromSeconds(30) };
+
+    // Send explicit cookie sets so OIDC POST tests deliberately omit the session and auth cookies.
+    async Task<HttpResponseMessage> Send(Jar jar, string path, HttpMethod? method = null, HttpContent? content = null)
+    {
+        using var request = new HttpRequestMessage(method ?? HttpMethod.Get, path) { Content = content };
+        if (jar.Values.Count > 0)
+            request.Headers.Add("Cookie", string.Join("; ", jar.Values.Select(pair => pair.Key + "=" + pair.Value)));
+        return await client.SendAsync(request);
+    }
+    async Task<JsonElement> Read(Jar jar)
+    {
+        using var response = await Send(jar, "/read");
+        Check(response.IsSuccessStatusCode, "current cookie can read session");
+        jar.Apply(response);
+        return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.Clone();
+    }
+    async Task<(Jar Cookies, string State, string Code)> Begin(Jar jar, string oid)
+    {
+        using var response = await Send(jar, "/Auth/EntraLogin");
+        Check(response.StatusCode == HttpStatusCode.Redirect && response.Headers.Location?.Host == "identity.test", "login starts OIDC challenge");
+        jar.Apply(response);
+        var query = QueryHelpers.ParseQuery(response.Headers.Location!.Query);
+        var code = Guid.NewGuid().ToString("N");
+        codes[code] = (oid, query["nonce"].ToString());
+        var callback = new Jar();
+        foreach (var pair in jar.Values.Where(pair => pair.Key.StartsWith(".AspNetCore.Correlation.") ||
+                     pair.Key.StartsWith(".AspNetCore.OpenIdConnect.Nonce.")))
+            callback.Values[pair.Key] = pair.Value;
+        Check(!callback.Values.ContainsKey(".AspNetCore.Session") && !callback.Values.ContainsKey("IND_CRM_APP.Auth"),
+            "callback omits Lax session and authentication cookies");
+        return (callback, query["state"].ToString(), code);
+    }
+    async Task<HttpResponseMessage> Complete((Jar Cookies, string State, string Code) attempt)
+        => await Send(attempt.Cookies, "/signin-oidc", HttpMethod.Post, new FormUrlEncodedContent(new Dictionary<string, string>
+        { ["state"] = attempt.State, ["code"] = attempt.Code }));
+    async Task Login(Jar jar, string oid)
+    {
+        using var response = await Complete(await Begin(jar, oid));
+        Check(response.StatusCode == HttpStatusCode.Redirect && response.Headers.Location?.OriginalString == "/read",
+            "validated OIDC callback completes login: " + response.StatusCode + " " + response.Headers.Location + " " + await response.Content.ReadAsStringAsync());
+        jar.Apply(response);
+        Check((await Read(jar)).GetProperty("oid").GetString() == oid, "login initializes session from validated cookie claims");
+    }
+    bool HasProtectedCookie(HttpResponseMessage response) => response.Headers.TryGetValues("Set-Cookie", out var values) &&
+        values.Any(value => value.StartsWith("IND_CRM_APP.Auth") || value.StartsWith("IND_CRM_APP.SelectedCompany"));
+
+    var jar = new Jar();
+    await Login(jar, "user-one");
+    using (var response = await Send(jar, "/set?company=A", HttpMethod.Post)) Check(response.IsSuccessStatusCode, "initial company set");
+    var original = await Read(jar);
+    var firstKey = original.GetProperty("key").GetString();
+    var sameUser = new PendingWork();
+    work["same"] = sameUser;
+    var pendingSame = Send(jar.Copy(), "/slow?id=same", HttpMethod.Post);
+    await sameUser.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+    using (var response = await Send(jar, "/logout", HttpMethod.Post)) jar.Apply(response);
+    using (var response = await Send(jar, "/Auth/Login")) Check((await response.Content.ReadAsStringAsync()).Contains("logout-marker"), "logout preserves anonymous TempData");
+    await Login(jar, "user-one");
+    using (var response = await Send(jar, "/set?company=A", HttpMethod.Post)) { }
+    sameUser.Finish.SetResult();
+    using (var response = await pendingSame)
+    {
+        Check(!HasProtectedCookie(response), "old company response cannot change browser preferences or auth cookie");
+        Check(await response.Content.ReadAsStringAsync() == "user-one:user-one", "old request retains its own identity snapshot");
+    }
+    var sameResult = await Read(jar);
+    Check(sameResult.GetProperty("company").GetString() == "A", "old company cannot overwrite same-user relogin");
+    Check(sameResult.GetProperty("token").GetString() == "fresh-login-context", "fresh context survives same-user relogin");
+    Check(sameResult.GetProperty("key").GetString() != firstKey, "same-user relogin has a distinct session generation");
+
+    var oldJar = jar.Copy();
+    var differentUser = new PendingWork();
+    work["different"] = differentUser;
+    var pendingDifferent = Send(oldJar.Copy(), "/slow?id=different", HttpMethod.Post);
+    await differentUser.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+    await Login(jar, "user-two");
+    differentUser.Finish.SetResult();
+    using (var response = await pendingDifferent)
+    {
+        Check(await response.Content.ReadAsStringAsync() == "user-one:user-one", "obsolete request never adopts the newer user's identity");
+        Check(!HasProtectedCookie(response), "different-user login suppresses old response cookies");
+    }
+    var differentResult = await Read(jar);
+    Check(differentResult.GetProperty("oid").GetString() == "user-two", "new-user sign-in survives older company request");
+    Check(differentResult.GetProperty("company").ValueKind == JsonValueKind.Null, "new login does not retain older selected company data");
+    using (var response = await Send(oldJar, "/read")) Check(response.StatusCode == HttpStatusCode.Redirect, "superseded cookie cannot enter business endpoint");
+    using (var response = await Send(oldJar, "/Auth/Login")) Check(response.IsSuccessStatusCode, "superseded cookie can render recovery without a redirect loop");
+    // Recovery must be able to challenge and sign in despite the rejected old cookie.
+    await Login(oldJar, "user-three");
+    jar = oldJar;
+
+    var oldFailure = new PendingWork();
+    work["failure"] = oldFailure;
+    var pendingFailure = Send(jar.Copy(), "/slow?id=failure&logout=1", HttpMethod.Post);
+    await oldFailure.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+    await Login(jar, "user-four");
+    oldFailure.Finish.SetResult();
+    using (var response = await pendingFailure) Check(!HasProtectedCookie(response), "late old failure cannot sign out the current login");
+    Check((await Read(jar)).GetProperty("oid").GetString() == "user-four", "new login remains active after late old failure");
+
+    // An old callback may not reopen a session explicitly closed after its challenge.
+    var canceled = await Begin(jar, "canceled-user");
+    using (var response = await Send(jar, "/logout", HttpMethod.Post)) jar.Apply(response);
+    using (var response = await Complete(canceled)) Check(!HasProtectedCookie(response), "logout cancels previously started OIDC callback");
+    var attemptOlder = await Begin(jar, "older-user");
+    var attemptNewer = await Begin(jar, "newer-user");
+    using (var response = await Complete(attemptNewer)) jar.Apply(response);
+    using (var response = await Complete(attemptNewer)) Check(!HasProtectedCookie(response), "a consumed callback cannot mint another authentication generation");
+    using (var response = await Complete(attemptOlder)) Check(!HasProtectedCookie(response), "last initiated login wins out-of-order callbacks");
+    Check((await Read(jar)).GetProperty("oid").GetString() == "newer-user", "older callback cannot replace accepted newer login");
+
+    // Expiring only session data must not shorten the protected authentication cookie lifetime.
+    var beforeExpiry = await Read(jar);
+    await app.Services.GetRequiredService<IDistributedCache>().RemoveAsync(beforeExpiry.GetProperty("key").GetString()!);
+    Check((await Read(jar)).GetProperty("oid").GetString() == "newer-user", "data-cache expiry recovers from valid authentication cookie");
+    // Simulate loss of process memory without exposing a production registry-reset operation.
+    var registry = app.Services.GetRequiredService<AuthenticationSessionRegistry>();
+    var states = (System.Collections.IDictionary)typeof(AuthenticationSessionRegistry)
+        .GetField("_states", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(registry)!;
+    states.Clear();
+    await app.Services.GetRequiredService<IDistributedCache>().RemoveAsync(beforeExpiry.GetProperty("key").GetString()!);
+    Check((await Read(jar)).GetProperty("oid").GetString() == "newer-user", "lost process memory recovers valid cookie without forced login");
+
+    var pendingBeforeRestart = await Begin(jar, "restart-callback-user");
+    states.Clear();
+    await Read(jar);
+    using (var response = await Complete(pendingBeforeRestart)) jar.Apply(response);
+    Check((await Read(jar)).GetProperty("oid").GetString() == "restart-callback-user",
+        "pending callback survives cookie bootstrap after simulated process memory loss");
+
+    var legacy = new Jar();
+    using (var response = await Send(legacy, "/legacy", HttpMethod.Post)) legacy.Apply(response);
+    var legacyOriginal = legacy.Copy();
+    var legacyUnrenewed = legacy.Copy();
+    var legacyA = await Read(legacy);
+    var legacyB = await Read(legacyOriginal);
+    Check(legacyA.GetProperty("key").GetString() == legacyB.GetProperty("key").GetString(), "overlapping legacy cookies migrate to the same generation");
+    var renewalWork = new PendingWork();
+    work["renewal"] = renewalWork;
+    var pendingRenewal = Send(legacyUnrenewed, "/slow?id=renewal", HttpMethod.Post);
+    await renewalWork.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+    await Login(legacy, "renewed-user");
+    renewalWork.Finish.SetResult();
+    using (var response = await pendingRenewal) Check(!HasProtectedCookie(response), "stale response suppresses framework sliding cookie renewal");
+    Check((await Read(legacy)).GetProperty("oid").GetString() == "renewed-user", "new login survives old sliding renewal response");
+
+    // Saturation rejects new admission temporarily while preserving active sessions and closures.
+    for (var index = 0; index <= 10000; index++)
+    {
+        try { registry.Begin("capacity-" + index, null, TimeSpan.FromMinutes(15)); }
+        catch (AuthenticationSessionCapacityException) { break; }
+    }
+    using (var response = await Send(new Jar(), "/Auth/EntraLogin"))
+        Check(response.StatusCode == HttpStatusCode.ServiceUnavailable && response.Headers.RetryAfter != null,
+            "new login admission at capacity returns retryable 503 instead of a redirect loop");
+    Check((await Read(legacy)).GetProperty("oid").GetString() == "renewed-user", "capacity does not evict an active authentication generation");
+    var capacityCookie = new Jar();
+    using (var response = await Send(capacityCookie, "/legacy?oid=capacity-user", HttpMethod.Post)) capacityCookie.Apply(response);
+    using (var response = await Send(capacityCookie, "/read"))
+        Check(response.StatusCode == HttpStatusCode.ServiceUnavailable && !HasProtectedCookie(response),
+            "cookie admission at capacity is temporary and cannot renew the unadmitted cookie: " + response.StatusCode +
+            " cookies=" + (response.Headers.TryGetValues("Set-Cookie", out var cookieValues) ? string.Join(",", cookieValues.Select(value => value.Split('=')[0])) : "none"));
+}
+finally
+{
+    foreach (var item in work.Values) item.Finish.TrySetResult();
+    await app.StopAsync();
+}
+Console.WriteLine($"Verified authentication lifecycle: {checks} checks");
+
+// Request gates make concurrency ordering deterministic without sleeps.
+sealed class PendingWork
+{
+    public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public TaskCompletionSource Finish { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+}
+
+// Only synthetic cookies are held here; no user credentials or external services are used.
+sealed class Jar
+{
+    public Dictionary<string, string> Values { get; } = new(StringComparer.Ordinal);
+    public Jar Copy()
+    {
+        var copy = new Jar();
+        foreach (var pair in Values) copy.Values[pair.Key] = pair.Value;
+        return copy;
+    }
+    public void Apply(HttpResponseMessage response)
+    {
+        if (!response.Headers.TryGetValues("Set-Cookie", out var values)) return;
+        foreach (var value in values)
+        {
+            var pair = value.Split(';')[0].Split('=', 2);
+            if (pair[1].Length == 0) Values.Remove(pair[0]);
+            else Values[pair[0]] = pair[1];
+        }
+    }
+}
+
+// Simulates only the identity provider's token endpoint; the real OIDC handler validates its JWT.
+sealed class IdentityProvider(ConcurrentDictionary<string, (string Oid, string Nonce)> codes, SecurityKey key) : HttpMessageHandler
+{
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var form = QueryHelpers.ParseQuery(await request.Content!.ReadAsStringAsync(cancellationToken));
+        var login = codes[form["code"].ToString()];
+        var jwt = new JwtSecurityToken("https://identity.test", "test-client",
+            [new Claim("sub", login.Oid), new Claim("oid", login.Oid), new Claim("nonce", login.Nonce),
+             new Claim("preferred_username", login.Oid),
+             new Claim("iat", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)],
+            DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddMinutes(10), new SigningCredentials(key, SecurityAlgorithms.RsaSha256));
+        return new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(new
+            {
+                token_type = "Bearer", access_token = "synthetic-access-token", expires_in = 600,
+                id_token = new JwtSecurityTokenHandler().WriteToken(jwt)
+            }), Encoding.UTF8, "application/json")
+        };
+    }
+}

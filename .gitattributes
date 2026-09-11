@@ -67,3 +67,9 @@
 
 # Preserve archived skill files byte-for-byte, including upstream Markdown hard breaks.
 docs/backups/codex-global-skills/** -whitespace
+
+# Preserve the exact source bytes used by CRM help and delivery checksums.
+docs/crm-help/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+scripts/crm-help/resources/answer-cases.json -text
+scripts/crm-help/Export-CrmHelpWord.py text eol=lf
+scripts/crm-help/Refresh-CrmHelpWordToc.py text eol=lf

@@ -1,0 +1,49 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expense-approval.acciones-del-responsable",
+    "moduleId":  "expense-approval",
+    "sectionNumber":  "10.4",
+    "title":  "Acciones del responsable",
+    "summary":  "Consulta cómo puede aprobar, rechazar o revertir un responsable.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Acciones del responsable",
+                                  "aprobación de gastos",
+                                  "estados de hoja"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre acciones del responsable?",
+                                          "Soy responsable, ¿cómo rechazo la hoja de un empleado?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.8.0",
+    "contentHash":  "5F8D456344F5A34C5D49BADCD095307A157BC04119AC48EC34D545584C6DF3CE",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "10.4",
+                   "pageFromTableOfContents":  27
+               }
+}

@@ -9,9 +9,13 @@ import {
   getDefaultExpenseGastoTypeCode,
   toExpenseGastoTypeCode,
 } from "../constants/expenseGastoTypeCatalog.ts";
-import { normalizeExpenseLineReimbursableExpense } from "../constants/expenseReimbursableExpenseCatalog.ts";
+import {
+  DEFAULT_LINE_REIMBURSABLE_EXPENSE,
+  normalizeExpenseLineReimbursableExpense,
+} from "../constants/expenseReimbursableExpenseCatalog.ts";
 import {
   createExpenseSheet,
+  fetchExistingExpenseProjectId,
   fetchExpenseSheetDetail,
   fetchExpenseSheetTicket,
   mapExpenseSheetHeader,
@@ -25,6 +29,10 @@ import {
   resolveExpenseLineExchangeRateForCurrency,
 } from "./expenseLineCurrency.ts";
 import { safeText } from "./expenseUiUtils.ts";
+import {
+  hasServerExpenseLineProjectDefault,
+  resolveNewExpenseLineProjectCandidate,
+} from "./expenseProjectRules.ts";
 
 const PREFERRED_TICKET_GASTO_TYPE = 8;
 
@@ -201,10 +209,15 @@ const buildLinePayload = ({
 }): ExpenseSheetCreateLineRequest => {
   const resolvedProjectId = hasProjectIdOverride
     ? safeText(projectIdOverride)
-    : safeText(existingLine?.projId || sheetProjectId);
+    : existingLine
+      ? safeText(existingLine.projId)
+      : safeText(sheetProjectId);
   const resolvedReimbursableExpense = hasReimbursableExpenseOverride
-    ? normalizeExpenseLineReimbursableExpense(reimbursableExpenseOverride)
-    : normalizeExpenseLineReimbursableExpense(existingLine?.reimbursableExpense);
+    ? normalizeExpenseLineReimbursableExpense(reimbursableExpenseOverride) ?? undefined
+    : existingLine
+      ? undefined
+      : DEFAULT_LINE_REIMBURSABLE_EXPENSE;
+  const projectProvided = hasProjectIdOverride;
 
   return {
     transDate: ticketSnapshot.transDate,
@@ -215,7 +228,8 @@ const buildLinePayload = ({
     ticket: true,
     qty: 1,
     price: ticketSnapshot.totalAmount,
-    projId: resolvedProjectId || undefined,
+    projId: projectProvided ? resolvedProjectId : undefined,
+    projIdProvided: projectProvided,
     reimbursableExpense: resolvedReimbursableExpense,
     currencyCode: ticketSnapshot.currencyCode || undefined,
     amountMST: ticketSnapshot.amountMST,
@@ -297,9 +311,20 @@ export const syncExpenseLinkedTicketSheetLine = async (args: SyncExpenseLinkedTi
     );
   }
 
+  const serverDefaultProvided = hasServerExpenseLineProjectDefault(selectedSheet);
+  const projectCandidate = resolveNewExpenseLineProjectCandidate({
+    defaultLineProjectId: sheetHeader.defaultLineProjId,
+    headerProjectId: sheetHeader.projId,
+    serverDefaultProvided,
+  });
+  const inheritedProjectId = !existingLine && !hasProjectIdOverride
+    ? serverDefaultProvided
+      ? projectCandidate
+      : await fetchExistingExpenseProjectId(projectCandidate, { suppressPermissionModal: true })
+    : "";
   const payload = buildLinePayload({
     fileId: safeFileId,
-    sheetProjectId: safeText(sheetHeader.projId),
+    sheetProjectId: inheritedProjectId,
     existingLine,
     ticketSnapshot,
     projectIdOverride,

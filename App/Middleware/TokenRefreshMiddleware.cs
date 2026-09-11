@@ -34,6 +34,13 @@ namespace IND_CRM_APP.Middleware
 
         public async Task Invoke(HttpContext context)
         {
+            // Error rendering must remain available when token refresh itself has failed.
+            if (context.GetEndpoint()?.Metadata.GetMetadata<IndErrorEndpointAttribute>() != null)
+            {
+                await _next(context);
+                return;
+            }
+
             var path = context.Request.Path.Value ?? string.Empty;
             var lowerPath = path.ToLowerInvariant();
 
@@ -53,6 +60,9 @@ namespace IND_CRM_APP.Middleware
                 await _next(context);
                 return;
             }
+
+            if (context.RequestAborted.IsCancellationRequested)
+                return;
 
             // Resolve scoped services only for protected routes.
             var tokenSession = context.RequestServices.GetRequiredService<ITokenSessionService>();
@@ -83,6 +93,8 @@ namespace IND_CRM_APP.Middleware
                             minutesLeft);
 
                         var refreshResult = await apiClient.RefreshTokenAsync(token);
+                        if (context.RequestAborted.IsCancellationRequested)
+                            return;
 
                         if (refreshResult != null &&
                             !string.IsNullOrWhiteSpace(refreshResult.Token))
@@ -103,6 +115,19 @@ namespace IND_CRM_APP.Middleware
                             return;
                         }
                     }
+                    catch (Exception) when (context.RequestAborted.IsCancellationRequested)
+                    {
+                        // An abandoned request must not clear or replace the user's session token.
+                        return;
+                    }
+                    catch (ApiException ex) when (IsTransientRefreshFailure(ex) &&
+                        expiresUtc.Value > DateTime.UtcNow)
+                    {
+                        // Keep the original expiry and let the API authorize this request with the valid token.
+                        _logger.LogWarning(ex,
+                            "Token refresh is temporarily unavailable. Keeping the current token until {ExpiresUtc}.",
+                            expiresUtc.Value);
+                    }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Error refreshing token.");
@@ -114,6 +139,12 @@ namespace IND_CRM_APP.Middleware
             }
 
             await _next(context);
+        }
+
+        // Only known transport failures are eligible to retain a token that has not expired.
+        private static bool IsTransientRefreshFailure(ApiException exception)
+        {
+            return (int)exception.StatusCode is 0 or 408 or 429 or 500 or 502 or 503 or 504;
         }
 
         private static bool IsApiRequest(HttpRequest request)

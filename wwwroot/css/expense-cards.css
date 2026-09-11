@@ -1,0 +1,248 @@
+/* Expense-only layouts. Shared timeline rules remain owned by Historial.css. */
+.expense-timeline-card .expense-timeline-card__content {
+    padding: 12px;
+    gap: 6px;
+}
+
+.expense-timeline-card .timeline-name,
+.expense-timeline-card .expense-sheet-card__subtitle {
+    margin: 0;
+    padding: 0;
+    text-align: left;
+}
+
+.expense-timeline-card .expense-card__metadata {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 3px 10px;
+    min-width: 0;
+    color: #00296bb8;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.expense-timeline-card .expense-card__date {
+    flex-shrink: 0;
+}
+
+.expense-timeline-card--header .expense-sheet-card__owner {
+    flex: 1 1 140px;
+    min-width: 0;
+    margin-left: auto;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.expense-timeline-card .expense-sheet-card__amount {
+    position: static;
+    min-width: 0;
+    max-width: 100%;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.expense-timeline-card .expense-card-header__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px 12px;
+    margin-top: 5px;
+}
+
+.expense-timeline-card .expense-card-header__footer > .expense-sheet-card__amount {
+    text-align: left;
+}
+
+.expense-timeline-card .expense-card__indicators {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    max-width: 100%;
+    margin-left: auto;
+}
+
+.expense-timeline-card .expense-sheet-card__status {
+    position: static;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    padding: 3px 6px;
+    border: 0;
+    border-radius: 3px;
+    filter: none;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: 0.2px;
+    text-align: center;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+
+.expense-timeline-card .expense-sheet-card__status--review,
+.expense-timeline-card .expense-sheet-card__status--unbilled {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.expense-timeline-card .expense-sheet-card__status--approved,
+.expense-timeline-card .expense-sheet-card__status--billed {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.expense-timeline-card .expense-sheet-card__status--rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.expense-timeline-card .expense-sheet-card__status--paid {
+    background: #e5eaf0;
+    color: #00296b;
+}
+
+.expense-timeline-card .expense-sheet-card__status-icon,
+.expense-timeline-card .expense-ticket-card__status-icons,
+.expense-timeline-card .expense-line-card__ticket-icon {
+    position: static;
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    color: #64748b;
+    transform: none;
+}
+
+.expense-timeline-card .expense-ticket-card__status-icon + .expense-ticket-card__status-icon {
+    margin-top: 0;
+}
+
+/* Reserve the existing selection rail without changing either button's events. */
+.expense-ticket-link-card .expense-card-header {
+    padding-right: calc(4.25rem + 8px);
+}
+
+.expense-card-lines {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.expense-card-lines > .timeline-item {
+    margin-bottom: 0;
+}
+
+.expense-card-lines > .timeline-item + .timeline-item {
+    border-top: 1px solid #e2e8f0;
+}
+
+.expense-card-lines .expense-timeline-card--line {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.expense-card-lines > .timeline-item:first-child .expense-timeline-card--line {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.expense-card-lines > .timeline-item:last-child .expense-timeline-card--line {
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.expense-card-lines .expense-timeline-card--line:hover {
+    transform: none;
+    background: #f8fafc;
+}
+
+.expense-timeline-card .expense-card-line {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.expense-timeline-card .expense-card-line__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    background: #e5eaf0;
+    border-radius: 5px;
+    color: #00296be0;
+}
+
+.expense-timeline-card .expense-card-line__icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.expense-timeline-card .expense-card-line__details {
+    flex: 1 1 110px;
+    min-width: 0;
+}
+
+.expense-timeline-card .expense-card-line__details .expense-card__metadata {
+    margin-top: 4px;
+}
+
+.expense-timeline-card .expense-card-line__trailing {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex: 0 1 auto;
+    margin-left: auto;
+    min-width: 0;
+    max-width: calc(100% - 46px);
+}
+
+.expense-timeline-card .expense-card-line__trailing:has(> .expense-card__indicators) {
+    align-self: flex-start;
+}
+
+.expense-timeline-card .expense-card-line__trailing .expense-sheet-card__amount {
+    font-size: 18px;
+    text-align: right;
+}
+
+.expense-timeline-card:focus-visible {
+    outline: 2px solid #00296b;
+    outline-offset: 2px;
+    z-index: 6;
+}
+
+@media (max-width: 480px) {
+    .expense-timeline-card .expense-card-line {
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .expense-timeline-card .expense-card-line__icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .expense-timeline-card .expense-card-line__trailing {
+        max-width: calc(100% - 40px);
+    }
+}
+
+@media (min-width: 640px) {
+    .expense-ticket-link-card .expense-card-header {
+        padding-right: calc(4.75rem + 8px);
+    }
+}

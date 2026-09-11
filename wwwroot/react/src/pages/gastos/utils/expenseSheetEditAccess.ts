@@ -1,9 +1,9 @@
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { resolveExpenseSheetDetailPolicy } from "../detail/expenseSheetDetailPolicy.ts";
-import type { ExpenseSheetDetailDto, ExpenseSheetHeader } from "../expenseTypes.ts";
-import { fetchExpenseSheetDetail, mapExpenseSheetHeader } from "./expenseApi.ts";
-import { isManagingOtherExpenseRecord } from "./expenseManagedUserScope.ts";
+import type { ExpenseSheetDetailDto, ExpenseSheetHeader, ExpenseSheetLine } from "../expenseTypes.ts";
+import { fetchExpenseSheetDetail, mapExpenseSheetHeader, mapExpenseSheetLine } from "./expenseApi.ts";
+import { isManagingOtherExpenseRecord, isSameExpenseUser } from "./expenseManagedUserScope.ts";
 import { hasAssignedVoucher, safeText } from "./expenseUiUtils.ts";
 
 const EXPENSE_STATUS_PAID = 4;
@@ -11,7 +11,10 @@ const EXPENSE_STATUS_PAID = 4;
 export type ExpenseSheetEditAccessResult = {
   sheetId: string;
   header: ExpenseSheetHeader | null;
+  lines: ExpenseSheetLine[];
   isPaid: boolean;
+  isManagingOtherUser: boolean;
+  isCurrentUserExpenseOwner: boolean;
   isLocked: boolean;
   blockedMessage: string;
 };
@@ -40,11 +43,9 @@ const selectSheet = (items: unknown[], sheetId: string): ExpenseSheetDetailDto |
     return null;
   }
 
-  const selected =
-    items.find(
-      (entry) =>
-        safeText((entry as { HojaGastosId?: unknown })?.HojaGastosId).toUpperCase() === safeSheetId
-    ) || items[0];
+  const selected = items.find(
+    (entry) => safeText((entry as { HojaGastosId?: unknown })?.HojaGastosId).toUpperCase() === safeSheetId
+  );
   if (!selected || typeof selected !== "object") {
     return null;
   }
@@ -67,22 +68,35 @@ export const resolveExpenseSheetEditAccess = async ({
     return {
       sheetId: "",
       header: null,
+      lines: [],
       isPaid: false,
+      isManagingOtherUser: false,
+      isCurrentUserExpenseOwner: false,
       isLocked: true,
       blockedMessage: indT("ExpenseSheets_NotFound", "Expense sheet was not found."),
     };
   }
 
+  const requestedOwnerAxUserId = safeText(selectedManagedUserId || currentAxUserId);
+
   try {
     const response = await fetchExpenseSheetDetail(safeSheetId, {
       suppressPermissionModal,
+      headers: requestedOwnerAxUserId
+        ? {
+            "X-IND-AxUserId": requestedOwnerAxUserId,
+          }
+        : undefined,
     });
 
     if (response?.Success === false) {
       return {
         sheetId: safeSheetId,
         header: null,
+        lines: [],
         isPaid: false,
+        isManagingOtherUser: false,
+        isCurrentUserExpenseOwner: false,
         isLocked: true,
         blockedMessage:
           safeText(response.Message) || indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."),
@@ -94,21 +108,33 @@ export const resolveExpenseSheetEditAccess = async ({
       return {
         sheetId: safeSheetId,
         header: null,
+        lines: [],
         isPaid: false,
+        isManagingOtherUser: false,
+        isCurrentUserExpenseOwner: false,
         isLocked: true,
         blockedMessage: indT("ExpenseSheets_NotFound", "Expense sheet was not found."),
       };
     }
 
     const mappedHeader = mapExpenseSheetHeader(selectedSheet);
+    const rawLines = Array.isArray(selectedSheet.Lines)
+      ? selectedSheet.Lines
+      : (Array.isArray(selectedSheet.lines) ? selectedSheet.lines : []);
+    const mappedLines = rawLines.map(mapExpenseSheetLine);
     const statusCode = typeof mappedHeader.expenseSheetStatus === "number" ? mappedHeader.expenseSheetStatus : null;
     const isPaid = statusCode === EXPENSE_STATUS_PAID || hasAssignedVoucher(mappedHeader.voucher);
+    const recordOwnerUserId = safeText(mappedHeader.ownerAxUserId || mappedHeader.userId);
+    const isCurrentUserExpenseOwner =
+      !!recordOwnerUserId &&
+      (isSameExpenseUser(recordOwnerUserId, currentAxUserId) ||
+        isSameExpenseUser(recordOwnerUserId, currentCrmUserId));
     const isManagingOtherUser = isManagingOtherExpenseRecord({
       canManageOtherUsers,
       currentAxUserId,
       currentCrmUserId,
       selectedManagedUserId,
-      recordOwnerUserId: mappedHeader.userId,
+      recordOwnerUserId,
       isCreateMode: false,
     });
     const detailPolicy = resolveExpenseSheetDetailPolicy({
@@ -122,7 +148,10 @@ export const resolveExpenseSheetEditAccess = async ({
     return {
       sheetId: safeSheetId,
       header: mappedHeader,
+      lines: mappedLines,
       isPaid,
+      isManagingOtherUser,
+      isCurrentUserExpenseOwner,
       isLocked,
       blockedMessage: isLocked ? resolveLockedSheetMessage(isPaid) : "",
     };
@@ -137,7 +166,10 @@ export const resolveExpenseSheetEditAccess = async ({
     return {
       sheetId: safeSheetId,
       header: null,
+      lines: [],
       isPaid: false,
+      isManagingOtherUser: false,
+      isCurrentUserExpenseOwner: false,
       isLocked: true,
       blockedMessage,
     };

@@ -1,6 +1,9 @@
 import { getSessionValueWithExpiry, removeSessionValueWithExpiry, setSessionValueWithExpiry } from "./sessionExpiry.ts";
+import { getBrowserStorageScopeToken } from "./browserStorageScope.ts";
 
-export const TEXT_EDITOR_PREFIX = "ind_texteditor_";
+const TEXT_EDITOR_SCOPE = getBrowserStorageScopeToken() || "scope-unavailable";
+
+export const TEXT_EDITOR_PREFIX = `ind_texteditor_v2_${TEXT_EDITOR_SCOPE}_`;
 const TEXT_EDITOR_VALUE_TTL_MS = 12 * 60 * 60 * 1000;
 const TEXT_EDITOR_RETURN_URL_TTL_MS = 2 * 60 * 60 * 1000;
 

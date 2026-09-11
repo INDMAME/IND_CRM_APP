@@ -23,7 +23,7 @@ using System.Xml.Linq;
 namespace IND_CRM_APP.Controllers
 {
     // Controller for expense sheet pages and read endpoints.
-    public class GastosController : BaseMvcController
+    public partial class GastosController : BaseMvcController
     {
         private readonly ILogger<GastosController> _logger;
         private readonly ICrmEnumCatalog _crmEnumCatalog;
@@ -46,6 +46,9 @@ namespace IND_CRM_APP.Controllers
         private const int ExpenseSheetStatusApproved = 2;
         private const int ExpenseSheetStatusRejected = 3;
         private const int ExpenseSheetStatusPaid = 4;
+        private const int ExpenseSheetReimbursableYes = 0;
+        private const int ExpenseSheetReimbursableNo = 1;
+        private const int ExpenseSheetReimbursableBoth = 2;
         private const string ExpenseSheetNotFoundErrorCode = "CRM_EXPENSESHEET_NOT_FOUND";
         private const string ExpenseSheetPaidReadOnlyErrorCode = "CRM_EXPENSESHEET_PAID_READ_ONLY";
         private const string ExpenseSheetReadOnlyByStatusErrorCode = "CRM_EXPENSESHEET_STATUS_READ_ONLY";
@@ -111,6 +114,7 @@ namespace IND_CRM_APP.Controllers
         {
             HeaderUpdate,
             LineMutation,
+            OwnLineTicketMutation,
             DeleteSheet
         }
 
@@ -165,7 +169,11 @@ namespace IND_CRM_APP.Controllers
 
         // Shows the expense tickets list page.
         [HttpGet]
-        public async Task<IActionResult> Tickets([FromQuery(Name = "action")] string ticketsAction = "", string hojaGastosId = "")
+        public async Task<IActionResult> Tickets(
+            [FromQuery(Name = "action")] string ticketsAction = "",
+            string hojaGastosId = "",
+            string lineRecId = "",
+            string sheetLineRecId = "")
         {
             var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
@@ -174,7 +182,15 @@ namespace IND_CRM_APP.Controllers
             await LoadEnvironmentInfoAsync();
             var normalizedAction = (ticketsAction ?? string.Empty).Trim().ToLowerInvariant();
             var safeSheetId = (hojaGastosId ?? string.Empty).Trim();
-            if (normalizedAction == "link" && !string.IsNullOrWhiteSpace(safeSheetId))
+            var safeTargetLineRecId = NormalizeOptionalText(sheetLineRecId) ?? NormalizeOptionalText(lineRecId);
+            if (normalizedAction == "link-line" &&
+                !string.IsNullOrWhiteSpace(safeSheetId) &&
+                !string.IsNullOrWhiteSpace(safeTargetLineRecId))
+            {
+                ViewData["TopbarBackUrl"] =
+                    $"/Gastos/ExpenseSheetLineDetail?hojaGastosId={Uri.EscapeDataString(safeSheetId)}&lineRecId={Uri.EscapeDataString(safeTargetLineRecId)}";
+            }
+            else if (normalizedAction == "link" && !string.IsNullOrWhiteSpace(safeSheetId))
             {
                 ViewData["TopbarBackUrl"] = $"/Gastos/ExpenseSheetDetail?hojaGastosId={Uri.EscapeDataString(safeSheetId)}";
             }
@@ -185,7 +201,13 @@ namespace IND_CRM_APP.Controllers
 
         // Shows the expense ticket detail page.
         [HttpGet]
-        public async Task<IActionResult> TicketDetail(string fileId, string mode = "", string origin = "", string sheetId = "", string lineRecId = "")
+        public async Task<IActionResult> TicketDetail(
+            string fileId,
+            string mode = "",
+            string origin = "",
+            string sheetId = "",
+            string lineRecId = "",
+            string sheetLineRecId = "")
         {
             var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
@@ -200,13 +222,16 @@ namespace IND_CRM_APP.Controllers
 
             ViewBag.TicketFileId = safeFileId;
             var normalizedOrigin = (origin ?? string.Empty).Trim().ToLowerInvariant();
-            if (normalizedOrigin == "expense-line" && !string.IsNullOrWhiteSpace(sheetId) && !string.IsNullOrWhiteSpace(lineRecId))
+            var safeTargetLineRecId = NormalizeOptionalText(sheetLineRecId) ?? NormalizeOptionalText(lineRecId);
+            if (normalizedOrigin == "expense-line" && !string.IsNullOrWhiteSpace(sheetId) && !string.IsNullOrWhiteSpace(safeTargetLineRecId))
             {
-                ViewData["TopbarBackUrl"] = $"/Gastos/ExpenseSheetLineDetail?hojaGastosId={Uri.EscapeDataString(sheetId.Trim())}&lineRecId={Uri.EscapeDataString(lineRecId.Trim())}";
+                ViewData["TopbarBackUrl"] = $"/Gastos/ExpenseSheetLineDetail?hojaGastosId={Uri.EscapeDataString(sheetId.Trim())}&lineRecId={Uri.EscapeDataString(safeTargetLineRecId)}";
             }
             else if (normalizedOrigin == "sheet-link" && !string.IsNullOrWhiteSpace(sheetId))
             {
-                ViewData["TopbarBackUrl"] = $"/Gastos/Tickets?action=link&hojaGastosId={Uri.EscapeDataString(sheetId.Trim())}";
+                ViewData["TopbarBackUrl"] = string.IsNullOrWhiteSpace(safeTargetLineRecId)
+                    ? $"/Gastos/Tickets?action=link&hojaGastosId={Uri.EscapeDataString(sheetId.Trim())}"
+                    : $"/Gastos/Tickets?action=link-line&hojaGastosId={Uri.EscapeDataString(sheetId.Trim())}&sheetLineRecId={Uri.EscapeDataString(safeTargetLineRecId)}&lineRecId={Uri.EscapeDataString(safeTargetLineRecId)}&origin=expense-line";
             }
             else if (normalizedOrigin == "sheet-create" || normalizedOrigin == "ticket-create")
             {
@@ -1232,7 +1257,7 @@ namespace IND_CRM_APP.Controllers
                 ? NormalizeExpenseSheetExchangeRateForWrite(normalizedCurrency, req.ExchRate)
                 : (decimal?)null;
             var normalizedDescription = (req.Description ?? string.Empty).Trim();
-            if (normalizedMode != 2 && !IsValidExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense))
+            if (normalizedMode != 2 && !IsValidExpenseSheetHeaderReimbursableExpenseForCreate(req.ReimbursableExpense))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
@@ -1253,8 +1278,13 @@ namespace IND_CRM_APP.Controllers
                     Ticket = line.Ticket,
                     Qty = line.Qty,
                     Price = line.Price,
-                    ProjId = NormalizeOptionalText(line.ProjId),
-                    ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpense(line.ReimbursableExpense),
+                    ProjId = line.ProjIdProvided == true
+                        ? (line.ProjId ?? string.Empty).Trim()
+                        : line.ProjIdProvided == false
+                            ? null
+                            : line.ProjId?.Trim(),
+                    ProjIdProvided = line.ProjIdProvided ?? (line.ProjId == null ? null : true),
+                    ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpenseForCreate(line.ReimbursableExpense),
                     CurrencyCode = NormalizeOptionalText(line.CurrencyCode)?.ToUpperInvariant(),
                     AmountMST = line.AmountMST,
                     ExchRate = line.ExchRate > 0 ? line.ExchRate : null,
@@ -1279,7 +1309,9 @@ namespace IND_CRM_APP.Controllers
                 ProjId = NormalizeOptionalText(req.ProjId),
                 ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null,
                 ExchangeRateMode = req.ExchangeRateMode is >= 0 ? req.ExchangeRateMode : null,
-                ReimbursableExpense = NormalizeExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense),
+                ReimbursableExpense = normalizedMode == 2
+                    ? null
+                    : NormalizeExpenseSheetHeaderReimbursableExpenseForCreate(req.ReimbursableExpense),
                 Lines = normalizedLines
             };
 
@@ -1426,13 +1458,17 @@ namespace IND_CRM_APP.Controllers
                 : (int?)null;
             var normalizedEstadoComentarios = NormalizeOptionalClearableText(req.EstadoComentarios);
             var normalizedVoucher = NormalizeOptionalText(req.Voucher);
+            var normalizedProjIdProvided = req.ProjIdProvided ?? (req.ProjId == null ? (bool?)null : true);
 
             var request = new ExpenseSheetUpdateRequest
             {
                 Description = (req.Description ?? string.Empty).Trim(),
                 CurrencyCode = normalizedCurrency,
                 ExchRate = normalizedExchRate,
-                ProjId = NormalizeOptionalText(req.ProjId),
+                ProjId = normalizedProjIdProvided == true
+                    ? (req.ProjId ?? string.Empty).Trim()
+                    : null,
+                ProjIdProvided = normalizedProjIdProvided,
                 Voucher = normalizedVoucher,
                 ExpenseSheetStatus = normalizedExpenseSheetStatus,
                 ExchangeRateMode = normalizedExchangeRateMode,
@@ -1560,7 +1596,8 @@ namespace IND_CRM_APP.Controllers
             if (!mutationGuard.Allowed)
                 return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
 
-            if (mutationGuard.Snapshot?.ReimbursableExpense == 2)
+            if (!IsEditableExpenseSheetHeaderReimbursableExpense(
+                    mutationGuard.Snapshot?.ReimbursableExpense))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
@@ -1596,6 +1633,87 @@ namespace IND_CRM_APP.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unhandled error in ApiExpenseSheetReimbursableExpensePropagate");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
+        // Proxies atomic project propagation while preserving the existing expense sheet mutation policy.
+        [HttpPost]
+        public async Task<IActionResult> ApiExpenseSheetProjectDefaultPropagate(
+            string hojaGastosId,
+            [FromBody] ExpenseSheetProjectDefaultPropagationRequest? req = null)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeSheetId = NormalizeOptionalText(hojaGastosId);
+            if (string.IsNullOrWhiteSpace(safeSheetId))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(
+                token,
+                nameof(ApiExpenseSheetProjectDefaultPropagate));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
+
+            var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                token,
+                safeSheetId,
+                requestAxUserId,
+                nameof(ApiExpenseSheetProjectDefaultPropagate),
+                ExpenseSheetMutationType.LineMutation);
+            if (!mutationGuard.Allowed)
+                return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+
+            var projectProvided = req?.ProjIdProvided ?? (req?.ProjId != null);
+            var request = new ExpenseSheetProjectDefaultPropagationRequest
+            {
+                ProjId = projectProvided ? (req?.ProjId ?? string.Empty).Trim() : null,
+                ProjIdProvided = projectProvided
+            };
+
+            try
+            {
+                var response = await _apiClient.PropagateExpenseSheetProjectDefaultAsync(
+                    token,
+                    safeSheetId,
+                    request,
+                    requestAxUserId);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetProjectDefaultPropagate");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetProjectDefaultPropagate");
                 return CreateApiCommandError(
                     StatusCodes.Status500InternalServerError,
                     _sr["Api_RequestFailed"].Value,
@@ -1646,7 +1764,12 @@ namespace IND_CRM_APP.Controllers
                 Ticket = req.Ticket,
                 Qty = req.Qty,
                 Price = req.Price,
-                ProjId = NormalizeOptionalText(req.ProjId),
+                ProjId = req.ProjIdProvided == true
+                    ? (req.ProjId ?? string.Empty).Trim()
+                    : req.ProjIdProvided == false
+                        ? null
+                        : req.ProjId?.Trim(),
+                ProjIdProvided = req.ProjIdProvided ?? (req.ProjId == null ? null : true),
                 ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpense(req.ReimbursableExpense),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
                 AmountMST = req.AmountMST,
@@ -1706,6 +1829,133 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // MMS - Attaches an existing ticket after validating the actor and sheet state. - 2026.08.04
+        [HttpPut]
+        public async Task<IActionResult> ApiExpenseSheetLineTicketAttach(
+            string hojaGastosId,
+            string lineRecId,
+            [FromBody] ExpenseSheetLineTicketRequest req)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeSheetId = NormalizeOptionalText(hojaGastosId);
+            var safeLineId = NormalizeOptionalText(lineRecId);
+            var safeFileId = NormalizeOptionalText(req?.FileId);
+            if (string.IsNullOrWhiteSpace(safeSheetId) ||
+                string.IsNullOrWhiteSpace(safeLineId) ||
+                string.IsNullOrWhiteSpace(safeFileId))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetLineTicketAttach));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
+            var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                token,
+                safeSheetId,
+                requestAxUserId,
+                nameof(ApiExpenseSheetLineTicketAttach),
+                ExpenseSheetMutationType.OwnLineTicketMutation);
+            if (!mutationGuard.Allowed)
+                return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+
+            try
+            {
+                var transport = await _apiClient.AttachExpenseSheetLineTicketAsync(
+                    token,
+                    safeSheetId,
+                    safeLineId,
+                    new ExpenseSheetLineTicketRequest { FileId = safeFileId },
+                    requestAxUserId,
+                    HttpContext.RequestAborted);
+                return CreateExpenseSheetLineTicketResponse(transport);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetLineTicketAttach");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetLineTicketAttach");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
+        // MMS - Detaches a ticket without deleting the line, ticket header, or file. - 2026.08.04
+        [HttpDelete]
+        public async Task<IActionResult> ApiExpenseSheetLineTicketDetach(string hojaGastosId, string lineRecId)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeSheetId = NormalizeOptionalText(hojaGastosId);
+            var safeLineId = NormalizeOptionalText(lineRecId);
+            if (string.IsNullOrWhiteSpace(safeSheetId) || string.IsNullOrWhiteSpace(safeLineId))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetLineTicketDetach));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
+            var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                token,
+                safeSheetId,
+                requestAxUserId,
+                nameof(ApiExpenseSheetLineTicketDetach),
+                ExpenseSheetMutationType.OwnLineTicketMutation);
+            if (!mutationGuard.Allowed)
+                return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+
+            try
+            {
+                var transport = await _apiClient.DetachExpenseSheetLineTicketAsync(
+                    token,
+                    safeSheetId,
+                    safeLineId,
+                    requestAxUserId,
+                    HttpContext.RequestAborted);
+                return CreateExpenseSheetLineTicketResponse(transport);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetLineTicketDetach");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetLineTicketDetach");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
         // API route used by React clients for /api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId}.
         [HttpDelete]
         public async Task<IActionResult> ApiExpenseSheetLineDelete(
@@ -1741,27 +1991,20 @@ namespace IND_CRM_APP.Controllers
             if (actingUser.Error != null)
                 return actingUser.Error;
             var requestAxUserId = actingUser.AxUserId;
+            if (resolvedDeleteWholeSheet)
+                return await ExecuteExpenseSheetDeletionAsync(token, safeSheetId, requestAxUserId, nameof(ApiExpenseSheetLineDelete));
+
             var mutationGuard = await ValidateExpenseSheetMutationAsync(
                 token,
                 safeSheetId,
                 requestAxUserId,
                 nameof(ApiExpenseSheetLineDelete),
-                resolvedDeleteWholeSheet ? ExpenseSheetMutationType.DeleteSheet : ExpenseSheetMutationType.LineMutation);
+                ExpenseSheetMutationType.LineMutation);
             if (!mutationGuard.Allowed)
                 return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
 
             try
             {
-                if (resolvedDeleteWholeSheet)
-                {
-                    var cleanupResult = await CleanupExpenseSheetLinkedTicketsBeforeDeleteAsync(
-                        token,
-                        safeSheetId,
-                        requestAxUserId);
-                    if (cleanupResult != null)
-                        return cleanupResult;
-                }
-
                 var response = await _apiClient.DeleteExpenseSheetLineAsync(
                     token,
                     safeSheetId,
@@ -1798,116 +2041,6 @@ namespace IND_CRM_APP.Controllers
                     _sr["Api_RequestFailed"].Value,
                     "UNHANDLED_ERROR");
             }
-        }
-
-        // Cleans up linked ticket blobs and headers before deleting a full expense sheet.
-        private async Task<IActionResult?> CleanupExpenseSheetLinkedTicketsBeforeDeleteAsync(
-            string token,
-            string hojaGastosId,
-            string? axUserIdOverride)
-        {
-            var detailResult = await _apiClient.GetExpenseSheetDetailAsync(token, hojaGastosId, axUserIdOverride);
-            var sheet = SelectSheet(detailResult.GetAnyItems(), hojaGastosId);
-            if (sheet == null)
-            {
-                _logger.LogWarning(
-                    "Skipping whole sheet delete because linked ticket files could not be discovered. hojaGastosId={HojaGastosId} traceId={TraceId}",
-                    hojaGastosId,
-                    detailResult.TraceId ?? string.Empty);
-                return CreateApiResponse(
-                    new
-                    {
-                        Success = false,
-                        Message = detailResult.GetMessageOrDefault(_sr["Api_RequestFailed"].Value),
-                        ErrorCode = detailResult.ErrorCode ?? "DELETE_FILE_DISCOVERY_FAILED",
-                        Data = (object?)null,
-                        Errors = Array.Empty<object>(),
-                        TraceId = detailResult.TraceId
-                    },
-                    StatusCodes.Status502BadGateway);
-            }
-
-            var linkedFileIds = GetExpenseSheetLinkedTicketFileIds(sheet);
-            if (linkedFileIds.Count == 0)
-                return null;
-
-            _logger.LogInformation(
-                "Deleting {Count} linked ticket files and tickets before deleting expense sheet {HojaGastosId}.",
-                linkedFileIds.Count,
-                hojaGastosId);
-
-            foreach (var fileId in linkedFileIds)
-            {
-                try
-                {
-                    var response = await _apiClient.DeleteExpenseSheetTicketFileAsync(token, fileId);
-                    if (!response.Success && !CanIgnoreMissingTicketFileResponse(response))
-                    {
-                        _logger.LogWarning(
-                            "Linked ticket file cleanup failed before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId} errorCode={ErrorCode} traceId={TraceId} message={Message}",
-                            hojaGastosId,
-                            fileId,
-                            response.ErrorCode ?? string.Empty,
-                            response.TraceId ?? string.Empty,
-                            response.Message ?? string.Empty);
-
-                        return CreateApiResponse(
-                            new
-                            {
-                                Success = false,
-                                Message = response.GetMessageOrDefault(_sr["ExpenseSheets_Detail_DeleteFailed"].Value),
-                                ErrorCode = response.ErrorCode ?? "DELETE_FILE_FAILED",
-                                Data = (object?)null,
-                                Errors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>(),
-                                TraceId = response.TraceId
-                            },
-                            StatusCodes.Status409Conflict);
-                    }
-                }
-                catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-                {
-                    _logger.LogInformation(
-                        "Linked ticket file was already missing before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId}",
-                        hojaGastosId,
-                        fileId);
-                }
-
-                try
-                {
-                    var response = await _apiClient.DeleteExpenseSheetTicketAsync(token, fileId);
-                    if (!response.Success && !CanIgnoreMissingExpenseSheetTicketResponse(response))
-                    {
-                        _logger.LogWarning(
-                            "Linked ticket cleanup failed before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId} errorCode={ErrorCode} traceId={TraceId} message={Message}",
-                            hojaGastosId,
-                            fileId,
-                            response.ErrorCode ?? string.Empty,
-                            response.TraceId ?? string.Empty,
-                            response.Message ?? string.Empty);
-
-                        return CreateApiResponse(
-                            new
-                            {
-                                Success = false,
-                                Message = response.GetMessageOrDefault(_sr["ExpenseSheets_Detail_DeleteFailed"].Value),
-                                ErrorCode = response.ErrorCode ?? "DELETE_TICKET_FAILED",
-                                Data = (object?)null,
-                                Errors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>(),
-                                TraceId = response.TraceId
-                            },
-                            StatusCodes.Status409Conflict);
-                    }
-                }
-                catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-                {
-                    _logger.LogInformation(
-                        "Linked ticket was already missing before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId}",
-                        hojaGastosId,
-                        fileId);
-                }
-            }
-
-            return null;
         }
 
         // API route used by React clients for /api/crm/expensesheets/tickets.
@@ -2880,7 +3013,7 @@ namespace IND_CRM_APP.Controllers
                     "SESSION_EXPIRED");
 
             var safeFileId = NormalizeOptionalText(fileId);
-            if (string.IsNullOrWhiteSpace(safeFileId) || (lineRecId.HasValue && lineRecId.Value <= 0))
+            if (string.IsNullOrWhiteSpace(safeFileId) || (lineRecId.HasValue && lineRecId.Value == 0))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
@@ -3495,7 +3628,7 @@ namespace IND_CRM_APP.Controllers
                     ? NormalizeExpenseSheetExchangeRateForWrite(normalizedCurrency, req.ExchRate)
                     : (decimal?)null;
                 var normalizedDescription = (req.Description ?? string.Empty).Trim();
-                if (normalizedMode != 2 && !IsValidExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense))
+                if (normalizedMode != 2 && !IsValidExpenseSheetHeaderReimbursableExpenseForCreate(req.ReimbursableExpense))
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
                 var sourceLines = req.Lines ?? new List<ExpenseSheetLineRequest>();
@@ -3513,8 +3646,13 @@ namespace IND_CRM_APP.Controllers
                         Ticket = line.Ticket,
                         Qty = line.Qty,
                         Price = line.Price,
-                        ProjId = NormalizeOptionalText(line.ProjId),
-                        ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpense(line.ReimbursableExpense),
+                        ProjId = line.ProjIdProvided == true
+                            ? (line.ProjId ?? string.Empty).Trim()
+                            : line.ProjIdProvided == false
+                                ? null
+                                : line.ProjId?.Trim(),
+                        ProjIdProvided = line.ProjIdProvided ?? (line.ProjId == null ? null : true),
+                        ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpenseForCreate(line.ReimbursableExpense),
                         CurrencyCode = NormalizeOptionalText(line.CurrencyCode)?.ToUpperInvariant(),
                         AmountMST = line.AmountMST,
                         ExchRate = line.ExchRate > 0 ? line.ExchRate : null,
@@ -3539,7 +3677,9 @@ namespace IND_CRM_APP.Controllers
                     ProjId = NormalizeOptionalText(req.ProjId),
                     ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null,
                     ExchangeRateMode = req.ExchangeRateMode is >= 0 ? req.ExchangeRateMode : null,
-                    ReimbursableExpense = NormalizeExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense),
+                    ReimbursableExpense = normalizedMode == 2
+                        ? null
+                        : NormalizeExpenseSheetHeaderReimbursableExpenseForCreate(req.ReimbursableExpense),
                     Lines = normalizedLines
                 };
 
@@ -3660,13 +3800,17 @@ namespace IND_CRM_APP.Controllers
                     : (int?)null;
                 var normalizedEstadoComentarios = NormalizeOptionalClearableText(req.EstadoComentarios);
                 var normalizedVoucher = NormalizeOptionalText(req.Voucher);
+                var normalizedProjIdProvided = req.ProjIdProvided ?? (req.ProjId == null ? (bool?)null : true);
 
                 var request = new ExpenseSheetUpdateRequest
                 {
                     Description = (req.Description ?? string.Empty).Trim(),
                     CurrencyCode = normalizedCurrency,
                     ExchRate = normalizedExchRate,
-                    ProjId = NormalizeOptionalText(req.ProjId),
+                    ProjId = normalizedProjIdProvided == true
+                        ? (req.ProjId ?? string.Empty).Trim()
+                        : null,
+                    ProjIdProvided = normalizedProjIdProvided,
                     Voucher = normalizedVoucher,
                     ExpenseSheetStatus = normalizedExpenseSheetStatus,
                     ExchangeRateMode = normalizedExchangeRateMode,
@@ -3770,7 +3914,12 @@ namespace IND_CRM_APP.Controllers
                     Ticket = req.Ticket,
                     Qty = req.Qty,
                     Price = req.Price,
-                    ProjId = NormalizeOptionalText(req.ProjId),
+                    ProjId = req.ProjIdProvided == true
+                        ? (req.ProjId ?? string.Empty).Trim()
+                        : req.ProjIdProvided == false
+                            ? null
+                            : req.ProjId?.Trim(),
+                    ProjIdProvided = req.ProjIdProvided ?? (req.ProjId == null ? null : true),
                     ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpense(req.ReimbursableExpense),
                     CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
                     AmountMST = req.AmountMST,
@@ -3872,57 +4021,24 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
-        // Deletes a whole expense sheet using the upstream delete route with deleteWholeSheet flag.
+        // Deletes a whole sheet through the same durable operation used by React clients.
         [HttpDelete("Gastos/DeleteExpenseSheet/{hojaGastosId}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteExpenseSheet(string hojaGastosId, [FromQuery] bool IND_SetActionMark = false)
         {
-            try
-            {
-                var token = GetToken();
-                if (string.IsNullOrWhiteSpace(token))
-                    return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
+            var safeSheetId = NormalizeOptionalText(hojaGastosId);
+            if (string.IsNullOrWhiteSpace(safeSheetId))
+                return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
-                if (string.IsNullOrWhiteSpace(hojaGastosId))
-                    return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
-
-                var actingUser = await ResolveExpenseActingUserForJsonAsync(token, nameof(DeleteExpenseSheet));
-                if (actingUser.Error != null)
-                    return actingUser.Error;
-                var requestAxUserId = actingUser.AxUserId;
-                var mutationGuard = await ValidateExpenseSheetMutationAsync(
-                    token,
-                    hojaGastosId.Trim(),
-                    requestAxUserId,
-                    nameof(DeleteExpenseSheet),
-                    ExpenseSheetMutationType.DeleteSheet);
-                if (!mutationGuard.Allowed)
-                    return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
-                var response = await _apiClient.DeleteExpenseSheetLineAsync(
-                    token,
-                    hojaGastosId.Trim(),
-                    "0",
-                    deleteWholeSheet: true,
-                    deleteMode: 2,
-                    axUserIdOverride: requestAxUserId);
-
-                if (IND_SetActionMark && response.Success)
-                {
-                    TempData.INDSetActionMarkDanger();
-                }
-
-                return Json(new { success = response.Success, message = response.Message, data = response.Data });
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Upstream API error in DeleteExpenseSheet");
-                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Unhandled error in DeleteExpenseSheet");
-                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
-            }
+            var actingUser = await ResolveExpenseActingUserForJsonAsync(token, nameof(DeleteExpenseSheet));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            return await ExecuteExpenseSheetDeletionAsync(
+                token, safeSheetId, actingUser.AxUserId, nameof(DeleteExpenseSheet),
+                legacyResponse: true, setActionMark: IND_SetActionMark);
         }
 
         // API route used by React clients for /api/crm/projects/list.
@@ -4010,7 +4126,7 @@ namespace IND_CRM_APP.Controllers
                     result.TraceId ?? "<null>",
                     result.GetAnyItems().Count(),
                     result.Message ?? "<null>");
-                var sheet = SelectSheet(result.GetAnyItems(), safeSheetId);
+                var sheet = SelectSheetExact(result.GetAnyItems(), safeSheetId);
                 if (sheet == null)
                 {
                     LogExpenseSheetLookupMiss(
@@ -4073,6 +4189,18 @@ namespace IND_CRM_APP.Controllers
                     snapshot.OwnerUserId,
                     axUserIdOverride);
 
+                if (mutationType == ExpenseSheetMutationType.OwnLineTicketMutation && isManagingOtherUser)
+                {
+                    return new ExpenseSheetMutationGuardResult
+                    {
+                        Allowed = false,
+                        StatusCode = StatusCodes.Status403Forbidden,
+                        Message = _sr["Auth_PermissionDenied_Body"].Value,
+                        ErrorCode = ExpenseManagedUserReadOnlyErrorCode,
+                        Snapshot = snapshot
+                    };
+                }
+
                 if (isManagingOtherUser)
                 {
                     var subordinateGuard = await ValidateManagedExpenseSheetOwnerAsync(token, snapshot.OwnerUserId, operationName, snapshot);
@@ -4082,7 +4210,9 @@ namespace IND_CRM_APP.Controllers
 
                 var policy = ResolveExpenseSheetMutationPolicy(snapshot, isManagingOtherUser, allowSelfManagement);
 
-                if (mutationType == ExpenseSheetMutationType.LineMutation && policy.InteractionMode != ExpenseSheetInteractionMode.FullEdit)
+                if ((mutationType == ExpenseSheetMutationType.LineMutation ||
+                     mutationType == ExpenseSheetMutationType.OwnLineTicketMutation) &&
+                    policy.InteractionMode != ExpenseSheetInteractionMode.FullEdit)
                 {
                     return BuildExpenseSheetReadOnlyGuard(snapshot, policy);
                 }
@@ -4254,6 +4384,21 @@ namespace IND_CRM_APP.Controllers
                 return BuildExpenseSheetReadOnlyGuard(snapshot, policy);
             }
 
+            if (!CanUpdateExpenseSheetHeaderReimbursableExpense(
+                    snapshot.ReimbursableExpense,
+                    request.ReimbursableExpense))
+            {
+                return new ExpenseSheetMutationGuardResult
+                {
+                    Allowed = false,
+                    StatusCode = StatusCodes.Status409Conflict,
+                    Message = _sr["Api_RequestFailed"].Value,
+                    ErrorCode = "CRM_EXPENSESHEET_REIMBURSABLE_READ_ONLY",
+                    Snapshot = snapshot,
+                    Policy = policy
+                };
+            }
+
             if (policy.InteractionMode == ExpenseSheetInteractionMode.CommentOnlyEdit &&
                 HasExpenseSheetHeaderFieldChanges(snapshot, request))
             {
@@ -4305,17 +4450,31 @@ namespace IND_CRM_APP.Controllers
             }
 
             var snapshot = mutationGuard.Snapshot;
+            var effectiveDescription = snapshot.Description;
+            if (string.IsNullOrWhiteSpace(effectiveDescription))
+            {
+                effectiveDescription = $"Hoja de gastos {hojaGastosId}";
+                _logger.LogInformation(
+                    "Applied legacy expense sheet description fallback. HojaGastosId: {HojaGastosId}. CurrentStatus: {CurrentStatus}. TargetStatus: {TargetStatus}.",
+                    hojaGastosId,
+                    snapshot.StatusCode?.ToString(CultureInfo.InvariantCulture) ?? "<null>",
+                    request.ExpenseSheetStatus?.ToString(CultureInfo.InvariantCulture) ?? "<null>");
+            }
+
             var effectiveRequest = new ExpenseSheetUpdateRequest
             {
-                Description = snapshot.Description,
+                Description = effectiveDescription,
                 CurrencyCode = snapshot.CurrencyCode,
                 ExchRate = NormalizeExpenseSheetExchangeRateForWrite(snapshot.CurrencyCode, snapshot.ExchangeRate),
-                ProjId = snapshot.ProjectId,
+                ProjId = null,
+                ProjIdProvided = false,
                 Voucher = snapshot.Voucher,
                 ExpenseSheetStatus = request.ExpenseSheetStatus,
                 ExchangeRateMode = snapshot.ExchangeRateMode,
                 EstadoComentarios = request.EstadoComentarios,
-                ReimbursableExpense = snapshot.ReimbursableExpense
+                ReimbursableExpense = IsEditableExpenseSheetHeaderReimbursableExpense(snapshot.ReimbursableExpense)
+                    ? snapshot.ReimbursableExpense
+                    : null
             };
 
             _logger.LogInformation(
@@ -4342,13 +4501,16 @@ namespace IND_CRM_APP.Controllers
             if (!string.Equals((request.Description ?? string.Empty).Trim(), snapshot.Description, StringComparison.Ordinal))
                 return true;
 
-            if (!string.Equals(NormalizeOptionalText(request.ProjId) ?? string.Empty, snapshot.ProjectId ?? string.Empty, StringComparison.OrdinalIgnoreCase))
+            var projectProvided = request.ProjIdProvided ?? (request.ProjId != null);
+            if (projectProvided &&
+                !string.Equals(NormalizeOptionalText(request.ProjId) ?? string.Empty, snapshot.ProjectId ?? string.Empty, StringComparison.OrdinalIgnoreCase))
                 return true;
 
             if (!string.Equals(NormalizeOptionalText(request.Voucher) ?? string.Empty, snapshot.Voucher ?? string.Empty, StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            if (NormalizeExpenseNullableInt(request.ReimbursableExpense) != NormalizeExpenseNullableInt(snapshot.ReimbursableExpense))
+            if (request.ReimbursableExpense.HasValue &&
+                NormalizeExpenseNullableInt(request.ReimbursableExpense) != NormalizeExpenseNullableInt(snapshot.ReimbursableExpense))
                 return true;
 
             return false;
@@ -4632,6 +4794,24 @@ namespace IND_CRM_APP.Controllers
             return result;
         }
 
+        // MMS - Forwards the ticket relationship envelope and HTTP status unchanged. - 2026.08.04
+        private static JsonResult CreateExpenseSheetLineTicketResponse(
+            ApiTransportResponse<ExpenseSheetLineTicketResultDto> transport)
+        {
+            var response = transport.Response;
+            return CreateApiResponse(
+                new
+                {
+                    Success = response.Success,
+                    Message = response.Message ?? string.Empty,
+                    ErrorCode = response.ErrorCode,
+                    Data = response.Data,
+                    Errors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>(),
+                    TraceId = response.TraceId
+                },
+                (int)transport.StatusCode);
+        }
+
         // Builds a standard paged API error payload for list-like endpoints.
         private static JsonResult CreateApiPagedError(int statusCode, string message)
         {
@@ -4717,13 +4897,60 @@ namespace IND_CRM_APP.Controllers
         // Accepts optional header values while rejecting numeric codes outside No, Yes and Both.
         private static bool IsValidExpenseSheetHeaderReimbursableExpense(int? reimbursableExpense)
         {
-            return !reimbursableExpense.HasValue || reimbursableExpense is >= 0 and <= 2;
+            return !reimbursableExpense.HasValue ||
+                   reimbursableExpense == ExpenseSheetReimbursableYes ||
+                   reimbursableExpense == ExpenseSheetReimbursableNo ||
+                   reimbursableExpense == ExpenseSheetReimbursableBoth;
+        }
+
+        // Creation defaults missing reimbursement values to Yes and never accepts the derived Both state.
+        private static bool IsValidExpenseSheetHeaderReimbursableExpenseForCreate(int? reimbursableExpense)
+        {
+            return !reimbursableExpense.HasValue ||
+                   reimbursableExpense == ExpenseSheetReimbursableYes ||
+                   reimbursableExpense == ExpenseSheetReimbursableNo;
+        }
+
+        // Applies the Yes default only when a new header is created.
+        private static int NormalizeExpenseSheetHeaderReimbursableExpenseForCreate(int? reimbursableExpense)
+        {
+            return reimbursableExpense == ExpenseSheetReimbursableNo
+                ? ExpenseSheetReimbursableNo
+                : ExpenseSheetReimbursableYes;
+        }
+
+        // Only concrete Yes/No values can drive header propagation or user edits.
+        private static bool IsEditableExpenseSheetHeaderReimbursableExpense(int? reimbursableExpense)
+        {
+            return reimbursableExpense == ExpenseSheetReimbursableYes ||
+                   reimbursableExpense == ExpenseSheetReimbursableNo;
+        }
+
+        // Allows Yes/No changes from concrete or derived mixed states; omitted values preserve the stored state.
+        private static bool CanUpdateExpenseSheetHeaderReimbursableExpense(
+            int? storedReimbursableExpense,
+            int? requestedReimbursableExpense)
+        {
+            if (!requestedReimbursableExpense.HasValue)
+                return true;
+
+            return (IsEditableExpenseSheetHeaderReimbursableExpense(storedReimbursableExpense) ||
+                    storedReimbursableExpense == ExpenseSheetReimbursableBoth) &&
+                   IsEditableExpenseSheetHeaderReimbursableExpense(requestedReimbursableExpense);
         }
 
         // Keeps Both out of expense sheet line payloads while preserving optional null values.
         private static int? NormalizeExpenseSheetLineReimbursableExpense(int? reimbursableExpense)
         {
             return reimbursableExpense is >= 0 and <= 1 ? reimbursableExpense : null;
+        }
+
+        // Applies the Yes default only when a new expense line is created.
+        private static int NormalizeExpenseSheetLineReimbursableExpenseForCreate(int? reimbursableExpense)
+        {
+            return reimbursableExpense == ExpenseSheetReimbursableNo
+                ? ExpenseSheetReimbursableNo
+                : ExpenseSheetReimbursableYes;
         }
 
         // Accepts optional line values but rejects the header-only Both enum value.
@@ -5539,15 +5766,15 @@ namespace IND_CRM_APP.Controllers
             return match ?? list[0];
         }
 
-        // Collects unique linked ticket file ids from a sheet detail payload.
-        private static List<string> GetExpenseSheetLinkedTicketFileIds(ExpenseSheetDetailDto? sheet)
+        // Selects only the requested sheet for mutation authorization.
+        private static ExpenseSheetDetailDto? SelectSheetExact(IEnumerable<ExpenseSheetDetailDto> items, string hojaGastosId)
         {
-            return (sheet?.Lines ?? new List<ExpenseSheetLineDto>())
-                .Select(line => NormalizeOptionalText(line.FileId))
-                .Where(fileId => !string.IsNullOrWhiteSpace(fileId))
-                .Cast<string>()
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            var safeSheetId = (hojaGastosId ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(safeSheetId))
+                return null;
+
+            return (items ?? Enumerable.Empty<ExpenseSheetDetailDto>()).FirstOrDefault(x =>
+                string.Equals((x.HojaGastosId ?? string.Empty).Trim(), safeSheetId, StringComparison.OrdinalIgnoreCase));
         }
 
         // Treats missing blob/file cleanup responses as already-clean states.
@@ -6022,6 +6249,7 @@ namespace IND_CRM_APP.Controllers
                 exchangeRateMode = ReadTypedOrExtraInt(sheet.ExchangeRateMode, sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
                 reimbursableExpense = ReadTypedOrExtraInt(sheet.ReimbursableExpense, sheet.Extra, "reimbursableExpense", "ReimbursableExpense"),
                 projId = ReadTypedOrExtraString(sheet.ProjId, sheet.Extra, "projId", "projectId", "proyectoId", "project"),
+                defaultLineProjId = sheet.DefaultLineProjId,
                 voucher = ReadTypedOrExtraString(sheet.Voucher, sheet.Extra, "voucher")
             };
         }

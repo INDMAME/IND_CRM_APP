@@ -1,0 +1,176 @@
+import React, { useCallback, useRef, useState } from "react";
+import AssistantChatShell from "../../../components/commons/chat/AssistantChatShell.tsx";
+import type { AssistantLauncherImageSources } from "../../../components/commons/chat/AssistantLauncherButton.tsx";
+import { indFormat, indT } from "../../../utils/indI18n.ts";
+import { normalizeHelpResponseLocale } from "./helpLocale.ts";
+import HomeHelpMessageFooter from "./HomeHelpMessageFooter.tsx";
+import HomeHelpModuleSelector from "./HomeHelpModuleSelector.tsx";
+import { useHomeHelpAssistant } from "./useHomeHelpAssistant.ts";
+import { useHomeHelpDesktopWindow } from "./useHomeHelpDesktopWindow.ts";
+import { useHomeHelpModuleCatalog } from "./useHomeHelpModuleCatalog.ts";
+
+type HomeHelpAssistantProps = {
+  botImageSrc: string;
+  isOpen: boolean;
+  initialLocale: string;
+  launcherImageSources: AssistantLauncherImageSources;
+  onClose: () => void;
+};
+
+const HIDDEN_HOME_HELP_MODULE_IDS = new Set(["introduction", "troubleshooting", "glossary"]);
+const noopChartSelection = () => {};
+
+// Adapts Home help state to the shared assistant shell.
+const HomeHelpAssistant = ({
+  botImageSrc,
+  isOpen,
+  initialLocale,
+  launcherImageSources,
+  onClose,
+}: HomeHelpAssistantProps) => {
+  const responseLocale = normalizeHelpResponseLocale(initialLocale);
+  const [selectedModuleId, setSelectedModuleId] = useState("");
+  const firstModuleButtonRef = useRef<HTMLButtonElement | null>(null);
+  const {
+    modules,
+    state: catalogState,
+    errorMessage: catalogError,
+  } = useHomeHelpModuleCatalog({ enabled: isOpen, responseLocale });
+  const selectableModules = modules.filter((module) => !HIDDEN_HOME_HELP_MODULE_IDS.has(module.id));
+  const selectedModule = selectableModules.find((module) => module.id === selectedModuleId) || null;
+  const {
+    isSending,
+    draftQuestion,
+    messages,
+    answerDetailsByMessageId,
+    messagesContainerRef,
+    textareaRef,
+    dialogRef,
+    setDraftQuestion,
+    submitDraftQuestion,
+    retryQuestion,
+    selectCandidate,
+    resetConversation,
+    handleDraftKeyDown,
+  } = useHomeHelpAssistant({ isOpen, responseLocale, selectedModule, onClose });
+  const desktopWindow = useHomeHelpDesktopWindow({
+    isOpen,
+    dialogRef,
+    moveAriaLabel: indT("HomeHelp_MoveWindow", "Move CRM help window"),
+    resizeAriaLabel: indT("HomeHelp_ResizeWindow", "Resize CRM help window"),
+  });
+
+  const selectModule = useCallback((moduleId: string) => {
+    setSelectedModuleId(moduleId);
+    setDraftQuestion("");
+  }, [setDraftQuestion]);
+
+  // Returns to the module selector without moving focus into the mobile text input.
+  const returnToModuleSelection = useCallback(() => {
+    dialogRef.current?.focus({ preventScroll: true });
+    resetConversation();
+    setSelectedModuleId("");
+    window.requestAnimationFrame(() => firstModuleButtonRef.current?.focus({ preventScroll: true }));
+  }, [dialogRef, resetConversation]);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <AssistantChatShell
+      isOpen
+      showLauncher={false}
+      hasContext
+      isSending={isSending}
+      title={indT("HomeHelp_PanelTitle", "CRM help")}
+      launcherAriaLabel={indT("HomeHelp_OpenAria", "Open CRM help")}
+      closeAriaLabel={indT("Common_Close", "Close")}
+      sendAriaLabel={indT("HomeHelp_Send", "Send question")}
+      sendingLabel={indT("HomeHelp_Sending", "Sending")}
+      retryLabel={indT("HomeHelp_Retry", "Try again")}
+      warningsLabel={indT("HomeHelp_Warnings", "Notices")}
+      inputPlaceholder={selectedModule
+        ? indT("HomeHelp_InputPlaceholder", "Ask how to use the CRM…")
+        : indT("HomeHelp_ModuleSelectionBody", "Select a section to enable the question box.")}
+      inputNotice={indT(
+        "HomeHelp_InputPrivacyNotice",
+        "Do not include personal data, customer data, or secrets."
+      )}
+      inputMaxLength={1200}
+      emptyStateTitle={selectedModule
+        ? indT("HomeHelp_EmptyTitle", "Hello! What do you need help with?")
+        : indT("HomeHelp_ModuleSelectionTitle", "Which section do you need help with?")}
+      emptyStateBody={selectedModule
+        ? ""
+        : indT("HomeHelp_ModuleSelectionBody", "Select a section to enable the question box.")}
+      noContextTitle={indT("HomeHelp_NoContextTitle", "Help is unavailable")}
+      noContextBody={indT("HomeHelp_NoContextBody", "The CRM guide could not be loaded.")}
+      noContextMessage={indT("HomeHelp_NoContextMessage", "Reload the page and try again.")}
+      desktopWindow={desktopWindow}
+      botImageSrc={botImageSrc}
+      launcherImageSources={launcherImageSources}
+      contextNotice={null}
+      emptyStateContent={!selectedModule ? (
+        <div className="mt-4 w-full text-left">
+          <HomeHelpModuleSelector
+            variant="choices"
+            modules={selectableModules}
+            catalogState={catalogState}
+            selectedModuleId={selectedModuleId}
+            ariaLabel={indT("HomeHelp_ModuleSelectionTitle", "Which section do you need help with?")}
+            loadingLabel={indT("HomeHelp_CatalogLoading", "Loading topics…")}
+            errorLabel={catalogError || indT("HomeHelp_CatalogError", "The help topics could not be loaded.")}
+            emptyLabel={indT("HomeHelp_CatalogEmpty", "No matching topics.")}
+            firstOptionRef={firstModuleButtonRef}
+            onSelect={selectModule}
+          />
+        </div>
+      ) : null}
+      messagesHeaderContent={selectedModule ? (
+        <HomeHelpModuleSelector
+          variant="summary"
+          label={indFormat(
+            "HomeHelp_ModuleSelectionLocked",
+            "Conversation section: {0}",
+            selectedModule.title
+          )}
+          backAriaLabel={indT("HomeHelp_ChangeModule", "Choose another section")}
+          onBack={returnToModuleSelection}
+        />
+      ) : null}
+      composerState={selectedModule ? "enabled" : "blocked"}
+      draftValue={draftQuestion}
+      messages={messages}
+      messagesContainerRef={messagesContainerRef}
+      textareaRef={textareaRef}
+      dialogRef={dialogRef}
+      dialogId="home-help-assistant-dialog"
+      ariaModal
+      onToggle={onClose}
+      onClose={onClose}
+      onDraftChange={setDraftQuestion}
+      onSubmit={() => void submitDraftQuestion()}
+      onRetry={(question, assistantMessageId) => {
+        if (assistantMessageId) {
+          void retryQuestion(question, assistantMessageId);
+        }
+      }}
+      onChartTypeSelect={noopChartSelection}
+      onDraftKeyDown={handleDraftKeyDown}
+      renderAssistantMessageFooter={(message) => {
+        const details = answerDetailsByMessageId[message.id];
+        return details ? (
+          <HomeHelpMessageFooter
+            details={details}
+            responseLocale={responseLocale}
+            disabled={isSending}
+            onCandidate={(question, topicId) => void selectCandidate(question, topicId, message.id)}
+          />
+        ) : null;
+      }}
+    />
+  );
+};
+
+export default HomeHelpAssistant;

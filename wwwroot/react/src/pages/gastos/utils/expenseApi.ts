@@ -18,6 +18,8 @@ import type {
   ExpenseSheetDraftResponse,
   ExpenseSheetHeaderUpdateRequest,
   ExpenseSheetLineDto,
+  ExpenseSheetLineTicketRequest,
+  ExpenseSheetLineTicketResultDto,
   ExpenseSheetLineUpdateRequest,
   ExpenseSheetLineUpdateResponseData,
   ExpenseSheetListApiRequest,
@@ -87,30 +89,19 @@ import { getExpenseActingUserOverride } from "./expenseActingUser.ts";
 import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import { resolveEffectiveCompanyId } from "../../../utils/companySelection.ts";
 import { indT } from "../../../utils/indI18n.ts";
+import { makeCache } from "../../../utils/makeCache.ts";
+import { captureActiveBrowserState } from "../../../utils/browserStorageScope.ts";
+import { assertExpenseAssistantSourceSize, loadExpenseAssistantSource } from "./expenseAssistantSource.ts";
 import {
   toExpenseSheetLineReimbursableExpense,
   toExpenseSheetReimbursableExpense,
 } from "./expenseSheetTotals.ts";
+import {
+  resolveExistingExpenseProjectIdFromPages,
+  type ExpenseProjectCatalogPage,
+} from "./expenseProjectValidation.ts";
 
-type ProjectDropdownOption = {
-  value?: string;
-  Value?: string;
-  text?: string;
-  Text?: string;
-  projId?: string;
-  ProjId?: string;
-  name?: string;
-  Name?: string;
-  description?: string;
-  Description?: string;
-};
-
-type ProjectDropdownResponse = {
-  total?: number;
-  Total?: number;
-  items?: ProjectDropdownOption[];
-  Items?: ProjectDropdownOption[];
-};
+type ProjectDropdownResponse = ExpenseProjectCatalogPage;
 
 type LegacyExpenseListItem = {
   hojaGastosId?: unknown;
@@ -145,6 +136,7 @@ type LegacyExpenseListResponse = {
 };
 
 type ExpenseApiContext = {
+  browserSnapshot: string;
   token: string;
   companyId: string;
   axUserId: string;
@@ -191,8 +183,12 @@ const JSON_HEADERS: Record<string, string> = {
 let runtimeAuthSeed: Partial<ExpenseApiAuthSeed> = {};
 let cachedContext: ExpenseApiContext | null = null;
 let cachedContextKey = "";
+let cachedContextExpiresAt = 0;
 let contextPromise: Promise<ExpenseApiContext> | null = null;
-const cachedCurrencyResponses = new Map<string, IndPagedResponse<ExpenseSheetCurrencyDto>>();
+let contextPromiseKey = "";
+let authCacheGeneration = 0;
+const CONTEXT_CACHE_TTL_MS = 5 * 60 * 1000;
+const cachedCurrencyResponses = makeCache<IndPagedResponse<ExpenseSheetCurrencyDto>>(10, 30 * 60 * 1000);
 const pendingCurrencyRequests = new Map<string, Promise<IndPagedResponse<ExpenseSheetCurrencyDto>>>();
 
 const safeText = safeTextTransform;
@@ -400,7 +396,16 @@ const waitForAbortableExpenseResult = async <T>(promise: Promise<T>, signal?: Ab
 };
 
 const buildContextKey = (seed: ExpenseApiAuthSeed): string => {
-  return `${seed.token}|${seed.entraOid}|${seed.appCode}|${readWindowSelectedCompany()}`;
+  return `${seed.token}|${seed.entraOid}|${seed.appCode}|${readWindowSelectedCompany()}|${captureActiveBrowserState()}`;
+};
+
+// Refuses stale page requests before an unavailable actor can fall back to the signed-in user.
+const requireActiveExpenseBrowserState = (expectedSnapshot?: string): string => {
+  const snapshot = captureActiveBrowserState();
+  if (!snapshot || (expectedSnapshot && expectedSnapshot !== snapshot)) {
+    throw new ApiFetchError(indT("Api_RequestFailed", "Request failed."), 409);
+  }
+  return snapshot;
 };
 
 const buildExpenseHeaders = (
@@ -409,6 +414,7 @@ const buildExpenseHeaders = (
   includeJson = false,
   includeAxUserId = true
 ): HeadersInit => {
+  requireActiveExpenseBrowserState(context.browserSnapshot);
   const base = sanitizeHeaders(options?.headers);
   const merged: Record<string, string> = { ...base };
 
@@ -540,7 +546,7 @@ const mapEntraContextCompany = (item: unknown): NormalizedEntraContextCompany | 
   };
 };
 
-const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): ExpenseApiContext => {
+const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): Omit<ExpenseApiContext, "browserSnapshot"> => {
   const rawResponse = response as {
     Success?: unknown;
     success?: unknown;
@@ -614,16 +620,21 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): E
 };
 
 const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<ExpenseApiContext> => {
+  if (typeof window !== "undefined" && window.IND?.browserState?.ready) {
+    await waitForAbortableExpenseResult(window.IND.browserState.ready, options?.signal);
+  }
+  const browserSnapshot = requireActiveExpenseBrowserState();
   const seed = resolveAuthSeed(options);
   const contextKey = buildContextKey(seed);
   const { signal, ...baseOptions } = options || {};
 
-  if (cachedContext && cachedContextKey === contextKey) {
+  if (cachedContext && cachedContextKey === contextKey && cachedContextExpiresAt > Date.now()) {
     return waitForAbortableExpenseResult(Promise.resolve(cachedContext), signal);
   }
 
-  if (!contextPromise || cachedContextKey !== contextKey) {
-    cachedContextKey = contextKey;
+  if (!contextPromise || contextPromiseKey !== contextKey) {
+    contextPromiseKey = contextKey;
+    const generation = authCacheGeneration;
     const sharedContextPromise = (async () => {
       const contextPayload: EntraContextRequest = {
         appCode: seed.appCode,
@@ -640,10 +651,14 @@ const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<Expen
         body: JSON.stringify(contextPayload),
       });
 
+      if (generation !== authCacheGeneration || contextPromiseKey !== contextKey || buildContextKey(seed) !== contextKey) {
+        throw createExpenseAbortError();
+      }
       const resolved = validateContextResponse(contextResponse);
       const nextContext: ExpenseApiContext = {
         ...resolved,
         token: seed.token,
+        browserSnapshot,
       };
 
       if (typeof window !== "undefined") {
@@ -651,15 +666,20 @@ const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<Expen
       }
 
       cachedContext = nextContext;
+      cachedContextKey = contextKey;
+      cachedContextExpiresAt = Date.now() + CONTEXT_CACHE_TTL_MS;
       return nextContext;
     })();
 
     contextPromise = sharedContextPromise;
-    void sharedContextPromise.finally(() => {
+    // Both outcomes are handled so a failed shared request creates no orphan rejection.
+    const clearPendingContext = () => {
       if (contextPromise === sharedContextPromise) {
         contextPromise = null;
+        contextPromiseKey = "";
       }
-    });
+    };
+    void sharedContextPromise.then(clearPendingContext, clearPendingContext);
   }
 
   return await waitForAbortableExpenseResult(contextPromise, signal);
@@ -789,7 +809,10 @@ export const configureExpenseApiAuth = (seed: Partial<ExpenseApiAuthSeed>): void
 
   cachedContext = null;
   cachedContextKey = "";
+  cachedContextExpiresAt = 0;
   contextPromise = null;
+  contextPromiseKey = "";
+  authCacheGeneration += 1;
   cachedCurrencyResponses.clear();
   pendingCurrencyRequests.clear();
 };
@@ -929,98 +952,14 @@ export const fetchExpenseSheetList = async (
   }
 };
 
-const normalizePositiveInteger = (value: unknown, fallbackValue: number): number => {
-  const parsedValue = Number(value);
-  if (Number.isFinite(parsedValue) && parsedValue > 0) {
-    return Math.floor(parsedValue);
-  }
-
-  return fallbackValue;
-};
-
-// Rebuilds one full list envelope for the assistant by loading every page of the active query.
+// Rebuilds a complete, bounded assistant dataset using the API pagination contract.
 export const fetchExpenseSheetListSourceJson = async (
   payload: ExpenseSheetListApiRequest,
   options?: ExpenseSheetListSourceJsonOptions
 ): Promise<ExpenseSheetListResponseEnvelope> => {
   const { seedResponse, ...baseOptions } = options || {};
-  const fallbackPage = normalizePositiveInteger(payload?.page, 1);
-  const fallbackPageSize = normalizePositiveInteger(payload?.pageSize, 50);
-  const normalizedSeedResponse = seedResponse ? normalizeListPagedResponse(cloneJsonCompatibleValue(seedResponse)) : null;
-  const initialResponse = normalizedSeedResponse ?? (await fetchExpenseSheetList(payload, baseOptions));
-  const normalizedInitialResponse = normalizeListPagedResponse(cloneJsonCompatibleValue(initialResponse));
-
-  if (normalizedInitialResponse.Success === false) {
-    throw new ApiFetchError(
-      safeText(normalizedInitialResponse.Message) || "Could not load the full expense sheet query."
-    );
-  }
-
-  const totalRecordsRaw = Number(normalizedInitialResponse.Total);
-  const totalRecords =
-    Number.isFinite(totalRecordsRaw) && totalRecordsRaw >= 0
-      ? Math.floor(totalRecordsRaw)
-      : normalizedInitialResponse.Items.length;
-  const effectivePageSize = normalizePositiveInteger(normalizedInitialResponse.PageSize, fallbackPageSize);
-  const totalPages = Math.max(1, Math.ceil(totalRecords / Math.max(1, effectivePageSize)));
-  const currentPage = Math.min(
-    totalPages,
-    normalizePositiveInteger(normalizedInitialResponse.Page ?? fallbackPage, fallbackPage)
-  );
-
-  if (totalPages <= 1) {
-    return {
-      ...normalizedInitialResponse,
-      Total: totalRecords,
-      Page: 1,
-      PageSize: effectivePageSize,
-      Items: cloneJsonCompatibleValue(normalizedInitialResponse.Items),
-    };
-  }
-
-  const itemsByPage = new Map<number, ExpenseSheetListItemDto[]>();
-  itemsByPage.set(currentPage, cloneJsonCompatibleValue(normalizedInitialResponse.Items));
-
-  for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
-    if (pageNumber === currentPage) {
-      continue;
-    }
-
-    const pageResponse = await fetchExpenseSheetList(
-      {
-        ...payload,
-        page: pageNumber,
-        pageSize: effectivePageSize,
-      },
-      baseOptions
-    );
-
-    if (pageResponse.Success === false) {
-      throw new ApiFetchError(
-        safeText(pageResponse.Message) || `Could not load expense sheet page ${pageNumber}.`
-      );
-    }
-
-    itemsByPage.set(pageNumber, cloneJsonCompatibleValue(pageResponse.Items));
-  }
-
-  const allItems: ExpenseSheetListItemDto[] = [];
-  for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
-    const pageItems = itemsByPage.get(pageNumber);
-    if (!Array.isArray(pageItems) || pageItems.length === 0) {
-      continue;
-    }
-
-    allItems.push(...pageItems);
-  }
-
-  return {
-    ...normalizedInitialResponse,
-    Total: totalRecords,
-    Page: 1,
-    PageSize: effectivePageSize,
-    Items: allItems,
-  };
+  const seed = seedResponse ? normalizeListPagedResponse(cloneJsonCompatibleValue(seedResponse)) : null;
+  return loadExpenseAssistantSource(payload, seed, (request) => fetchExpenseSheetList(request, baseOptions), options?.signal);
 };
 
 // Loads one expense sheet detail from /api/crm/expensesheets/{hojaGastosId}.
@@ -1053,14 +992,19 @@ export const getExpenseSheetCurrencies = async (
   }
 
   const companyId = safeText(context?.companyId || readWindowSelectedCompany()).toUpperCase();
-  const cacheKey = companyId || "-";
+  const generation = authCacheGeneration;
+  const seed = resolveAuthSeed(options);
+  const authContextKey = buildContextKey(seed);
+  const cacheKey = `${authContextKey}|${companyId || "-"}`;
+  const { signal, ...sharedOptions } = options || {};
 
-  if (cachedCurrencyResponses.has(cacheKey)) {
-    return cachedCurrencyResponses.get(cacheKey) as IndPagedResponse<ExpenseSheetCurrencyDto>;
+  const cachedCurrencies = cachedCurrencyResponses.get(cacheKey);
+  if (cachedCurrencies) {
+    return waitForAbortableExpenseResult(Promise.resolve(cachedCurrencies), signal);
   }
 
   if (pendingCurrencyRequests.has(cacheKey)) {
-    return pendingCurrencyRequests.get(cacheKey) as Promise<IndPagedResponse<ExpenseSheetCurrencyDto>>;
+    return waitForAbortableExpenseResult(pendingCurrencyRequests.get(cacheKey)!, signal);
   }
 
   const requestPromise = (async () => {
@@ -1074,12 +1018,15 @@ export const getExpenseSheetCurrencies = async (
 
     try {
       const response = await fetchJson<IndPagedResponse<ExpenseSheetCurrencyDto>>("/api/crm/expensesheets/currencies", {
-        ...options,
+        ...sharedOptions,
         method: "GET",
         headers,
       });
 
       const normalizedResponse = normalizeCurrencyPagedResponse(response);
+      if (generation !== authCacheGeneration || buildContextKey(seed) !== authContextKey) {
+        throw createExpenseAbortError();
+      }
       if (normalizedResponse.Success) {
         cachedCurrencyResponses.set(cacheKey, normalizedResponse);
       }
@@ -1091,7 +1038,7 @@ export const getExpenseSheetCurrencies = async (
       }
 
       const legacyListResponse = await fetchJson<LegacyExpenseListResponse>("/Gastos/ListExpenseSheets", {
-        ...options,
+        ...sharedOptions,
         method: "POST",
         headers: {
           ...sanitizeHeaders(options?.headers),
@@ -1136,20 +1083,18 @@ export const getExpenseSheetCurrencies = async (
       };
 
       const normalizedFallback = normalizeCurrencyPagedResponse(fallbackResponse);
-      if (normalizedFallback.Success) {
-        cachedCurrencyResponses.set(cacheKey, normalizedFallback);
-      }
-
+      // A sampled legacy list is not a complete currency catalog and must not poison the cache.
+      if (generation !== authCacheGeneration || buildContextKey(seed) !== authContextKey) throw createExpenseAbortError();
       return normalizedFallback;
     }
   })();
 
   pendingCurrencyRequests.set(cacheKey, requestPromise);
-  try {
-    return await requestPromise;
-  } finally {
-    pendingCurrencyRequests.delete(cacheKey);
-  }
+  const clearPendingCurrencies = () => {
+    if (pendingCurrencyRequests.get(cacheKey) === requestPromise) pendingCurrencyRequests.delete(cacheKey);
+  };
+  void requestPromise.then(clearPendingCurrencies, clearPendingCurrencies);
+  return waitForAbortableExpenseResult(requestPromise, signal);
 };
 
 // Reads available subordinates from /api/crm/expensesheets/subordinates.
@@ -1422,6 +1367,34 @@ export const propagateExpenseSheetReimbursableExpense = async (
   return normalizeApiResponse(response);
 };
 
+// Atomically updates the header project and every line, preserving an explicit blank value.
+export const propagateExpenseSheetProjectDefault = async (
+  hojaGastosId: string,
+  projectId: string,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<null>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeSheetId = encodeURIComponent(String(hojaGastosId || "").trim());
+  if (!safeSheetId) {
+    throw new ApiFetchError(indT("Api_RequestFailed", "Request failed."));
+  }
+
+  const response = await fetchJson<IndApiResponse<null>>(
+    `/api/crm/expensesheets/${safeSheetId}/project-default/propagate`,
+    {
+      ...options,
+      method: "POST",
+      headers: buildExpenseHeaders(context, options, true),
+      body: JSON.stringify({
+        projId: safeText(projectId),
+        projIdProvided: true,
+      }),
+    }
+  );
+
+  return normalizeApiResponse(response);
+};
+
 // Deletes a full expense sheet using /api/crm/expensesheets/{hojaGastosId}/lines/0?deleteWholeSheet=true.
 export const deleteExpenseSheet = async (
   hojaGastosId: string,
@@ -1484,6 +1457,60 @@ export const updateExpenseSheetLine = async (
       method: "PUT",
       headers: buildExpenseHeaders(context, options, true),
       body: JSON.stringify(normalizedPayload),
+    }
+  );
+
+  return normalizeApiResponse(response);
+};
+
+// MMS - Attaches an existing ticket to a manual line through the atomic endpoint. - 2026.08.04
+export const attachExpenseSheetLineTicket = async (
+  hojaGastosId: string,
+  lineRecId: string,
+  payload: ExpenseSheetLineTicketRequest,
+  options?: ExpenseTicketListFetchOptions
+): Promise<IndApiResponse<ExpenseSheetLineTicketResultDto>> => {
+  const { axUserIdOverride, ...baseOptions } = options || {};
+  const context = await ensureExpenseApiContext(baseOptions);
+  const safeSheetId = encodeURIComponent(safeText(hojaGastosId));
+  const safeLineId = encodeURIComponent(safeText(lineRecId));
+  const safeFileId = safeText(payload?.fileId);
+  if (!safeSheetId || !safeLineId || !safeFileId) {
+    throw new ApiFetchError(indT("Api_RequestFailed", "Request failed."));
+  }
+
+  const response = await fetchJson<IndApiResponse<ExpenseSheetLineTicketResultDto>>(
+    `/api/crm/expensesheets/${safeSheetId}/lines/${safeLineId}/ticket`,
+    {
+      ...baseOptions,
+      method: "PUT",
+      headers: buildTicketListHeaders(context, baseOptions, axUserIdOverride),
+      body: JSON.stringify({ fileId: safeFileId }),
+    }
+  );
+
+  return normalizeApiResponse(response);
+};
+
+// MMS - Detaches a ticket while preserving the line, ticket header, and file. - 2026.08.04
+export const detachExpenseSheetLineTicket = async (
+  hojaGastosId: string,
+  lineRecId: string,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<ExpenseSheetLineTicketResultDto>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeSheetId = encodeURIComponent(safeText(hojaGastosId));
+  const safeLineId = encodeURIComponent(safeText(lineRecId));
+  if (!safeSheetId || !safeLineId) {
+    throw new ApiFetchError(indT("Api_RequestFailed", "Request failed."));
+  }
+
+  const response = await fetchJson<IndApiResponse<ExpenseSheetLineTicketResultDto>>(
+    `/api/crm/expensesheets/${safeSheetId}/lines/${safeLineId}/ticket`,
+    {
+      ...options,
+      method: "DELETE",
+      headers: buildExpenseHeaders(context, options),
     }
   );
 
@@ -1611,6 +1638,7 @@ export const askExpenseSheetsQuestion = async (
         ? undefined
         : cloneJsonCompatibleValue(payload.sourceJson),
   };
+  if (safePayload.sourceJson !== undefined) assertExpenseAssistantSourceSize(safePayload);
 
   const response = await fetch("/api/ia/service/expensesheets/ask", {
     credentials: "same-origin",
@@ -2121,7 +2149,7 @@ export const deleteExpenseSheetTicket = async (
   const context = await ensureExpenseApiContext(options);
   const safeFileId = encodeURIComponent(String(fileId || "").trim());
   const query = new URLSearchParams();
-  if (Number.isInteger(Number(lineRecId)) && Number(lineRecId) > 0) {
+  if (Number.isInteger(Number(lineRecId)) && Number(lineRecId) !== 0) {
     query.set("lineRecId", String(lineRecId));
   }
 
@@ -2320,5 +2348,19 @@ export const fetchExpenseProjects = async (
       method: "GET",
       ...options,
     }
+  );
+};
+
+// Resolves an exact project id through the existing company-scoped project catalog.
+export const fetchExistingExpenseProjectId = async (
+  projectId: string,
+  options?: ApiFetchOptions
+): Promise<string> => {
+  const normalizedProjectId = String(projectId || "").trim();
+  if (!normalizedProjectId) return "";
+
+  return resolveExistingExpenseProjectIdFromPages(
+    normalizedProjectId,
+    (page, pageSize) => fetchExpenseProjects(normalizedProjectId, page, pageSize, options)
   );
 };

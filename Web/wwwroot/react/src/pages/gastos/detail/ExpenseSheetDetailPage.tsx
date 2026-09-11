@@ -14,6 +14,7 @@ import { consumeExpenseSheetCreatedReturnContext } from "../utils/expenseSheetCr
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
 import { createInitialExpenseSheetsFilterSnapshot } from "../list/expenseFilterSnapshot.ts";
 import { setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
+import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
 
 const DETAIL_FAB_BASELINE_BOTTOM_PX = 24;
 const DETAIL_FAB_WITH_STATUS_ACTION_BAR_BOTTOM_PX = 110;
@@ -88,8 +89,7 @@ const ExpenseSheetDetailPageContent = () => {
 
       const executeBackNavigation = () => {
         rearmExpenseSheetsReturnState();
-        window.__indBypassNavigationGuardOnce?.();
-        window.location.href = EXPENSE_SHEETS_LIST_URL;
+        navigateToExpenseUrl(EXPENSE_SHEETS_LIST_URL);
       };
 
       if (typeof window.__indRequestNavigation === "function") {
@@ -114,8 +114,7 @@ const ExpenseSheetDetailPageContent = () => {
 
       const executeBackNavigation = () => {
         rearmExpenseSheetsReturnState();
-        window.__indBypassNavigationGuardOnce?.();
-        window.location.replace(EXPENSE_SHEETS_LIST_URL);
+        navigateToExpenseUrl(EXPENSE_SHEETS_LIST_URL, { replace: true });
       };
 
       if (typeof window.__indRequestNavigation === "function") {

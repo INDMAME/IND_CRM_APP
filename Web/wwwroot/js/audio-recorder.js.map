@@ -2,6 +2,6 @@
   "version": 3,
   "sources": ["../react/src/pages/system/AudioRecorder.tsx"],
   "sourcesContent": ["import React from \"react\";\r\nimport AudioRecorderMinimal from \"./AudioRecorderMinimal.tsx\";\r\nimport { mountReactIsland, mountWhenDocumentReady } from \"../../utils/reactIsland.tsx\";\r\n\r\n// Mount the audio recorder into the Razor view root.\r\nexport const mountAudioRecorder = () => {\r\n  const el = document.getElementById(\"ind-audio-recorder-root\");\r\n  if (!el) return;\r\n\r\n  mountReactIsland(el, <AudioRecorderMinimal />);\r\n};\r\n\r\n// Auto-mount when the page bundle loads.\r\nconst mount = () => {\r\n  mountAudioRecorder();\r\n};\r\n\r\nmountWhenDocumentReady(mount);\r\n\r\nexport default AudioRecorderMinimal;\r\n"],
-  "mappings": "2JASuB,IAAAA,EAAA,OAJVC,EAAqB,IAAM,CACtC,IAAMC,EAAK,SAAS,eAAe,yBAAyB,EACvDA,GAELC,EAAiBD,KAAI,OAACE,EAAA,EAAqB,CAAE,CAC/C,EAGMC,EAAQ,IAAM,CAClBJ,EAAmB,CACrB,EAEAK,EAAuBD,CAAK,EAE5B,IAAOE,EAAQH",
-  "names": ["import_jsx_runtime", "mountAudioRecorder", "el", "mountReactIsland", "AudioRecorderMinimal", "mount", "mountWhenDocumentReady", "AudioRecorder_default"]
+  "mappings": "0MAEAA,IAOuB,IAAAC,EAAA,OAJVC,EAAqB,IAAM,CACtC,IAAMC,EAAK,SAAS,eAAe,yBAAyB,EACvDA,GAELC,EAAiBD,KAAI,OAACE,EAAA,EAAqB,CAAE,CAC/C,EAGMC,EAAQ,IAAM,CAClBJ,EAAmB,CACrB,EAEAK,EAAuBD,CAAK,EAE5B,IAAOE,EAAQH",
+  "names": ["init_reactIsland", "import_jsx_runtime", "mountAudioRecorder", "el", "mountReactIsland", "AudioRecorderMinimal", "mount", "mountWhenDocumentReady", "AudioRecorder_default"]
 }

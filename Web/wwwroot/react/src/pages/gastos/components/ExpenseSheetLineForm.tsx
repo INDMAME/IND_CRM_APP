@@ -3,7 +3,11 @@ import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import SingleDatePicker from "../../../components/commons/SingleDatePicker.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetLine } from "../expenseTypes.ts";
-import { formatExpenseAmountLabel } from "../expenseFormatters.ts";
+import {
+  formatExpenseAmountLabel,
+  formatExpenseOriginalAmountLabel,
+  formatExpenseReimbursableAmountLabel,
+} from "../expenseFormatters.ts";
 import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { formatExpenseDisplayDate, normalizeDescriptionText, safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseInputNumber, formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
@@ -14,6 +18,7 @@ import {
   LINE_REIMBURSABLE_EXPENSE_YES_VALUE,
   getExpenseLineReimbursableExpenseLabel,
   getExpenseLineReimbursableExpenseOptions,
+  isEditableExpenseLineReimbursableExpense,
   normalizeExpenseLineReimbursableExpense,
 } from "../constants/expenseReimbursableExpenseCatalog.ts";
 
@@ -143,7 +148,7 @@ const ExpenseSheetLineCurrencyFields = ({
       exchangeRateInfoMessage={exchangeRateInfoMessage}
       exchangeRateReferenceKind="company"
       amountCurrency={amountCurrencyValue}
-      amountCurrencyLabel={formatExpenseAmountLabel(normalizedExpenseCurrencyCode)}
+      amountCurrencyLabel={formatExpenseOriginalAmountLabel(normalizedExpenseCurrencyCode)}
       amountCurrencyMode={amountCurrencyEditable ? "editable" : "readonly"}
       reimbursementAmount={grossCompanyAmountValue}
       companyAmountLabel={formatExpenseAmountLabel(localCurrencyCode)}
@@ -218,12 +223,13 @@ const ExpenseSheetLineForm = ({
   const reimbursableExpenseValue = normalizeExpenseLineReimbursableExpense(
     isEditing ? draftReimbursableExpense : line.reimbursableExpense
   );
+  const hasEditableReimbursableExpenseValue = isEditableExpenseLineReimbursableExpense(reimbursableExpenseValue);
   const reimbursableExpenseLabel = getExpenseLineReimbursableExpenseLabel(
     isEditing ? draftReimbursableExpense : line.reimbursableExpense
   );
   const reimbursableStatusLabel = indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable");
   const hasPendingReimbursementRecalculation =
-    line.reimbursableExpense === LINE_REIMBURSABLE_EXPENSE_YES_VALUE && line.reimbursableAmount === 0;
+    !isEditing && line.reimbursableExpense === LINE_REIMBURSABLE_EXPENSE_YES_VALUE && line.reimbursableAmount === 0;
   const internationalField = isEditing ? (
     <SelectCombobox
       label={indT("ExpenseSheets_Field_International", "International")}
@@ -240,12 +246,17 @@ const ExpenseSheetLineForm = ({
       value={internacionalLabel}
     />
   );
-  const reimbursableExpenseField = isEditing ? (
+  const reimbursableExpenseField = isEditing && hasEditableReimbursableExpenseValue ? (
     <SelectCombobox
       label={reimbursableStatusLabel}
       options={reimbursableExpenseOptions}
       value={String(reimbursableExpenseValue)}
-      onChange={(value) => onDraftReimbursableExpenseChange(normalizeExpenseLineReimbursableExpense(value))}
+      onChange={(value) => {
+        const normalizedValue = normalizeExpenseLineReimbursableExpense(value);
+        if (isEditableExpenseLineReimbursableExpense(normalizedValue) && normalizedValue !== null) {
+          onDraftReimbursableExpenseChange(normalizedValue);
+        }
+      }}
       placeholder={reimbursableStatusLabel}
       allowTextInput={false}
       showSearchButton={false}
@@ -261,7 +272,7 @@ const ExpenseSheetLineForm = ({
       <div className="grid grid-cols-2 gap-3 md:gap-4">
         {reimbursableExpenseField}
         <ExpenseReadOnlyField
-          label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
+          label={formatExpenseReimbursableAmountLabel(localCurrencyCode)}
           value={reimbursableAmountText}
           valueAlign="right"
         />

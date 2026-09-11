@@ -107,7 +107,7 @@ export const useExpenseSheetDetailState = ({
   const [draftProjectId, setDraftProjectId] = useState("");
   const [draftCurrencyCode, setDraftCurrencyCode] = useState("");
   const [draftExchangeRate, setDraftExchangeRate] = useState("");
-  const [draftReimbursableExpense, setDraftReimbursableExpense] = useState<number | null>(DEFAULT_REIMBURSABLE_EXPENSE);
+  const [draftReimbursableExpense, setDraftReimbursableExpense] = useState<number | null>(null);
   const [draftEstadoComentarios, setDraftEstadoComentarios] = useState("");
   const [defaultCurrencyCode, setDefaultCurrencyCode] = useState("");
   const [isExchangeRateLoading, setIsExchangeRateLoading] = useState(false);
@@ -127,6 +127,7 @@ export const useExpenseSheetDetailState = ({
       formatExpenseInputNumber(nextHeader?.exchRate, {
         minimumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
         maximumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
+        preferDecimalSeparator: true,
         useGrouping: true,
         fallback: "",
       })
@@ -294,6 +295,7 @@ export const useExpenseSheetDetailState = ({
   const exchangeRateValue = formatExpenseInputNumber(safeText(header?.exchRate), {
     minimumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
     maximumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
+    preferDecimalSeparator: true,
     useGrouping: true,
     fallback: "",
   });
@@ -590,10 +592,10 @@ export const useExpenseSheetDetailState = ({
 
   const navigateToCreatedSheet = useCallback((createdSheetId: string) => {
     const safeCreatedSheetId = safeText(createdSheetId);
-    if (!safeCreatedSheetId) return;
+    if (!safeCreatedSheetId) return false;
 
     const targetUrl = `/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(safeCreatedSheetId)}`;
-    navigateToExpenseUrl(targetUrl);
+    return navigateToExpenseUrl(targetUrl);
   }, []);
 
   const navigateToLineDetail = useCallback(

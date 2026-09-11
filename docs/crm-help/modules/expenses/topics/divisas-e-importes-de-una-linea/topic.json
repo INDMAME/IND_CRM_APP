@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expenses.divisas-e-importes-de-una-linea",
+    "moduleId":  "expenses",
+    "sectionNumber":  "8.7",
+    "title":  "Divisas e importes de una línea",
+    "summary":  "Entiende las divisas, el tipo de cambio y los importes de una línea.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Divisas e importes de una línea",
+                                  "hojas de gastos",
+                                  "gastos"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre divisas e importes de una línea?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expenses.modulo-hojas-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "CCF90B2ED726B0FDF4E6170B9CFA33EECA8C6FCD413AEA9D315FD2BE1B1719BF",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "8.7",
+                   "pageFromTableOfContents":  21
+               }
+}

@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FloatingList from "../../../components/commons/FloatingList.tsx";
-import { ChevronDownSvg, ChevronUpSvg } from "../../../components/commons/chevrons.tsx";
+import {
+  SELECT_FIELD_ACTION_BUTTON_CLASS_NAME,
+  SELECT_FIELD_ACTIONS_CLASS_NAME,
+  SelectChevron,
+} from "../../../components/commons/chevrons.tsx";
 import { useOutsideClick } from "../../../hooks/useOutsideClick.ts";
 import { classNames } from "../../../utils/classNames.ts";
 import { normalizeExpenseTicketDraftTime } from "../utils/expenseTicketDateTime.ts";
@@ -156,21 +160,24 @@ const ExpenseTicketTimeInput = ({
           aria-controls={listId}
           style={{ color: valueColor }}
         />
-        <button
-          type="button"
-          className={classNames(
-            "absolute inset-y-0 right-0 flex items-center px-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/35",
-            readOnlyMode ? "cursor-not-allowed text-slate-400" : "text-slate-500 hover:text-primary"
-          )}
-          onClick={() => {
-            if (readOnlyMode) return;
-            setOpen((previous) => !previous);
-          }}
-          disabled={readOnlyMode}
-          aria-label={label}
-        >
-          {isOpen ? <ChevronUpSvg className="size-5" /> : <ChevronDownSvg className="size-5" />}
-        </button>
+        <div className={SELECT_FIELD_ACTIONS_CLASS_NAME}>
+          <button
+            type="button"
+            className={classNames(
+              SELECT_FIELD_ACTION_BUTTON_CLASS_NAME,
+              "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/35",
+              readOnlyMode ? "cursor-not-allowed text-slate-400" : "text-slate-500 hover:text-primary"
+            )}
+            onClick={() => {
+              if (readOnlyMode) return;
+              setOpen((previous) => !previous);
+            }}
+            disabled={readOnlyMode}
+            aria-label={label}
+          >
+            <SelectChevron open={isOpen} />
+          </button>
+        </div>
         <FloatingList
           anchorRef={anchorRef}
           open={isOpen}

@@ -1,5 +1,6 @@
 import { getExpenseScopeToken } from "./expenseScope.ts";
 import type { ExpenseSelectOption } from "./expenseSelectOptions.ts";
+import { canPersistSensitiveBrowserState } from "../../../utils/browserStorageScope.ts";
 
 const RECENT_CURRENCY_STORAGE_KEY_PREFIX = "expense_recent_currencies_v1";
 const MAX_RECENT_CURRENCY_CODES = 6;
@@ -12,7 +13,7 @@ const normalizeStorageKeyPart = (value: unknown): string => {
 };
 
 const readStorage = (): Storage | null => {
-  if (typeof window === "undefined") return null;
+  if (typeof window === "undefined" || !canPersistSensitiveBrowserState()) return null;
 
   try {
     return window.localStorage;

@@ -8,6 +8,8 @@ import type {
   ExpenseSheetTicketListRequest,
 } from "../expenseTypes.ts";
 import { fetchExpenseSheetTicketLinkList, fetchExpenseSheetTicketsList } from "../utils/expenseApi.ts";
+import { getExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
+import { captureSensitiveBrowserState } from "../../../utils/browserStorageScope.ts";
 
 type ExpenseTicketFilterKeyInputProps = {
   label: string;
@@ -90,6 +92,9 @@ const ExpenseTicketFilterKeyInput = ({
   showLabel = true,
 }: ExpenseTicketFilterKeyInputProps) => {
   const readOnlyMode = readOnly || disabled;
+  const queryScope = JSON.stringify([
+    captureSensitiveBrowserState(), getExpenseActingUserOverride(), mode, fixedStatusFilter, createdDateFrom, createdDateTo,
+  ]);
 
   const loadOptions = useCallback(async (term: string, signal: AbortSignal): Promise<RemoteSearchOption[]> => {
     const payload = buildTicketSuggestPayload(term, 1, SEARCH_PAGE_SIZE, fixedStatusFilter, createdDateFrom, createdDateTo);
@@ -167,6 +172,7 @@ const ExpenseTicketFilterKeyInput = ({
 
   return (
     <RemoteSearchCombobox
+      queryScope={queryScope}
       label={label}
       placeholder={placeholder}
       value={value}

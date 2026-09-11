@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FloatingList from "../commons/FloatingList.tsx";
 import Spinner from "../commons/Spinner.tsx";
-import { ChevronDownSvg, ChevronUpSvg } from "../commons/chevrons.tsx";
+import {
+  SELECT_FIELD_ACTION_BUTTON_CLASS_NAME,
+  SELECT_FIELD_ACTIONS_CLASS_NAME,
+  SelectChevron,
+} from "../commons/chevrons.tsx";
 import { fetchJson } from "../../services/apiService.ts";
 import { handleComboboxKeyDown } from "../../hooks/useComboboxKeyboard.ts";
 import { useOutsideClick } from "../../hooks/useOutsideClick.ts";
@@ -9,6 +13,7 @@ import { classNames } from "../../utils/classNames.ts";
 import { indFormat, indT } from "../../utils/indI18n.ts";
 import { mapAccountItem } from "../../utils/visitasMapping.ts";
 import { getClientCache, hasClientCache, setClientCache } from "../../utils/visitasStorage.ts";
+import { captureVisitLookupState, isVisitLookupStateCurrent } from "../../utils/visitasStorage.ts";
 
 export type ClientOption = {
   value: string;
@@ -103,6 +108,9 @@ const ClientSearchCombobox = ({
     if (abortRef.current) {
       abortRef.current.abort();
       abortRef.current = null;
+      setLoading(false);
+      setLoadingMore(false);
+      setBlocking(false);
     }
   };
 
@@ -129,8 +137,8 @@ const ClientSearchCombobox = ({
     setHasMore(true);
     setOpen(false);
     const cacheKey = query.trim().toLowerCase();
-    if (hasClientCache(cacheKey)) {
-      const cached = (getClientCache(cacheKey) || []) as ClientOption[];
+    const cached = getClientCache(cacheKey) as ClientOption[] | null;
+    if (cached) {
       setActiveIndex(0);
       setFetchedQuery(currentQuery);
       setOptions(cached);
@@ -152,18 +160,20 @@ const ClientSearchCombobox = ({
     setBlocking(true);
     setStatus(indT("Visits_Create_Searching", "Searching..."));
     const controller = new AbortController();
+    const scopeSnapshot = captureVisitLookupState();
     abortRef.current = controller;
     let shouldOpenOnFinish = false;
     try {
       const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(query)}&page=1&pageSize=10`;
       const data = await fetchJson<{ items?: unknown[] }>(url, { signal: controller.signal });
+      if (controller.signal.aborted || abortRef.current !== controller) return;
       const items = (data.items || []).flatMap((item) => {
         const mapped = mapAccountItem(item);
         return mapped ? [mapped] : [];
       });
       setActiveIndex(0);
       setFetchedQuery(currentQuery);
-      setClientCache(cacheKey, items);
+      if (isVisitLookupStateCurrent(scopeSnapshot)) setClientCache(cacheKey, items);
       setOptions(items);
       if (items.length < 1) {
         setSelected(null);
@@ -186,23 +196,27 @@ const ClientSearchCombobox = ({
         setStatus(indT("Visits_Create_LoadClientsError", "Failed to load clients."));
       }
     } finally {
-      abortRef.current = null;
-      setLoading(false);
-      setBlocking(false);
-      if (shouldOpenOnFinish) setOpen(true);
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+        setLoading(false);
+        setBlocking(false);
+        if (shouldOpenOnFinish) setOpen(true);
+      }
     }
   };
 
   const loadMore = useCallback(async () => {
-    if (loadingMore || loading || !hasMore || query.trim().length < minChars) return;
+    if (abortRef.current || loadingMore || loading || !hasMore || fetchedQuery.length < minChars) return;
     setLoadingMore(true);
     setBlocking(true);
     const controller = new AbortController();
     abortRef.current = controller;
     try {
       const nextPage = page + 1;
-      const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(query)}&page=${nextPage}&pageSize=10`;
+      // Pagination belongs to the loaded query even when the input displays a selected account.
+      const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(fetchedQuery)}&page=${nextPage}&pageSize=10`;
       const data = await fetchJson<{ items?: unknown[] }>(url, { signal: controller.signal });
+      if (controller.signal.aborted || abortRef.current !== controller) return;
       const items = (data.items || []).flatMap((item) => {
         const mapped = mapAccountItem(item);
         return mapped ? [mapped] : [];
@@ -210,12 +224,18 @@ const ClientSearchCombobox = ({
       setOptions((prev) => [...prev, ...items]);
       setPage(nextPage);
       setHasMore(items.length === 10);
+    } catch {
+      if (!controller.signal.aborted && abortRef.current === controller) {
+        setStatus(indT("Visits_Create_LoadClientsError", "Failed to load clients."));
+      }
     } finally {
-      abortRef.current = null;
-      setLoadingMore(false);
-      setBlocking(false);
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+        setLoadingMore(false);
+        setBlocking(false);
+      }
     }
-  }, [loadingMore, loading, hasMore, query, page, minChars]);
+  }, [loadingMore, loading, hasMore, fetchedQuery, page, minChars]);
 
   useEffect(() => {
     if (!open || !listRef.current) return;
@@ -250,7 +270,7 @@ const ClientSearchCombobox = ({
 
     const qKey = trimmed.toLowerCase();
     const isSelectionDisplay = !!selected && query === (selected.text || "");
-    const shouldSearch = !isSelectionDisplay && qKey !== fetchedQuery;
+    const shouldSearch = !isSelectionDisplay && (qKey !== fetchedQuery || !hasClientCache(qKey));
 
     if (shouldSearch) {
       search();
@@ -301,7 +321,6 @@ const ClientSearchCombobox = ({
     : "block truncate uppercase text-[11px] text-slate-500";
   const statusClass = isCompact ? "text-xs text-slate-500 tech-info" : "text-xs text-slate-500 tech-info";
   const searchIconSize = isCompact ? "h-5 w-5" : "h-5 w-5";
-  const chevronIconSize = isCompact ? "h-5 w-5" : "h-5 w-5";
 
   const safeIdBase = idBase || (isCompact ? "history-client" : "client");
   const listId = `${safeIdBase}-options`;
@@ -349,9 +368,9 @@ const ClientSearchCombobox = ({
             aria-activedescendant={activeId}
           />
 
-          <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
+          <div className={SELECT_FIELD_ACTIONS_CLASS_NAME}>
             {(loading || blocking) && (
-              <span className="flex items-center px-2" aria-hidden="true">
+              <span className={SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} aria-hidden="true">
                 {isCompact ? <Spinner size="h-4 w-4" /> : <Spinner />}
               </span>
             )}
@@ -359,7 +378,7 @@ const ClientSearchCombobox = ({
             {showSearchIcon && (
               <button
                 type="button"
-                className="flex items-center p-1.5 text-slate-400 hover:text-slate-500"
+                className={`${SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} text-slate-400 hover:text-slate-500`}
                 onClick={requestSearchOrOpen}
                 aria-label={indT("Visits_Create_SearchClient", "Search account")}
               >
@@ -371,7 +390,7 @@ const ClientSearchCombobox = ({
 
             <button
               type="button"
-              className="flex items-center p-1.5 text-slate-500 hover:text-slate-600"
+              className={`${SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} text-slate-500 hover:text-slate-600`}
               onClick={() => {
                 if (loading || blocking) return;
                 if (open) {
@@ -387,7 +406,7 @@ const ClientSearchCombobox = ({
                   : indT("Visits_Create_ShowClientOptions", "Show client options")
               }
             >
-              {open ? <ChevronUpSvg className={chevronIconSize} /> : <ChevronDownSvg className={chevronIconSize} />}
+              <SelectChevron open={open} />
             </button>
           </div>
         </div>

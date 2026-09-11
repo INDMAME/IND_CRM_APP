@@ -6,6 +6,8 @@ import { buildExpenseListPayload } from "../utils/expensePayloadBuilders.ts";
 import { fetchExpenseSheetList, mapExpenseSheetListItemToCard } from "../utils/expenseApi.ts";
 import { isExpenseAbortLikeError, runExpenseReadRequestWithRetry } from "../utils/expenseRequestRetry.ts";
 import { resolveExpenseListAxUserIdOverride } from "../utils/expenseManagedUserScope.ts";
+import { getExpenseAssistantQueryKey } from "../utils/expenseAssistantSource.ts";
+import { captureActiveBrowserState } from "../../../utils/browserStorageScope.ts";
 import type { ExpenseSheetsAssistantContextSnapshot } from "./expenseSheetsAssistantTypes.ts";
 
 type UseExpenseSheetsListDataArgs = {
@@ -35,6 +37,15 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
   );
   const activeRequestControllerRef = useRef<AbortController | null>(null);
   const activeRequestSeqRef = useRef(0);
+  const assistantQueryKeyRef = useRef("");
+
+  // Removes stale source data without resetting the conversation or list filters.
+  const invalidateAssistantContext = useCallback(() => {
+    setAssistantContext((previous) => ({
+      ...buildEmptyAssistantContextSnapshot(),
+      contextVersion: previous.contextVersion + 1,
+    }));
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -85,6 +96,11 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
         selectedManagedUserId: filters?.managedUserId,
         includeSubordinates: filters?.includeSubordinates,
       });
+      const queryKey = getExpenseAssistantQueryKey(payload, listAxUserIdOverride, captureActiveBrowserState());
+      if (assistantQueryKeyRef.current !== queryKey) {
+        assistantQueryKeyRef.current = queryKey;
+        invalidateAssistantContext();
+      }
       const handleCapturedResponse = (capture: {
         request: NonNullable<ExpenseSheetsAssistantContextSnapshot["lastExpenseSheetsListRequest"]>;
         response: NonNullable<ExpenseSheetsAssistantContextSnapshot["lastExpenseSheetsListResponse"]>;
@@ -118,6 +134,7 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
         if (requestSeq !== activeRequestSeqRef.current) return;
 
         if (response?.Success === false) {
+          invalidateAssistantContext();
           setErrorMessage(response.Message || indT("ExpenseSheets_LoadError", "Could not load expense sheets."));
           setItems([]);
           setTotal(0);
@@ -135,6 +152,7 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
       } catch (error) {
         if (requestSeq !== activeRequestSeqRef.current) return;
         if (isExpenseAbortLikeError(error, controller.signal)) return;
+        invalidateAssistantContext();
 
         if (error instanceof ApiFetchError && error.status === 403) {
           onForbidden();
@@ -153,7 +171,7 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
         }
       }
     },
-    [hasAccess, onForbidden, pageSize]
+    [hasAccess, invalidateAssistantContext, onForbidden, pageSize]
   );
 
   const resetList = useCallback(() => {
@@ -167,11 +185,9 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
     setCurrentPage(1);
     setErrorMessage("");
     setIsLoading(false);
-    setAssistantContext((previous) => ({
-      ...buildEmptyAssistantContextSnapshot(),
-      contextVersion: previous.contextVersion + 1,
-    }));
-  }, []);
+    assistantQueryKeyRef.current = "";
+    invalidateAssistantContext();
+  }, [invalidateAssistantContext]);
 
   return {
     items,

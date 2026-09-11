@@ -1,0 +1,259 @@
+using System.Net;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using System.Text.Json;
+using IND_CRM_APP.Middleware;
+using IND_CRM_APP.Models.Shared;
+using IND_CRM_APP.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+
+var checks = 0;
+var failures = new List<string>();
+var transientStatuses = new[] { 0, 408, 429, 500, 502, 503, 504 };
+var rejectedStatuses = new[] { 400, 401, 403, 404, 409, 422 };
+
+// The HTTP client must preserve failure status and must never apply failure response tokens.
+foreach (var status in transientStatuses.Concat(rejectedStatuses))
+{
+    using var scenario = new RefreshScenario(status);
+    try
+    {
+        await scenario.Client.RefreshTokenAsync("original-token");
+        Check(false, $"client preserves status {status}");
+    }
+    catch (ApiException ex)
+    {
+        Check((int)ex.StatusCode == status, $"client preserves status {status}");
+        Check(status == 0 || ex.Headers.ContainsKey("X-Test-Status"), $"client preserves headers {status}");
+    }
+    Check(scenario.TokenSession.GetToken() == ("original-token", scenario.OriginalExpiry), $"failure cannot replace session token {status}");
+    Check(scenario.RequestCount == 1, $"client sends one refresh {status}");
+}
+
+// Temporary failures can keep using only the original, still valid token.
+foreach (var status in transientStatuses)
+{
+    using var scenario = new RefreshScenario(status);
+    await scenario.Invoke();
+    Check(scenario.NextCount == 1 && scenario.Context.Response.StatusCode == 200, $"valid token survives transient {status}");
+    Check(scenario.TokenSession.GetToken() == ("original-token", scenario.OriginalExpiry), $"transient {status} does not extend expiry");
+    Check(scenario.RequestCount == 1, $"middleware never retries transient {status} in a loop");
+    Check(scenario.Context.Session.GetString("CompanyId") == "company-a", $"transient {status} preserves context");
+}
+
+// Explicit denials and other non-transient failures still reject the request.
+foreach (var status in rejectedStatuses)
+{
+    using var scenario = new RefreshScenario(status);
+    await scenario.Invoke();
+    CheckRejected(scenario, $"HTTP {status}");
+}
+
+// HTTP success alone is insufficient when no usable token can be read.
+foreach (var body in new[] { "", "null", "{}", "not-json", "{\"Success\":false}", "{\"Success\":true,\"Data\":{\"Token\":\"\"}}" })
+{
+    using var scenario = new RefreshScenario(200, body);
+    await scenario.Invoke();
+    CheckRejected(scenario, $"invalid payload {body}");
+}
+
+// A missing result from the interface is also a rejection, not a transport failure.
+using (var scenario = new RefreshScenario(200))
+{
+    var missingResult = DispatchProxy.Create<ICrmApiClient, MissingRefreshResult>();
+    await scenario.Invoke(missingResult);
+    Check(scenario.NextCount == 0 && scenario.Context.Response.StatusCode == 401, "null refresh result rejects");
+    Check(scenario.TokenSession.GetToken().Token == null, "null refresh result clears token");
+}
+
+// The old token may expire while the refresh request is waiting for the server.
+foreach (var status in new[] { 0, 503 })
+{
+    using var scenario = new RefreshScenario(status, expiresDuringRefresh: true);
+    await scenario.Invoke();
+    CheckRejected(scenario, $"expiry during transient {status}");
+}
+
+// Existing successful response aliases remain supported by the actual client mapper.
+foreach (var tokenProperty in new[] { "Token", "Jwt", "AccessToken", "BearerToken" })
+{
+    var nextExpiry = DateTime.UtcNow.AddMinutes(30);
+    var payload = JsonSerializer.Serialize(new { Success = true, Data = new Dictionary<string, object> { [tokenProperty] = "new-token", ["Expires"] = nextExpiry } });
+    using var scenario = new RefreshScenario(200, payload);
+    await scenario.Invoke();
+    Check(scenario.NextCount == 1, $"successful {tokenProperty} continues");
+    Check(scenario.TokenSession.GetToken() == ("new-token", nextExpiry), $"successful {tokenProperty} stores mapped token and expiry");
+    Check(scenario.RequestCount == 1, $"successful {tokenProperty} refreshes once");
+}
+
+// Canceling an actual HTTP request cannot turn a late response into a session mutation.
+foreach (var status in new[] { 0, 503, 401, 200 })
+{
+    var payload = JsonSerializer.Serialize(new { Success = true, Data = new { Token = "late-token", Expires = DateTime.UtcNow.AddMinutes(30) } });
+    using var scenario = new RefreshScenario(status, payload, cancelDuringRefresh: true);
+    await scenario.Invoke();
+    Check(scenario.NextCount == 0 && scenario.Context.Response.StatusCode == 200, $"cancellation {status} stops without relogin");
+    Check(scenario.Context.Response.Body.Length == 0, $"cancellation {status} writes no rejection response");
+    Check(scenario.TokenSession.GetToken() == ("original-token", scenario.OriginalExpiry), $"cancellation {status} leaves session unchanged");
+    Check(scenario.RequestCount == 1, $"cancellation {status} sends no extra refresh");
+}
+using (var scenario = new RefreshScenario(503))
+{
+    scenario.Cancel();
+    await scenario.Invoke();
+    Check(scenario.RequestCount == 0 && scenario.NextCount == 0, "already canceled request stops before refresh");
+    Check(scenario.TokenSession.GetToken() == ("original-token", scenario.OriginalExpiry), "already canceled request leaves session unchanged");
+}
+
+// No refresh should be attempted for an already expired token or a token far from expiry.
+using (var scenario = new RefreshScenario(503))
+{
+    scenario.TokenSession.SetToken("original-token", DateTime.UtcNow.AddSeconds(-1));
+    await scenario.Invoke();
+    Check(scenario.RequestCount == 0 && scenario.NextCount == 0 && scenario.Context.Response.StatusCode == 401, "already expired token rejects without refresh");
+}
+using (var scenario = new RefreshScenario(503))
+{
+    scenario.TokenSession.SetToken("original-token", DateTime.UtcNow.AddHours(1));
+    await scenario.Invoke();
+    Check(scenario.RequestCount == 0 && scenario.NextCount == 1, "distant expiry continues without refresh");
+}
+
+if (failures.Count > 0)
+    throw new InvalidOperationException($"{failures.Count}/{checks} checks failed:\n" + string.Join("\n", failures));
+Console.WriteLine($"Verified token refresh resilience: {checks} checks");
+
+// Accumulate failures so a baseline run demonstrates the complete affected behavior.
+void Check(bool condition, string message)
+{
+    checks++;
+    if (!condition) failures.Add(message);
+}
+
+// Verify rejection preserves company state while returning the existing relogin contract.
+void CheckRejected(RefreshScenario scenario, string label)
+{
+    Check(scenario.NextCount == 0 && scenario.Context.Response.StatusCode == 401, $"{label} rejects");
+    Check(scenario.TokenSession.GetToken().Token == null, $"{label} clears token");
+    Check(scenario.Context.Response.Headers.CacheControl == "no-store", $"{label} cannot be cached");
+    Check(scenario.Context.Session.GetString("CompanyId") == "company-a", $"{label} retains company selection");
+}
+
+// Runs the production middleware, token session and HTTP client against a controlled transport.
+sealed class RefreshScenario : IDisposable
+{
+    private readonly HttpClient http;
+    private readonly int status;
+    private readonly string body;
+    private readonly bool expiresDuringRefresh;
+    private readonly bool cancelDuringRefresh;
+    private readonly CancellationTokenSource requestCancellation = new();
+    public DefaultHttpContext Context { get; } = new();
+    public TokenSessionService TokenSession { get; }
+    public ApiClientService Client { get; }
+    public DateTime OriginalExpiry { get; }
+    public int RequestCount { get; private set; }
+    public int NextCount { get; private set; }
+
+    // Creates one independent request with a valid token and a simulated API outcome.
+    public RefreshScenario(int status, string? body = null, bool expiresDuringRefresh = false, bool cancelDuringRefresh = false)
+    {
+        this.status = status;
+        this.body = body ?? "{\"Success\":false,\"ErrorCode\":\"TEST\"}";
+        this.expiresDuringRefresh = expiresDuringRefresh;
+        this.cancelDuringRefresh = cancelDuringRefresh;
+        Context.Request.Path = "/api/test-refresh";
+        Context.RequestAborted = requestCancellation.Token;
+        Context.Response.Body = new MemoryStream();
+        Context.Session = new MemorySession();
+        Context.Session.SetString("CompanyId", "company-a");
+        var accessor = new HttpContextAccessor { HttpContext = Context };
+        TokenSession = new TokenSessionService(accessor, Options.Create(new JwtSettings()));
+        OriginalExpiry = DateTime.UtcNow.Add(expiresDuringRefresh ? TimeSpan.FromMilliseconds(500) : TimeSpan.FromMinutes(2));
+        TokenSession.SetToken("original-token", OriginalExpiry);
+        http = new HttpClient(new ControlledHandler(Respond));
+        Client = new ApiClientService(http, new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["ApiSettings:BaseUrl"] = "https://fixture.invalid"
+        }).Build(), TokenSession, accessor, new FixtureEnvironment(), NullLogger<ApiClientService>.Instance);
+    }
+
+    // Execute one middleware invocation without an HTTP server or a global application build.
+    public async Task Invoke(ICrmApiClient? overrideClient = null)
+    {
+        using var provider = new ServiceCollection()
+            .AddSingleton<ITokenSessionService>(TokenSession)
+            .AddSingleton<ICrmApiClient>(overrideClient ?? Client).BuildServiceProvider();
+        Context.RequestServices = provider;
+        var middleware = new TokenRefreshMiddleware(_ => { NextCount++; return Task.CompletedTask; },
+            NullLogger<TokenRefreshMiddleware>.Instance, Options.Create(new JwtSettings()));
+        await middleware.Invoke(Context);
+    }
+
+    // The transport preserves real response parsing while controlling status and elapsed expiry.
+    private async Task<HttpResponseMessage> Respond(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        RequestCount++;
+        if (request.Headers.Authorization?.Parameter != "original-token") throw new InvalidOperationException("unexpected bearer token");
+        if (expiresDuringRefresh)
+        {
+            var remaining = OriginalExpiry - DateTime.UtcNow + TimeSpan.FromMilliseconds(50);
+            if (remaining > TimeSpan.Zero) await Task.Delay(remaining, cancellationToken);
+        }
+        if (cancelDuringRefresh) Cancel();
+        if (status == 0) throw new HttpRequestException("simulated transport failure");
+        var response = new HttpResponseMessage((HttpStatusCode)status) { Content = new StringContent(body) };
+        response.Headers.Add("X-Test-Status", status.ToString());
+        if (status != 200) response.Headers.Add("X-Refreshed-Token", "untrusted-error-token");
+        return response;
+    }
+
+    // Simulate the browser abandoning this request using the actual HTTP cancellation token.
+    public void Cancel() => requestCancellation.Cancel();
+
+    // Release fixture-owned streams and HTTP resources only.
+    public void Dispose() { http.Dispose(); Context.Response.Body.Dispose(); requestCancellation.Dispose(); }
+}
+
+// Supplies HTTP outcomes through the same transport used in production.
+sealed class ControlledHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond) : HttpMessageHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => respond(request, cancellationToken);
+}
+
+// Supplies a missing interface result without implementing unrelated API endpoints.
+public class MissingRefreshResult : DispatchProxy
+{
+    protected override object? Invoke(MethodInfo? targetMethod, object?[]? args) => targetMethod?.Name == "RefreshTokenAsync"
+        ? Task.FromResult<LoginResult?>(null)
+        : throw new NotSupportedException(targetMethod?.Name);
+}
+
+// Keeps fixture token state in the same ISession contract as the application.
+sealed class MemorySession : ISession
+{
+    private readonly Dictionary<string, byte[]> entries = new();
+    public bool IsAvailable => true;
+    public string Id => "fixture-session";
+    public IEnumerable<string> Keys => entries.Keys;
+    public void Clear() => entries.Clear();
+    public Task CommitAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public Task LoadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public void Remove(string key) => entries.Remove(key);
+    public void Set(string key, byte[] value) => entries[key] = value;
+    public bool TryGetValue(string key, [NotNullWhen(true)] out byte[]? value) => entries.TryGetValue(key, out value);
+}
+
+// Avoids process environment dependencies when constructing the production API client.
+sealed class FixtureEnvironment : IHostEnvironment
+{
+    public string EnvironmentName { get; set; } = "Development";
+    public string ApplicationName { get; set; } = "TokenRefreshFixture";
+    public string ContentRootPath { get; set; } = ".";
+    public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
+}

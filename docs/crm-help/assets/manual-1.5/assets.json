@@ -1,0 +1,556 @@
+{
+    "schemaVersion":  "1.0",
+    "sourceSha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+    "assets":  [
+                   {
+                       "id":  "manual-1.5.image5",
+                       "path":  "assets/manual-1.5/image5.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "649B215F26F2C70793A57ACC013722F27200136BC53BF8704C065ED7637EC5EC",
+                       "sourcePart":  "word/media/image5.png",
+                       "altText":  "Captura de «Elementos comunes de la pantalla» relacionada con: • Mensajes de error o permiso: explican por qué una acción no se ha podido realizar. Deben leerse antes de reintentar.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image6",
+                       "path":  "assets/manual-1.5/image6.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "7B35826746C6E666760AE028A6B64A29037FF78ECD24078543D94FFA2AA6B32C",
+                       "sourcePart":  "word/media/image6.png",
+                       "altText":  "Captura de «Elementos comunes de la pantalla» relacionada con: • Mensajes de error o permiso: explican por qué una acción no se ha podido realizar. Deben leerse antes de reintentar.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image7",
+                       "path":  "assets/manual-1.5/image7.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "E1832FA4C0F7A0635471DF751280097EB1B2B59FA10E86FDB6669E2C43BCB94D",
+                       "sourcePart":  "word/media/image7.png",
+                       "altText":  "Captura de «Elementos comunes de la pantalla» relacionada con: • Mensajes de error o permiso: explican por qué una acción no se ha podido realizar. Deben leerse antes de reintentar.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image8",
+                       "path":  "assets/manual-1.5/image8.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "EC041189692EC500522FE9012C535C70154FC8C7F2A7408A065207090300F6EE",
+                       "sourcePart":  "word/media/image8.png",
+                       "altText":  "Captura de «Qué significa empresa activa» relacionada con: La empresa activa determina los clientes, proyectos, divisas, visitas, hojas de gastos y tickets que puede consultar. Antes de crear o buscar información, co...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image9",
+                       "path":  "assets/manual-1.5/image9.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "FFD619A164C6DFDA58B22C66EB259194C267BA94BF869248429F2EE23A8B81BB",
+                       "sourcePart":  "word/media/image9.png",
+                       "altText":  "Imagen procedente del Manual App CRM 1.5; consulte el tema asociado para su contexto funcional.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image10",
+                       "path":  "assets/manual-1.5/image10.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "8DD12B5A2347995C5A5E578888348B1FF989AFDAEC47903A3126F2A07351170D",
+                       "sourcePart":  "word/media/image10.png",
+                       "altText":  "Imagen procedente del Manual App CRM 1.5; consulte el tema asociado para su contexto funcional.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image11",
+                       "path":  "assets/manual-1.5/image11.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "8920D658D0558E437FD3973DC8FF776622F2DE9488FBEE9E07B8F261266C6320",
+                       "sourcePart":  "word/media/image11.png",
+                       "altText":  "Captura de la sección «Filtrar el historial» del manual CRM.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image12",
+                       "path":  "assets/manual-1.5/image12.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "E397EE4F9790567C079040A08E5858CBC5AA383A92BEB68B198B4DDFA7899976",
+                       "sourcePart":  "word/media/image12.png",
+                       "altText":  "Captura de «Crear una visita: paso 1, cuenta y contactos» relacionada con: 5. Pulse Avanzar.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image13",
+                       "path":  "assets/manual-1.5/image13.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "4E89A6D1A85C839A20461782B75F1F1FB51209B750A82DA2220FAA052EFE9948",
+                       "sourcePart":  "word/media/image13.png",
+                       "altText":  "Captura de «Crear una visita: paso 1, cuenta y contactos» relacionada con: 5. Pulse Avanzar.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image14",
+                       "path":  "assets/manual-1.5/image14.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "584C52567994ACA43BD7E6E508AC9065F97165F28F5A104DBA51031113C68D24",
+                       "sourcePart":  "word/media/image14.png",
+                       "altText":  "Captura de «Crear una visita: paso 1, cuenta y contactos» relacionada con: 5. Pulse Avanzar.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image15",
+                       "path":  "assets/manual-1.5/image15.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "5A54741670C116D1A8072B4312582BC90BBE551E25565BD2D86D2C4A795D5B60",
+                       "sourcePart":  "word/media/image15.png",
+                       "altText":  "Captura de «Crear una visita: paso 2, datos de la visita» relacionada con: 8. En Confirmar creación, revise la pregunta y pulse Aceptar para crear la visita o Cancelar para volver al formulario.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image16",
+                       "path":  "assets/manual-1.5/image16.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "6446BEA4471BD66817423A0BF697A21CF7A478563D188B881DC2DD396549B2B4",
+                       "sourcePart":  "word/media/image16.png",
+                       "altText":  "Captura de «Crear una visita: paso 2, datos de la visita» relacionada con: 8. En Confirmar creación, revise la pregunta y pulse Aceptar para crear la visita o Cancelar para volver al formulario.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image17",
+                       "path":  "assets/manual-1.5/image17.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "5886E9AED0E69944EA9623DEE9C94BB4B408941ABA699FEA1F435D3FC4385B38",
+                       "sourcePart":  "word/media/image17.png",
+                       "altText":  "Captura de «Editor de texto y dictado» relacionada con: Al pulsar Comentarios, Antecedentes o Conclusiones se abre un editor a pantalla completa. Escriba el texto y pulse Guardar para devolverlo al formulario. Cua...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image18",
+                       "path":  "assets/manual-1.5/image18.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "A37513F30044CBB7A50E8A283236F71CDF5D9AF3B7A682DB5818C2D00A30EAD9",
+                       "sourcePart":  "word/media/image18.png",
+                       "altText":  "Captura de «Editor de texto y dictado» relacionada con: Al pulsar Comentarios, Antecedentes o Conclusiones se abre un editor a pantalla completa. Escriba el texto y pulse Guardar para devolverlo al formulario. Cua...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image19",
+                       "path":  "assets/manual-1.5/image19.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "268E6F867D43256636CB663B0E3A5A6D9DAB62E3625855F6D921FAAB8FBD8A05",
+                       "sourcePart":  "word/media/image19.png",
+                       "altText":  "Captura de «Editor de texto y dictado» relacionada con: Al pulsar Comentarios, Antecedentes o Conclusiones se abre un editor a pantalla completa. Escriba el texto y pulse Guardar para devolverlo al formulario. Cua...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image20",
+                       "path":  "assets/manual-1.5/image20.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "19804882E9B2016C3EDACF8B85F8F10FF7148DB25218D022EDE1FB5CA7EA9499",
+                       "sourcePart":  "word/media/image20.png",
+                       "altText":  "Captura de «Consultar, editar o eliminar una visita» relacionada con: La cuenta y los contactos utilizados durante la creación no son campos editables en el detalle actual. Si la visita se creó para una cuenta equivocada, no ca...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image21",
+                       "path":  "assets/manual-1.5/image21.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "89320ECDC473E3D8B7EBA391411EA0C052EE8EC2740B6C24C68D5A68C8B43592",
+                       "sourcePart":  "word/media/image21.png",
+                       "altText":  "Captura de «Consultar, editar o eliminar una visita» relacionada con: La cuenta y los contactos utilizados durante la creación no son campos editables en el detalle actual. Si la visita se creó para una cuenta equivocada, no ca...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image22",
+                       "path":  "assets/manual-1.5/image22.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "78CAB09FF1797E318ECA8C62C6DE7DDF45C9C39A5D9C7464A294DCB7956164F1",
+                       "sourcePart":  "word/media/image22.png",
+                       "altText":  "Captura de «Abrir la lista de hojas» relacionada con: 3. Espere a que aparezcan las tarjetas. Cada tarjeta puede mostrar el identificador, la descripción, el propietario, la fecha, la divisa, el importe, el esta...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image23",
+                       "path":  "assets/manual-1.5/image23.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "C60E816A93EA92939C9A6DA6B83BF7D063060763AE6B378EEE75D55D7C7F442E",
+                       "sourcePart":  "word/media/image23.png",
+                       "altText":  "Captura de «Abrir la lista de hojas» relacionada con: 3. Espere a que aparezcan las tarjetas. Cada tarjeta puede mostrar el identificador, la descripción, el propietario, la fecha, la divisa, el importe, el esta...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image24",
+                       "path":  "assets/manual-1.5/image24.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "900B70BADCFF99E489538273C9E2C321AE5BE54F58CB7EFB69F0F3644C8CDDEA",
+                       "sourcePart":  "word/media/image24.png",
+                       "altText":  "Captura de «Abrir la lista de hojas» relacionada con: 3. Espere a que aparezcan las tarjetas. Cada tarjeta puede mostrar el identificador, la descripción, el propietario, la fecha, la divisa, el importe, el esta...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image25",
+                       "path":  "assets/manual-1.5/image25.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "64B2152C96149E9E0A197FA00395878413569768D6B50DA5B1DD934409990F4D",
+                       "sourcePart":  "word/media/image25.png",
+                       "altText":  "Captura de «Buscar y filtrar hojas» relacionada con: 4. Pulse Borrar para retirar todos los criterios.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image26",
+                       "path":  "assets/manual-1.5/image26.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "3F79A96262C40BBAC014F31351EB32778125BF7F9DA5798B8E213EA3D0A5237B",
+                       "sourcePart":  "word/media/image26.png",
+                       "altText":  "Captura de «Buscar y filtrar hojas» relacionada con: 4. Pulse Borrar para retirar todos los criterios.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image27",
+                       "path":  "assets/manual-1.5/image27.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "08A4990E9BC728D2815122E2EE79330448FCC178367FC81F895CF19C65E22BD0",
+                       "sourcePart":  "word/media/image27.png",
+                       "altText":  "Captura de «Buscar y filtrar hojas» relacionada con: 4. Pulse Borrar para retirar todos los criterios.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image28",
+                       "path":  "assets/manual-1.5/image28.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "71BB0CDDC023341E5901D683757D9C6C7C1AEAD1CAF3C8D1291870591FA21514",
+                       "sourcePart":  "word/media/image28.png",
+                       "altText":  "Captura de «Utilizar el Asistente de gastos» relacionada con: La lista puede mostrar un botón para abrir el Asistente de gastos en la sección inferior izquierda del formulario. Este asistente analiza únicamente las hoja...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image29",
+                       "path":  "assets/manual-1.5/image29.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "FAFD724027FFFE4557E0627214CEFA249FDCBE1DCEA79E9A80D532DED3C5B90E",
+                       "sourcePart":  "word/media/image29.png",
+                       "altText":  "Captura de «Crear la cabecera de una hoja» relacionada con: 1. En la lista, pulse el botón Crear o el botón redondo con el signo más.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image30",
+                       "path":  "assets/manual-1.5/image30.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "625A35C74ACB1E6302B148DBE60857253186502986AC6CFA5144BC5EAA7B82CC",
+                       "sourcePart":  "word/media/image30.png",
+                       "altText":  "Captura de «Comprender el detalle de la hoja» relacionada con: En Borrador y con permisos de edición, el botón de acciones rápidas ofrece Nuevo ticket, Vincular ticket y Nueva línea. Cuando la hoja es de solo lectura, es...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image31",
+                       "path":  "assets/manual-1.5/image31.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "5EC3CFFB13FA8E22A99E8F5CC2753917374D68005ED43181CAA79FACE7392DED",
+                       "sourcePart":  "word/media/image31.png",
+                       "altText":  "Captura de «Comprender el detalle de la hoja» relacionada con: En Borrador y con permisos de edición, el botón de acciones rápidas ofrece Nuevo ticket, Vincular ticket y Nueva línea. Cuando la hoja es de solo lectura, es...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image32",
+                       "path":  "assets/manual-1.5/image32.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "D03E1003D569DA2AA23735302932E4FF0D7F0646872C8F6EA09F598C3FD77FA3",
+                       "sourcePart":  "word/media/image32.png",
+                       "altText":  "Captura de «Añadir una línea manual» relacionada con: 8. Pulse Guardar y confirme.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image33",
+                       "path":  "assets/manual-1.5/image33.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "AA009F1663CF8E44B8297858F57185AC8B369C86111738B40EF0AB51CC6F1479",
+                       "sourcePart":  "word/media/image33.png",
+                       "altText":  "Captura de «Añadir una línea manual» relacionada con: 8. Pulse Guardar y confirme.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image34",
+                       "path":  "assets/manual-1.5/image34.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "6CE6D9FCA0072707C73073A1ACB7A8F883E9DDE52C6611087D038153865B87BD",
+                       "sourcePart":  "word/media/image34.png",
+                       "altText":  "Captura de «Añadir una línea manual» relacionada con: 8. Pulse Guardar y confirme.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image35",
+                       "path":  "assets/manual-1.5/image35.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "E9CE87112C39F65836CF6D008E0092CD4B1323A61FCCC65E2093003FDB0C04DF",
+                       "sourcePart":  "word/media/image35.png",
+                       "altText":  "Captura de «Divisas e importes de una línea» relacionada con: Si ambas divisas coinciden, Tipo cambio se mantiene en 100 y no necesita introducirse. Si son distintas, la aplicación intenta obtener el tipo correspondient...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image36",
+                       "path":  "assets/manual-1.5/image36.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "9D4D8790A807C6FAA64ECA21C937762473D24C480B9C1114B58005B90E1C175F",
+                       "sourcePart":  "word/media/image36.png",
+                       "altText":  "Captura de «Divisas e importes de una línea» relacionada con: Si ambas divisas coinciden, Tipo cambio se mantiene en 100 y no necesita introducirse. Si son distintas, la aplicación intenta obtener el tipo correspondient...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image37",
+                       "path":  "assets/manual-1.5/image37.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "1B72E822A269D6533574FAAA82FF2FDA663F01533DF7B4793797C59F2F31928A",
+                       "sourcePart":  "word/media/image37.png",
+                       "altText":  "Captura de «Crear un ticket desde una hoja» relacionada con: 5. Pulse Guardar. El ticket queda vinculado a la hoja solo al completar correctamente este guardado. No cierre ni vuelva atrás antes de guardarlo y asegurars...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image38",
+                       "path":  "assets/manual-1.5/image38.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "A8272360B058EDC55F1E394EA815DA5B05BCDFB410DA63F05FA3DCFFEA01D25A",
+                       "sourcePart":  "word/media/image38.png",
+                       "altText":  "Captura de «Crear un ticket desde una hoja» relacionada con: 5. Pulse Guardar. El ticket queda vinculado a la hoja solo al completar correctamente este guardado. No cierre ni vuelva atrás antes de guardarlo y asegurars...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image39",
+                       "path":  "assets/manual-1.5/image39.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "95888CB6552713F094543637E43E5BB843A7EE89790D01CABFECE44458EAF1F6",
+                       "sourcePart":  "word/media/image39.png",
+                       "altText":  "Captura de «Crear un ticket desde una hoja» relacionada con: 5. Pulse Guardar. El ticket queda vinculado a la hoja solo al completar correctamente este guardado. No cierre ni vuelva atrás antes de guardarlo y asegurars...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image40",
+                       "path":  "assets/manual-1.5/image40.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "1280AD94A0826A9DE81EECEB1CBFF6A34325DADF738529417555E526958AB138",
+                       "sourcePart":  "word/media/image40.png",
+                       "altText":  "Imagen procedente del Manual App CRM 1.5; consulte el tema asociado para su contexto funcional.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image41",
+                       "path":  "assets/manual-1.5/image41.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "058CD85B44F973E69009AEC7205310FF88A8EEB1C883F1C1A9F659EA71B953A1",
+                       "sourcePart":  "word/media/image41.png",
+                       "altText":  "Captura de «Vincular tickets existentes» relacionada con: 5. Lea el resultado. La aplicación indica cuántos fueron solicitados, vinculados, omitidos o fallidos. Si alguno falla, anote el motivo antes de cerrar.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image42",
+                       "path":  "assets/manual-1.5/image42.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "07140E1BDBC8D70629C5C7BB50780454265D0820E525448314D772A5D1A61D6A",
+                       "sourcePart":  "word/media/image42.png",
+                       "altText":  "Captura de «Vincular tickets existentes» relacionada con: 5. Lea el resultado. La aplicación indica cuántos fueron solicitados, vinculados, omitidos o fallidos. Si alguno falla, anote el motivo antes de cerrar.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image43",
+                       "path":  "assets/manual-1.5/image43.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "3EF8FD32F12A562DA3289D2B65CC9D3D681754728FF6F1BE8B2F45D7E54BC03E",
+                       "sourcePart":  "word/media/image43.png",
+                       "altText":  "Captura de «Vincular tickets existentes» relacionada con: 5. Lea el resultado. La aplicación indica cuántos fueron solicitados, vinculados, omitidos o fallidos. Si alguno falla, anote el motivo antes de cerrar.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image44",
+                       "path":  "assets/manual-1.5/image44.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "BF10635D1DA19480B5A2C0B50AD30512C7131CDDFD9C0BA3A9F05DA7CC84B718",
+                       "sourcePart":  "word/media/image44.png",
+                       "altText":  "Captura de «Abrir y filtrar tickets» relacionada con: 4. Pulse una tarjeta para abrir su detalle.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image45",
+                       "path":  "assets/manual-1.5/image45.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "EB7D010E65DA6F0C7DA65FDAF85860AE529D4F191805F6693A10251AFD859C5B",
+                       "sourcePart":  "word/media/image45.png",
+                       "altText":  "Captura de «Abrir y filtrar tickets» relacionada con: 4. Pulse una tarjeta para abrir su detalle.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image46",
+                       "path":  "assets/manual-1.5/image46.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "E1B7CD03EF7263168E812B8C19E8561EC5EB5F2F85DBC40604177F7DEF7FAFBB",
+                       "sourcePart":  "word/media/image46.png",
+                       "altText":  "Captura de «Estado del ticket» relacionada con: Un ticket Pendiente todavía no está asignado a una hoja. Un ticket Asignado ya se encuentra relacionado con una hoja de gastos. Si necesita cambiar esa relac...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image47",
+                       "path":  "assets/manual-1.5/image47.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "F3B21EC1EFD00AC38D4CD43F49174086A1BF19B747B82CB073C0C0D3A9BF6C24",
+                       "sourcePart":  "word/media/image47.png",
+                       "altText":  "Captura de «Estado del ticket» relacionada con: Un ticket Pendiente todavía no está asignado a una hoja. Un ticket Asignado ya se encuentra relacionado con una hoja de gastos. Si necesita cambiar esa relac...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image48",
+                       "path":  "assets/manual-1.5/image48.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "0BBAF2F8B5C725474443025D0138A9FB2EBB030AF1AE12087B65F8CC943E3127",
+                       "sourcePart":  "word/media/image48.png",
+                       "altText":  "Captura de «Estado del ticket» relacionada con: Un ticket Pendiente todavía no está asignado a una hoja. Un ticket Asignado ya se encuentra relacionado con una hoja de gastos. Si necesita cambiar esa relac...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image49",
+                       "path":  "assets/manual-1.5/image49.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "957EA460544A1184AC4C95346C0F3AC69606F0B5E04E4C341B15FD0DA7ADBE1A",
+                       "sourcePart":  "word/media/image49.png",
+                       "altText":  "Captura de «Flujo general de estados» relacionada con: Desde Rechazada, Pasar a Borrador devuelve a Borrador y Deshacer rechazo devuelve a Aprobación solicitada.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image50",
+                       "path":  "assets/manual-1.5/image50.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "01BF8CF2E4AE59CCF938059CB40B2995A3752F5947E8DEC052A05663C1059A52",
+                       "sourcePart":  "word/media/image50.png",
+                       "altText":  "Captura de «Enlaces recibidos por correo» relacionada con: Un correo de aprobación puede incluir un enlace directo a la hoja. Pulse el enlace, identifíquese si se solicita y espere. La aplicación puede cambiar a la e...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image51",
+                       "path":  "assets/manual-1.5/image51.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "CE1752E175C20B1A43991F434A9C6897597594DBF29778F6EA3470BD26DCBAD4",
+                       "sourcePart":  "word/media/image51.png",
+                       "altText":  "Captura de «Hoja de gastos: CRM / Usuarios / Hoja de gastos» relacionada con: Se puede realizar una acción directamente sobre el formulario tradicional de la hoja de gastos. En la botonera de la parte derecha, pulse Funciones para most...",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image52",
+                       "path":  "assets/manual-1.5/image52.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "282FCBAA37B34677BF0FB6D5A6B5A7D9D292AC3BA2B746D15572A3CC9192903E",
+                       "sourcePart":  "word/media/image52.png",
+                       "altText":  "Captura de «Gestión de hojas de gastos» relacionada con: Esta nueva opción está disponible en el menú: CRM / Asuntos / Hojas de Gastos / Gestión de Hojas de Gastos.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image53",
+                       "path":  "assets/manual-1.5/image53.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "B2B1C5836199095B0E324EBAAD99A15B58ED6B5EC092120ED2737B1C685EC6CE",
+                       "sourcePart":  "word/media/image53.png",
+                       "altText":  "Captura de «Gestión de hojas de gastos» relacionada con: Esta nueva opción está disponible en el menú: CRM / Asuntos / Hojas de Gastos / Gestión de Hojas de Gastos.",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   },
+                   {
+                       "id":  "manual-1.5.image54",
+                       "path":  "assets/manual-1.5/image54.png",
+                       "mimeType":  "image/png",
+                       "sha256":  "D3FF20D08BD43701989F8F67DF29A5753AFAF713096FFBA5015219402DBD9D42",
+                       "sourcePart":  "word/media/image54.png",
+                       "altText":  "Captura de «Gestión de hojas de gastos» relacionada con: En la zona superior hay un filtro de estado de hoja de gastos. Es un desplegable en el que aparecen todas las opciones posibles:",
+                       "usedByTopicIds":  [
+
+                                          ]
+                   }
+               ]
+}

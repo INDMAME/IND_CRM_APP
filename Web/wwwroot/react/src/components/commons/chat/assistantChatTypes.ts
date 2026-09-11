@@ -18,6 +18,7 @@ export type AssistantChatMessageMeta = {
   warnings?: string[];
   retryAfter?: string | null;
   httpStatus?: number;
+  includeInHistory?: boolean;
 };
 
 export type AssistantChatMessage = {

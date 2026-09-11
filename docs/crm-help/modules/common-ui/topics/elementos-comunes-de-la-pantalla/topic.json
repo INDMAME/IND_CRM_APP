@@ -1,0 +1,51 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui.elementos-comunes-de-la-pantalla",
+    "moduleId":  "common-ui",
+    "sectionNumber":  "5",
+    "title":  "Elementos comunes de la pantalla",
+    "summary":  "Identifique las zonas de la pantalla, los controles y los mensajes de la aplicación.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Elementos comunes de la pantalla",
+                                  "barra superior",
+                                  "menú lateral",
+                                  "botón flotante",
+                                  "mensajes de confirmación"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Para qué sirven los botones y zonas de la pantalla?",
+                                          "¿Cómo distingo un mensaje de progreso de una confirmación?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "common-ui.editar-guardar-y-cancelar"
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "9C8F118FDB78FFD4DE0D9412E799FD79BE68B9BD29A4CB05AD5C0AA66657D506",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "5",
+                   "pageFromTableOfContents":  8
+               }
+}

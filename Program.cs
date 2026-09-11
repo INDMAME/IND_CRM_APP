@@ -1,10 +1,12 @@
-﻿using IND_CRM_APP.Middleware;
+using IND_CRM_APP.Middleware;
+using IND_CRM_APP.Extensions;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
-using Microsoft.AspNetCore.Diagnostics;
 using IND_CRM_APP.Infrastructure.Security.Auth;
 using IND_CRM_APP.Infrastructure.Security.Filters;
+using IND_CRM_APP.Infrastructure.Performance;
+using IND_CRM_APP.Infrastructure.Session;
 using IND_CRM_APP.Infrastructure.Validation;
 using System.Reflection;
 using Microsoft.AspNetCore.Localization;
@@ -18,7 +20,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Routing.Constraints;
-using System.Security.Claims;
 using System.IO;
 using System.Security.Cryptography;
 
@@ -94,7 +95,7 @@ builder.WebHost.ConfigureKestrel(options =>
 // -----------------------------
 // Servicios
 // -----------------------------
-//builder.Services.AddResponseCompression();
+builder.Services.AddStaticAssetDelivery();
 // Point localization to the new Resources root.
 builder.Services.AddLocalization(options => options.ResourcesPath = "App/Resources");
 
@@ -167,6 +168,7 @@ builder.Services.AddAuthentication(options =>
         : CookieSecurePolicy.Always;
     options.LoginPath = "/Auth/Login";
     options.AccessDeniedPath = "/Auth/Login";
+    options.Events.OnValidatePrincipal = AuthenticationSessionEvents.ValidateCookie;
 })
 .AddOpenIdConnect(options =>
 {
@@ -189,59 +191,12 @@ builder.Services.AddAuthentication(options =>
     };
     options.Events = new OpenIdConnectEvents
     {
-        OnTokenValidated = context =>
-        {
-            var httpContext = context.HttpContext;
-            var logger = httpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            var principal = context.Principal;
-            var oid = principal?.FindFirst(IndAuthEnv.ClaimOid)?.Value
-                      ?? principal?.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
-
-            // Log Entra OID to help diagnose Entra user mapping issues.
-            if (string.IsNullOrWhiteSpace(oid))
-                logger.LogWarning("Entra OID claim missing in token.");
-            else
-                logger.LogInformation("Entra OID received: {EntraOid}", oid);
-
-            if (!string.IsNullOrWhiteSpace(oid))
-                httpContext.Session.SetString("ENTRAOID", oid);
-
-            // Always clear cached context on a fresh Entra sign-in.
-            var sessionKeysToClear = new[]
-            {
-                "INDWebContext",
-                "INDCompanySelected",
-                "INDCompanySelectedName",
-                "INDCompanySelectionSource",
-                "INDEntraOidContext",
-                "INDContextToken",
-                "INDContextVersion",
-                "INDPermissionsRevision",
-                "INDContextIssuedUtc",
-                "INDContextExpiresUtc",
-                "INDContextLastActivityUtc",
-                "INDContextTenantId",
-                "AxUser"
-            };
-
-            foreach (var sessionKey in sessionKeysToClear)
-                httpContext.Session.Remove(sessionKey);
-
-            logger.LogInformation("Cleared cached context after Entra sign-in.");
-
-            var preferred = principal?.FindFirst(IndAuthEnv.ClaimEmailPreferred)?.Value;
-            var email = preferred
-                        ?? principal?.FindFirst("email")?.Value
-                        ?? principal?.FindFirst(ClaimTypes.Email)?.Value;
-            var display = email ?? principal?.Identity?.Name ?? string.Empty;
-
-            if (!string.IsNullOrWhiteSpace(display))
-                httpContext.Session.SetString("Username", display);
-
-            return Task.CompletedTask;
-        },
+        OnTicketReceived = AuthenticationSessionEvents.CompleteLogin,
         OnRedirectToIdentityProvider = context =>
         {
+            if (!AuthenticationSessionEvents.BeginLogin(context))
+                return Task.CompletedTask;
+
             if (context.Properties?.Items == null)
                 return Task.CompletedTask;
 
@@ -297,6 +252,9 @@ builder.Services.AddSession(options =>
         ? CookieSecurePolicy.SameAsRequest
         : CookieSecurePolicy.Always;
 });
+// Keep concurrent session writes coherent without locking upstream operations.
+builder.Services.AddSingleton<Microsoft.AspNetCore.Session.ISessionStore, ConcurrentSessionStore>();
+builder.Services.AddSingleton<AuthenticationSessionRegistry>();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -331,21 +289,7 @@ var app = builder.Build();
 // -----------------------------
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler(errorApp =>
-    {
-        errorApp.Run(async context =>
-        {
-            var feature = context.Features.Get<IExceptionHandlerPathFeature>();
-            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-
-            if (feature?.Error != null)
-            {
-                logger.LogError(feature.Error, "Unhandled exception on path: {Path}", feature.Path);
-            }
-
-            context.Response.Redirect("/Shared/Error");
-        });
-    });
+    app.UseExceptionHandler("/Shared/Error");
 
     app.UseHsts();
 }
@@ -381,16 +325,23 @@ app.Use(async (context, next) =>
     await next();
 });
 
-//app.UseResponseCompression();
-app.UseStaticFiles();
+app.UseStaticAssetDelivery(app.Environment.WebRootFileProvider);
 app.UseRequestLocalization(app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value);
+// Register before routing so status re-execution resolves its error endpoint again.
+app.UseCrmStatusCodePages();
 app.UseRouting();
-// Friendly 404 page for missing routes.
-app.UseStatusCodePagesWithReExecute("/Home/NotFound", "?code={0}");
 app.UseCookiePolicy();
+app.Use(async (context, next) =>
+{
+    AuthenticationSessionRequest.PrepareResponse(context);
+    await next(context);
+});
 app.UseSession();
 app.UseAuthentication();
+app.UseMiddleware<AuthenticationSessionMiddleware>();
 app.UseAuthorization();
+// Reject stale company tabs before any middleware can call IND_CRM_API.
+app.UseMiddleware<ExpectedCompanyContextMiddleware>();
 // Token refresh middleware
 app.UseMiddleware<TokenRefreshMiddleware>();
 app.UseMiddleware<IndContextRefreshMiddleware>();
@@ -398,6 +349,34 @@ app.UseMiddleware<IndContextRefreshMiddleware>();
 // -----------------------------
 // Rutas MVC
 // -----------------------------
+app.MapControllerRoute(
+    name: "api-help-catalog",
+    pattern: "api/help/catalog",
+    defaults: new { controller = "Home", action = "ApiHelpCatalog" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
+    name: "api-help-topic",
+    pattern: "api/help/topics/{topicId}",
+    defaults: new { controller = "Home", action = "ApiHelpTopic" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
+    name: "api-help-ask",
+    pattern: "api/help/ask",
+    defaults: new { controller = "Home", action = "ApiHelpAsk" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
+    name: "api-help-feedback",
+    pattern: "api/help/feedback",
+    defaults: new { controller = "Home", action = "ApiHelpFeedback" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
 app.MapControllerRoute(
     name: "api-auth-entra-context",
     pattern: "api/auth/entra/context",
@@ -606,6 +585,28 @@ app.MapControllerRoute(
     pattern: "api/crm/expensesheets/{hojaGastosId}/reimbursable-expense/propagate",
     defaults: new { controller = "Gastos", action = "ApiExpenseSheetReimbursableExpensePropagate" },
     constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheets-project-default-propagate",
+    pattern: "api/crm/expensesheets/{hojaGastosId}/project-default/propagate",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetProjectDefaultPropagate" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+// MMS - Registers line ticket routes before the generic expense line routes. - 2026.08.04
+app.MapControllerRoute(
+    name: "api-expense-sheets-line-ticket-attach",
+    pattern: "api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId}/ticket",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetLineTicketAttach" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("PUT") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheets-line-ticket-detach",
+    pattern: "api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId}/ticket",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetLineTicketDetach" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("DELETE") }
 );
 
 app.MapControllerRoute(

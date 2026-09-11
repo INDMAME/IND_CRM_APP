@@ -1,0 +1,53 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "tickets.modulo-tickets",
+    "moduleId":  "tickets",
+    "sectionNumber":  "9",
+    "title":  "Módulo Tickets",
+    "summary":  "Distinga la creación del ticket, la revisión de sus datos y su vinculación a una hoja.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Módulo Tickets",
+                                  "Tickets",
+                                  "justificantes de gasto",
+                                  "imagen y datos del ticket",
+                                  "revisión de tickets"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Para qué sirve el módulo Tickets?",
+                                          "¿Crear un ticket, revisarlo y vincularlo son pasos diferentes?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "tickets.abrir-y-filtrar-tickets",
+                            "tickets.crear-un-ticket-desde-el-modulo-tickets",
+                            "tickets.estado-del-ticket"
+                        ],
+    "routeKey":  "expenses.tickets",
+    "status":  "published",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "1BB142BBDCE0FA944EDBA8458639189D757937D6CAC6FBDE993746221238F854",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "9",
+                   "pageFromTableOfContents":  24
+               }
+}

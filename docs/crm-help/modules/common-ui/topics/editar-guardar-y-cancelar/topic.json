@@ -1,0 +1,51 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui.editar-guardar-y-cancelar",
+    "moduleId":  "common-ui",
+    "sectionNumber":  "5.1",
+    "title":  "Editar, guardar y cancelar",
+    "summary":  "Edite los campos permitidos, confirme el guardado y distinga qué cambios descarta Cancelar.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Editar, guardar y cancelar",
+                                  "modo edición",
+                                  "descartar cambios",
+                                  "cambios sin guardar",
+                                  "confirmar guardado"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Cómo edito y guardo un registro?",
+                                          "¿Cancelar deshace los cambios que ya he guardado?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "common-ui.elementos-comunes-de-la-pantalla"
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "7045DEB41C3CF10B1FA612643A5B42793BAA87D97CB2C5AA41BDEB83E7FAAD6A",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "5.1",
+                   "pageFromTableOfContents":  9
+               }
+}

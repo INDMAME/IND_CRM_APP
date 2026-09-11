@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expense-approval.acciones-del-propietario",
+    "moduleId":  "expense-approval",
+    "sectionNumber":  "10.3",
+    "title":  "Acciones del propietario",
+    "summary":  "Consulta las acciones disponibles para el propietario de una hoja.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Acciones del propietario",
+                                  "aprobación de gastos",
+                                  "estados de hoja"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre acciones del propietario?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.8.0",
+    "contentHash":  "47AD2649DA73975BE86F6CD678F411A371DBCB743F13CFAB3EB5A008040F4972",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "10.3",
+                   "pageFromTableOfContents":  27
+               }
+}

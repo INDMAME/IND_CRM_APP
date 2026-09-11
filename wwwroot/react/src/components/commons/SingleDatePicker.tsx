@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useFloatingPosition } from "../../hooks/useFloatingPosition.ts";
-import { ChevronDownSvg, ChevronUpSvg } from "./chevrons.tsx";
+import {
+  SELECT_FIELD_ACTION_BUTTON_CLASS_NAME,
+  SELECT_FIELD_ACTIONS_CLASS_NAME,
+  SelectChevron,
+} from "./chevrons.tsx";
 
 // Single date picker matching the Historial DRP visual style.
 // Returns an ISO string (yyyy-MM-dd) via onChange.
@@ -274,8 +278,10 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
         >
           <span style={{ color: valueColor, fontWeight: 400 }}>{formatDisplay(selectedDate)}</span>
         </button>
-        <span className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 pointer-events-none">
-          {isPopoverOpen ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
+        <span className={`${SELECT_FIELD_ACTIONS_CLASS_NAME} pointer-events-none text-slate-500`}>
+          <span className={SELECT_FIELD_ACTION_BUTTON_CLASS_NAME}>
+            <SelectChevron open={isPopoverOpen} />
+          </span>
         </span>
       </div>
       {popover}
