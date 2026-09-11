@@ -514,13 +514,16 @@ export const useExpenseSheetDetailPageController = () => {
         sheetId: createdSheetId,
       });
       clearExpenseActingUserOverride();
-      setIsRedirectingAfterCreate(true);
-      navigateToCreatedSheet(createdSheetId);
+      const navigationStarted = navigateToCreatedSheet(createdSheetId);
+      setIsRedirectingAfterCreate(navigationStarted);
+      if (!navigationStarted) {
+        setStatus(indFormat("ExpenseSheets_CreatedOpenPending", "Expense sheet {0} was created. Save again to open it.", createdSheetId));
+      }
       return;
     }
 
     reloadExpensePage();
-  }, [invalidateCachedListForRefetch, isCreateMode, navigateToCreatedSheet]);
+  }, [invalidateCachedListForRefetch, isCreateMode, navigateToCreatedSheet, setStatus]);
 
   const handleStatusActionClick = useCallback(
     (action: { labelKey: string; fallback: string; nextStatus: number }) => {

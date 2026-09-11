@@ -592,10 +592,10 @@ export const useExpenseSheetDetailState = ({
 
   const navigateToCreatedSheet = useCallback((createdSheetId: string) => {
     const safeCreatedSheetId = safeText(createdSheetId);
-    if (!safeCreatedSheetId) return;
+    if (!safeCreatedSheetId) return false;
 
     const targetUrl = `/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(safeCreatedSheetId)}`;
-    navigateToExpenseUrl(targetUrl);
+    return navigateToExpenseUrl(targetUrl);
   }, []);
 
   const navigateToLineDetail = useCallback(

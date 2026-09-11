@@ -9,7 +9,7 @@ import {
 } from "../services/moduleDataVisibilityService.ts";
 import { indT } from "../utils/indI18n.ts";
 import { resolveEffectiveCompanyId } from "../utils/companySelection.ts";
-import { getSessionJsonWithExpiry, setSessionJsonWithExpiry } from "../utils/sessionExpiry.ts";
+import { getSessionJsonWithExpiry, removeSessionValueWithExpiry, setSessionJsonWithExpiry } from "../utils/sessionExpiry.ts";
 import { getBrowserStorageScopeToken } from "../utils/browserStorageScope.ts";
 import {
   buildVisibleUserByOwnerMap,
@@ -33,6 +33,7 @@ type UseModuleDataVisibilityArgs = {
   includeCrmUserId?: boolean;
   allowCachedUsers?: boolean;
   preloadedUsers?: unknown[] | null;
+  preloadedUsersSucceeded?: boolean;
   onForbidden?: () => void;
   onDebug?: (message: string, data?: Record<string, unknown>) => void;
 };
@@ -74,8 +75,10 @@ const buildCacheKey = (
   ].join("_");
 };
 
-const hasPreloadedUsers = (preloadedUsers: unknown[] | null | undefined): boolean => {
-  return Array.isArray(preloadedUsers) && preloadedUsers.length > 0;
+// Empty lists are authoritative only when the server confirms a successful preload.
+const hasPreloadedUsers = (preloadedUsers: unknown[] | null | undefined, succeeded?: boolean): boolean => {
+  return Array.isArray(preloadedUsers) &&
+    (succeeded === true || (succeeded === undefined && preloadedUsers.length > 0));
 };
 
 const readPreloadedUsers = (preloadedUsers: unknown[] | null | undefined): ModuleDataVisibilityVisibleUser[] => {
@@ -94,19 +97,22 @@ export const useModuleDataVisibility = ({
   includeCrmUserId = true,
   allowCachedUsers = true,
   preloadedUsers,
+  preloadedUsersSucceeded,
   onForbidden,
   onDebug,
 }: UseModuleDataVisibilityArgs) => {
-  const [visibleUsers, setVisibleUsers] = useState<ModuleDataVisibilityVisibleUser[]>(() => readPreloadedUsers(preloadedUsers));
+  const [visibleUsers, setVisibleUsers] = useState<ModuleDataVisibilityVisibleUser[]>(() =>
+    hasPreloadedUsers(preloadedUsers, preloadedUsersSucceeded) ? readPreloadedUsers(preloadedUsers) : []);
   const [visibleUsersLoading, setVisibleUsersLoading] = useState(false);
   const [visibleUsersError, setVisibleUsersError] = useState("");
-  const [visibleUsersReady, setVisibleUsersReady] = useState(() => hasPreloadedUsers(preloadedUsers));
+  const [visibleUsersReady, setVisibleUsersReady] = useState(() => hasPreloadedUsers(preloadedUsers, preloadedUsersSucceeded));
   const activeAbortRef = useRef<AbortController | null>(null);
   const activeRequestIdRef = useRef(0);
 
   const visibleUserByOwnerAxUserId = useMemo(() => buildVisibleUserByOwnerMap(visibleUsers), [visibleUsers]);
 
   const abortActiveRequest = useCallback(() => {
+    activeRequestIdRef.current += 1;
     if (!activeAbortRef.current) return;
     try {
       activeAbortRef.current.abort();
@@ -118,8 +124,9 @@ export const useModuleDataVisibility = ({
 
   const loadVisibleUsers = useCallback(
     async (force = false) => {
+      abortActiveRequest();
+      const requestId = activeRequestIdRef.current;
       if (!enabled) {
-        abortActiveRequest();
         setVisibleUsers([]);
         setVisibleUsersLoading(false);
         setVisibleUsersError("");
@@ -129,7 +136,7 @@ export const useModuleDataVisibility = ({
 
       const cacheKey = buildCacheKey(companyId, axUserId, permissionsRevision, appCode, moduleCode, includeCrmUserId);
       const preloaded = readPreloadedUsers(preloadedUsers);
-      if (!force && hasPreloadedUsers(preloadedUsers)) {
+      if (!force && hasPreloadedUsers(preloadedUsers, preloadedUsersSucceeded)) {
         setVisibleUsers(preloaded);
         setVisibleUsersLoading(false);
         setVisibleUsersError("");
@@ -141,7 +148,9 @@ export const useModuleDataVisibility = ({
         return;
       }
 
-      const cached = force || !allowCachedUsers || !cacheKey
+      const preloadAttempted = preloadedUsersSucceeded !== undefined || Array.isArray(preloadedUsers);
+      if (preloadAttempted || force) removeSessionValueWithExpiry(cacheKey);
+      const cached = force || preloadAttempted || !allowCachedUsers || !cacheKey
         ? null
         : getSessionJsonWithExpiry<ModuleDataVisibilityCacheEntry>(cacheKey);
       if (cached && Array.isArray(cached.users)) {
@@ -153,11 +162,9 @@ export const useModuleDataVisibility = ({
         return;
       }
 
-      const requestId = ++activeRequestIdRef.current;
-      abortActiveRequest();
-
       const controller = new AbortController();
       activeAbortRef.current = controller;
+      setVisibleUsers([]);
       setVisibleUsersLoading(true);
       setVisibleUsersError("");
       setVisibleUsersReady(false);
@@ -173,6 +180,7 @@ export const useModuleDataVisibility = ({
         const users = normalizeModuleDataVisibilityUsers(getVisibleUsersResponseItems(response));
         const traceId = getVisibleUsersResponseTraceId(response);
         if (!isVisibleUsersResponseSuccess(response) && users.length === 0) {
+          removeSessionValueWithExpiry(cacheKey);
           setVisibleUsers([]);
           setVisibleUsersLoading(false);
           setVisibleUsersError(getVisibleUsersResponseMessage(response) || indT("Api_RequestFailed", "Could not load visible users."));
@@ -196,6 +204,9 @@ export const useModuleDataVisibility = ({
           activeAbortRef.current = null;
           return;
         }
+
+        removeSessionValueWithExpiry(cacheKey);
+        setVisibleUsers([]);
 
         if (err instanceof ApiFetchError && err.status === 403) {
           setVisibleUsersLoading(false);
@@ -226,6 +237,7 @@ export const useModuleDataVisibility = ({
       onForbidden,
       permissionsRevision,
       preloadedUsers,
+      preloadedUsersSucceeded,
     ]
   );
 

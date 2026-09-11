@@ -37,6 +37,8 @@ type RemoteSearchComboboxProps = {
     signal: AbortSignal
   ) => Promise<{ items: RemoteSearchOption[]; total?: number }>;
   idBase: string;
+  // Identifies external filters and identity independently of the editable search term.
+  queryScope?: string;
   minSearchLength?: number;
   pageSize?: number;
   allowEmptySearch?: boolean;
@@ -67,7 +69,7 @@ const uniqueByValue = (items: RemoteSearchOption[]): RemoteSearchOption[] => {
 };
 
 // Generic remote-search combobox that supports manual search and optional paged loading on open.
-const RemoteSearchCombobox = ({
+const RemoteSearchComboboxContent = ({
   label,
   placeholder,
   value,
@@ -124,6 +126,14 @@ const RemoteSearchCombobox = ({
     loadingRef.current = loading;
   }, [loading]);
 
+  // Editing or selecting a value invalidates every pending result for the previous input.
+  const cancelPendingSearch = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    loadingRef.current = false;
+    setLoading(false);
+  }, []);
+
   const query = value || "";
   const loadedSearchTermKey = loadedSearchTermRef.current.trim().toLowerCase();
   const hasLoadedOpenSearchOptions =
@@ -158,6 +168,7 @@ const RemoteSearchCombobox = ({
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
+      loadingRef.current = true;
       setLoading(true);
       if (!append) {
         setActiveIndex(0);
@@ -169,6 +180,7 @@ const RemoteSearchCombobox = ({
       try {
         if (onSearchPage) {
           const response = await onSearchPage(normalizedTerm, page, pageSize, controller.signal);
+          if (controller.signal.aborted || abortRef.current !== controller) return;
           const pageItems = uniqueByValue(Array.isArray(response?.items) ? response.items : []);
           if (!append && pageItems.length === 0) {
             setOptions([]);
@@ -196,6 +208,7 @@ const RemoteSearchCombobox = ({
           }
         } else {
           const response = await onSearch(normalizedTerm, controller.signal);
+          if (controller.signal.aborted || abortRef.current !== controller) return;
           const next = uniqueByValue(response || []);
           if (!append && next.length === 0) {
             setOptions([]);
@@ -221,6 +234,7 @@ const RemoteSearchCombobox = ({
         loadedSearchTermRef.current = normalizedTerm;
         setOpen(true);
       } catch {
+        if (controller.signal.aborted || abortRef.current !== controller) return;
         if (!append) {
           setOptions([]);
           currentPageRef.current = 0;
@@ -233,15 +247,16 @@ const RemoteSearchCombobox = ({
       } finally {
         if (abortRef.current === controller) {
           abortRef.current = null;
+          loadingRef.current = false;
+          setLoading(false);
         }
-        setLoading(false);
       }
     },
     [onChange, onSearch, onSearchPage, pageSize]
   );
 
   const runSearch = useCallback(async () => {
-    if (readOnlyMode || loading) return;
+    if (readOnlyMode || loadingRef.current) return;
     const term = query.trim();
     const termKey = term.toLowerCase();
 
@@ -262,10 +277,10 @@ const RemoteSearchCombobox = ({
     }
 
     await executeSearch(term, 1, false);
-  }, [canSearchTerm, executeSearch, lastSearchedTerm, loading, onSearchPage, options.length, query, readOnlyMode]);
+  }, [canSearchTerm, executeSearch, lastSearchedTerm, onSearchPage, options.length, query, readOnlyMode]);
 
   const runOpenSearch = useCallback(async () => {
-    if (readOnlyMode || loading || !loadOnOpen) return;
+    if (readOnlyMode || loadingRef.current || !loadOnOpen) return;
 
     const term = openSearchMode === "empty-query" ? "" : query.trim();
     if (!canSearchTerm(term)) {
@@ -275,10 +290,10 @@ const RemoteSearchCombobox = ({
     await executeSearch(term, 1, false, {
       clearValueOnNoResults: openSearchMode !== "empty-query",
     });
-  }, [canSearchTerm, executeSearch, loadOnOpen, loading, openSearchMode, query, readOnlyMode]);
+  }, [canSearchTerm, executeSearch, loadOnOpen, openSearchMode, query, readOnlyMode]);
 
   const runLoadMore = useCallback(async () => {
-    if (readOnlyMode || loading || !onSearchPage || !infiniteScroll || !hasMoreRef.current) {
+    if (readOnlyMode || loadingRef.current || !onSearchPage || !infiniteScroll || !hasMoreRef.current) {
       return;
     }
 
@@ -303,7 +318,6 @@ const RemoteSearchCombobox = ({
     executeSearch,
     infiniteScroll,
     lastSearchedTerm,
-    loading,
     onSearchPage,
     openSearchMode,
     query,
@@ -336,6 +350,7 @@ const RemoteSearchCombobox = ({
 
   const selectOption = (option: RemoteSearchOption) => {
     const nextValue = String(option.value || "").trim();
+    cancelPendingSearch();
     setShowNotFoundState(false);
     onChange(nextValue);
     onCommit?.(nextValue);
@@ -382,6 +397,7 @@ const RemoteSearchCombobox = ({
             value={query}
             onChange={(event) => {
               const nextValue = event.target.value;
+              cancelPendingSearch();
               setActiveIndex(0);
               setShowNotFoundState(false);
               onChange(nextValue);
@@ -536,5 +552,10 @@ const RemoteSearchCombobox = ({
     </div>
   );
 };
+
+// Remounts lookup-owned state when the business query changes, preserving the controlled value.
+const RemoteSearchCombobox = (props: RemoteSearchComboboxProps) => (
+  <RemoteSearchComboboxContent key={props.queryScope ?? ""} {...props} />
+);
 
 export default RemoteSearchCombobox;
