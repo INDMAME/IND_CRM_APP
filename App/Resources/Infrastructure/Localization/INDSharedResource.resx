@@ -1862,4 +1862,6 @@
   <data name="Visits_Create_PartialChanged" xml:space="preserve">
     <value>La actividad {0} ya existe. Restaura los valores originales del formulario para reintentar los contactos pendientes, o edita la actividad desde el historial.</value>
   </data>
+  <data name="ExpenseSheets_Assistant_SourceTooLarge" xml:space="preserve"><value>Acota los filtros antes de preguntar: el asistente admite hasta 6000 hojas de gastos y 4 MB de datos.</value></data>
+  <data name="ExpenseSheets_Assistant_SourceChanged" xml:space="preserve"><value>El listado de gastos cambió durante la carga. Actualiza el listado y vuelve a intentarlo.</value></data>
 </root>

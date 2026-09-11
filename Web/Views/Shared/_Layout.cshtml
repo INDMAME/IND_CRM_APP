@@ -586,6 +586,7 @@
         window.__IND_MODULE_ACCESS__ = @Html.Raw(moduleAccessJson);
         window.__IND_ENTRA_OID__ = @Html.Raw(JsonSerializer.Serialize(entraOid));
         window.__IND_SELECTED_COMPANY__ = @Html.Raw(JsonSerializer.Serialize(selectedCompanyId ?? string.Empty));
+        window.__IND_PERMISSIONS_REVISION__ = @Html.Raw(JsonSerializer.Serialize(Context?.Session?.GetString("INDPermissionsRevision") ?? string.Empty));
         window.__IND_ALLOW_SELF_MANAGEMENT__ = @Html.Raw(JsonSerializer.Serialize(allowSelfManagement));
         window.__IND_PERMISSION_I18N__ = {
             title: @Html.Raw(JsonSerializer.Serialize(SR["Auth_PermissionDenied_Title"].Value)),

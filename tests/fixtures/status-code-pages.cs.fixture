@@ -38,6 +38,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
 builder.Services.AddSession();
+builder.Services.AddSingleton<Microsoft.AspNetCore.Session.ISessionStore, IND_CRM_APP.Infrastructure.Session.ConcurrentSessionStore>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITokenSessionService, TokenSessionService>();
 builder.Services.AddScoped<IIndAuthContextService, IndAuthContextService>();
@@ -200,6 +201,31 @@ try
         Check(json.RootElement.GetProperty("Items")[0].GetProperty("PermissionsRevision").GetString() == "new-revision", "Context endpoint returned the old revision");
     using (var recovered = await authClient.GetAsync("/api/audit/recovered"))
         Check(recovered.StatusCode == HttpStatusCode.OK, "Signed context was not installed into the session");
+
+    // Repeated reads reuse a request-local parsed context, while replacement and removal invalidate it.
+    using (var scope = app.Services.CreateScope())
+    {
+        var accessor = scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
+        var context = new DefaultHttpContext();
+        context.Session = app.Services.GetRequiredService<Microsoft.AspNetCore.Session.ISessionStore>()
+            .Create("parsed-context-test", TimeSpan.FromHours(2), TimeSpan.FromSeconds(10), () => true, true);
+        accessor.HttpContext = context;
+        try
+        {
+            SeedFreshCache(context);
+            var authContext = scope.ServiceProvider.GetRequiredService<IIndAuthContextService>();
+            var first = authContext.GetCachedContext();
+            Check(first != null && ReferenceEquals(first, authContext.GetCachedContext()), "Repeated context read was not reused");
+            context.Session.SetString("INDWebContext", JsonSerializer.Serialize(new IndWebContext { ContextVersion = 99 }));
+            Check(authContext.GetCachedContext()?.ContextVersion == 99, "Parsed context ignored replacement JSON");
+            context.Session.Remove("INDWebContext");
+            Check(authContext.GetCachedContext() == null, "Parsed context survived session removal");
+        }
+        finally
+        {
+            accessor.HttpContext = null;
+        }
+    }
     Console.WriteLine("Verified exception recovery, anonymous errors, antiforgery and fresh signed context.");
 }
 finally

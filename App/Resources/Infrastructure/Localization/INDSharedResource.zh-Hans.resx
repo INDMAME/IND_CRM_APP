@@ -1862,4 +1862,6 @@
   <data name="Visits_Create_PartialChanged" xml:space="preserve">
     <value>活动 {0} 已存在。请恢复表单的原始值后重试添加待处理的联系人，或从历史记录中编辑该活动。</value>
   </data>
+  <data name="ExpenseSheets_Assistant_SourceTooLarge" xml:space="preserve"><value>提问前请缩小筛选范围：助手最多支持 6000 张费用报销单和 4 MB 数据。</value></data>
+  <data name="ExpenseSheets_Assistant_SourceChanged" xml:space="preserve"><value>费用列表在加载期间发生了变化。请刷新列表后重试。</value></data>
 </root>

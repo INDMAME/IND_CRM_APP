@@ -19,6 +19,8 @@
 ## Identidad, empresa y autorización
 
 - Microsoft Entra/OIDC autentica al usuario. El servidor conserva `INDWebContext` y la empresa elegida.
+- `ConcurrentSessionStore` conserva el formato y proveedor de sesión de ASP.NET Core. Coordina únicamente recarga, mezcla y guardado mediante bloqueos acotados del proceso; las peticiones a la API continúan en paralelo. Fusiona claves independientes, mantiene juntos los campos de contexto firmado y descarta escrituras anteriores a un cambio de identidad, empresa o cierre de sesión. Esta coordinación corresponde al proveedor local de memoria, no a múltiples procesos con un almacén distribuido.
+- `IndAuthContextService` reutiliza el contexto deserializado dentro de la petición y registra actividad como máximo cada 30 segundos; un cambio del JSON o su eliminación invalida esa lectura.
 - `INDModuleAuthorizeFilter` y `INDModuleRegistry` controlan acceso a módulos.
 - `AllowSelfManagement` pertenece a la empresa seleccionada y React lo recibe a través de `AuthProvider`/`useAuthContext()`.
 - Para llamadas dependientes de empresa, resolver la empresa efectiva con la utilidad compartida de selección; una selección manual válida prevalece sobre la predeterminada.
@@ -31,6 +33,7 @@
 - No usar claves globales ni solo una clave padre para listas de subordinados, permisos, hojas o tickets.
 - Una caché válida puede pintar primero para reducir espera, pero los flujos que exigen actualidad vuelven a consultar la API. Si el refresco falla, solo se conserva el valor previo cuando el comportamiento actual lo contempla y nunca se eleva un permiso.
 - La caché del navegador no sustituye sesiones, permisos, validación ni datos actuales de la API.
+- Los helpers de `sessionExpiry.ts` guardan valor y caducidad conjuntamente, aceptan lectura del formato anterior y notifican si una escritura falla. Las limpiezas automáticas eliminan estados vencidos; no expulsan borradores vigentes para liberar cuota.
 - En cierre de sesión, cambio de identidad o contexto inválido se limpian o invalidan los ámbitos correspondientes.
 - Los recursos fijos versionados —CSS, JavaScript, fuentes, iconos, imágenes decorativas y ayuda generada— pueden llevar caché larga. HTML autenticado, respuestas API y documentos/imágenes de tickets no se convierten en recursos estáticos reutilizables.
 

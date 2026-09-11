@@ -29,7 +29,7 @@ const quickTicketPath = path.join(
   "useExpenseSheetQuickTicketFlowCore.ts"
 );
 
-const [scopeBuild, quickTicketBuild, coordinatorSource] = await Promise.all([
+const [scopeBuild, coordinatorBuild] = await Promise.all([
   build({
     entryPoints: [scopePath],
     bundle: true,
@@ -40,19 +40,17 @@ const [scopeBuild, quickTicketBuild, coordinatorSource] = await Promise.all([
     logLevel: "silent",
   }),
   build({
-    entryPoints: [quickTicketPath],
+    entryPoints: [coordinatorPath],
     bundle: true,
     format: "iife",
-    globalName: "QuickTicketFlow",
     platform: "browser",
     write: false,
     logLevel: "silent",
   }),
-  readFile(generatedCoordinatorPath, "utf8"),
 ]);
 
 const scopeSource = scopeBuild.outputFiles[0]?.text || "";
-const quickTicketSource = quickTicketBuild.outputFiles[0]?.text || "";
+const coordinatorSource = coordinatorBuild.outputFiles[0]?.text || "";
 
 class MockStorage {
   constructor(entries = []) {
@@ -553,148 +551,30 @@ test("a bfcache restore applies an invalidation missed while the page was frozen
   assert.deepEqual(harness.location.replaceCalls, ["/Auth/Login?loggedOut=true"]);
 });
 
-class DeferredOpenCacheStorage extends MockCacheStorage {
-  constructor() {
-    super();
-    this.openStarted = new Promise((resolve) => {
-      this.resolveOpenStarted = resolve;
-    });
-    this.openGate = new Promise((resolve) => {
-      this.resolveOpenGate = resolve;
-    });
-  }
-
-  async open(name) {
-    this.resolveOpenStarted();
-    await this.openGate;
-    return super.open(name);
-  }
-}
-
-class DeferredPutCache extends MockCache {
-  constructor() {
-    super();
-    this.putStarted = new Promise((resolve) => {
-      this.resolvePutStarted = resolve;
-    });
-    this.putGate = new Promise((resolve) => {
-      this.resolvePutGate = resolve;
-    });
-  }
-
-  async put(request, response) {
-    this.resolvePutStarted();
-    await this.putGate;
-    await super.put(request, response);
-  }
-}
-
-class DeferredPutCacheStorage extends MockCacheStorage {
-  constructor() {
-    super();
-    this.cache = new DeferredPutCache();
-  }
-
-  async open(name) {
-    this.values.set(name, this.cache);
-    return this.cache;
-  }
-}
-
-const createQuickTicketHarness = (caches) => {
-  const browserState = {
-    allowed: true,
-    epoch: 1,
-    isPersistenceAllowed() {
-      return this.allowed;
-    },
-    getEpoch() {
-      return this.epoch;
-    },
-  };
-  const window = {
-    __IND_ENTRA_OID__: "user-a",
-    __IND_SELECTED_COMPANY__: "ceu",
-    IND: { browserState },
-    caches,
-  };
-  const context = vm.createContext({
-    Blob,
-    Request: class MockRequest {
-      constructor(url) {
-        this.url = String(url);
-      }
-    },
-    Response: class MockResponse {
-      constructor(body, options) {
-        this.body = body;
-        this.options = options;
-      }
-    },
-    URL,
-    caches,
-    console,
-    document: { documentElement: { lang: "en" } },
-    navigator: { language: "en" },
-    window,
-  });
-  vm.runInContext(quickTicketSource, context, { filename: quickTicketPath });
-  return { browserState, context };
-};
-
-test("an invalidation racing cache open cannot recreate a ticket image cache", async () => {
-  const caches = new DeferredOpenCacheStorage();
-  const { browserState, context } = createQuickTicketHarness(caches);
-
-  const cachePromise = context.QuickTicketFlow.cacheImageFile("ticket-1", new Blob(["private"], { type: "image/png" }));
-  await caches.openStarted;
-  browserState.allowed = false;
-  browserState.epoch += 1;
-  caches.resolveOpenGate();
-  await cachePromise;
-
-  assert.deepEqual(await caches.keys(), []);
+test("same-identity startup removes obsolete ticket images while retaining valid drafts", async () => {
+  const localStorage = new MockStorage([["ind_browser_identity_v1", "user-a"]]);
+  const sessionStorage = new MockStorage([["visitas_draft_v2_user-a", "unfinished work"]]);
+  const caches = new MockCacheStorage();
+  await caches.open("ind-expense-ticket-image-v1");
+  await caches.open("ind-expense-ticket-image-v2-user-a");
+  await caches.open("ind-static-assets-v1");
+  const harness = createCoordinatorHarness({ oid: "user-a", localStorage, sessionStorage, caches });
+  assert.equal(harness.window.IND.browserState.isPersistenceAllowed(), true);
+  await harness.window.IND.browserState.ready;
+  assert.deepEqual(await caches.keys(), ["ind-static-assets-v1"]);
+  assert.equal(sessionStorage.getItem("visitas_draft_v2_user-a"), "unfinished work");
 });
 
-test("an invalidation racing cache put removes the completed private write", async () => {
-  const caches = new DeferredPutCacheStorage();
-  const { browserState, context } = createQuickTicketHarness(caches);
-  const cachePromise = context.QuickTicketFlow.cacheImageFile("ticket-2", new Blob(["private"], { type: "image/png" }));
-  await caches.cache.putStarted;
-
-  browserState.allowed = false;
-  browserState.epoch += 1;
-  for (const name of await caches.keys()) {
-    await caches.delete(name);
-  }
-  caches.cache.resolvePutGate();
-  await cachePromise;
-
-  assert.deepEqual(await caches.keys(), []);
-  assert.equal(caches.cache.entries.size, 0);
-});
-
-test("successful-flow cleanup waits for a parallel image-cache write", async () => {
-  const caches = new DeferredPutCacheStorage();
-  const { context } = createQuickTicketHarness(caches);
-  const cacheWritePromise = context.QuickTicketFlow.cacheImageFile(
-    "ticket-success",
-    new Blob(["private"], { type: "image/png" })
-  );
-  await caches.cache.putStarted;
-
-  let cleanupCompleted = false;
-  const cleanupPromise = context.QuickTicketFlow
-    .removeCachedImageFileAfterWrite("ticket-success", cacheWritePromise)
-    .then(() => {
-      cleanupCompleted = true;
-    });
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(cleanupCompleted, false);
-
-  caches.cache.resolvePutGate();
-  await cleanupPromise;
-  assert.equal(caches.cache.entries.size, 0);
+test("invalidation during obsolete image cleanup cannot resume persistence", async () => {
+  const localStorage = new MockStorage([["ind_browser_identity_v1", "user-a"]]);
+  const caches = new DeferredDeleteCacheStorage();
+  await caches.open("ind-expense-ticket-image-v2-user-a");
+  const harness = createCoordinatorHarness({ oid: "user-a", localStorage, caches });
+  await caches.deleteStarted;
+  harness.window.IND.browserState.prepareForCompanyChange();
+  caches.resolveDeleteGate();
+  await harness.window.IND.browserState.ready;
+  assert.equal(harness.window.IND.browserState.isPersistenceAllowed(), false);
 });
 
 test("layout and relogin contracts keep cleanup behind confirmed navigation", async () => {
@@ -754,7 +634,5 @@ test("layout and relogin contracts keep cleanup behind confirmed navigation", as
 
   const forcedReloginBlock = apiService.slice(apiService.indexOf("forcedReloginPromise = (async"));
   assert.ok(forcedReloginBlock.indexOf("prepareForRelogin") < forcedReloginBlock.indexOf("requestForcedRelogin"));
-  assert.ok(quickTicket.indexOf("isSensitiveBrowserStateCurrent(stateSnapshot)") < quickTicket.indexOf("await cache.put"));
-  assert.ok(quickTicket.lastIndexOf("isSensitiveBrowserStateCurrent(stateSnapshot)") > quickTicket.indexOf("await cache.put"));
-  assert.match(quickTicketHook, /removeCachedImageFileAfterWrite\(cacheKey, cacheWritePromise\)/u);
+  assert.doesNotMatch(quickTicket + quickTicketHook, /caches\.open|cache\.put|cacheImageFile/u);
 });

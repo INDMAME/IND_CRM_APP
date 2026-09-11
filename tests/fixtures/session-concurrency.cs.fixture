@@ -1,0 +1,214 @@
+using IND_CRM_APP.Infrastructure.Session;
+using Microsoft.AspNetCore.Session;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Net;
+
+var services = new ServiceCollection();
+services.AddLogging();
+services.AddDistributedMemoryCache();
+services.AddSession();
+services.AddSingleton<ISessionStore, ConcurrentSessionStore>();
+using var provider = services.BuildServiceProvider();
+var store = args.Contains("--baseline")
+    ? new DistributedSessionStore(provider.GetRequiredService<IDistributedCache>(), provider.GetRequiredService<ILoggerFactory>())
+    : provider.GetRequiredService<ISessionStore>();
+
+// Creates independent request snapshots sharing one cache key.
+ISession Open(string key) => store.Create(key, TimeSpan.FromHours(2), TimeSpan.FromSeconds(10), () => true, false);
+
+// Seeds synthetic identity and context without contacting an external service.
+async Task Seed(string key)
+{
+    var session = Open(key);
+    session.SetString("ENTRAOID", "user-one");
+    session.SetString("INDEntraOidContext", "user-one");
+    session.SetString("INDCompanySelected", "A");
+    session.SetString("INDContextVersion", "1");
+    session.SetString("INDContextToken", "context-one");
+    session.SetString("INDWebContext", "context-json-one");
+    session.SetString("Token", "internal-token-one");
+    session.SetString("TokenExpires", "2030-01-01T00:00:00Z");
+    await session.CommitAsync();
+}
+
+// Fails with a scenario name so regressions remain actionable.
+void Equal(string? expected, string? actual, string scenario)
+{
+    if (expected != actual) throw new Exception($"{scenario}: expected {expected ?? "<null>"}, actual {actual ?? "<null>"}");
+}
+
+var firstSession = Open("stable-id");
+var originalId = firstSession.Id;
+firstSession.SetString("initial", "value");
+await firstSession.CommitAsync();
+Equal(originalId, Open("stable-id").Id, "framework session id remains stable");
+
+await Seed("company");
+var slow = Open("company");
+await slow.LoadAsync();
+slow.SetString("INDContextLastActivityUtc", "2026-09-11T10:00:00Z");
+var switchCompany = Open("company");
+switchCompany.SetString("INDCompanySelected", "B");
+switchCompany.SetString("INDContextVersion", "2");
+switchCompany.SetString("INDContextToken", "context-two");
+await switchCompany.CommitAsync();
+await slow.CommitAsync();
+Equal("B", Open("company").GetString("INDCompanySelected"), "slow request must not undo company switch");
+Equal("context-two", Open("company").GetString("INDContextToken"), "company context remains coherent");
+
+await Seed("independent");
+var left = Open("independent");
+var right = Open("independent");
+await left.LoadAsync();
+await right.LoadAsync();
+left.SetString("field-left", "left");
+right.SetString("field-right", "right");
+await Task.WhenAll(left.CommitAsync(), right.CommitAsync());
+Equal("left", Open("independent").GetString("field-left"), "first independent write");
+Equal("right", Open("independent").GetString("field-right"), "second independent write");
+
+await Seed("refresh");
+var older = Open("refresh");
+var newer = Open("refresh");
+await older.LoadAsync();
+await newer.LoadAsync();
+older.SetString("INDContextVersion", "2");
+older.SetString("INDContextToken", "context-two");
+older.SetString("INDWebContext", "context-json-two");
+newer.SetString("INDContextVersion", "3");
+newer.SetString("INDContextToken", "context-three");
+newer.SetString("INDWebContext", "context-json-three");
+await newer.CommitAsync();
+await older.CommitAsync();
+Equal("3", Open("refresh").GetString("INDContextVersion"), "latest signed context wins");
+Equal("context-three", Open("refresh").GetString("INDContextToken"), "signed context token matches version");
+Equal("context-json-three", Open("refresh").GetString("INDWebContext"), "signed context JSON matches version");
+
+await Seed("company-refresh");
+var delayedSwitch = Open("company-refresh");
+var concurrentRefresh = Open("company-refresh");
+await delayedSwitch.LoadAsync();
+await concurrentRefresh.LoadAsync();
+delayedSwitch.SetString("INDCompanySelected", "B");
+delayedSwitch.SetString("INDCompanySelectionSource", "user");
+delayedSwitch.SetString("INDContextVersion", "2");
+delayedSwitch.SetString("INDContextToken", "context-two");
+concurrentRefresh.SetString("INDContextVersion", "3");
+concurrentRefresh.SetString("INDContextToken", "context-three");
+await concurrentRefresh.CommitAsync();
+await delayedSwitch.CommitAsync();
+Equal("B", Open("company-refresh").GetString("INDCompanySelected"), "explicit selection survives concurrent refresh");
+Equal(null, Open("company-refresh").GetString("INDContextVersion"), "old context requires a fresh lookup");
+Equal(null, Open("company-refresh").GetString("INDContextToken"), "old signed context cannot replace a newer one");
+var freshSelectedContext = Open("company-refresh");
+freshSelectedContext.SetString("INDEntraOidContext", "user-one");
+freshSelectedContext.SetString("INDContextVersion", "4");
+freshSelectedContext.SetString("INDContextToken", "context-four");
+await freshSelectedContext.CommitAsync();
+Equal("B", Open("company-refresh").GetString("INDCompanySelected"), "fresh context keeps requested company");
+Equal("4", Open("company-refresh").GetString("INDContextVersion"), "new context can recover after invalidation");
+
+await Seed("temp-data");
+var oldTempDataReader = Open("temp-data");
+oldTempDataReader.SetString("__ControllerTempData", "old-message");
+await oldTempDataReader.CommitAsync();
+var concurrentTempDataWriter = Open("temp-data");
+await concurrentTempDataWriter.LoadAsync();
+oldTempDataReader.Remove("__ControllerTempData");
+concurrentTempDataWriter.SetString("__ControllerTempData", "new-message");
+await concurrentTempDataWriter.CommitAsync();
+await oldTempDataReader.CommitAsync();
+Equal("new-message", Open("temp-data").GetString("__ControllerTempData"), "old TempData read cannot delete a newer message");
+
+await Seed("tokens");
+var tokenSlow = Open("tokens");
+await tokenSlow.LoadAsync();
+tokenSlow.SetString("Token", "internal-token-one");
+tokenSlow.SetString("INDContextLastActivityUtc", "2026-09-11T10:00:00Z");
+var tokenRefresh = Open("tokens");
+tokenRefresh.SetString("Token", "internal-token-two");
+tokenRefresh.SetString("TokenExpires", "2030-01-02T00:00:00Z");
+await tokenRefresh.CommitAsync();
+await tokenSlow.CommitAsync();
+Equal("internal-token-two", Open("tokens").GetString("Token"), "stale metadata keeps refreshed token");
+Equal("2030-01-02T00:00:00Z", Open("tokens").GetString("TokenExpires"), "token expiry remains paired");
+
+await Seed("logout");
+var beforeLogout = Open("logout");
+await beforeLogout.LoadAsync();
+beforeLogout.SetString("INDContextLastActivityUtc", "2026-09-11T10:00:00Z");
+var logout = Open("logout");
+logout.Clear();
+await logout.CommitAsync();
+await beforeLogout.CommitAsync();
+Equal(null, Open("logout").GetString("ENTRAOID"), "late request must not resurrect logout");
+Equal(null, Open("logout").GetString("Token"), "logout keeps token removed");
+
+await Seed("expired");
+var beforeExpiry = Open("expired");
+beforeExpiry.SetString("INDContextLastActivityUtc", "2026-09-11T10:00:00Z");
+await provider.GetRequiredService<IDistributedCache>().RemoveAsync("expired");
+await beforeExpiry.CommitAsync();
+Equal(null, Open("expired").GetString("Token"), "expired cache cannot be revived");
+
+await Seed("activity");
+var earlyActivity = Open("activity");
+var lateActivity = Open("activity");
+earlyActivity.SetString("INDContextLastActivityUtc", "2026-09-11T10:00:00Z");
+lateActivity.SetString("INDContextLastActivityUtc", "2026-09-11T10:01:00Z");
+await lateActivity.CommitAsync();
+await earlyActivity.CommitAsync();
+Equal("2026-09-11T10:01:00Z", Open("activity").GetString("INDContextLastActivityUtc"), "activity is monotonic");
+
+// Exercises actual SessionMiddleware cookie creation and overlapping HTTP requests.
+var builder = WebApplication.CreateBuilder();
+builder.Logging.ClearProviders();
+builder.WebHost.UseUrls("http://127.0.0.1:0");
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession();
+builder.Services.AddSingleton<ISessionStore, ConcurrentSessionStore>();
+await using var app = builder.Build();
+var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+var finish = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+app.UseSession();
+app.MapGet("/seed", (HttpContext http) =>
+{
+    http.Session.SetString("ENTRAOID", "http-user");
+    http.Session.SetString("INDCompanySelected", "A");
+    return Results.Ok();
+});
+app.MapGet("/slow", async (HttpContext http) =>
+{
+    http.Session.SetString("INDContextLastActivityUtc", "2026-09-11T10:00:00Z");
+    entered.SetResult();
+    await finish.Task.WaitAsync(TimeSpan.FromSeconds(15));
+    return Results.Ok();
+});
+app.MapGet("/switch", (HttpContext http) =>
+{
+    http.Session.SetString("INDCompanySelected", "B");
+    return Results.Ok();
+});
+app.MapGet("/read", (HttpContext http) => Results.Text(http.Session.GetString("INDCompanySelected") ?? ""));
+await app.StartAsync();
+try
+{
+    var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
+    using var handler = new HttpClientHandler { CookieContainer = new CookieContainer() };
+    using var client = new HttpClient(handler) { BaseAddress = new Uri(address), Timeout = TimeSpan.FromSeconds(20) };
+    (await client.GetAsync("/seed")).EnsureSuccessStatusCode();
+    var pending = client.GetAsync("/slow");
+    await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+    (await client.GetAsync("/switch")).EnsureSuccessStatusCode();
+    finish.SetResult();
+    (await pending).EnsureSuccessStatusCode();
+    Equal("B", await client.GetStringAsync("/read"), "real HTTP session commit");
+}
+finally
+{
+    finish.TrySetResult();
+    await app.StopAsync();
+}
+Console.WriteLine("Verified session concurrency, expiry, logout and real HTTP cookie flow");

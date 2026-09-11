@@ -1862,4 +1862,6 @@
   <data name="Visits_Create_PartialChanged" xml:space="preserve">
     <value>A atividade {0} já existe. Restaure os valores originais do formulário para tentar novamente os contactos pendentes, ou edite a atividade no histórico.</value>
   </data>
+  <data name="ExpenseSheets_Assistant_SourceTooLarge" xml:space="preserve"><value>Restrinja os filtros antes de perguntar: o assistente suporta até 6000 folhas de despesas e 4 MB de dados.</value></data>
+  <data name="ExpenseSheets_Assistant_SourceChanged" xml:space="preserve"><value>A lista de despesas mudou durante o carregamento. Atualize a lista e tente novamente.</value></data>
 </root>

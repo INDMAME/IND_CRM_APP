@@ -1862,4 +1862,6 @@
   <data name="Visits_Create_PartialChanged" xml:space="preserve">
     <value>Activity {0} already exists. Restore the original form values to retry pending contacts, or edit the activity from history.</value>
   </data>
+  <data name="ExpenseSheets_Assistant_SourceTooLarge" xml:space="preserve"><value>Narrow the filters before asking: the assistant supports up to 6000 expense sheets and 4 MB of data.</value></data>
+  <data name="ExpenseSheets_Assistant_SourceChanged" xml:space="preserve"><value>The expense list changed while loading. Refresh the list and try again.</value></data>
 </root>

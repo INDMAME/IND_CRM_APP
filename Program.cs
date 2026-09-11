@@ -6,6 +6,7 @@ using IND_CRM_APP.Services.Enums;
 using IND_CRM_APP.Infrastructure.Security.Auth;
 using IND_CRM_APP.Infrastructure.Security.Filters;
 using IND_CRM_APP.Infrastructure.Performance;
+using IND_CRM_APP.Infrastructure.Session;
 using IND_CRM_APP.Infrastructure.Validation;
 using System.Reflection;
 using Microsoft.AspNetCore.Localization;
@@ -298,6 +299,8 @@ builder.Services.AddSession(options =>
         ? CookieSecurePolicy.SameAsRequest
         : CookieSecurePolicy.Always;
 });
+// Keep concurrent session writes coherent without locking upstream operations.
+builder.Services.AddSingleton<Microsoft.AspNetCore.Session.ISessionStore, ConcurrentSessionStore>();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();

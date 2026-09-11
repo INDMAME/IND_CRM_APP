@@ -13,6 +13,7 @@ import { classNames } from "../../utils/classNames.ts";
 import { indFormat, indT } from "../../utils/indI18n.ts";
 import { mapAccountItem } from "../../utils/visitasMapping.ts";
 import { getClientCache, hasClientCache, setClientCache } from "../../utils/visitasStorage.ts";
+import { captureVisitLookupState, isVisitLookupStateCurrent } from "../../utils/visitasStorage.ts";
 
 export type ClientOption = {
   value: string;
@@ -107,6 +108,9 @@ const ClientSearchCombobox = ({
     if (abortRef.current) {
       abortRef.current.abort();
       abortRef.current = null;
+      setLoading(false);
+      setLoadingMore(false);
+      setBlocking(false);
     }
   };
 
@@ -133,8 +137,8 @@ const ClientSearchCombobox = ({
     setHasMore(true);
     setOpen(false);
     const cacheKey = query.trim().toLowerCase();
-    if (hasClientCache(cacheKey)) {
-      const cached = (getClientCache(cacheKey) || []) as ClientOption[];
+    const cached = getClientCache(cacheKey) as ClientOption[] | null;
+    if (cached) {
       setActiveIndex(0);
       setFetchedQuery(currentQuery);
       setOptions(cached);
@@ -156,18 +160,20 @@ const ClientSearchCombobox = ({
     setBlocking(true);
     setStatus(indT("Visits_Create_Searching", "Searching..."));
     const controller = new AbortController();
+    const scopeSnapshot = captureVisitLookupState();
     abortRef.current = controller;
     let shouldOpenOnFinish = false;
     try {
       const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(query)}&page=1&pageSize=10`;
       const data = await fetchJson<{ items?: unknown[] }>(url, { signal: controller.signal });
+      if (controller.signal.aborted || abortRef.current !== controller) return;
       const items = (data.items || []).flatMap((item) => {
         const mapped = mapAccountItem(item);
         return mapped ? [mapped] : [];
       });
       setActiveIndex(0);
       setFetchedQuery(currentQuery);
-      setClientCache(cacheKey, items);
+      if (isVisitLookupStateCurrent(scopeSnapshot)) setClientCache(cacheKey, items);
       setOptions(items);
       if (items.length < 1) {
         setSelected(null);
@@ -190,10 +196,12 @@ const ClientSearchCombobox = ({
         setStatus(indT("Visits_Create_LoadClientsError", "Failed to load clients."));
       }
     } finally {
-      abortRef.current = null;
-      setLoading(false);
-      setBlocking(false);
-      if (shouldOpenOnFinish) setOpen(true);
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+        setLoading(false);
+        setBlocking(false);
+        if (shouldOpenOnFinish) setOpen(true);
+      }
     }
   };
 
@@ -207,6 +215,7 @@ const ClientSearchCombobox = ({
       const nextPage = page + 1;
       const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(query)}&page=${nextPage}&pageSize=10`;
       const data = await fetchJson<{ items?: unknown[] }>(url, { signal: controller.signal });
+      if (controller.signal.aborted || abortRef.current !== controller) return;
       const items = (data.items || []).flatMap((item) => {
         const mapped = mapAccountItem(item);
         return mapped ? [mapped] : [];
@@ -214,10 +223,16 @@ const ClientSearchCombobox = ({
       setOptions((prev) => [...prev, ...items]);
       setPage(nextPage);
       setHasMore(items.length === 10);
+    } catch {
+      if (!controller.signal.aborted && abortRef.current === controller) {
+        setStatus(indT("Visits_Create_LoadClientsError", "Failed to load clients."));
+      }
     } finally {
-      abortRef.current = null;
-      setLoadingMore(false);
-      setBlocking(false);
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+        setLoadingMore(false);
+        setBlocking(false);
+      }
     }
   }, [loadingMore, loading, hasMore, query, page, minChars]);
 
@@ -254,7 +269,7 @@ const ClientSearchCombobox = ({
 
     const qKey = trimmed.toLowerCase();
     const isSelectionDisplay = !!selected && query === (selected.text || "");
-    const shouldSearch = !isSelectionDisplay && qKey !== fetchedQuery;
+    const shouldSearch = !isSelectionDisplay && (qKey !== fetchedQuery || !hasClientCache(qKey));
 
     if (shouldSearch) {
       search();

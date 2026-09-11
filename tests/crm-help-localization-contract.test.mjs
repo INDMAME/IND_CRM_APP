@@ -69,7 +69,7 @@ test("Manual publishes Spanish only and contains no capture placeholders", async
   assert.doesNotMatch(generatedBundle, /Captura de referencia/iu);
 });
 
-test("the Spanish glossary keeps all 23 definitions", async () => {
+test("the Spanish glossary keeps its original definitions alongside expanded guidance", async () => {
   const glossary = topics.find((topic) => topic.id === "glossary.glosario-basico");
   assert.ok(glossary);
 
@@ -77,8 +77,20 @@ test("the Spanish glossary keeps all 23 definitions", async () => {
   const definitionBlocks = content
     .split(/(?:\r?\n){2,}/u)
     .map((value) => value.trim())
-    .filter((value) => value && !value.startsWith("#") && !value.startsWith("<!--"));
-  assert.equal(definitionBlocks.length, 23, "Spanish glossary does not contain 23 definition blocks");
+    .filter((value) => /^[^:\n]+:\s+\S/u.test(value));
+  // Additional workflow sections must not make the original glossary retention check fail.
+  const originalTerms = [
+    "Aplicación web", "Barra de direcciones", "Borrador", "Botón", "Campo", "Cuenta", "Divisa",
+    "Enlace", "Empresa activa", "Estado", "Filtro", "Hoja de gastos", "IA", "Identificador",
+    "Línea de gasto", "Navegador", "Permiso", "Propietario", "Reembolsable", "Responsable",
+    "Ticket", "Tipo de cambio", "Voucher o justificante",
+  ];
+  const definitions = new Map(definitionBlocks.map((block) => [block.slice(0, block.indexOf(":")), block.slice(block.indexOf(":") + 1).trim()]));
+  assert.equal(definitions.size, definitionBlocks.length, "Spanish glossary contains duplicated definitions");
+  for (const term of originalTerms) {
+    assert.ok(definitions.has(term), `Spanish glossary lost the definition for ${term}`);
+    assert.ok(definitions.get(term).length > 10, `Spanish glossary has an empty definition for ${term}`);
+  }
 });
 
 test("Manual uses the clarified module title and keeps expense approval next to expense sheets", async () => {

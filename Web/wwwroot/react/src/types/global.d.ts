@@ -11,6 +11,7 @@ declare global {
     __IND_I18N__?: Record<string, string>;
     __IND_MODULE_ACCESS__?: Record<string, number>;
     __IND_SELECTED_COMPANY__?: string;
+    __IND_PERMISSIONS_REVISION__?: string;
     __IND_ALLOW_SELF_MANAGEMENT__?: boolean;
     __IND_API_TOKEN__?: string;
     __IND_ENTRA_OID__?: string;
@@ -67,6 +68,7 @@ declare global {
     __IND_I18N__?: Record<string, string>;
     __IND_MODULE_ACCESS__?: Record<string, number>;
     __IND_SELECTED_COMPANY__?: string;
+    __IND_PERMISSIONS_REVISION__?: string;
     __IND_ALLOW_SELF_MANAGEMENT__?: boolean;
     __IND_API_TOKEN__?: string;
     __IND_ENTRA_OID__?: string;
