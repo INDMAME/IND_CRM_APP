@@ -116,7 +116,19 @@ public sealed class ConcurrentSessionStore : ISessionStore
                 if (SessionStateMerge.Unchanged(_original!, latest))
                     latest = _inner;
                 else if (!SessionStateMerge.Apply(_original!, desired, latest, _cleared))
+                {
                     _logger.LogInformation("Discarded session writes from an obsolete identity or company context.");
+                    // Company conflicts can expose the accepted choice, but never another identity.
+                    if (_original!.TryGetValue("ENTRAOID", out var originalOid) &&
+                        latest.TryGetValue("ENTRAOID", out var latestOid) && originalOid.AsSpan().SequenceEqual(latestOid))
+                    {
+                        _inner = latest;
+                        _original = SessionStateMerge.Snapshot(latest);
+                    }
+                    _changed = false;
+                    _cleared = false;
+                    return;
+                }
                 await latest.CommitAsync(cancellationToken);
                 _inner = latest;
                 _original = SessionStateMerge.Snapshot(latest);

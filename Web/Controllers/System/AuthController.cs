@@ -1,6 +1,7 @@
 using System;
 using IND_CRM_APP.Extensions;
 using IND_CRM_APP.Infrastructure.Security.Auth;
+using IND_CRM_APP.Infrastructure.Session;
 using IND_CRM_APP.Infrastructure.Localization;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
@@ -399,6 +400,8 @@ namespace IND_CRM_APP.Controllers
         // Clears both session values and auth cookie.
         private async Task ClearAuthSessionAsync()
         {
+            if (!AuthenticationSessionRequest.TryClose(HttpContext))
+                return;
             _authContext.ClearSelectedCompanyPreference();
             HttpContext.Session.Clear();
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

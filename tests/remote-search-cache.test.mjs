@@ -21,6 +21,7 @@ function createRenderer(entry = componentPath, boundary = {}) {
   let dirty = false;
   let props;
   let tree;
+  const clientCache = new Map();
   const React = {
     createElement: (type, nextProps, ...children) => ({ type, props: { ...nextProps, children } }),
     useState(initial) {
@@ -65,11 +66,18 @@ function createRenderer(entry = componentPath, boundary = {}) {
     "chevrons.tsx": { SelectChevron: "chevron" },
     "useOutsideClick.ts": { useOutsideClick() {} },
     "useComboboxKeyboard.ts": { handleComboboxKeyDown() {} },
-    "indI18n.ts": { indT: (_key, fallback) => fallback },
-    "apiService.ts": { ApiFetchError: class extends Error {} },
+    "indI18n.ts": { indT: (_key, fallback) => fallback, indFormat: (_key, fallback, ...values) => fallback.replace(/\{(\d+)\}/g, (_, index) => values[index]) },
+    "apiService.ts": { ApiFetchError: class extends Error {}, fetchJson: boundary.fetchJson },
     "expenseApi.ts": {},
     "browserStorageScope.ts": { captureSensitiveBrowserState: () => boundary.scope || "user-a:company-a:0" },
     "expenseActingUser.ts": { getExpenseActingUserOverride: () => boundary.actor || "AX-A" },
+    "visitasStorage.ts": {
+      getClientCache: (key) => clientCache.get(key) ?? null,
+      hasClientCache: (key) => clientCache.has(key),
+      setClientCache: (key, value) => clientCache.set(key, value),
+      captureVisitLookupState: () => "scope",
+      isVisitLookupStateCurrent: () => true,
+    },
   };
   if (entry !== componentPath) mocks["RemoteSearchCombobox.tsx"] = { __esModule: true, default: "remote-search" };
   const load = (file) => {
@@ -98,11 +106,12 @@ function createRenderer(entry = componentPath, boundary = {}) {
       return resolve(node.type(node.props), `${key}/child`);
     }
     if (node.props.ref && !node.props.ref.current) {
-      node.props.ref.current = { parentElement: {
+      const scrollElement = {
         scrollTop: 950, clientHeight: 100, scrollHeight: 1000,
         addEventListener: (_event, listener) => scrollListeners.add(listener),
         removeEventListener: (_event, listener) => scrollListeners.delete(listener),
-      } };
+      };
+      node.props.ref.current = { ...scrollElement, parentElement: scrollElement };
     }
     return { ...node, props: { ...node.props, children: resolve(node.props.children, `${location}/children`) } };
   };
@@ -241,4 +250,40 @@ test("consumer scopes include owner, business filters, and browser identity", ()
   assert.notEqual(scope(project), projectA);
   boundary.scope = "user-a:company-b:1";
   assert.notEqual(scope(sheet, { managedUserId: "AX-A" }), sheetA);
+});
+
+test("client pagination retains the searched term after selecting and reopening an option", async () => {
+  const calls = [];
+  const renderer = createRenderer("components/visitas/ClientSearchCombobox.tsx", { fetchJson: async (url) => {
+    const params = new URL(url, "https://crm.test").searchParams;
+    calls.push({ term: params.get("term"), page: Number(params.get("page")) });
+    const page = Number(params.get("page"));
+    return { items: params.get("term") === "inser" ? Array.from({ length: 10 }, (_, index) => ({ AccountNum: `C${(page - 1) * 10 + index}`, NombreComercial: `Insertec ${index}` })) : [] };
+  } });
+  let selected = null;
+  let props = { value: selected, onSelected: (value) => { selected = value; } };
+  let tree = renderer.render(props);
+  findInput(tree).props.onChange({ target: { value: "inser" } }); tree = renderer.render();
+  findArrow(tree).props.onClick(); await immediate(); tree = renderer.render();
+  findAll(tree, (node) => node.props?.role === "option")[0].props.onClick();
+  props = { ...props, value: selected }; tree = renderer.render(props);
+  findArrow(tree).props.onClick(); renderer.render(); renderer.scroll(); await immediate(); tree = renderer.render();
+  assert.deepEqual(calls, [{ term: "inser", page: 1 }, { term: "inser", page: 2 }]);
+  assert.equal(visibleOptions(tree).length, 20);
+});
+
+test("client pagination shares a pending page when scroll fires twice before render", async () => {
+  const calls = [];
+  let complete;
+  const renderer = createRenderer("components/visitas/ClientSearchCombobox.tsx", { fetchJson: async (url) => {
+    const page = Number(new URL(url, "https://crm.test").searchParams.get("page")); calls.push(page);
+    if (page === 2) return new Promise((resolve) => { complete = resolve; });
+    return { items: Array.from({ length: 10 }, (_, index) => ({ AccountNum: `C${index}`, NombreComercial: `Insertec ${index}` })) };
+  } });
+  let tree = renderer.render({ value: null, onSelected() {} });
+  findInput(tree).props.onChange({ target: { value: "inser" } }); tree = renderer.render();
+  findArrow(tree).props.onClick(); await immediate(); renderer.render();
+  renderer.scroll(); renderer.scroll();
+  assert.deepEqual(calls, [1, 2]);
+  complete({ items: [] }); await immediate();
 });

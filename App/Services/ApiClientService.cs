@@ -702,7 +702,14 @@ namespace IND_CRM_APP.Services
         {
             PrepareRequestHeaders(currentToken, "RefreshToken", requireCompany: false);
 
-            var result = await SendPostAsync(ApiRoutes.AuthRefresh, "{}");
+            var cancellationToken = _httpContextAccessor.HttpContext?.RequestAborted ?? CancellationToken.None;
+            var result = await SendPostAsync(ApiRoutes.AuthRefresh, "{}", cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Preserve transport failures so the caller can distinguish temporary outages from denial.
+            if (!result.IsSuccessStatusCode)
+                throw new ApiException(result.ErrorMessage ?? "Token refresh request failed.",
+                    result.StatusCode, result.Raw, result.Headers);
 
             var response = DeserializeApiResponse<LoginEnvelope>(result, "Refresh");
             ApplyRefreshedToken(result.Headers, response.Data?.Expires);

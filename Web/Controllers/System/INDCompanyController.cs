@@ -121,6 +121,8 @@ namespace IND_CRM_APP.Controllers
             {
                 // Persist the merged choice before writing its browser preference.
                 await HttpContext.Session.CommitAsync(HttpContext.RequestAborted);
+                if (!AuthenticationSessionRequest.IsCurrent(HttpContext))
+                    return StatusCode(StatusCodes.Status409Conflict);
                 var committedCompany = HttpContext.Session.GetString("INDCompanySelected");
                 if (!string.IsNullOrWhiteSpace(committedCompany))
                     _authContext.RememberSelectedCompanyPreference(committedCompany);

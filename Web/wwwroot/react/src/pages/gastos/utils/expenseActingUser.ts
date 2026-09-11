@@ -1,11 +1,11 @@
 import { getSessionValueWithExpiry, removeSessionValueWithExpiry, setSessionValueWithExpiry } from "../../../utils/sessionExpiry.ts";
 import { getExpenseScopeToken } from "./expenseScope.ts";
-import { captureSensitiveBrowserState } from "../../../utils/browserStorageScope.ts";
+import { captureActiveBrowserState, captureSensitiveBrowserState } from "../../../utils/browserStorageScope.ts";
 
 const normalizeUserId = (value: unknown): string => String(value || "").trim();
 const EXPENSE_ACTING_USER_KEY_PREFIX = "expense_acting_user_v1";
 const EXPENSE_ACTING_USER_TTL_MS = 12 * 60 * 60 * 1000;
-let activeOverride: { snapshot: string; userId: string; expiresAt: number } | null = null;
+let activeOverride: { snapshot: string; userId: string } | null = null;
 let signedInUser: { snapshot: string; userId: string } | null = null;
 
 const getScopedKey = (): string => {
@@ -14,34 +14,35 @@ const getScopedKey = (): string => {
 
 // Returns the active AxUserId override used by Gastos API calls.
 export const getExpenseActingUserOverride = (): string => {
-  const snapshot = captureSensitiveBrowserState();
+  const snapshot = captureActiveBrowserState();
   if (!snapshot) {
     activeOverride = null;
     signedInUser = null;
     return "";
   }
   if (activeOverride?.snapshot === snapshot) {
-    return activeOverride.expiresAt > Date.now() ? activeOverride.userId : "";
+    return activeOverride.userId;
   }
-  activeOverride = null;
-  return normalizeUserId(getSessionValueWithExpiry(getScopedKey()));
+  const userId = normalizeUserId(getSessionValueWithExpiry(getScopedKey()));
+  activeOverride = { snapshot, userId };
+  return userId;
 };
 
 // Records the signed-in user so navigation can omit a redundant self override.
 export const setExpenseActingSignedInUser = (userId: unknown): void => {
-  const snapshot = captureSensitiveBrowserState();
+  const snapshot = captureActiveBrowserState();
   signedInUser = snapshot ? { snapshot, userId: normalizeUserId(userId) } : null;
 };
 
 // Sets the active AxUserId override used by Gastos API calls.
 export const setExpenseActingUserOverride = (userId: unknown): string => {
   const normalized = normalizeUserId(userId);
-  const snapshot = captureSensitiveBrowserState();
+  const snapshot = captureActiveBrowserState();
   if (!snapshot) {
     activeOverride = null;
     return "";
   }
-  activeOverride = { snapshot, userId: normalized, expiresAt: Date.now() + EXPENSE_ACTING_USER_TTL_MS };
+  activeOverride = { snapshot, userId: normalized };
   if (!normalized) {
     removeSessionValueWithExpiry(getScopedKey());
     return "";

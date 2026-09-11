@@ -53,6 +53,7 @@ declare global {
       browserState?: {
         ready: Promise<void>;
         isPersistenceAllowed: () => boolean;
+        isContextActive: () => boolean;
         getEpoch: () => number;
         clearSensitiveState: (removeIdentityMarker?: boolean) => Promise<void>;
         prepareForRelogin: (reason?: string) => Promise<void>;

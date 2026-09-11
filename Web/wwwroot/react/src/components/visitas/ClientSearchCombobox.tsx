@@ -206,14 +206,15 @@ const ClientSearchCombobox = ({
   };
 
   const loadMore = useCallback(async () => {
-    if (loadingMore || loading || !hasMore || query.trim().length < minChars) return;
+    if (abortRef.current || loadingMore || loading || !hasMore || fetchedQuery.length < minChars) return;
     setLoadingMore(true);
     setBlocking(true);
     const controller = new AbortController();
     abortRef.current = controller;
     try {
       const nextPage = page + 1;
-      const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(query)}&page=${nextPage}&pageSize=10`;
+      // Pagination belongs to the loaded query even when the input displays a selected account.
+      const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(fetchedQuery)}&page=${nextPage}&pageSize=10`;
       const data = await fetchJson<{ items?: unknown[] }>(url, { signal: controller.signal });
       if (controller.signal.aborted || abortRef.current !== controller) return;
       const items = (data.items || []).flatMap((item) => {
@@ -234,7 +235,7 @@ const ClientSearchCombobox = ({
         setBlocking(false);
       }
     }
-  }, [loadingMore, loading, hasMore, query, page, minChars]);
+  }, [loadingMore, loading, hasMore, fetchedQuery, page, minChars]);
 
   useEffect(() => {
     if (!open || !listRef.current) return;

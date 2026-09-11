@@ -67,6 +67,7 @@ const createNonce = (): string => {
 class BrowserStateCoordinator {
   private readonly renderedCompanyId = String(window.__IND_SELECTED_COMPANY__ || "").trim();
   private persistenceAllowed = false;
+  private contextActive = false;
   private epoch = 0;
   private logoutInProgress = false;
   private lastInvalidationNonce = "";
@@ -84,6 +85,9 @@ class BrowserStateCoordinator {
 
   // Reports whether feature code may persist sensitive state.
   public isPersistenceAllowed = (): boolean => this.persistenceAllowed;
+
+  // Reports whether the rendered identity may still own live in-memory state.
+  public isContextActive = (): boolean => this.contextActive;
 
   // Returns the current invalidation epoch for async race checks.
   public getEpoch = (): number => this.epoch;
@@ -203,7 +207,7 @@ class BrowserStateCoordinator {
     if (!previousOid || previousOid !== entraOid) {
       const cleanup = this.clearSensitiveState(false);
       const activationEpoch = this.epoch;
-      this.writeIdentityMarker(localStorage, entraOid);
+      const identityMarkerWritten = this.writeIdentityMarker(localStorage, entraOid);
 
       if (previousOid && previousOid !== entraOid) {
         this.publishInvalidation({
@@ -219,15 +223,17 @@ class BrowserStateCoordinator {
       const identityMarker = this.readIdentityMarker(localStorage);
       if (
         this.epoch === activationEpoch &&
-        identityMarker === entraOid &&
+        (identityMarker === entraOid || (!identityMarker && !identityMarkerWritten)) &&
         currentScope.entraOid === entraOid &&
         currentScope.companyId === companyId
       ) {
-        this.persistenceAllowed = true;
+        this.contextActive = true;
+        this.persistenceAllowed = identityMarker === entraOid;
       }
       return;
     }
 
+    this.contextActive = true;
     this.persistenceAllowed = true;
     // Remove obsolete images without delaying restoration of valid same-identity drafts.
     await this.deleteSensitiveCaches();
@@ -408,6 +414,7 @@ class BrowserStateCoordinator {
   }
 
   private stopSensitivePersistence(): void {
+    this.contextActive = false;
     this.persistenceAllowed = false;
     this.epoch += 1;
   }
@@ -420,11 +427,15 @@ class BrowserStateCoordinator {
     }
   }
 
-  private writeIdentityMarker(storage: Storage | null, entraOid: string): void {
+  // Distinguishes unavailable storage from a marker removed by another identity transition.
+  private writeIdentityMarker(storage: Storage | null, entraOid: string): boolean {
     try {
+      if (!storage) return false;
       storage?.setItem(IDENTITY_MARKER_KEY, entraOid);
+      return true;
     } catch {
       // Identity-scoped keys remain safe when durable storage is unavailable.
+      return false;
     }
   }
 
@@ -468,6 +479,7 @@ window.IND = window.IND || {};
 window.IND.browserState = {
   ready: coordinator.ready,
   isPersistenceAllowed: coordinator.isPersistenceAllowed,
+  isContextActive: coordinator.isContextActive,
   getEpoch: coordinator.getEpoch,
   clearSensitiveState: coordinator.clearSensitiveState,
   prepareForRelogin: coordinator.prepareForRelogin,

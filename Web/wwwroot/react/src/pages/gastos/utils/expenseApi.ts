@@ -90,6 +90,7 @@ import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts"
 import { resolveEffectiveCompanyId } from "../../../utils/companySelection.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { makeCache } from "../../../utils/makeCache.ts";
+import { captureActiveBrowserState } from "../../../utils/browserStorageScope.ts";
 import { assertExpenseAssistantSourceSize, loadExpenseAssistantSource } from "./expenseAssistantSource.ts";
 import {
   toExpenseSheetLineReimbursableExpense,
@@ -135,6 +136,7 @@ type LegacyExpenseListResponse = {
 };
 
 type ExpenseApiContext = {
+  browserSnapshot: string;
   token: string;
   companyId: string;
   axUserId: string;
@@ -394,7 +396,16 @@ const waitForAbortableExpenseResult = async <T>(promise: Promise<T>, signal?: Ab
 };
 
 const buildContextKey = (seed: ExpenseApiAuthSeed): string => {
-  return `${seed.token}|${seed.entraOid}|${seed.appCode}|${readWindowSelectedCompany()}`;
+  return `${seed.token}|${seed.entraOid}|${seed.appCode}|${readWindowSelectedCompany()}|${captureActiveBrowserState()}`;
+};
+
+// Refuses stale page requests before an unavailable actor can fall back to the signed-in user.
+const requireActiveExpenseBrowserState = (expectedSnapshot?: string): string => {
+  const snapshot = captureActiveBrowserState();
+  if (!snapshot || (expectedSnapshot && expectedSnapshot !== snapshot)) {
+    throw new ApiFetchError(indT("Api_RequestFailed", "Request failed."), 409);
+  }
+  return snapshot;
 };
 
 const buildExpenseHeaders = (
@@ -403,6 +414,7 @@ const buildExpenseHeaders = (
   includeJson = false,
   includeAxUserId = true
 ): HeadersInit => {
+  requireActiveExpenseBrowserState(context.browserSnapshot);
   const base = sanitizeHeaders(options?.headers);
   const merged: Record<string, string> = { ...base };
 
@@ -534,7 +546,7 @@ const mapEntraContextCompany = (item: unknown): NormalizedEntraContextCompany | 
   };
 };
 
-const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): ExpenseApiContext => {
+const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): Omit<ExpenseApiContext, "browserSnapshot"> => {
   const rawResponse = response as {
     Success?: unknown;
     success?: unknown;
@@ -608,6 +620,10 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): E
 };
 
 const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<ExpenseApiContext> => {
+  if (typeof window !== "undefined" && window.IND?.browserState?.ready) {
+    await waitForAbortableExpenseResult(window.IND.browserState.ready, options?.signal);
+  }
+  const browserSnapshot = requireActiveExpenseBrowserState();
   const seed = resolveAuthSeed(options);
   const contextKey = buildContextKey(seed);
   const { signal, ...baseOptions } = options || {};
@@ -642,6 +658,7 @@ const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<Expen
       const nextContext: ExpenseApiContext = {
         ...resolved,
         token: seed.token,
+        browserSnapshot,
       };
 
       if (typeof window !== "undefined") {

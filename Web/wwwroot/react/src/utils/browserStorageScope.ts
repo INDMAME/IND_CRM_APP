@@ -6,6 +6,7 @@ type BrowserScopeWindow = {
     browserState?: {
       getEpoch?: () => number;
       isPersistenceAllowed?: () => boolean;
+      isContextActive?: () => boolean;
     };
   };
 };
@@ -49,6 +50,16 @@ export const canPersistSensitiveBrowserState = (): boolean => {
 export const captureSensitiveBrowserState = (): string => {
   if (!canPersistSensitiveBrowserState() || typeof window === "undefined") return "";
   const browserState = (window as BrowserScopeWindow).IND?.browserState;
+  const epoch = Number(browserState?.getEpoch?.() ?? 0);
+  return `${getBrowserStorageScopeToken()}::${Number.isFinite(epoch) ? epoch : 0}`;
+};
+
+// Keeps live state usable without storage while rejecting invalidated identity contexts.
+export const captureActiveBrowserState = (): string => {
+  if (typeof window === "undefined" || !getBrowserStorageScopeToken()) return "";
+  const browserState = (window as BrowserScopeWindow).IND?.browserState;
+  const active = browserState?.isContextActive?.() ?? browserState?.isPersistenceAllowed?.();
+  if (active !== true) return "";
   const epoch = Number(browserState?.getEpoch?.() ?? 0);
   return `${getBrowserStorageScopeToken()}::${Number.isFinite(epoch) ? epoch : 0}`;
 };

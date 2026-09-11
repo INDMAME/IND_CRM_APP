@@ -499,8 +499,11 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
             _logger.LogError("Context initialization failed for {Path}. ErrorCode: {ErrorCode}. Reason: {Reason}", path, errorCode ?? string.Empty, safeReason);
 
             // Clear session cache and auth cookie to prevent stale context loops.
-            http.Session.Clear();
-            await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            if (IND_CRM_APP.Infrastructure.Session.AuthenticationSessionRequest.TryClose(http))
+            {
+                http.Session.Clear();
+                await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            }
 
             var tempData = _tempDataFactory.GetTempData(http);
             tempData.INDSetActionMarkError();

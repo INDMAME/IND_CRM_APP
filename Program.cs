@@ -1,4 +1,4 @@
-﻿using IND_CRM_APP.Middleware;
+using IND_CRM_APP.Middleware;
 using IND_CRM_APP.Extensions;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
@@ -20,7 +20,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Routing.Constraints;
-using System.Security.Claims;
 using System.IO;
 using System.Security.Cryptography;
 
@@ -169,6 +168,7 @@ builder.Services.AddAuthentication(options =>
         : CookieSecurePolicy.Always;
     options.LoginPath = "/Auth/Login";
     options.AccessDeniedPath = "/Auth/Login";
+    options.Events.OnValidatePrincipal = AuthenticationSessionEvents.ValidateCookie;
 })
 .AddOpenIdConnect(options =>
 {
@@ -191,59 +191,12 @@ builder.Services.AddAuthentication(options =>
     };
     options.Events = new OpenIdConnectEvents
     {
-        OnTokenValidated = context =>
-        {
-            var httpContext = context.HttpContext;
-            var logger = httpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            var principal = context.Principal;
-            var oid = principal?.FindFirst(IndAuthEnv.ClaimOid)?.Value
-                      ?? principal?.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
-
-            // Log Entra OID to help diagnose Entra user mapping issues.
-            if (string.IsNullOrWhiteSpace(oid))
-                logger.LogWarning("Entra OID claim missing in token.");
-            else
-                logger.LogInformation("Entra OID received: {EntraOid}", oid);
-
-            if (!string.IsNullOrWhiteSpace(oid))
-                httpContext.Session.SetString("ENTRAOID", oid);
-
-            // Always clear cached context on a fresh Entra sign-in.
-            var sessionKeysToClear = new[]
-            {
-                "INDWebContext",
-                "INDCompanySelected",
-                "INDCompanySelectedName",
-                "INDCompanySelectionSource",
-                "INDEntraOidContext",
-                "INDContextToken",
-                "INDContextVersion",
-                "INDPermissionsRevision",
-                "INDContextIssuedUtc",
-                "INDContextExpiresUtc",
-                "INDContextLastActivityUtc",
-                "INDContextTenantId",
-                "AxUser"
-            };
-
-            foreach (var sessionKey in sessionKeysToClear)
-                httpContext.Session.Remove(sessionKey);
-
-            logger.LogInformation("Cleared cached context after Entra sign-in.");
-
-            var preferred = principal?.FindFirst(IndAuthEnv.ClaimEmailPreferred)?.Value;
-            var email = preferred
-                        ?? principal?.FindFirst("email")?.Value
-                        ?? principal?.FindFirst(ClaimTypes.Email)?.Value;
-            var display = email ?? principal?.Identity?.Name ?? string.Empty;
-
-            if (!string.IsNullOrWhiteSpace(display))
-                httpContext.Session.SetString("Username", display);
-
-            return Task.CompletedTask;
-        },
+        OnTicketReceived = AuthenticationSessionEvents.CompleteLogin,
         OnRedirectToIdentityProvider = context =>
         {
+            if (!AuthenticationSessionEvents.BeginLogin(context))
+                return Task.CompletedTask;
+
             if (context.Properties?.Items == null)
                 return Task.CompletedTask;
 
@@ -301,6 +254,7 @@ builder.Services.AddSession(options =>
 });
 // Keep concurrent session writes coherent without locking upstream operations.
 builder.Services.AddSingleton<Microsoft.AspNetCore.Session.ISessionStore, ConcurrentSessionStore>();
+builder.Services.AddSingleton<AuthenticationSessionRegistry>();
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -377,8 +331,14 @@ app.UseRequestLocalization(app.Services.GetRequiredService<IOptions<RequestLocal
 app.UseCrmStatusCodePages();
 app.UseRouting();
 app.UseCookiePolicy();
+app.Use(async (context, next) =>
+{
+    AuthenticationSessionRequest.PrepareResponse(context);
+    await next(context);
+});
 app.UseSession();
 app.UseAuthentication();
+app.UseMiddleware<AuthenticationSessionMiddleware>();
 app.UseAuthorization();
 // Reject stale company tabs before any middleware can call IND_CRM_API.
 app.UseMiddleware<ExpectedCompanyContextMiddleware>();
