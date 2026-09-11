@@ -13,7 +13,8 @@ import { useOutsideClick } from "../../hooks/useOutsideClick.ts";
 import { classNames } from "../../utils/classNames.ts";
 import { indFormat, indT } from "../../utils/indI18n.ts";
 import { isNoDataRow, isNoDataText } from "../../utils/noData.ts";
-import { getCachedContacts, setCachedContacts, getStoredSelection, setStoredSelection, clearStoredSelection } from "../../utils/visitasStorage.ts";
+import { getCachedContacts, setCachedContacts, getStoredSelection, setStoredSelection, clearStoredSelection, VISIT_LOOKUP_CACHE_TTL_MS } from "../../utils/visitasStorage.ts";
+import { captureVisitLookupState, isVisitLookupStateCurrent } from "../../utils/visitasStorage.ts";
 
 type ContactOption = {
   value: string;
@@ -53,6 +54,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
   const listRef = useRef<HTMLDivElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const loadedContactsExpiryRef = useRef(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const lastAccountRef = useRef(accountNum || "");
@@ -104,15 +106,17 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
   }, []);
 
   const primeFromCache = () => {
-    const cached = getCachedContacts(accountNum) as ContactOption[] | null;
+    const cached = getCachedContacts(accountNum);
     if (cached) {
-      setOptions(cached);
+      loadedContactsExpiryRef.current = cached.expiresAt;
+      setOptions(cached.items as ContactOption[]);
       setShowNotFoundState(false);
       setHasLoaded(true);
-      setHasMore(cached.length === 10);
+      setPage(cached.lastLoadedPage);
+      setHasMore(cached.hasMore);
       setStatus(
-        cached.length
-          ? indFormat("Visits_Create_ContactCountCache", "{0} contacts (cache)", cached.length)
+        cached.items.length
+          ? indFormat("Visits_Create_ContactCountCache", "{0} contacts (cache)", cached.items.length)
           : indT("Visits_Create_NoContacts", "No contacts")
       );
       return true;
@@ -122,6 +126,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
 
   useEffect(() => {
     cancelPending();
+    loadedContactsExpiryRef.current = 0;
     setQuery("");
     setOpen(false);
     setLoading(false);
@@ -220,6 +225,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
     }
 
     const controller = new AbortController();
+    const scopeSnapshot = captureVisitLookupState();
     abortRef.current = controller;
     try {
       const res = await fetchJson<ContactsDropdownResponse>(
@@ -228,29 +234,32 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
       );
       const rawItems = Array.isArray(res.items) ? res.items : Array.isArray(res.Items) ? res.Items : [];
       const mapped = mapContacts(rawItems);
-      setOptions((prev) => {
-        const next = append ? [...prev, ...mapped] : mapped;
-        setCachedContacts(accountNum, next);
-        return next;
-      });
+      if (controller.signal.aborted || abortRef.current !== controller) return;
+      const next = append ? [...options, ...mapped] : mapped;
+      if (isVisitLookupStateCurrent(scopeSnapshot)) setCachedContacts(accountNum, next, pageToLoad, rawItems.length === 10);
+      loadedContactsExpiryRef.current = Date.now() + VISIT_LOOKUP_CACHE_TTL_MS;
+      setOptions(next);
       setShowNotFoundState(false);
       setHasLoaded(true);
-      setHasMore(mapped.length === 10);
+      setHasMore(rawItems.length === 10);
       setPage(pageToLoad);
       setStatus(mapped.length ? indFormat("Visits_Create_ContactCount", "{0} contacts", mapped.length) : indT("Visits_Create_NoContacts", "No contacts"));
     } catch {
+      if (controller.signal.aborted || abortRef.current !== controller) return;
       setStatus(indT("Visits_Create_LoadContactsError", "Failed to load contacts."));
     } finally {
-      abortRef.current = null;
-      setLoading(false);
-      setLoadingMore(false);
-      setBlocking(false);
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+        setLoading(false);
+        setLoadingMore(false);
+        setBlocking(false);
+      }
     }
   };
 
   const ensureLoaded = () => {
     if (!accountNum) return;
-    if (hasLoaded && options.length) return;
+    if (hasLoaded && loadedContactsExpiryRef.current > Date.now()) return;
     if (primeFromCache()) return;
     load(1, false);
   };
@@ -258,7 +267,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
   const loadMoreContacts = React.useCallback(() => {
     if (!accountNum || !hasMore || loadingMore || loading) return;
     load(page + 1, true);
-  }, [accountNum, hasMore, loadingMore, loading, page]);
+  }, [accountNum, hasMore, loadingMore, loading, page, options]);
 
   useEffect(() => {
     if (!open || !listRef.current) return;

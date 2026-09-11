@@ -19,10 +19,11 @@ const ACCESS_RIGHTS: Record<AccessLevel, number> = {
   FullAccess: 4,
 };
 
-const EXPENSE_MANAGEMENT_CACHE_KEY_PREFIX = "expense_management_context_v2";
+const EXPENSE_MANAGEMENT_CACHE_KEY_PREFIX = "expense_management_context_v3";
 const EXPENSE_MANAGEMENT_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 type ExpenseManagementCacheEntry = {
+  refreshedAt: number;
   currentAxUserId: string;
   currentUserName?: string;
   currentCrmUserId?: string;
@@ -122,13 +123,17 @@ const resolveManagedUserSelection = (
 };
 
 const getExpenseManagementCacheKey = (): string => {
-  return `${EXPENSE_MANAGEMENT_CACHE_KEY_PREFIX}_${getExpenseScopeToken()}`;
+  const revision = encodeURIComponent(String(globalThis.__IND_PERMISSIONS_REVISION__ || ""));
+  return `${EXPENSE_MANAGEMENT_CACHE_KEY_PREFIX}_${getExpenseScopeToken()}_r${revision}`;
 };
 
 const readExpenseManagementCache = (): ExpenseManagementCacheEntry | null => {
   const cacheKey = getExpenseManagementCacheKey();
   const raw = getSessionJsonWithExpiry<ExpenseManagementCacheEntry>(cacheKey);
   if (!raw || typeof raw !== "object") return null;
+  const refreshedAt = Number(raw.refreshedAt);
+  if (!Number.isFinite(refreshedAt) || refreshedAt <= 0 || refreshedAt > Date.now() ||
+    Date.now() - refreshedAt > EXPENSE_MANAGEMENT_CACHE_TTL_MS) return null;
 
   const currentAxUserId = normalizeText(raw.currentAxUserId);
   const currentUserName = normalizeText(raw.currentUserName);
@@ -137,6 +142,7 @@ const readExpenseManagementCache = (): ExpenseManagementCacheEntry | null => {
   const selectedManagedUserId = resolveManagedUserSelection(raw.selectedManagedUserId, currentAxUserId, subordinates);
 
   return {
+    refreshedAt,
     currentAxUserId,
     currentUserName,
     currentCrmUserId,
@@ -147,8 +153,11 @@ const readExpenseManagementCache = (): ExpenseManagementCacheEntry | null => {
 };
 
 const writeExpenseManagementCache = (entry: ExpenseManagementCacheEntry): void => {
+  // Selection changes and failed refreshes must not extend the lifetime of business data.
+  const remainingTtl = entry.refreshedAt + EXPENSE_MANAGEMENT_CACHE_TTL_MS - Date.now();
+  if (!(remainingTtl > 0)) return;
   const cacheKey = getExpenseManagementCacheKey();
-  setSessionJsonWithExpiry(cacheKey, entry, EXPENSE_MANAGEMENT_CACHE_TTL_MS);
+  setSessionJsonWithExpiry(cacheKey, entry, remainingTtl);
 };
 
 type AuthValue = {
@@ -208,6 +217,7 @@ export const AuthProvider = ({
   // Sensitive edit flows must gate with this value in addition to module access rights.
   const selfManagementFromLayout = allowSelfManagement ?? globalThis.__IND_ALLOW_SELF_MANAGEMENT__ === true;
   const cachedEntry = useMemo(() => readExpenseManagementCache(), [company]);
+  const [managementRefreshedAt, setManagementRefreshedAt] = useState(() => cachedEntry?.refreshedAt || 0);
   const [currentAxUserId, setCurrentAxUserId] = useState(() => normalizeText(cachedEntry?.currentAxUserId));
   const [currentUserName, setCurrentUserName] = useState(() => normalizeText(cachedEntry?.currentUserName));
   const [currentCrmUserId, setCurrentCrmUserId] = useState(() => normalizeText(cachedEntry?.currentCrmUserId));
@@ -237,6 +247,7 @@ export const AuthProvider = ({
     setCurrentUserName("");
     setCurrentCrmUserId("");
     setSubordinates([]);
+    setManagementRefreshedAt(0);
     setSelectedManagedUserIdState("");
     setSelfManagement(selfManagementFromLayout);
   }, [enableExpenseManagement, selfManagementFromLayout]);
@@ -258,9 +269,11 @@ export const AuthProvider = ({
       setCurrentCrmUserId(normalizeText(cached.currentCrmUserId));
       setSubordinates(cachedUsers);
       setSelectedManagedUserIdState(cachedSelection);
-      setSelfManagement(cached.allowSelfManagement === true ? true : selfManagementFromLayout);
+      setManagementRefreshedAt(cached.refreshedAt);
+      setSelfManagement(selfManagementFromLayout);
       setManagementBootstrapReady(true);
     } else {
+      setManagementRefreshedAt(0);
       setManagementBootstrapReady(false);
     }
 
@@ -279,6 +292,7 @@ export const AuthProvider = ({
           resolvedCurrentUserName
         );
 
+        let subordinatesRefreshed = false;
         // Always refresh subordinates from API to avoid stale legacy id mappings.
         try {
           const subordinatesResponse = await expenseApiModule.getExpenseSheetSubordinates({
@@ -289,6 +303,7 @@ export const AuthProvider = ({
             resolvedCurrentUser,
             resolvedCurrentUserName
           );
+          subordinatesRefreshed = true;
         } catch {
           // Keep cached subordinates when refresh fails.
         }
@@ -305,6 +320,7 @@ export const AuthProvider = ({
         setCurrentUserName(resolvedCurrentUserName);
         setCurrentCrmUserId(resolvedCurrentCrmUser);
         setSubordinates(nextSubordinates);
+        setManagementRefreshedAt(subordinatesRefreshed ? Date.now() : cached?.refreshedAt || 0);
         setSelectedManagedUserIdState(nextSelection);
         setSelfManagement(contextSnapshot.allowSelfManagement === true);
       } catch {
@@ -315,6 +331,7 @@ export const AuthProvider = ({
           setCurrentUserName("");
           setCurrentCrmUserId("");
           setSubordinates([]);
+          setManagementRefreshedAt(0);
           setSelectedManagedUserIdState("");
           setSelfManagement(selfManagementFromLayout);
         }
@@ -337,6 +354,7 @@ export const AuthProvider = ({
     if (!managementBootstrapReady) return;
 
     writeExpenseManagementCache({
+      refreshedAt: managementRefreshedAt,
       currentAxUserId: normalizeText(currentAxUserId),
       currentUserName: normalizeText(currentUserName),
       currentCrmUserId: normalizeText(currentCrmUserId),
@@ -350,6 +368,7 @@ export const AuthProvider = ({
     currentCrmUserId,
     enableExpenseManagement,
     managementBootstrapReady,
+    managementRefreshedAt,
     selectedManagedUserId,
     selfManagement,
     subordinates,

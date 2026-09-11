@@ -194,12 +194,19 @@ export const useExpenseTicketsFilterCache = () => {
     if (!normalized) return;
 
     const keys = getScopedKeys();
-    setSessionJsonWithExpiry(keys.filterKey, normalized, EXPENSE_TICKETS_CACHE_TTL_MS);
-    if (!getSessionJsonWithExpiry<ExpenseTicketsCachedState>(keys.filterKey)) {
+    removeSessionValueWithExpiry(keys.returnFlagKey);
+    removeSessionValueWithExpiry(keys.returnModeKey);
+    const saved = setSessionJsonWithExpiry(keys.filterKey, normalized, EXPENSE_TICKETS_CACHE_TTL_MS) ||
       setSessionJsonWithExpiry(keys.filterKey, toCompactState(normalized), EXPENSE_TICKETS_CACHE_TTL_MS);
+    if (!saved) {
+      removeSessionValueWithExpiry(keys.filterKey);
+      removeSessionValueWithExpiry(keys.returnFlagKey);
+      removeSessionValueWithExpiry(keys.returnModeKey);
+      return;
     }
-    setSessionValueWithExpiry(keys.returnFlagKey, "1", EXPENSE_TICKETS_CACHE_TTL_MS);
-    setSessionValueWithExpiry(keys.returnModeKey, "restore", EXPENSE_TICKETS_CACHE_TTL_MS);
+    if (setSessionValueWithExpiry(keys.returnModeKey, "restore", EXPENSE_TICKETS_CACHE_TTL_MS)) {
+      setSessionValueWithExpiry(keys.returnFlagKey, "1", EXPENSE_TICKETS_CACHE_TTL_MS);
+    }
   }, []);
 
   const readCachedState = useCallback((): ExpenseTicketsCachedState | null => {

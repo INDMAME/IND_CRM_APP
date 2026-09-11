@@ -14,14 +14,10 @@ import { toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 import { resolveTicketLineAmount } from "../utils/expenseTicketLineAmount.ts";
 import {
   canPersistSensitiveBrowserState,
-  captureSensitiveBrowserState,
   getBrowserStorageScopeToken,
-  isSensitiveBrowserStateCurrent,
 } from "../../../utils/browserStorageScope.ts";
 
 const TICKET_BROWSER_SCOPE = getBrowserStorageScopeToken() || "scope-unavailable";
-const TICKET_IMAGE_CACHE_NAME = `ind-expense-ticket-image-v2-${TICKET_BROWSER_SCOPE}`;
-const TICKET_IMAGE_CACHE_PREFIX = "/__ind_cache__/ticket-image/";
 const TICKET_TRACE_STORAGE_KEY = `expense_sheet_ticket_quick_flow_trace_v2_${TICKET_BROWSER_SCOPE}`;
 
 export const MAX_TICKET_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
@@ -67,23 +63,6 @@ export type NormalizedDraft = {
   gastoType: number | null;
   lines: NormalizedDraftLine[];
 };
-
-export type PendingUploadRetry =
-  | {
-      strategy: "ia-ready";
-      fileId: string;
-      extension: string;
-      cacheKey: string;
-      draft: NormalizedDraft;
-      fileNameHint: string;
-    }
-  | {
-      strategy: "manual-post-upload-draft";
-      fileId: string;
-      extension: string;
-      cacheKey: string;
-      fileNameHint: string;
-    };
 
 export type UploadSyncResult = {
   urlFile: string;
@@ -355,66 +334,4 @@ export const persistTraceList = (traceList: TicketTraceEntry[]): void => {
   } catch {
     // Ignore storage failures in restricted browser contexts.
   }
-};
-
-export const cacheImageFile = async (cacheKey: string, file: File): Promise<void> => {
-  const stateSnapshot = captureSensitiveBrowserState();
-  if (!stateSnapshot || typeof window === "undefined" || !("caches" in window)) return;
-  const cache = await caches.open(TICKET_IMAGE_CACHE_NAME);
-  const requestUrl = `${TICKET_IMAGE_CACHE_PREFIX}${encodeURIComponent(cacheKey)}`;
-  if (!isSensitiveBrowserStateCurrent(stateSnapshot)) {
-    await caches.delete(TICKET_IMAGE_CACHE_NAME).catch(() => false);
-    return;
-  }
-  await cache.put(
-    new Request(requestUrl),
-    new Response(file, {
-      headers: {
-        "Content-Type": safeText(file.type) || "application/octet-stream",
-      },
-    })
-  );
-  if (!isSensitiveBrowserStateCurrent(stateSnapshot)) {
-    await cache.delete(requestUrl).catch(() => false);
-    await caches.delete(TICKET_IMAGE_CACHE_NAME).catch(() => false);
-  }
-};
-
-export const readCachedImageFile = async (cacheKey: string): Promise<Blob | null> => {
-  const stateSnapshot = captureSensitiveBrowserState();
-  if (!stateSnapshot || typeof window === "undefined" || !("caches" in window)) return null;
-  const cache = await caches.open(TICKET_IMAGE_CACHE_NAME);
-  const requestUrl = `${TICKET_IMAGE_CACHE_PREFIX}${encodeURIComponent(cacheKey)}`;
-  const cachedResponse = await cache.match(requestUrl);
-  if (!cachedResponse || !isSensitiveBrowserStateCurrent(stateSnapshot)) return null;
-  const blob = await cachedResponse.blob();
-  return isSensitiveBrowserStateCurrent(stateSnapshot) ? blob : null;
-};
-
-export const removeCachedImageFile = async (cacheKey: string): Promise<void> => {
-  if (typeof window === "undefined" || !("caches" in window)) return;
-  const stateSnapshot = captureSensitiveBrowserState();
-  if (!stateSnapshot) {
-    await caches.delete(TICKET_IMAGE_CACHE_NAME).catch(() => false);
-    return;
-  }
-  const cache = await caches.open(TICKET_IMAGE_CACHE_NAME);
-  if (!isSensitiveBrowserStateCurrent(stateSnapshot)) {
-    await caches.delete(TICKET_IMAGE_CACHE_NAME).catch(() => false);
-    return;
-  }
-  const requestUrl = `${TICKET_IMAGE_CACHE_PREFIX}${encodeURIComponent(cacheKey)}`;
-  await cache.delete(requestUrl);
-  if (!isSensitiveBrowserStateCurrent(stateSnapshot)) {
-    await caches.delete(TICKET_IMAGE_CACHE_NAME).catch(() => false);
-  }
-};
-
-// Waits for a parallel cache write before removing the successful-flow recovery image.
-export const removeCachedImageFileAfterWrite = async (
-  cacheKey: string,
-  pendingWrite: Promise<void>
-): Promise<void> => {
-  await pendingWrite.catch(() => undefined);
-  await removeCachedImageFile(cacheKey);
 };

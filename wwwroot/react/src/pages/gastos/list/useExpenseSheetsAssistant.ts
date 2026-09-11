@@ -1,7 +1,6 @@
 import {
   useCallback,
   useEffect,
-  useEffectEvent,
   useMemo,
   useRef,
   useState,
@@ -22,8 +21,10 @@ import { parseStructuredChatMessages } from "../../../components/commons/chat/ch
 import { buildStructuredAssistantAnswerInstructions } from "../../../components/commons/chat/chatPromptConventions.ts";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
+import { captureSensitiveBrowserState } from "../../../utils/browserStorageScope.ts";
 import { askExpenseSheetsQuestion, fetchExpenseSheetListSourceJson } from "../utils/expenseApi.ts";
 import { runExpenseReadRequestWithRetry } from "../utils/expenseRequestRetry.ts";
+import { createExpenseAssistantSourceCache, getExpenseAssistantQueryKey } from "../utils/expenseAssistantSource.ts";
 import type { ExpenseSheetListResponseEnvelope, ExpenseSheetsAskResult, IndValidationError } from "../expenseTypes.ts";
 import { safeText, sanitizeAssistantText } from "../utils/expenseUiUtils.ts";
 import {
@@ -69,12 +70,6 @@ type UseExpenseSheetsAssistantResult = {
 const MAX_TEXTAREA_HEIGHT_PX = 168;
 const DEFAULT_ASSISTANT_VISUAL_WIDTH_PX = 304;
 const DEFAULT_ASSISTANT_VISUAL_HEIGHT_PX = 264;
-
-type ExpenseSheetsAssistantSourceJsonCache = {
-  contextVersion: number;
-  axUserIdOverride: string;
-  response: ExpenseSheetListResponseEnvelope;
-};
 
 type SendQuestionOptions = {
   requestedVisualizationType?: VisualizationType | null;
@@ -363,7 +358,10 @@ export const useExpenseSheetsAssistant = ({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const previousContextVersionRef = useRef(context.contextVersion);
-  const sourceJsonCacheRef = useRef<ExpenseSheetsAssistantSourceJsonCache | null>(null);
+  const [sourceJsonCache] = useState(createExpenseAssistantSourceCache);
+  const sourceQueryKey = context.lastExpenseSheetsListRequest
+    ? getExpenseAssistantQueryKey(context.lastExpenseSheetsListRequest, safeText(context.lastExpenseSheetsListAxUserIdOverride), captureSensitiveBrowserState())
+    : "";
 
   const hasContext = useMemo(
     () =>
@@ -497,11 +495,10 @@ export const useExpenseSheetsAssistant = ({
   }, [isOpen]);
 
   useEffect(() => {
-    const cachedSourceJson = sourceJsonCacheRef.current;
-    if (!cachedSourceJson) return;
-    if (cachedSourceJson.contextVersion === context.contextVersion) return;
-    sourceJsonCacheRef.current = null;
-  }, [context.contextVersion]);
+    sourceJsonCache.selectQuery(sourceQueryKey);
+  }, [sourceJsonCache, sourceQueryKey]);
+
+  useEffect(() => () => sourceJsonCache.clear(), [sourceJsonCache]);
 
   useEffect(() => {
     if (previousContextVersionRef.current === context.contextVersion) {
@@ -520,39 +517,24 @@ export const useExpenseSheetsAssistant = ({
     );
   }, [assistantCopy.contextUpdated, assistantCopy.noContextMessage, context.contextVersion, hasContext, messages.length]);
 
-  const resolveFullSourceJson = useEffectEvent(async (): Promise<ExpenseSheetListResponseEnvelope | null> => {
+  const resolveFullSourceJson = useCallback(async (): Promise<ExpenseSheetListResponseEnvelope | null> => {
     if (!context.lastExpenseSheetsListRequest || !context.lastExpenseSheetsListResponse) {
       return null;
     }
 
     const axUserIdOverride = safeText(context.lastExpenseSheetsListAxUserIdOverride);
-    const cachedSourceJson = sourceJsonCacheRef.current;
-    if (
-      cachedSourceJson &&
-      cachedSourceJson.contextVersion === context.contextVersion &&
-      cachedSourceJson.axUserIdOverride === axUserIdOverride
-    ) {
-      return cachedSourceJson.response;
-    }
-
-    const fullSourceJson = await runExpenseReadRequestWithRetry(
-      () =>
-        fetchExpenseSheetListSourceJson(context.lastExpenseSheetsListRequest, {
-          suppressPermissionModal: true,
-          axUserIdOverride: axUserIdOverride || undefined,
-          seedResponse: context.lastExpenseSheetsListResponse,
-        }),
-      {}
-    );
-
-    sourceJsonCacheRef.current = {
-      contextVersion: context.contextVersion,
-      axUserIdOverride,
-      response: fullSourceJson,
-    };
-
-    return fullSourceJson;
-  });
+    const request = context.lastExpenseSheetsListRequest;
+    const response = context.lastExpenseSheetsListResponse;
+    return sourceJsonCache.load(sourceQueryKey, response, (signal) => runExpenseReadRequestWithRetry(
+      () => fetchExpenseSheetListSourceJson(request, {
+        suppressPermissionModal: true,
+        axUserIdOverride: axUserIdOverride || undefined,
+        seedResponse: response,
+        signal,
+      }),
+      { signal }
+    ));
+  }, [context.lastExpenseSheetsListRequest, context.lastExpenseSheetsListResponse, context.lastExpenseSheetsListAxUserIdOverride, sourceJsonCache, sourceQueryKey]);
 
   const sendQuestion = useCallback(
     async (rawQuestion: string, options?: SendQuestionOptions) => {

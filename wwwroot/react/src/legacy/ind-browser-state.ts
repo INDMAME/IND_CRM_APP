@@ -229,6 +229,8 @@ class BrowserStateCoordinator {
     }
 
     this.persistenceAllowed = true;
+    // Remove obsolete images without delaying restoration of valid same-identity drafts.
+    await this.deleteSensitiveCaches();
   }
 
   // Adds the render-time company to same-origin fetches and reloads on a stale-context response.
