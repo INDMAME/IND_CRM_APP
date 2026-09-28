@@ -196,7 +196,7 @@ Formatversion: 1
         #        return 'Aprobacion solicitada';
         #
         #    if (_eventType == 'ExpenseSheetApprovalRequestCancelled')
-        #        return 'Solicitud de aprobación cancelada';
+        #        return 'Solicitud de Aprobación Deshecha';
         #
         #    if (_eventType == 'ExpenseSheetApprovalUndone')
         #        return 'Aprobación deshecha';
@@ -370,7 +370,7 @@ Formatversion: 1
         #        return strFmt('La hoja de gastos %1 esta lista para revision.', _hojaId);
         #
         #    if (_eventType == 'ExpenseSheetApprovalRequestCancelled')
-        #        return strFmt('El propietario ha cancelado la solicitud de aprobación de la hoja de gastos %1 para corregir sus datos.', _hojaId);
+        #        return strFmt('El propietario ha deshecho la solicitud de aprobación de la hoja de gastos %1 para corregir sus datos.', _hojaId);
         #
         #    if (_eventType == 'ExpenseSheetApprovalUndone')
         #        return strFmt('Se ha deshecho la aprobación de la hoja de gastos %1. La hoja vuelve a estar en revisión.', _hojaId);
@@ -402,7 +402,7 @@ Formatversion: 1
         #        return strFmt('Hoja de gastos %1 pendiente de aprobacion', _hojaId);
         #
         #    if (_eventType == 'ExpenseSheetApprovalRequestCancelled')
-        #        return strFmt('Cancelación de Solicitud de Aprobación - hoja de gastos %1', _hojaId);
+        #        return strFmt('Solicitud de Aprobación Deshecha - hoja de gastos %1', _hojaId);
         #
         #    if (_eventType == 'ExpenseSheetApprovalUndone')
         #        return strFmt('Aprobación deshecha - hoja de gastos %1', _hojaId);
@@ -2777,7 +2777,7 @@ Formatversion: 1
         #        if (INDCRMExpenseSheetService::isExpenseSheetApprovalRequestEvent(eventType) ||
         #            eventType == 'ExpenseSheetApprovalRequestCancelled')
         #        {
-        #            // Approval requests and cancellations notify every direct manager of the owner.
+        #            // Approval requests and undo notices notify every direct manager of the owner.
         #            managerCrmUserIds = INDCRMExpenseSheetService::resolveExpenseSheetManagerCrmUserIds(ownerCrmUserId);
         #            if (conLen(managerCrmUserIds) == 0)
         #                return [INDCRMUtilityService::buildHeader(false, 'No se encontró jefatura para el propietario de la hoja, verificar CRMUsuarioSubordinadoTable.', conNull()), conNull()];
@@ -5138,7 +5138,7 @@ Formatversion: 1
         #    if (INDCRMExpenseSheetService::isExpenseSheetApprovalRequestEvent(eventType) ||
         #        eventType == 'ExpenseSheetApprovalRequestCancelled')
         #    {
-        #        // The owner is the functional sender; every direct manager receives requests and cancellations.
+        #        // The owner is the functional sender; every direct manager receives requests and undo notices.
         #        senderUserId     = expenseSheet.UserId;
         #        senderCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(senderUserId);
         #        if (!senderCrmUserId)

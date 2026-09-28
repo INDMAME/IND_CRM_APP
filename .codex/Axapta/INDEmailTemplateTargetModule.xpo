@@ -62,7 +62,7 @@ Formatversion: 1
       #CRMApprovalRequestCancelled
       PROPERTIES
         Name                #CRMApprovalRequestCancelled
-        Label               #CRM - Cancelación de Solicitud de Aprobación
+        Label               #CRM - Solicitud de Aprobación Deshecha
         ConfigurationKey    #
         EnumValue           #5
       ENDPROPERTIES
