@@ -432,3 +432,26 @@ test("ticket detail rows retain quantity and their own identifier without inheri
     assert.deepEqual(await events(page), Array(3).fill("ticket-line:-456"));
   });
 });
+
+test("sheet and ticket line icons and details are vertically centered", async () => {
+  for (const kind of ["sheetLines", "ticketLines"]) {
+    await withFixture(kind, {}, async (page) => {
+      const geometry = await page.locator("#fixture .timeline-card").first().evaluate((card) => {
+        const cardRect = card.getBoundingClientRect();
+        const iconRect = card.querySelector(".expense-card-line__icon").getBoundingClientRect();
+        const detailsRect = card.querySelector(".expense-card-line__details").getBoundingClientRect();
+        const amountRect = card.querySelector(".expense-sheet-card__amount").getBoundingClientRect();
+        return {
+          cardCenter: cardRect.top + cardRect.height / 2,
+          iconCenter: iconRect.top + iconRect.height / 2,
+          detailsCenter: detailsRect.top + detailsRect.height / 2,
+          amountRight: amountRect.right,
+          cardRight: cardRect.right,
+        };
+      });
+      assert.ok(Math.abs(geometry.iconCenter - geometry.cardCenter) <= 2, `${kind} icon must be centered`);
+      assert.ok(Math.abs(geometry.detailsCenter - geometry.cardCenter) <= 2, `${kind} title and metadata must be centered`);
+      assert.ok(geometry.cardRight - geometry.amountRight <= 14, `${kind} amount must stay on the right`);
+    });
+  }
+});
