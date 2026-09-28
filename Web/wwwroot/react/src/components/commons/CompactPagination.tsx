@@ -1,4 +1,5 @@
 import React, { forwardRef, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { classNames } from "../../utils/classNames.ts";
 import Spinner from "./Spinner.tsx";
 
@@ -127,9 +128,10 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
 
     return (
       <>
-        {showPageSpinner ? (
+        {showPageSpinner && typeof document !== "undefined" ? createPortal(
           <div
-            className="fixed inset-0 z-600000 flex items-center justify-center bg-slate-100"
+            className="fixed inset-0 flex items-center justify-center bg-slate-100"
+            style={{ zIndex: 600000 }}
             onWheel={(event) => {
               event.preventDefault();
             }}
@@ -138,7 +140,8 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
             }}
           >
             <Spinner size="h-10 w-10" />
-          </div>
+          </div>,
+          document.body
         ) : null}
         <div
           id="pagination"

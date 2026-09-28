@@ -1,7 +1,7 @@
 /* Expense-only layouts. Shared timeline rules remain owned by Historial.css. */
 .expense-timeline-card .expense-timeline-card__content {
-    padding: 12px;
-    gap: 6px;
+    padding: 9px 10px;
+    gap: 4px;
 }
 
 .expense-timeline-card .timeline-name,
@@ -9,11 +9,20 @@
     margin: 0;
     padding: 0;
     text-align: left;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: normal;
+}
+
+.expense-timeline-card .timeline-name {
+    width: 100%;
 }
 
 .expense-timeline-card .expense-card__metadata {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: baseline;
     gap: 3px 10px;
     min-width: 0;
@@ -23,15 +32,18 @@
 }
 
 .expense-timeline-card .expense-card__date {
-    flex-shrink: 0;
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .expense-timeline-card--header .expense-sheet-card__owner {
-    flex: 1 1 140px;
+    flex: 1 1 auto;
     min-width: 0;
     margin-left: auto;
     text-align: right;
-    overflow-wrap: anywhere;
 }
 
 .expense-timeline-card .expense-sheet-card__amount {
@@ -41,12 +53,14 @@
     font-size: 22px;
     font-weight: 700;
     line-height: 1.25;
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .expense-timeline-card .expense-card-header__footer {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: flex-end;
     justify-content: space-between;
     gap: 8px 12px;
@@ -59,12 +73,14 @@
 
 .expense-timeline-card .expense-card__indicators {
     display: inline-flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     justify-content: flex-end;
     gap: 6px;
+    min-width: 0;
     max-width: 100%;
     margin-left: auto;
+    overflow: hidden;
 }
 
 .expense-timeline-card .expense-sheet-card__status {
@@ -84,7 +100,9 @@
     letter-spacing: 0.2px;
     text-align: center;
     text-transform: uppercase;
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .expense-timeline-card .expense-sheet-card__status--review,
@@ -167,51 +185,52 @@
 }
 
 .expense-timeline-card .expense-card-line {
-    display: flex;
-    flex-flow: row wrap;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    grid-template-rows: auto auto;
     align-items: center;
-    gap: 10px;
+    column-gap: 8px;
+    row-gap: 2px;
 }
 
 .expense-timeline-card .expense-card-line__icon {
+    grid-column: 1;
+    grid-row: 1 / 3;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
     background: #e5eaf0;
     border-radius: 5px;
     color: #00296be0;
 }
 
 .expense-timeline-card .expense-card-line__icon svg {
-    width: 24px;
-    height: 24px;
+    width: 29px;
+    height: 29px;
 }
 
 .expense-timeline-card .expense-card-line__details {
-    flex: 1 1 110px;
+    grid-column: 2;
+    grid-row: 1;
     min-width: 0;
 }
 
 .expense-timeline-card .expense-card-line__details .expense-card__metadata {
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 .expense-timeline-card .expense-card-line__trailing {
     display: flex;
+    grid-column: 2;
+    grid-row: 2;
     flex-direction: column;
     align-items: flex-end;
-    gap: 4px;
-    flex: 0 1 auto;
-    margin-left: auto;
+    justify-content: flex-end;
+    gap: 2px;
     min-width: 0;
-    max-width: calc(100% - 46px);
-}
-
-.expense-timeline-card .expense-card-line__trailing:has(> .expense-card__indicators) {
-    align-self: flex-start;
+    width: 100%;
 }
 
 .expense-timeline-card .expense-card-line__trailing .expense-sheet-card__amount {
@@ -227,17 +246,7 @@
 
 @media (max-width: 480px) {
     .expense-timeline-card .expense-card-line {
-        gap: 8px;
-        padding: 10px;
-    }
-
-    .expense-timeline-card .expense-card-line__icon {
-        width: 32px;
-        height: 32px;
-    }
-
-    .expense-timeline-card .expense-card-line__trailing {
-        max-width: calc(100% - 40px);
+        padding: 7px 8px;
     }
 }
 

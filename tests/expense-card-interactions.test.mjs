@@ -16,6 +16,7 @@ import ExpenseTimelineCard from "${componentRoot}/ExpenseTimelineCard.tsx";
 import ExpenseLinesTimeline from "${componentRoot}/ExpenseLinesTimeline.tsx";
 import ExpenseTicketLinesList from "${componentRoot}/ExpenseTicketLinesList.tsx";
 import ExpenseTicketLinkTimelineItem from "${componentRoot}/ExpenseTicketLinkTimelineItem.tsx";
+import CompactPagination from "./Web/wwwroot/react/src/components/commons/CompactPagination.tsx";
 import { useTimelineCardEffects } from "./Web/wwwroot/react/src/hooks/useTimelineCardEffects.ts";
 
 const dateParts = { day: "10", month: "Sep", year: "2026" };
@@ -38,7 +39,7 @@ function EffectHost({ children }) {
 }
 
 // Supplies display values and mock callbacks to either card body.
-function CardFixture({ layout, customHandlers, effects }) {
+function CardFixture({ layout, customHandlers, effects, longText }) {
   const interactionProps = customHandlers ? {
     "aria-label": "Custom card",
     "aria-pressed": true,
@@ -56,8 +57,8 @@ function CardFixture({ layout, customHandlers, effects }) {
     <ExpenseTimelineCard
       layout={layout}
       dateParts={dateParts}
-      title={effects ? longTitle : "Expense example"}
-      subtitle="Owner Alpha"
+      title={effects || longText ? longTitle : "Expense example"}
+      subtitle={longText ? "An owner name that is much wider than this small expense card" : "Owner Alpha"}
       amountText="1,234.50 EUR"
       statusClassName="expense-sheet-card__status expense-sheet-card__status--review"
       statusLabel="Approval requested"
@@ -138,10 +139,22 @@ function TicketLinesFixture() {
   /></div>;
 }
 
+// Keeps the pagination spinner pending inside a transformed ancestor.
+function PaginationFixture() {
+  const [loading, setLoading] = useState(false);
+  window.completePagination = () => setLoading(false);
+  return <div id="fixture" style={{ transform: "translateZ(0)", height: 150 }}>
+    <CompactPagination totalPages={2} currentPage={1} loading={loading}
+      onPageChange={() => setLoading(true)} labels={paginationLabels} />
+    <div id="previous-card" style={{ position: "absolute", bottom: 0 }}>Previous card</div>
+  </div>;
+}
+
 const root = createRoot(document.getElementById("root"));
 window.mountExpenseCardFixture = (kind, options) => {
   const Component = { card: CardFixture, link: TicketLinkFixture,
-    sheetLines: SheetLinesFixture, ticketLines: TicketLinesFixture }[kind];
+    sheetLines: SheetLinesFixture, ticketLines: TicketLinesFixture,
+    pagination: PaginationFixture }[kind];
   root.render(<Component {...options} />);
 };
 `;
@@ -210,7 +223,7 @@ async function withFixture(kind, options, verify) {
       <body><div id="root"></div></body></html>`);
     await page.addScriptTag({ content: fixtureBundle.outputFiles[0].text });
     await page.evaluate(({ kind, options }) => window.mountExpenseCardFixture(kind, options), { kind, options });
-    await page.locator("#fixture .timeline-card").first().waitFor();
+    await page.locator(kind === "pagination" ? "#fixture #pagination" : "#fixture .timeline-card").first().waitFor();
     await verify(page);
     assert.deepEqual(errors, [], "The isolated components must not raise browser errors");
     assert.deepEqual(requests, [], "The fixture must not call a URL, API, or authenticated application");
@@ -279,6 +292,66 @@ for (const layout of ["header", "line"]) {
   });
 }
 
+test("expense card text stays on one line while line amounts sit at the lower right", async () => {
+  for (const layout of ["header", "line"]) {
+    await withFixture("card", { layout, longText: true }, async (page) => {
+      const card = page.locator("#fixture .timeline-card");
+      const title = card.locator(".timeline-name");
+      const subtitle = card.locator(".expense-sheet-card__subtitle");
+      const geometry = await card.evaluate((element) => {
+        const titleElement = element.querySelector(".timeline-name");
+        const subtitleElement = element.querySelector(".expense-sheet-card__subtitle");
+        const amountElement = element.querySelector(".expense-sheet-card__amount");
+        const iconElement = element.querySelector(".expense-card-line__icon svg");
+        return {
+          cardRight: element.getBoundingClientRect().right,
+          titleHeight: titleElement.getBoundingClientRect().height,
+          titleLineHeight: parseFloat(getComputedStyle(titleElement).lineHeight),
+          titleOverflow: titleElement.scrollWidth > titleElement.clientWidth,
+          subtitleHeight: subtitleElement.getBoundingClientRect().height,
+          subtitleLineHeight: parseFloat(getComputedStyle(subtitleElement).lineHeight),
+          amount: amountElement.getBoundingClientRect().toJSON(),
+          title: titleElement.getBoundingClientRect().toJSON(),
+          iconWidth: iconElement?.getBoundingClientRect().width || 0,
+        };
+      });
+      assert.ok(geometry.titleHeight <= geometry.titleLineHeight + 1);
+      assert.ok(geometry.subtitleHeight <= geometry.subtitleLineHeight + 1);
+      assert.ok(geometry.titleOverflow);
+      assert.match(await title.getAttribute("data-fulltext"), /^A long expense description/u);
+      assert.match(await subtitle.getAttribute("data-fulltext"), /An owner name/u);
+      if (layout === "line") {
+        assert.ok(geometry.amount.top >= geometry.title.bottom);
+        assert.ok(geometry.cardRight - geometry.amount.right <= 14);
+        assert.ok(geometry.iconWidth >= 28);
+      }
+      await page.setViewportSize({ width: 260, height: 812 });
+      const singleLineFields = await card.evaluate((element) =>
+        [...element.querySelectorAll(".timeline-name, .expense-card__date, .expense-sheet-card__subtitle, .expense-sheet-card__amount, .expense-sheet-card__status")]
+          .map((field) => field.getBoundingClientRect().height <= parseFloat(getComputedStyle(field).lineHeight) + 7)
+      );
+      assert.ok(singleLineFields.every(Boolean), "Card fields must remain on one line at narrow widths");
+    });
+  }
+});
+
+test("pagination loading covers the viewport outside transformed list containers", async () => {
+  await withFixture("pagination", {}, async (page) => {
+    await page.getByRole("button", { name: "2", exact: true }).click();
+    const overlay = page.locator("body > div.fixed.inset-0");
+    await overlay.waitFor();
+    const bounds = await overlay.boundingBox();
+    assert.ok(bounds);
+    assert.equal(bounds.x, 0);
+    assert.equal(bounds.y, 0);
+    assert.equal(bounds.width, 375);
+    assert.equal(bounds.height, 812);
+    assert.equal(await page.evaluate(() => document.elementFromPoint(180, 800)?.closest("#previous-card") !== null), false);
+    await page.evaluate(() => window.completePagination());
+    await overlay.waitFor({ state: "detached" });
+  });
+});
+
 test("ticket selection stays separate from opening and preserves its focus target", async () => {
   await withFixture("link", {}, async (page) => {
     const item = page.locator('.timeline-item[data-ticket-file-id="TICKET-42"]');
@@ -329,6 +402,9 @@ test("sheet rows preserve accessible type, signed identifiers, linked metadata, 
     const firstCard = page.locator("#fixture .timeline-card").first();
     assert.equal(await page.getByRole("group", { name: "FILE-123", exact: true }).count(), 1);
     await expect(firstCard).toHaveAccessibleName(/Existing type/u);
+    const linkedIconBottom = await firstCard.locator(".expense-line-card__ticket-icon").evaluate((element) => element.getBoundingClientRect().bottom);
+    const amountTop = await firstCard.locator(".expense-sheet-card__amount").evaluate((element) => element.getBoundingClientRect().top);
+    assert.ok(linkedIconBottom <= amountTop, "The linked ticket indicator remains above the amount");
     await firstCard.click({ position: { x: 12, y: 12 } });
     assert.deepEqual(await events(page), ["line:-123"]);
     await page.getByRole("button", { name: "2", exact: true }).click();
