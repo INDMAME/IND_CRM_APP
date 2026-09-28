@@ -59,6 +59,14 @@ Formatversion: 1
         EnumValue           #4
       ENDPROPERTIES
       
+      #CRMApprovalRequestCancelled
+      PROPERTIES
+        Name                #CRMApprovalRequestCancelled
+        Label               #CRM - Cancelación de Solicitud de Aprobación
+        ConfigurationKey    #
+        EnumValue           #5
+      ENDPROPERTIES
+
       #EmailTest
       PROPERTIES
         Name                #EmailTest
@@ -67,6 +75,22 @@ Formatversion: 1
         EnumValue           #6
       ENDPROPERTIES
       
+      #CRMApprovalUndone
+      PROPERTIES
+        Name                #CRMApprovalUndone
+        Label               #CRM - Aprobación deshecha
+        ConfigurationKey    #
+        EnumValue           #7
+      ENDPROPERTIES
+
+      #CRMRejectionUndone
+      PROPERTIES
+        Name                #CRMRejectionUndone
+        Label               #CRM - Rechazo deshecho
+        ConfigurationKey    #
+        EnumValue           #8
+      ENDPROPERTIES
+
     ENDTYPEELEMENTS
   ENDENUMTYPE
   

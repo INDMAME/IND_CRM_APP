@@ -195,6 +195,15 @@ Formatversion: 1
         #    if (_eventType == 'ExpenseSheetApprovalRequested')
         #        return 'Aprobacion solicitada';
         #
+        #    if (_eventType == 'ExpenseSheetApprovalRequestCancelled')
+        #        return 'Solicitud de aprobación cancelada';
+        #
+        #    if (_eventType == 'ExpenseSheetApprovalUndone')
+        #        return 'Aprobación deshecha';
+        #
+        #    if (_eventType == 'ExpenseSheetRejectionUndone')
+        #        return 'Rechazo deshecho';
+        #
         #    if (_eventType == 'ExpenseSheetApproved')
         #        return 'Aprobada';
         #
@@ -360,6 +369,15 @@ Formatversion: 1
         #    if (_eventType == 'ExpenseSheetApprovalRequested')
         #        return strFmt('La hoja de gastos %1 esta lista para revision.', _hojaId);
         #
+        #    if (_eventType == 'ExpenseSheetApprovalRequestCancelled')
+        #        return strFmt('El propietario ha cancelado la solicitud de aprobación de la hoja de gastos %1 para corregir sus datos.', _hojaId);
+        #
+        #    if (_eventType == 'ExpenseSheetApprovalUndone')
+        #        return strFmt('Se ha deshecho la aprobación de la hoja de gastos %1. La hoja vuelve a estar en revisión.', _hojaId);
+        #
+        #    if (_eventType == 'ExpenseSheetRejectionUndone')
+        #        return strFmt('Se ha deshecho el rechazo de la hoja de gastos %1. La hoja vuelve a estar en revisión.', _hojaId);
+        #
         #    if (_eventType == 'ExpenseSheetApproved')
         #        return strFmt('La hoja de gastos %1 ha sido aprobada.', _hojaId);
         #
@@ -382,6 +400,15 @@ Formatversion: 1
         #{
         #    if (_eventType == 'ExpenseSheetApprovalRequested')
         #        return strFmt('Hoja de gastos %1 pendiente de aprobacion', _hojaId);
+        #
+        #    if (_eventType == 'ExpenseSheetApprovalRequestCancelled')
+        #        return strFmt('Cancelación de Solicitud de Aprobación - hoja de gastos %1', _hojaId);
+        #
+        #    if (_eventType == 'ExpenseSheetApprovalUndone')
+        #        return strFmt('Aprobación deshecha - hoja de gastos %1', _hojaId);
+        #
+        #    if (_eventType == 'ExpenseSheetRejectionUndone')
+        #        return strFmt('Rechazo deshecho - hoja de gastos %1', _hojaId);
         #
         #    if (_eventType == 'ExpenseSheetApproved')
         #        return strFmt('Hoja de gastos %1 aprobada', _hojaId);
@@ -2747,10 +2774,10 @@ Formatversion: 1
         #        if (actorAxUserId)
         #            actorCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(actorAxUserId);
         #
-        #        if (INDCRMExpenseSheetService::isExpenseSheetApprovalRequestEvent(eventType))
+        #        if (INDCRMExpenseSheetService::isExpenseSheetApprovalRequestEvent(eventType) ||
+        #            eventType == 'ExpenseSheetApprovalRequestCancelled')
         #        {
-        #            // Solicitud de aprobacion: reciben todas las jefaturas directas del propietario.
-        #            // Tambien cubre deshacer rechazo/aprobacion cuando la hoja vuelve a InReview.
+        #            // Approval requests and cancellations notify every direct manager of the owner.
         #            managerCrmUserIds = INDCRMExpenseSheetService::resolveExpenseSheetManagerCrmUserIds(ownerCrmUserId);
         #            if (conLen(managerCrmUserIds) == 0)
         #                return [INDCRMUtilityService::buildHeader(false, 'No se encontró jefatura para el propietario de la hoja, verificar CRMUsuarioSubordinadoTable.', conNull()), conNull()];
@@ -2764,7 +2791,8 @@ Formatversion: 1
         #                if (!recipientCrmUserId)
         #                    continue;
         #
-        #                if (actorCrmUserId && actorCrmUserId == recipientCrmUserId)
+        #                if (actorCrmUserId && actorCrmUserId == recipientCrmUserId &&
+        #                    eventType != 'ExpenseSheetApprovalRequestCancelled')
         #                    continue;
         #
         #                recipientEmail = INDCRMExpenseSheetService::getPersonaEmailByUserId(recipientCrmUserId);
@@ -2784,9 +2812,11 @@ Formatversion: 1
         #
         #            if (eventType == 'ExpenseSheetApproved' ||
         #                eventType == 'ExpenseSheetRejected' ||
+        #                eventType == 'ExpenseSheetApprovalUndone' ||
+        #                eventType == 'ExpenseSheetRejectionUndone' ||
         #                eventType == 'ExpenseSheetPaid')
         #            {
-        #                // Cambio final de estado: recibe el propietario o creador de la hoja segun el evento.
+        #                // The owner receives decisions and reversals; payment may use the creator.
         #                if (eventType == 'ExpenseSheetPaid' && header.INDCreatedByUserId)
         #                    recipientCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(header.INDCreatedByUserId);
         #                else
@@ -2802,7 +2832,10 @@ Formatversion: 1
         #        if (!recipientCrmUserId)
         #            return [INDCRMUtilityService::buildHeader(false, 'Usuario CRM destinatario no encontrado.', conNull()), conNull()];
         #
-        #        if ((eventType == 'ExpenseSheetApproved' || eventType == 'ExpenseSheetRejected')
+        #        if ((eventType == 'ExpenseSheetApproved' ||
+        #             eventType == 'ExpenseSheetRejected' ||
+        #             eventType == 'ExpenseSheetApprovalUndone' ||
+        #             eventType == 'ExpenseSheetRejectionUndone')
         #            && actorCrmUserId != ownerCrmUserId
         #            && !CRMUsuarioSubordinadoTable::EsAprobadorHojaGastos(actorCrmUserId, ownerCrmUserId))
         #        {
@@ -4757,6 +4790,10 @@ Formatversion: 1
         #    if (_toStatus == INDExpenseSheetStatus::Paid)
         #        return 'ExpenseSheetPaid';
         #
+        #    if (_fromStatus == INDExpenseSheetStatus::InReview &&
+        #        _toStatus   == INDExpenseSheetStatus::Draft)
+        #        return 'ExpenseSheetApprovalRequestCancelled';
+        #
         #    if ((_fromStatus == INDExpenseSheetStatus::Draft ||
         #         _fromStatus == INDExpenseSheetStatus::Rejected ||
         #         _fromStatus == INDExpenseSheetStatus::Approved) &&
@@ -4775,6 +4812,24 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #resolveExpenseSheetDecisionUndoEvent
+        #// Resolves the owner notice for a manager undoing an approval or rejection.
+        #static server str resolveExpenseSheetDecisionUndoEvent(INDExpenseSheetStatus _fromStatus,
+        #                                                        INDExpenseSheetStatus _toStatus)
+        #{
+        #    if (_toStatus != INDExpenseSheetStatus::InReview)
+        #        return '';
+        #
+        #    if (_fromStatus == INDExpenseSheetStatus::Approved)
+        #        return 'ExpenseSheetApprovalUndone';
+        #
+        #    if (_fromStatus == INDExpenseSheetStatus::Rejected)
+        #        return 'ExpenseSheetRejectionUndone';
+        #
+        #    return '';
+        #}
+        #
+      ENDSOURCE
       SOURCE #resolveExpenseSheetTemplateTargetModule
         #// Convierte el evento de hoja de gastos al modulo destino usado por las plantillas.
         #static server INDEmailTemplateTargetModule resolveExpenseSheetTemplateTargetModule(str _eventType,
@@ -4782,6 +4837,15 @@ Formatversion: 1
         #{
         #    if (_eventType == 'ExpenseSheetPaid' || _toStatus == INDExpenseSheetStatus::Paid)
         #        return INDEmailTemplateTargetModule::CRMPaid;
+        #
+        #    if (_eventType == 'ExpenseSheetApprovalRequestCancelled')
+        #        return INDEmailTemplateTargetModule::CRMApprovalRequestCancelled;
+        #
+        #    if (_eventType == 'ExpenseSheetApprovalUndone')
+        #        return INDEmailTemplateTargetModule::CRMApprovalUndone;
+        #
+        #    if (_eventType == 'ExpenseSheetRejectionUndone')
+        #        return INDEmailTemplateTargetModule::CRMRejectionUndone;
         #
         #    if (_toStatus == INDExpenseSheetStatus::InReview)
         #        return INDEmailTemplateTargetModule::CRMInReview;
@@ -5034,6 +5098,7 @@ Formatversion: 1
         #    DataAreaId                    companyId;
         #    CRMHojaGastosTable            expenseSheet;
         #    str                           eventType;
+        #    str                           decisionUndoEvent;
         #    str 20                        senderUserId;
         #    str 20                        recipientUserId;
         #    CRMUserId                     senderCrmUserId;
@@ -5055,6 +5120,7 @@ Formatversion: 1
         #        return false;
         #
         #    eventType = INDCRMExpenseSheetService::resolveExpenseSheetNotificationEvent(_fromStatus, _toStatus);
+        #    decisionUndoEvent = INDCRMExpenseSheetService::resolveExpenseSheetDecisionUndoEvent(_fromStatus, _toStatus);
         #    if (!eventType)
         #        return false;
         #
@@ -5069,10 +5135,10 @@ Formatversion: 1
         #    if (!_correlationId)
         #        _correlationId = strFmt('%1-%2-%3', expenseSheet.HojaGastosId, today(), timeNow());
         #
-        #    if (INDCRMExpenseSheetService::isExpenseSheetApprovalRequestEvent(eventType))
+        #    if (INDCRMExpenseSheetService::isExpenseSheetApprovalRequestEvent(eventType) ||
+        #        eventType == 'ExpenseSheetApprovalRequestCancelled')
         #    {
-        #        // Solicitud de aprobacion: emite el propietario y reciben todas sus jefaturas directas.
-        #        // Tambien cubre deshacer rechazo/aprobacion cuando la hoja vuelve a InReview.
+        #        // The owner is the functional sender; every direct manager receives requests and cancellations.
         #        senderUserId     = expenseSheet.UserId;
         #        senderCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(senderUserId);
         #        if (!senderCrmUserId)
@@ -5091,7 +5157,7 @@ Formatversion: 1
         #        for (i = 1; i <= conLen(managerCrmUserIds); i++)
         #        {
         #            managerCrmUserId  = conPeek(managerCrmUserIds, i);
-        #        recipientUserId  = managerCrmUserId;
+        #            recipientUserId  = managerCrmUserId;
         #            recipientCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(recipientUserId);
         #
         #            sentOk = INDCRMExpenseSheetService::sendExpenseSheetNotificationToRecipient(
@@ -5110,7 +5176,42 @@ Formatversion: 1
         #
         #            if (sentOk)
         #                anySentOk = true;
-        #    }
+        #        }
+        #
+        #        if (decisionUndoEvent)
+        #        {
+        #            // Tell the owner that the previous decision is no longer valid.
+        #            senderUserId = _actorUserId;
+        #            recipientUserId = expenseSheet.UserId;
+        #            senderCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(senderUserId);
+        #            recipientCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(recipientUserId);
+        #
+        #            if (senderCrmUserId != recipientCrmUserId &&
+        #                !CRMUsuarioSubordinadoTable::EsAprobadorHojaGastos(senderCrmUserId, expenseSheet.UserId))
+        #            {
+        #                warning(strFmt('No se envio email %1 para hoja %2: el actor %3 no es un aprobador habilitado.',
+        #                               decisionUndoEvent, expenseSheet.HojaGastosId, senderCrmUserId));
+        #            }
+        #            else
+        #            {
+        #                sentOk = INDCRMExpenseSheetService::sendExpenseSheetNotificationToRecipient(
+        #                    expenseSheet,
+        #                    decisionUndoEvent,
+        #                    _fromStatus,
+        #                    _toStatus,
+        #                    senderUserId,
+        #                    senderCrmUserId,
+        #                    recipientUserId,
+        #                    recipientCrmUserId,
+        #                    companyId,
+        #                    _source,
+        #                    _correlationId,
+        #                    false);
+        #
+        #                if (sentOk)
+        #                    anySentOk = true;
+        #            }
+        #        }
         #
         #        return anySentOk;
         #    }
