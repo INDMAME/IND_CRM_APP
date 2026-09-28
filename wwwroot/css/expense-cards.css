@@ -123,8 +123,8 @@
 }
 
 .expense-timeline-card .expense-sheet-card__status--paid {
-    background: #e5eaf0;
-    color: #00296b;
+    background: #065f46;
+    color: #ffffff;
 }
 
 .expense-timeline-card .expense-sheet-card__status-icon,
@@ -188,14 +188,16 @@
     display: grid;
     grid-template-columns: 40px minmax(0, 1fr);
     grid-template-rows: auto auto;
-    align-items: center;
+    align-items: start;
     column-gap: 8px;
-    row-gap: 2px;
+    row-gap: 0;
+    padding: 5px 8px;
 }
 
 .expense-timeline-card .expense-card-line__icon {
     grid-column: 1;
     grid-row: 1 / 3;
+    align-self: start;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -218,7 +220,7 @@
 }
 
 .expense-timeline-card .expense-card-line__details .expense-card__metadata {
-    margin-top: 2px;
+    margin-top: 0;
 }
 
 .expense-timeline-card .expense-card-line__trailing {
@@ -246,7 +248,7 @@
 
 @media (max-width: 480px) {
     .expense-timeline-card .expense-card-line {
-        padding: 7px 8px;
+        padding: 4px 8px;
     }
 }
 
