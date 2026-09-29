@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Lunes 24/08/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Martes 29/09/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -520,6 +520,50 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #buildLinkedTicketMonetarySnapshot
+        #//MMS - CRM fix - 2026.08.24
+        #// Builds the authoritative monetary snapshot used by every ticket-link path.
+        #// Output: [valid, message, currencyCode, totalAmount, amountMST, exchRate].
+        #static container buildLinkedTicketMonetarySnapshot(INDTicketInfoTable _ticketHeader)
+        #{
+        #    CurrencyCode currencyCode;
+        #    CurrencyCode localCurrencyCode;
+        #    Amount       totalAmount;
+        #    Amount       amountMST;
+        #    ExchRate     exchRate;
+        #    ;
+        #
+        #    if (!_ticketHeader.RecId)
+        #        return [false, 'Ticket no encontrado.', '', 0, 0, 0];
+        #
+        #    currencyCode = strUpr(strLRTrim(_ticketHeader.CurrencyCode));
+        #    if (currencyCode)
+        #        currencyCode = INDCRMUtilityService::resolveCurrencyCode(currencyCode);
+        #
+        #    if (!currencyCode)
+        #        return [false, 'El ticket no tiene una divisa valida y no se ha vinculado.', '', 0, 0, 0];
+        #
+        #    totalAmount = Currency::amount(_ticketHeader.TotalAmount, currencyCode);
+        #    if (totalAmount <= 0)
+        #        return [false, 'El importe original del ticket debe ser mayor que cero.', '', 0, 0, 0];
+        #
+        #    localCurrencyCode = CompanyInfo::standardCurrency();
+        #    if (currencyCode == localCurrencyCode)
+        #    {
+        #        amountMST = Currency::amount(totalAmount, localCurrencyCode);
+        #        return [true, '', currencyCode, totalAmount, amountMST, 100];
+        #    }
+        #
+        #    amountMST = Currency::amount(_ticketHeader.AmountMST, localCurrencyCode);
+        #    exchRate  = _ticketHeader.ExchRate;
+        #
+        #    if (amountMST <= 0 || exchRate <= 0)
+        #        return [false, strFmt('El ticket en divisa %1 necesita importe original, importe de reembolso y tipo de cambio positivos.', currencyCode), '', 0, 0, 0];
+        #
+        #    return [true, '', currencyCode, totalAmount, amountMST, exchRate];
+        #}
+        #
+      ENDSOURCE
       SOURCE #calculateTicketTotalAmount
         #// Metodo: calculateTicketTotalAmount
         #// Proposito: Devuelve sum(TotalAmount) para las lineas del ticket.
@@ -598,50 +642,6 @@ Formatversion: 1
         #    }
         #
         #    return false;
-        #}
-        #
-      ENDSOURCE
-      SOURCE #buildLinkedTicketMonetarySnapshot
-        #//MMS - CRM fix - 2026.08.24
-        #// Builds the authoritative monetary snapshot used by every ticket-link path.
-        #// Output: [valid, message, currencyCode, totalAmount, amountMST, exchRate].
-        #static container buildLinkedTicketMonetarySnapshot(INDTicketInfoTable _ticketHeader)
-        #{
-        #    CurrencyCode currencyCode;
-        #    CurrencyCode localCurrencyCode;
-        #    Amount       totalAmount;
-        #    Amount       amountMST;
-        #    ExchRate     exchRate;
-        #    ;
-        #
-        #    if (!_ticketHeader.RecId)
-        #        return [false, 'Ticket no encontrado.', '', 0, 0, 0];
-        #
-        #    currencyCode = strUpr(strLRTrim(_ticketHeader.CurrencyCode));
-        #    if (currencyCode)
-        #        currencyCode = INDCRMUtilityService::resolveCurrencyCode(currencyCode);
-        #
-        #    if (!currencyCode)
-        #        return [false, 'El ticket no tiene una divisa valida y no se ha vinculado.', '', 0, 0, 0];
-        #
-        #    totalAmount = Currency::amount(_ticketHeader.TotalAmount, currencyCode);
-        #    if (totalAmount <= 0)
-        #        return [false, 'El importe original del ticket debe ser mayor que cero.', '', 0, 0, 0];
-        #
-        #    localCurrencyCode = CompanyInfo::standardCurrency();
-        #    if (currencyCode == localCurrencyCode)
-        #    {
-        #        amountMST = Currency::amount(totalAmount, localCurrencyCode);
-        #        return [true, '', currencyCode, totalAmount, amountMST, 100];
-        #    }
-        #
-        #    amountMST = Currency::amount(_ticketHeader.AmountMST, localCurrencyCode);
-        #    exchRate  = _ticketHeader.ExchRate;
-        #
-        #    if (amountMST <= 0 || exchRate <= 0)
-        #        return [false, strFmt('El ticket en divisa %1 necesita importe original, importe de reembolso y tipo de cambio positivos.', currencyCode), '', 0, 0, 0];
-        #
-        #    return [true, '', currencyCode, totalAmount, amountMST, exchRate];
         #}
         #
       ENDSOURCE
@@ -1179,10 +1179,10 @@ Formatversion: 1
         #                    // Record digital origin only at creation, after the ticket and owner were validated.
         #                    line.INDCreatedFromTicket = fileId ? NoYes::Yes : NoYes::No;
         #
-        #                    line.Price    = price;
-        #                    line.Qty      = qty;
+        #                    line.Price         = price;
+        #                    line.Qty           = qty;
         #                    line.Currency = lineCurrencyCode ? lineCurrencyCode : (currencyCode ? currencyCode : header.CurrencyCode);
-        #                    line.Amount   = line.CalcAmount();
+        #                    line.Amount        = line.CalcAmount();
         #
         #                    if (hasLineExchRate)
         #                        line.ExchRate = lineExchRate;
@@ -1200,7 +1200,7 @@ Formatversion: 1
         #                    if (mode == #ModeAddLinesToExisting && fileId)
         #                        line.recalculateReimbursableAmount();
         #                    else
-        #                        line.normalizeCurrencyAmounts(hasLineAmountMST);
+        #                    line.normalizeCurrencyAmounts(hasLineAmountMST);
         #
         #                    if (hasLineReimbursableExpense)
         #                        line.ReimbursableExpense = any2int(lineReimbursableExpense);
@@ -2614,9 +2614,9 @@ Formatversion: 1
         #        }
         #        else
         #        {
-        #            select firstonly header
-        #                where header.UserId       == crmUserId
-        #                   && header.HojaGastosId == hojaId;
+        #        select firstonly header
+        #            where header.UserId       == crmUserId
+        #               && header.HojaGastosId == hojaId;
         #        }
         #
         #        if (!header.RecId ||
@@ -2777,7 +2777,8 @@ Formatversion: 1
         #        if (INDCRMExpenseSheetService::isExpenseSheetApprovalRequestEvent(eventType) ||
         #            eventType == 'ExpenseSheetApprovalRequestCancelled')
         #        {
-        #            // Approval requests and undo notices notify every direct manager of the owner.
+        #            // Solicitud de aprobacion: reciben todas las jefaturas directas del propietario.
+        #            // Tambien cubre deshacer rechazo/aprobacion cuando la hoja vuelve a InReview.
         #            managerCrmUserIds = INDCRMExpenseSheetService::resolveExpenseSheetManagerCrmUserIds(ownerCrmUserId);
         #            if (conLen(managerCrmUserIds) == 0)
         #                return [INDCRMUtilityService::buildHeader(false, 'No se encontró jefatura para el propietario de la hoja, verificar CRMUsuarioSubordinadoTable.', conNull()), conNull()];
@@ -2816,7 +2817,7 @@ Formatversion: 1
         #                eventType == 'ExpenseSheetRejectionUndone' ||
         #                eventType == 'ExpenseSheetPaid')
         #            {
-        #                // The owner receives decisions and reversals; payment may use the creator.
+        #                // Cambio final de estado: recibe el propietario o creador de la hoja segun el evento.
         #                if (eventType == 'ExpenseSheetPaid' && header.INDCreatedByUserId)
         #                    recipientCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(header.INDCreatedByUserId);
         #                else
@@ -3250,6 +3251,7 @@ Formatversion: 1
         #    str 1000           likePattern;
         #    date               createdDateFrom;
         #    date               createdDateTo;
+        #    date               effectiveTicketDate;
         #    CurrencyCode       currencyCode;
         #    int                gastoTypeFilter;
         #    boolean            hasGastoTypeFilter;
@@ -3346,10 +3348,18 @@ Formatversion: 1
         #            if (!docuRef.RecId)
         #                continue;
         #
-        #            if (createdDateFrom && ticketHeader.createdDate < createdDateFrom)
+        #            // Keep API date bounds, but filter by the receipt date.
+        #            effectiveTicketDate = ticketHeader.TicketDate;
+        #            if (!effectiveTicketDate)
+        #                effectiveTicketDate = docuRef.INDTransDate;
+        #
+        #            if ((createdDateFrom || createdDateTo) && !effectiveTicketDate)
         #                continue;
         #
-        #            if (createdDateTo && ticketHeader.createdDate > createdDateTo)
+        #            if (createdDateFrom && effectiveTicketDate < createdDateFrom)
+        #                continue;
+        #
+        #            if (createdDateTo && effectiveTicketDate > createdDateTo)
         #                continue;
         #
         #            conResult += [INDCRMExpenseSheetService::buildExpenseSheetTicketLinkListRow(ticketHeader, docuRef)];
@@ -3386,6 +3396,7 @@ Formatversion: 1
         #    boolean            hasStatusFilter;
         #    date               createdDateFrom;
         #    date               createdDateTo;
+        #    date               effectiveTicketDate;
         #    CurrencyCode       currencyCode;
         #    int                gastoTypeFilter;
         #    boolean            hasGastoTypeFilter;
@@ -3497,10 +3508,18 @@ Formatversion: 1
         #            if (!docuRef.RecId)
         #                continue;
         #
-        #            if (createdDateFrom && ticketHeader.createdDate < createdDateFrom)
+        #            // Keep API date bounds, but filter by the receipt date.
+        #            effectiveTicketDate = ticketHeader.TicketDate;
+        #            if (!effectiveTicketDate)
+        #                effectiveTicketDate = docuRef.INDTransDate;
+        #
+        #            if ((createdDateFrom || createdDateTo) && !effectiveTicketDate)
         #                continue;
         #
-        #            if (createdDateTo && ticketHeader.createdDate > createdDateTo)
+        #            if (createdDateFrom && effectiveTicketDate < createdDateFrom)
+        #                continue;
+        #
+        #            if (createdDateTo && effectiveTicketDate > createdDateTo)
         #                continue;
         #
         #            conResult += [INDCRMExpenseSheetService::buildExpenseSheetTicketListRow(ticketHeader, docuRef)];
@@ -4728,6 +4747,24 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #resolveExpenseSheetDecisionUndoEvent
+        #// Resolves the owner notice for a manager undoing an approval or rejection.
+        #static server str resolveExpenseSheetDecisionUndoEvent(INDExpenseSheetStatus _fromStatus,
+        #                                                        INDExpenseSheetStatus _toStatus)
+        #{
+        #    if (_toStatus != INDExpenseSheetStatus::InReview)
+        #        return '';
+        #
+        #    if (_fromStatus == INDExpenseSheetStatus::Approved)
+        #        return 'ExpenseSheetApprovalUndone';
+        #
+        #    if (_fromStatus == INDExpenseSheetStatus::Rejected)
+        #        return 'ExpenseSheetRejectionUndone';
+        #
+        #    return '';
+        #}
+        #
+      ENDSOURCE
       SOURCE #resolveExpenseSheetManagerCrmUserId
         #// Conserva el contrato heredado devolviendo la primera jefatura directa encontrada.
         #static server CRMUserId resolveExpenseSheetManagerCrmUserId(CRMUserId _ownerCrmUserId)
@@ -4812,24 +4849,6 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
-      SOURCE #resolveExpenseSheetDecisionUndoEvent
-        #// Resolves the owner notice for a manager undoing an approval or rejection.
-        #static server str resolveExpenseSheetDecisionUndoEvent(INDExpenseSheetStatus _fromStatus,
-        #                                                        INDExpenseSheetStatus _toStatus)
-        #{
-        #    if (_toStatus != INDExpenseSheetStatus::InReview)
-        #        return '';
-        #
-        #    if (_fromStatus == INDExpenseSheetStatus::Approved)
-        #        return 'ExpenseSheetApprovalUndone';
-        #
-        #    if (_fromStatus == INDExpenseSheetStatus::Rejected)
-        #        return 'ExpenseSheetRejectionUndone';
-        #
-        #    return '';
-        #}
-        #
-      ENDSOURCE
       SOURCE #resolveExpenseSheetTemplateTargetModule
         #// Convierte el evento de hoja de gastos al modulo destino usado por las plantillas.
         #static server INDEmailTemplateTargetModule resolveExpenseSheetTemplateTargetModule(str _eventType,
@@ -4878,6 +4897,53 @@ Formatversion: 1
         #    return sysUserInfo.Id ? sysUserInfo.Language : '';
         #}
         #
+      ENDSOURCE
+      SOURCE #logAcceptedExpenseSheetNotification
+        #// Records an accepted expense sheet email in the existing company mail log.
+        #static server void logAcceptedExpenseSheetNotification(CRMHojaGastosTable _expenseSheet,
+        #                                                       str                 _eventType,
+        #                                                       DataAreaId          _companyId,
+        #                                                       str                 _fromEmail,
+        #                                                       str                 _toEmail,
+        #                                                       str                 _subject,
+        #                                                       str                 _textBody,
+        #                                                       str                 _correlationId)
+        #{
+        #    INDMailLogTable mailLog;
+        #    ;
+        #
+        #    try
+        #    {
+        #        changecompany(_companyId)
+        #        {
+        #            mailLog.clear();
+        #            mailLog.DocumentTypes = INDMailDocumentTypes::Crm_HojaGasto;
+        #            mailLog.IdDocumento   = _expenseSheet.HojaGastosId;
+        #            mailLog.MailFrom      = _fromEmail;
+        #            mailLog.MailTo        = _toEmail;
+        #            mailLog.MailToCon     = [_toEmail];
+        #            mailLog.Subject       = _subject;
+        #            mailLog.Body          = _textBody;
+        #            mailLog.TipoDocumento = _eventType;
+        #            mailLog.insert();
+        #        }
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        warning(strFmt('Mail log not saved for expense sheet %1, event %2, correlationId %3: database deadlock.',
+        #                       _expenseSheet.HojaGastosId, _eventType, _correlationId));
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        warning(strFmt('Mail log not saved for expense sheet %1, event %2, correlationId %3.',
+        #                       _expenseSheet.HojaGastosId, _eventType, _correlationId));
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        warning(strFmt('Mail log not saved for expense sheet %1, event %2, correlationId %3: internal error.',
+        #                       _expenseSheet.HojaGastosId, _eventType, _correlationId));
+        #    }
+        #}
       ENDSOURCE
       SOURCE #sendExpenseSheetNotificationToRecipient
         #// Envia el email de hoja de gastos para un destinatario concreto y resuelve su idioma de plantilla.
@@ -5030,7 +5096,7 @@ Formatversion: 1
         #                                                            htmlBody,
         #                                                            textBody,
         #                                                            '',
-        #                                                            false,
+        #                                                            true,
         #                                                            INDInternalApiClientServer::normalizeInternalApiMailImportance(strFmt("%1", INDEmailImportance::high)),
         #                                                            'AxaptaExpenseSheetStatus',
         #                                                            _eventType,
@@ -5043,8 +5109,20 @@ Formatversion: 1
         #            warning(strFmt('Email hoja gastos no aceptado por transporte: eventType=%1 hoja=%2 company=%3 correlationId=%4 idempotencyKey=%5 recipientCrmUserId=%6.',
         #                           _eventType, _expenseSheet.HojaGastosId, _companyId, _correlationId, idempotencyKey, _recipientCrmUserId));
         #        else
+        #        {
         #            info(strFmt('Email hoja gastos aceptado por transporte: eventType=%1 hoja=%2 company=%3 correlationId=%4 idempotencyKey=%5 recipientCrmUserId=%6.',
         #                        _eventType, _expenseSheet.HojaGastosId, _companyId, _correlationId, idempotencyKey, _recipientCrmUserId));
+        #
+        #            INDCRMExpenseSheetService::logAcceptedExpenseSheetNotification(
+        #                _expenseSheet,
+        #                _eventType,
+        #                _companyId,
+        #                fromEmail,
+        #                toEmail,
+        #                subject,
+        #                textBody,
+        #                _correlationId);
+        #        }
         #
         #        return sentOk;
         #    }
@@ -5157,7 +5235,7 @@ Formatversion: 1
         #        for (i = 1; i <= conLen(managerCrmUserIds); i++)
         #        {
         #            managerCrmUserId  = conPeek(managerCrmUserIds, i);
-        #            recipientUserId  = managerCrmUserId;
+        #        recipientUserId  = managerCrmUserId;
         #            recipientCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(recipientUserId);
         #
         #            sentOk = INDCRMExpenseSheetService::sendExpenseSheetNotificationToRecipient(
@@ -5176,7 +5254,7 @@ Formatversion: 1
         #
         #            if (sentOk)
         #                anySentOk = true;
-        #        }
+        #    }
         #
         #        if (decisionUndoEvent)
         #        {
