@@ -1,0 +1,321 @@
+using System.Reflection;
+using IND_CRM_APP.Controllers;
+using IND_CRM_APP.Infrastructure.Localization;
+using IND_CRM_APP.Models.CRM;
+using IND_CRM_APP.Models.Shared;
+using IND_CRM_APP.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging.Abstractions;
+
+var verified = 0;
+
+var owner = Create("JML", "JML");
+Check(await Guard(owner.Controller, "LineMutation"), true, 200);
+Require(owner.Api.Calls.SequenceEqual(new[] { "GetExpenseSheetDetailAsync" }), "Own JML line edit unexpectedly queried subordinate scope.");
+verified++;
+Check(await Guard(owner.Controller, "HeaderUpdate", new ExpenseSheetUpdateRequest { ExpenseSheetStatus = 1 }), true, 200);
+verified++;
+
+var collision = Create("MGRAX", "MGR");
+collision.Api.Sheet.UserId = "OWNER";
+collision.Api.Sheet.OwnerAxUserId = "COLLIDE";
+collision.Api.Subordinates.Add(new() { UserId = "OTHER", CrmUserId = "OTHER", AxUserId = "COLLIDE" });
+Check(await Guard(collision.Controller, "LineMutation"), false, 403, "CRM_EXPENSE_MANAGED_USER_READ_ONLY");
+verified++;
+
+var crmMismatch = Create("JML", "JML");
+crmMismatch.Api.Sheet.UserId = "OTHER";
+crmMismatch.Api.Sheet.OwnerAxUserId = "JML";
+Check(await Guard(crmMismatch.Controller, "LineMutation"), false, 403, "CRM_EXPENSE_MANAGED_USER_READ_ONLY");
+verified++;
+
+var unknownOwner = Create("JML", "JML");
+unknownOwner.Api.Sheet.UserId = null;
+unknownOwner.Api.Sheet.OwnerAxUserId = null;
+Check(await Guard(unknownOwner.Controller, "LineMutation"), false, 403, "CRM_EXPENSE_MANAGED_USER_READ_ONLY");
+verified++;
+
+var failedDetail = Create("JML", "JML");
+failedDetail.Api.DetailSuccess = false;
+Check(await Guard(failedDetail.Controller, "LineMutation"), false, 404, "CRM_EXPENSESHEET_NOT_FOUND");
+verified++;
+
+var wrongSheet = Create("JML", "JML");
+wrongSheet.Api.Sheet.HojaGastosId = "HG-OTHER";
+Check(await Guard(wrongSheet.Controller, "LineMutation"), false, 404, "CRM_EXPENSESHEET_NOT_FOUND");
+verified++;
+
+var exactCompany = Create("JML", "JML");
+exactCompany.Auth.Context.Companies.Insert(0, new() { CompanyId = "RSI", CrmUserId = "OTHER" });
+Check(await Guard(exactCompany.Controller, "LineMutation"), true, 200);
+verified++;
+
+foreach (var companyCase in new[] { "missing-session", "selected-mismatch", "missing-context-company" })
+{
+    var scoped = Create("JML", "JML");
+    if (companyCase == "missing-session") scoped.Http.Session.Remove("INDCompanySelected");
+    if (companyCase == "selected-mismatch") scoped.Auth.SelectedCompanyId = "RSI";
+    if (companyCase == "missing-context-company") scoped.Auth.Context.Companies[0].CompanyId = "RSI";
+    Check(await Guard(scoped.Controller, "LineMutation"), false, 403, "CRM_EXPENSE_MANAGED_USER_READ_ONLY");
+    verified++;
+}
+
+var manager = Create("MGRAX", "MGR");
+manager.Api.Sheet.ExpenseSheetStatus = 1;
+manager.Api.Subordinates.Add(new() { UserId = "JML", CrmUserId = "JML", AxUserId = "JMLF" });
+Check(await Guard(manager.Controller, "LineMutation", axUserId: "JMLF"), false, 409, "CRM_EXPENSESHEET_STATUS_READ_ONLY");
+Check(await Guard(manager.Controller, "DeleteSheet", axUserId: "JMLF"), false, 409, "CRM_EXPENSESHEET_STATUS_READ_ONLY");
+verified += 2;
+
+var transition = new ExpenseSheetUpdateRequest
+{
+    Description = "tampered", CurrencyCode = "EUR", ExchRate = 999m, ProjId = "P-HACK",
+    Voucher = "V-HACK", ExpenseSheetStatus = 2, ExchangeRateMode = 9,
+    EstadoComentarios = "approved", ReimbursableExpense = 0
+};
+var transitionGuard = await Guard(manager.Controller, "HeaderUpdate", transition, "JMLF");
+Check(transitionGuard, true, 200);
+var effective = Sanitize(manager.Controller, transitionGuard, transition);
+Require(effective.Description == "Stored" && effective.CurrencyCode == "USD" && effective.ExchRate == 125m,
+    "Status-only transition did not restore stored monetary/header fields.");
+Require(effective.ProjId == "P1" && effective.Voucher == null && effective.ExchangeRateMode == 1 && effective.ReimbursableExpense == 1,
+    "Status-only transition leaked editable request fields.");
+Require(effective.ExpenseSheetStatus == 2 && effective.EstadoComentarios == "approved", "Status/comment transition was not preserved.");
+verified++;
+
+var invalidTransition = await Guard(manager.Controller, "HeaderUpdate", new ExpenseSheetUpdateRequest { ExpenseSheetStatus = 0 }, "JMLF");
+Check(invalidTransition, false, 409, "CRM_EXPENSESHEET_STATUS_TRANSITION_NOT_ALLOWED");
+verified++;
+
+foreach (var paidSheet in new[]
+{
+    new ExpenseSheetDetailDto { HojaGastosId = "HG000289", UserId = "JML", OwnerAxUserId = "JMLF", ExpenseSheetStatus = 4 },
+    new ExpenseSheetDetailDto { HojaGastosId = "HG000289", UserId = "JML", OwnerAxUserId = "JMLF", ExpenseSheetStatus = 0, Voucher = "PAY-1" }
+})
+{
+    var paid = Create("JML", "JML");
+    paid.Api.Sheet = paidSheet;
+    Check(await Guard(paid.Controller, "LineMutation"), false, 409, "CRM_EXPENSESHEET_PAID_READ_ONLY");
+    verified++;
+}
+
+var actor = Create("MGRAX", "MGR");
+actor.Api.Sheet.ExpenseSheetStatus = 1;
+actor.Api.Subordinates.Add(new() { UserId = "JML", CrmUserId = "JML", AxUserId = "JMLF" });
+var actorRequest = new ExpenseSheetUpdateRequest { ExpenseSheetStatus = 2 };
+var actorGuard = await Guard(actor.Controller, "HeaderUpdate", actorRequest, "JMLF");
+Check(actorGuard, true, 200);
+Require(await Actor(actor.Controller, actorGuard, actorRequest, "JMLF") == "MGRAX", "Valid managed transition did not forward the manager AX actor.");
+verified++;
+
+var actorCollision = Create("MGRAX", "MGR");
+actorCollision.Api.Sheet.UserId = "COLLIDE";
+actorCollision.Api.Sheet.OwnerAxUserId = "OWNERAX";
+actorCollision.Api.Sheet.ExpenseSheetStatus = 1;
+actorCollision.Api.Subordinates.Add(new() { UserId = "COLLIDE", CrmUserId = "COLLIDE", AxUserId = "OTHERAX" });
+var collisionRequest = new ExpenseSheetUpdateRequest { ExpenseSheetStatus = 2 };
+var collisionGuard = await Guard(actorCollision.Controller, "HeaderUpdate", collisionRequest, "COLLIDE");
+Check(collisionGuard, true, 200);
+Require(await Actor(actorCollision.Controller, collisionGuard, collisionRequest, "COLLIDE") == null,
+    "A subordinate CRM id was incorrectly accepted as the requested AX actor.");
+verified++;
+
+var failedScope = Create("MGRAX", "MGR");
+failedScope.Api.Sheet.ExpenseSheetStatus = 1;
+failedScope.Api.Subordinates.Add(new() { UserId = "JML", AxUserId = "JMLF" });
+failedScope.Api.SubordinatesSuccess = false;
+Check(await Guard(failedScope.Controller, "HeaderUpdate", new ExpenseSheetUpdateRequest { ExpenseSheetStatus = 2 }),
+    false, 403, "CRM_EXPENSE_MANAGED_USER_READ_ONLY");
+verified++;
+
+// Exercises every original Release 16 state cell and its exact transition targets.
+var staticFlags = BindingFlags.NonPublic | BindingFlags.Static;
+var controllerType = typeof(GastosController);
+foreach (var managingOther in new[] { false, true })
+foreach (var selfManagement in new[] { false, true })
+foreach (var status in new[] { 0, 1, 2, 3, 4 })
+{
+    var snapshot = controllerType.GetMethod("BuildExpenseSheetSnapshot", staticFlags)!.Invoke(null,
+        new object[] { new ExpenseSheetDetailDto { UserId = "OWNER", ExpenseSheetStatus = status } })!;
+    var policy = controllerType.GetMethod("ResolveExpenseSheetMutationPolicy", staticFlags)!.Invoke(null,
+        new object[] { snapshot, managingOther, selfManagement })!;
+    var mode = policy.GetType().GetProperty("InteractionMode")!.GetValue(policy)!.ToString();
+    var expectedMode = managingOther ? (status is 1 or 2 or 3 ? "StatusActionOnly" : "ReadOnly") :
+        status == 0 ? "FullEdit" : selfManagement ? (status == 2 ? "StatusActionOnly" : "ReadOnly") :
+        status is 1 or 3 ? "StatusActionOnly" : "ReadOnly";
+    Require(mode == expectedMode, $"State matrix changed: {managingOther}/{selfManagement}/{status}.");
+    var canDelete = (bool)policy.GetType().GetProperty("CanDeleteSheet")!.GetValue(policy)!;
+    Require(canDelete == (!managingOther && status == 0), "Delete matrix changed.");
+    var targets = (IEnumerable<int>)policy.GetType().GetProperty("AllowedNextStatuses")!.GetValue(policy)!;
+    int[] expectedTargets = managingOther ? status switch { 1 => [2, 3], 2 or 3 => [1], _ => [] } :
+        selfManagement ? status switch { 0 => [2], 2 => [0], _ => [] } :
+        status switch { 0 => [1], 1 or 3 => [0], _ => [] };
+    Require(targets.Order().SequenceEqual(expectedTargets.Order()), "Allowed status transitions changed.");
+    verified++;
+}
+
+// Rejects cross-namespace collisions and preserves the explicit AX compatibility fallback.
+foreach (var identity in new (string? Ax, string? Crm, string? OwnerCrm, string? OwnerAx, bool Other)[]
+{
+    ("JML", "JML", "JML", "JMLF", false),
+    ("AX", "HER_CRM", "HER_CRM", "DERIVED_AX", false),
+    ("AX", "RSI_CRM", "HER_CRM", "AX", true),
+    ("COLLISION", "MY_CRM", "COLLISION", "OTHER_AX", true),
+    ("MY_AX", "COLLISION", "OTHER_CRM", "COLLISION", true),
+    ("MY_AX", null, null, "my_ax", false),
+    ("MY_AX", null, "MY_AX", null, true),
+    ("MY_AX", "MY_CRM", null, null, true),
+    (null, null, "MY_CRM", "MY_AX", true),
+    (" ax ", " crm ", "CRM", "other", false)
+})
+{
+    var actual = (bool)controllerType.GetMethod("ResolveIsManagingOtherExpenseRecord", staticFlags)!.Invoke(null,
+        new object?[] { identity.Ax, identity.Crm, identity.OwnerCrm, identity.OwnerAx })!;
+    Require(actual == identity.Other, $"Typed identity mismatch: {identity}.");
+    verified++;
+}
+
+Console.WriteLine($"Verified {verified} company-scoped expense owner guard cases.");
+
+// Creates the real controller with configurable company-scoped identity doubles.
+static Scenario Create(string currentAxUserId, string currentCrmUserId)
+{
+    var client = DispatchProxy.Create<ICrmApiClient, FakeApi>();
+    var api = (FakeApi)(object)client;
+    var authClient = DispatchProxy.Create<IIndAuthContextService, FakeAuth>();
+    var auth = (FakeAuth)(object)authClient;
+    auth.Context = new IndWebContext
+    {
+        Header = new() { AxUserId = currentAxUserId },
+        Companies = new() { new() { CompanyId = "HER", CrmUserId = currentCrmUserId } }
+    };
+    auth.SelectedCompanyId = "HER";
+    var http = new DefaultHttpContext();
+    http.Features.Set<ISessionFeature>(new TestSessionFeature { Session = new FakeSession() });
+    http.Session.SetString("AxUser", currentAxUserId);
+    http.Session.SetString("INDCompanySelected", "HER");
+    var controller = new GastosController(client, new FakeToken(), NullLogger<GastosController>.Instance, null!, null!, authClient, new FakeLocalizer())
+    {
+        ControllerContext = new ControllerContext { HttpContext = http }
+    };
+    return new(controller, api, auth, http);
+}
+
+// Invokes the production mutation guard, including its private mutation enum.
+static async Task<object> Guard(GastosController controller, string mutation, ExpenseSheetUpdateRequest? request = null, string? axUserId = "JML")
+{
+    var type = typeof(GastosController);
+    var enumType = type.GetNestedType("ExpenseSheetMutationType", BindingFlags.NonPublic)!;
+    var method = type.GetMethod("ValidateExpenseSheetMutationAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
+    var task = (Task)method.Invoke(controller, new object?[] { "token", "HG000289", axUserId, "fixture", Enum.Parse(enumType, mutation), request })!;
+    await task;
+    return task.GetType().GetProperty("Result")!.GetValue(task)!;
+}
+
+// Invokes the production sanitizer after a successful managed status guard.
+static ExpenseSheetUpdateRequest Sanitize(GastosController controller, object guard, ExpenseSheetUpdateRequest request)
+{
+    var method = typeof(GastosController).GetMethod("BuildExpenseSheetEffectiveHeaderUpdateRequest", BindingFlags.Instance | BindingFlags.NonPublic)!;
+    return (ExpenseSheetUpdateRequest)method.Invoke(controller, new object?[] { guard, request, "fixture", "HG000289" })!;
+}
+
+// Invokes the production approver actor resolver.
+static async Task<string?> Actor(GastosController controller, object guard, ExpenseSheetUpdateRequest request, string requestAxUserId)
+{
+    var method = typeof(GastosController).GetMethod("ResolveManagedExpenseStatusActorAxUserIdAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
+    var task = (Task)method.Invoke(controller, new object?[] { "token", requestAxUserId, guard, request, "fixture" })!;
+    await task;
+    return (string?)task.GetType().GetProperty("Result")!.GetValue(task);
+}
+
+// Checks the private guard through its stable result properties.
+static void Check(object result, bool allowed, int status, string? errorCode = null)
+{
+    var type = result.GetType();
+    Require((bool)type.GetProperty("Allowed")!.GetValue(result)! == allowed, $"Expected Allowed={allowed}.");
+    Require((int)type.GetProperty("StatusCode")!.GetValue(result)! == status, $"Expected HTTP {status}.");
+    if (errorCode != null) Require((string)type.GetProperty("ErrorCode")!.GetValue(result)! == errorCode, $"Expected {errorCode}.");
+}
+
+// Stops the harness on the first violated production invariant.
+static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
+
+// Groups one isolated controller request and its configurable dependencies.
+public sealed record Scenario(GastosController Controller, FakeApi Api, FakeAuth Auth, DefaultHttpContext Http);
+
+// Returns only the API reads used by the ownership guard.
+public class FakeApi : DispatchProxy
+{
+    public List<string> Calls { get; } = new();
+    public bool DetailSuccess { get; set; } = true;
+    public ExpenseSheetDetailDto Sheet { get; set; } = new()
+    {
+        HojaGastosId = "HG000289", UserId = "JML", OwnerAxUserId = "JMLF", ExpenseSheetStatus = 0,
+        Description = "Stored", CurrencyCode = "USD", ExchRate = 125m, ProjId = "P1", ExchangeRateMode = 1, ReimbursableExpense = 1
+    };
+    public List<ExpenseSheetSubordinateDto> Subordinates { get; } = new();
+    public bool SubordinatesSuccess { get; set; } = true;
+    protected override object? Invoke(MethodInfo? method, object?[]? args)
+    {
+        Calls.Add(method!.Name);
+        if (method.Name == "GetExpenseSheetDetailAsync")
+            return Task.FromResult(new PagedApiResponse<ExpenseSheetDetailDto> { Success = DetailSuccess, Items = new[] { Sheet } });
+        if (method.Name == "GetExpenseSheetSubordinatesAsync")
+            return Task.FromResult(new PagedApiResponse<ExpenseSheetSubordinateDto> { Success = SubordinatesSuccess, Items = Subordinates });
+        throw new Exception("Unexpected API call: " + method.Name);
+    }
+}
+
+// Supplies one cached company context and selected-company result.
+public class FakeAuth : DispatchProxy
+{
+    public IndWebContext Context { get; set; } = new();
+    public string? SelectedCompanyId { get; set; }
+    protected override object? Invoke(MethodInfo? method, object?[]? args) => method!.Name switch
+    {
+        "GetCachedContext" => Context,
+        "GetSelectedCompanyId" => SelectedCompanyId,
+        "EnsureContextAsync" => Task.FromResult(new IndAuthContextResult { Success = true, Context = Context }),
+        _ => throw new Exception("Unexpected auth call: " + method.Name)
+    };
+}
+
+// Supplies an inert test token without connecting to any external service.
+public sealed class FakeToken : ITokenSessionService
+{
+    public (string? Token, DateTime? ExpiresUtc) GetToken() => ("token", DateTime.UtcNow.AddHours(1));
+    public void SetToken(string token, DateTime? expiresUtc = null) { }
+    public void Clear() { }
+}
+
+// Echoes resource keys so permission failures remain inspectable in tests.
+public sealed class FakeLocalizer : IStringLocalizer<INDSharedResource>
+{
+    public LocalizedString this[string name] => new(name, name);
+    public LocalizedString this[string name, params object[] args] => this[name];
+    public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) => Array.Empty<LocalizedString>();
+}
+
+// Stores session values in memory for one isolated request.
+public sealed class FakeSession : ISession
+{
+    private readonly Dictionary<string, byte[]> values = new();
+    public bool IsAvailable => true;
+    public string Id => "test-session";
+    public IEnumerable<string> Keys => values.Keys;
+    public void Clear() => values.Clear();
+    public Task CommitAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public Task LoadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public void Remove(string key) => values.Remove(key);
+    public void Set(string key, byte[] value) => values[key] = value;
+    public bool TryGetValue(string key, out byte[] value) => values.TryGetValue(key, out value!);
+}
+
+// Attaches the in-memory session to the controller HTTP context.
+public sealed class TestSessionFeature : ISessionFeature
+{
+    public ISession Session { get; set; } = null!;
+}
