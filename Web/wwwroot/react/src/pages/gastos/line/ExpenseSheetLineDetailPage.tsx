@@ -182,6 +182,7 @@ const ExpenseSheetLineDetailContent = () => {
     currentAxUserId,
     currentCrmUserId,
     selectedManagedUserId,
+    managementBootstrapReady,
     sheetId,
     lineId,
     isCreateMode,

@@ -187,6 +187,7 @@ type UseExpenseSheetLineDetailStateArgs = {
   currentAxUserId: string;
   currentCrmUserId: string;
   selectedManagedUserId: string;
+  managementBootstrapReady: boolean;
   sheetId: string;
   lineId: string;
   isCreateMode: boolean;
@@ -202,6 +203,7 @@ export const useExpenseSheetLineDetailState = ({
   currentAxUserId,
   currentCrmUserId,
   selectedManagedUserId,
+  managementBootstrapReady,
   sheetId,
   lineId,
   isCreateMode,
@@ -272,6 +274,12 @@ export const useExpenseSheetLineDetailState = ({
     const loadDetail = async () => {
       if (!hasAccess) {
         onForbidden();
+        return;
+      }
+
+      // Wait for the selected-company identity before checking sheet ownership.
+      if (!managementBootstrapReady) {
+        setIsLoading(true);
         return;
       }
 
@@ -493,6 +501,7 @@ export const useExpenseSheetLineDetailState = ({
     isCreateMode,
     startInEditMode,
     lineId,
+    managementBootstrapReady,
     onForbidden,
     selectedManagedUserId,
     sheetId,
@@ -634,7 +643,7 @@ export const useExpenseSheetLineDetailState = ({
       isPaid: isSheetPaid,
     });
   }, [allowSelfManagement, header, isManagingOtherUser, isSheetPaid, statusCode]);
-  const canUseFullEditFeatures = detailPolicy.interactionMode === "full_edit";
+  const canUseFullEditFeatures = managementBootstrapReady && detailPolicy.interactionMode === "full_edit";
   const canCreateExpenseCurrent = canUseFullEditFeatures;
   const canEditExpenseCurrent = canUseFullEditFeatures;
   const canDeleteExpenseCurrent = canUseFullEditFeatures;
@@ -723,7 +732,7 @@ export const useExpenseSheetLineDetailState = ({
     line,
     lineNavigation,
     companyCurrencyCode,
-    isLoading,
+    isLoading: isLoading || !managementBootstrapReady,
     errorMessage,
     busy,
     status,
