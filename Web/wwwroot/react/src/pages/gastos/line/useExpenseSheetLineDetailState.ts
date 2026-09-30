@@ -23,7 +23,7 @@ import { hasAssignedVoucher, parseExpenseDate, safeText, toIsoDate } from "../ut
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 import { resolveExpenseSheetDetailPolicy } from "../detail/expenseSheetDetailPolicy.ts";
-import { isManagingOtherExpenseRecord, isSameExpenseUser } from "../utils/expenseManagedUserScope.ts";
+import { isCurrentExpenseOwner, isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
 import {
   DEFAULT_LINE_REIMBURSABLE_EXPENSE,
   normalizeExpenseLineReimbursableExpense,
@@ -315,7 +315,7 @@ export const useExpenseSheetLineDetailState = ({
 
           const sheets = Array.isArray(response?.Items) ? response.Items : [];
           const selectedSheet =
-            sheets.find((entry) => safeText(entry?.HojaGastosId).toUpperCase() === sheetId.trim().toUpperCase()) || sheets[0];
+            sheets.find((entry) => safeText(entry?.HojaGastosId ?? entry?.hojaGastosId).toUpperCase() === sheetId.trim().toUpperCase());
 
           if (!selectedSheet) {
             setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet line was not found."));
@@ -329,11 +329,10 @@ export const useExpenseSheetLineDetailState = ({
           const loadedStatusCode = typeof loadedHeader.expenseSheetStatus === "number" ? loadedHeader.expenseSheetStatus : null;
           const isCreateLockedStatus = loadedStatusCode === EXPENSE_STATUS_APPROVED || loadedStatusCode === EXPENSE_STATUS_PAID;
           const isManagingOtherUser = isManagingOtherExpenseRecord({
-            canManageOtherUsers,
             currentAxUserId,
             currentCrmUserId,
-            selectedManagedUserId,
-            recordOwnerUserId: loadedHeader.userId,
+            recordOwnerCrmUserId: loadedHeader.userId,
+            recordOwnerAxUserId: loadedHeader.ownerAxUserId,
             isCreateMode: false,
           });
           const loadedPolicy = resolveExpenseSheetDetailPolicy({
@@ -403,7 +402,7 @@ export const useExpenseSheetLineDetailState = ({
 
         const sheets = Array.isArray(response?.Items) ? response.Items : [];
         const selectedSheet =
-          sheets.find((entry) => safeText(entry?.HojaGastosId).toUpperCase() === sheetId.trim().toUpperCase()) || sheets[0];
+          sheets.find((entry) => safeText(entry?.HojaGastosId ?? entry?.hojaGastosId).toUpperCase() === sheetId.trim().toUpperCase());
 
         if (!selectedSheet) {
           setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet line was not found."));
@@ -437,11 +436,10 @@ export const useExpenseSheetLineDetailState = ({
         const loadedIsSheetPaid = loadedIsSheetPaidByStatus || hasAssignedVoucher(mappedHeader.voucher);
         const loadedHasLinkedTicket = !!safeText(selectedLine.fileId);
         const loadedIsManagingOtherUser = isManagingOtherExpenseRecord({
-          canManageOtherUsers,
           currentAxUserId,
           currentCrmUserId,
-          selectedManagedUserId,
-          recordOwnerUserId: mappedHeader.ownerAxUserId || mappedHeader.userId,
+          recordOwnerCrmUserId: mappedHeader.userId,
+          recordOwnerAxUserId: mappedHeader.ownerAxUserId,
           isCreateMode,
         });
         const loadedPolicy = resolveExpenseSheetDetailPolicy({
@@ -606,17 +604,17 @@ export const useExpenseSheetLineDetailState = ({
   const isSheetPaidByStatus = statusCode === EXPENSE_STATUS_PAID;
   const isSheetPaidByVoucher = hasAssignedVoucher(header?.voucher);
   const isSheetPaid = isSheetPaidByStatus || isSheetPaidByVoucher;
-  const expenseOwnerUserId = safeText(header?.ownerAxUserId || header?.userId);
-  const isCurrentUserExpenseOwner =
-    !!expenseOwnerUserId &&
-    (isSameExpenseUser(expenseOwnerUserId, currentAxUserId) ||
-      isSameExpenseUser(expenseOwnerUserId, currentCrmUserId));
-  const isManagingOtherUser = isManagingOtherExpenseRecord({
-    canManageOtherUsers,
+  const isCurrentUserExpenseOwner = isCurrentExpenseOwner({
     currentAxUserId,
     currentCrmUserId,
-    selectedManagedUserId,
-    recordOwnerUserId: expenseOwnerUserId,
+    recordOwnerCrmUserId: header?.userId,
+    recordOwnerAxUserId: header?.ownerAxUserId,
+  });
+  const isManagingOtherUser = isManagingOtherExpenseRecord({
+    currentAxUserId,
+    currentCrmUserId,
+    recordOwnerCrmUserId: header?.userId,
+    recordOwnerAxUserId: header?.ownerAxUserId,
     isCreateMode,
   });
   const detailPolicy = useMemo(() => {

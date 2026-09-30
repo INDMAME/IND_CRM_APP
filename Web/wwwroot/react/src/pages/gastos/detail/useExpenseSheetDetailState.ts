@@ -183,7 +183,7 @@ export const useExpenseSheetDetailState = ({
 
         const sheets = Array.isArray(response?.Items) ? response.Items : [];
         const selectedSheet =
-          sheets.find((entry) => safeText(entry?.HojaGastosId).toUpperCase() === sheetId.trim().toUpperCase()) || sheets[0];
+          sheets.find((entry) => safeText(entry?.HojaGastosId ?? entry?.hojaGastosId).toUpperCase() === sheetId.trim().toUpperCase());
 
         if (!selectedSheet) {
           setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet was not found."));
@@ -262,11 +262,10 @@ export const useExpenseSheetDetailState = ({
   const isSheetPaidByVoucher = hasAssignedVoucher(header?.voucher);
   const isSheetPaid = isSheetPaidByStatus || isSheetPaidByVoucher;
   const isManagingOtherUser = isManagingOtherExpenseRecord({
-    canManageOtherUsers,
     currentAxUserId,
     currentCrmUserId,
-    selectedManagedUserId,
-    recordOwnerUserId: header?.userId,
+    recordOwnerCrmUserId: header?.userId,
+    recordOwnerAxUserId: header?.ownerAxUserId,
     isCreateMode,
   });
   const detailPolicy = useMemo(() => {

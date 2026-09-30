@@ -5,6 +5,24 @@ import {
   buildExpenseSheetFullUpdatePayload,
   buildExpenseSheetStatusTransitionPayload,
 } from "../Web/wwwroot/react/src/pages/gastos/detail/expenseSheetHeaderPayloads.ts";
+import {
+  isCurrentExpenseOwner,
+  isManagingOtherExpenseRecord,
+} from "../Web/wwwroot/react/src/pages/gastos/utils/expenseManagedUserScope.ts";
+
+const ownerIdentity = {
+  currentAxUserId: "AX-A",
+  currentCrmUserId: "CRM-A",
+  recordOwnerAxUserId: "AX-B",
+  recordOwnerCrmUserId: "CRM-A",
+};
+assert.equal(isCurrentExpenseOwner(ownerIdentity), true);
+assert.equal(isManagingOtherExpenseRecord(ownerIdentity), false);
+assert.equal(isCurrentExpenseOwner({ ...ownerIdentity, recordOwnerCrmUserId: "CRM-B", recordOwnerAxUserId: "AX-A" }), false);
+assert.equal(isCurrentExpenseOwner({ ...ownerIdentity, recordOwnerCrmUserId: "AX-A" }), false);
+assert.equal(isCurrentExpenseOwner({ ...ownerIdentity, recordOwnerCrmUserId: "", recordOwnerAxUserId: "AX-A" }), true);
+assert.equal(isCurrentExpenseOwner({ ...ownerIdentity, recordOwnerCrmUserId: "", recordOwnerAxUserId: "" }), false);
+assert.equal(isManagingOtherExpenseRecord({ ...ownerIdentity, recordOwnerCrmUserId: "", recordOwnerAxUserId: "" }), true);
 
 const legacyDraft = {
   draftDescription: "   ",

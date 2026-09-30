@@ -6,7 +6,7 @@ import { spawnSync } from "node:child_process";
 import test from "node:test";
 
 // Compiles the real MVC actions and HTTP client against deterministic local dependencies.
-test("whole-sheet deletion preserves authorization, durable recovery, HTTP status, and line-only behavior", () => {
+test("expense mutations preserve ownership, status, and durable deletion behavior", () => {
   const root = path.resolve(import.meta.dirname, "..");
   const fixture = mkdtempSync(path.join(tmpdir(), "ind-sheet-deletion-"));
   const sourceFiles = [
@@ -28,7 +28,7 @@ test("whole-sheet deletion preserves authorization, durable recovery, HTTP statu
     const result = spawnSync("dotnet", ["run", "--project", path.join(fixture, "Deletion.csproj")],
       { cwd: fixture, encoding: "utf8", timeout: 120000 });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert.match(result.stdout, /Verified 24 durable deletion cases\./u);
+    assert.match(result.stdout, /Verified 64 expense mutation and deletion cases\./u);
   } finally {
     const resolved = path.resolve(fixture);
     assert.equal(path.dirname(resolved), path.resolve(tmpdir()));

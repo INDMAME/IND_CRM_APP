@@ -130,7 +130,8 @@ namespace IND_CRM_APP.Controllers
         // Normalized server snapshot for policy evaluation and payload comparison.
         private sealed class ExpenseSheetSnapshot
         {
-            public string OwnerUserId { get; init; } = string.Empty;
+            public string OwnerCrmUserId { get; init; } = string.Empty;
+            public string OwnerAxUserId { get; init; } = string.Empty;
             public int? StatusCode { get; init; }
             public string Description { get; init; } = string.Empty;
             public string CurrencyCode { get; init; } = string.Empty;
@@ -2221,6 +2222,19 @@ namespace IND_CRM_APP.Controllers
             if (managedUserGuard != null)
                 return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
 
+            var existingSheetId = NormalizeOptionalText(existingHojaGastosId);
+            if (!string.IsNullOrWhiteSpace(existingSheetId))
+            {
+                var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                    token,
+                    existingSheetId,
+                    requestAxUserId,
+                    nameof(ApiExpenseSheetTicketQuickCreate),
+                    ExpenseSheetMutationType.LineMutation);
+                if (!mutationGuard.Allowed)
+                    return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+            }
+
             var safeTicketFileName = Path.GetFileName(ticketImage.FileName ?? "ticket.jpg");
             var normalizedContentType = (ticketImage.ContentType ?? string.Empty).Trim();
             var normalizedExtension = Path.GetExtension(ticketImage.FileName ?? string.Empty).TrimStart('.').Trim();
@@ -2242,7 +2256,7 @@ namespace IND_CRM_APP.Controllers
                 CurrencyCode = NormalizeOptionalText(currencyCode)?.ToUpperInvariant(),
                 Description = NormalizeOptionalText(description),
                 Comentario = NormalizeOptionalText(comentario),
-                ExistingHojaGastosId = NormalizeOptionalText(existingHojaGastosId),
+                ExistingHojaGastosId = existingSheetId,
                 ProjId = NormalizeOptionalText(projId) ?? NormalizeOptionalText(projectId),
                 ProjectId = NormalizeOptionalText(projectId)
             };
@@ -2604,6 +2618,15 @@ namespace IND_CRM_APP.Controllers
             var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketsLinkBulk));
             if (managedUserGuard != null)
                 return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
+
+            var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                token,
+                request.ExpenseSheetId,
+                requestAxUserId,
+                nameof(ApiExpenseSheetTicketsLinkBulk),
+                ExpenseSheetMutationType.LineMutation);
+            if (!mutationGuard.Allowed)
+                return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
 
             try
             {
@@ -3837,6 +3860,12 @@ namespace IND_CRM_APP.Controllers
                     request,
                     nameof(UpdateExpenseSheetHeader),
                     hojaGastosId.Trim());
+                var actorAxUserId = await ResolveManagedExpenseStatusActorAxUserIdAsync(
+                    token,
+                    requestAxUserId,
+                    mutationGuard,
+                    effectiveRequest,
+                    nameof(UpdateExpenseSheetHeader));
                 LogExpenseCurrencyTrace(
                     nameof(UpdateExpenseSheetHeader),
                     "request",
@@ -3847,7 +3876,8 @@ namespace IND_CRM_APP.Controllers
                     ("projectId", effectiveRequest.ProjId),
                     ("expenseSheetStatus", effectiveRequest.ExpenseSheetStatus),
                     ("exchangeRateMode", effectiveRequest.ExchangeRateMode));
-                var response = await _apiClient.UpdateExpenseSheetHeaderAsync(token, hojaGastosId.Trim(), effectiveRequest, requestAxUserId);
+                var response = await _apiClient.UpdateExpenseSheetHeaderAsync(
+                    token, hojaGastosId.Trim(), effectiveRequest, requestAxUserId, actorAxUserId);
                 LogExpenseCurrencyTrace(
                     nameof(UpdateExpenseSheetHeader),
                     "response",
@@ -4112,6 +4142,11 @@ namespace IND_CRM_APP.Controllers
                 };
             }
 
+            // The API client forwards this session company as X-IND-Company.
+            var requestCompanyId = NormalizeOptionalText(HttpContext?.Session.GetString("INDCompanySelected"));
+            if (string.IsNullOrWhiteSpace(requestCompanyId))
+                return BuildExpenseSheetOwnerDeniedGuard();
+
             try
             {
                 var result = await _apiClient.GetExpenseSheetDetailAsync(token, safeSheetId, axUserIdOverride);
@@ -4126,6 +4161,9 @@ namespace IND_CRM_APP.Controllers
                     result.TraceId ?? "<null>",
                     result.GetAnyItems().Count(),
                     result.Message ?? "<null>");
+                if (!result.Success)
+                    return BuildExpenseSheetOwnerDeniedGuard();
+
                 var sheet = SelectSheetExact(result.GetAnyItems(), safeSheetId);
                 if (sheet == null)
                 {
@@ -4179,15 +4217,21 @@ namespace IND_CRM_APP.Controllers
                 var currentAxUserId = NormalizeOptionalText(cachedContext?.Header?.AxUserId) ?? GetCurrentSessionAxUserId() ?? string.Empty;
                 var selectedCompanyId = NormalizeOptionalText(_authContext.GetSelectedCompanyId(cachedContext));
                 var selectedCompany = cachedContext?.Companies?.FirstOrDefault(company =>
-                    string.Equals(company.CompanyId, selectedCompanyId, StringComparison.OrdinalIgnoreCase))
-                    ?? cachedContext?.Companies?.FirstOrDefault();
+                    string.Equals(company.CompanyId, requestCompanyId, StringComparison.OrdinalIgnoreCase));
+                if (selectedCompany == null ||
+                    !IsSameExpenseUserId(selectedCompanyId, requestCompanyId) ||
+                    !IsSameExpenseUserId(
+                        NormalizeOptionalText(HttpContext?.Session.GetString("INDCompanySelected")),
+                        requestCompanyId))
+                    return BuildExpenseSheetOwnerDeniedGuard(snapshot);
+
                 var allowSelfManagement = selectedCompany?.AllowSelfManagement == true;
                 var currentCrmUserId = NormalizeOptionalText(selectedCompany?.CrmUserId);
                 var isManagingOtherUser = ResolveIsManagingOtherExpenseRecord(
                     currentAxUserId,
                     currentCrmUserId,
-                    snapshot.OwnerUserId,
-                    axUserIdOverride);
+                    snapshot.OwnerAxUserId,
+                    snapshot.OwnerCrmUserId);
 
                 if (mutationType == ExpenseSheetMutationType.OwnLineTicketMutation && isManagingOtherUser)
                 {
@@ -4203,7 +4247,7 @@ namespace IND_CRM_APP.Controllers
 
                 if (isManagingOtherUser)
                 {
-                    var subordinateGuard = await ValidateManagedExpenseSheetOwnerAsync(token, snapshot.OwnerUserId, operationName, snapshot);
+                    var subordinateGuard = await ValidateManagedExpenseSheetOwnerAsync(token, snapshot, operationName);
                     if (!subordinateGuard.Allowed)
                         return subordinateGuard;
                 }
@@ -4279,10 +4323,12 @@ namespace IND_CRM_APP.Controllers
         {
             return new ExpenseSheetSnapshot
             {
-                OwnerUserId = NormalizeOptionalText(sheet.OwnerAxUserId)
-                              ?? NormalizeOptionalText(sheet.UserId)
-                              ?? NormalizeOptionalText(GetExtraString(sheet.Extra, "ownerAxUserId", "OwnerAxUserId", "userId", "axUserId", "usuario"))
-                              ?? string.Empty,
+                OwnerCrmUserId = NormalizeOptionalText(sheet.UserId)
+                                 ?? NormalizeOptionalText(GetExtraString(sheet.Extra, "userId", "UserId"))
+                                 ?? string.Empty,
+                OwnerAxUserId = NormalizeOptionalText(sheet.OwnerAxUserId)
+                                ?? NormalizeOptionalText(GetExtraString(sheet.Extra, "ownerAxUserId", "OwnerAxUserId"))
+                                ?? string.Empty,
                 StatusCode = sheet.ExpenseSheetStatus ?? GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
                 Description = NormalizeOptionalText(sheet.Description)
                               ?? NormalizeOptionalText(GetExtraString(sheet.Extra, "description", "descripcion", "desc"))
@@ -4516,30 +4562,20 @@ namespace IND_CRM_APP.Controllers
             return false;
         }
 
-        // Protects subordinate mutations by verifying the record owner belongs to the current subordinate scope.
+        // Protects subordinate mutations by checking like-for-like identities in the active company scope.
         private async Task<ExpenseSheetMutationGuardResult> ValidateManagedExpenseSheetOwnerAsync(
             string token,
-            string ownerUserId,
-            string operationName,
-            ExpenseSheetSnapshot snapshot)
+            ExpenseSheetSnapshot snapshot,
+            string operationName)
         {
-            var normalizedOwnerUserId = NormalizeOptionalText(ownerUserId);
-            if (string.IsNullOrWhiteSpace(normalizedOwnerUserId))
-            {
-                return new ExpenseSheetMutationGuardResult
-                {
-                    Allowed = false,
-                    StatusCode = StatusCodes.Status403Forbidden,
-                    Message = _sr["Auth_PermissionDenied_Body"].Value,
-                    ErrorCode = ExpenseManagedUserReadOnlyErrorCode,
-                    Snapshot = snapshot
-                };
-            }
+            if (string.IsNullOrWhiteSpace(snapshot.OwnerCrmUserId) &&
+                string.IsNullOrWhiteSpace(snapshot.OwnerAxUserId))
+                return BuildExpenseSheetOwnerDeniedGuard(snapshot);
 
             try
             {
                 var items = await GetExpenseSheetSubordinatesForScopeAsync(token);
-                var belongsToSubordinates = items.Any(item => MatchesExpenseSubordinateUserId(item, normalizedOwnerUserId));
+                var belongsToSubordinates = items.Any(item => MatchesExpenseSubordinateOwner(item, snapshot));
 
                 if (belongsToSubordinates)
                 {
@@ -4552,9 +4588,10 @@ namespace IND_CRM_APP.Controllers
                 }
 
                 _logger.LogInformation(
-                    "Blocked expense mutation outside subordinate scope in {Operation}. ownerUserId={OwnerUserId}",
+                    "Blocked expense mutation outside subordinate scope in {Operation}. OwnerCrmUserId={OwnerCrmUserId}; OwnerAxUserId={OwnerAxUserId}",
                     operationName,
-                    normalizedOwnerUserId);
+                    snapshot.OwnerCrmUserId,
+                    snapshot.OwnerAxUserId);
 
                 return new ExpenseSheetMutationGuardResult
                 {
@@ -4620,22 +4657,23 @@ namespace IND_CRM_APP.Controllers
             try
             {
                 var items = await GetExpenseSheetSubordinatesForScopeAsync(token);
-                var ownerMatchesScope = items.Any(item => MatchesExpenseSubordinateUserId(item, snapshot.OwnerUserId));
-                var requestMatchesOwner = IsSameExpenseUserId(snapshot.OwnerUserId, normalizedRequestAxUserId) ||
+                var ownerMatchesScope = items.Any(item => MatchesExpenseSubordinateOwner(item, snapshot));
+                var requestMatchesOwner = IsSameExpenseUserId(snapshot.OwnerAxUserId, normalizedRequestAxUserId) ||
                                           items.Any(item =>
-                                              MatchesExpenseSubordinateUserId(item, snapshot.OwnerUserId) &&
-                                              MatchesExpenseSubordinateUserId(item, normalizedRequestAxUserId));
+                                              MatchesExpenseSubordinateOwner(item, snapshot) &&
+                                              MatchesExpenseSubordinateAxUserId(item, normalizedRequestAxUserId));
 
                 if (ownerMatchesScope && requestMatchesOwner)
                     return sessionAxUserId;
 
                 _logger.LogInformation(
-                    "Skipped expense status actor forwarding in {Operation}. OwnerMatchesScope={OwnerMatchesScope}. RequestMatchesOwner={RequestMatchesOwner}. RequestAxUserId={RequestAxUserId}. OwnerUserId={OwnerUserId}.",
+                    "Skipped expense status actor forwarding in {Operation}. OwnerMatchesScope={OwnerMatchesScope}. RequestMatchesOwner={RequestMatchesOwner}. RequestAxUserId={RequestAxUserId}. OwnerCrmUserId={OwnerCrmUserId}; OwnerAxUserId={OwnerAxUserId}.",
                     operationName,
                     ownerMatchesScope,
                     requestMatchesOwner,
                     normalizedRequestAxUserId,
-                    snapshot.OwnerUserId);
+                    snapshot.OwnerCrmUserId,
+                    snapshot.OwnerAxUserId);
             }
             catch (Exception ex)
             {
@@ -4661,30 +4699,30 @@ namespace IND_CRM_APP.Controllers
             };
         }
 
-        // Resolves own vs subordinate mode using both Ax and CRM user identities.
+        // Resolves own vs subordinate mode with CRM priority and AX fallback only when CRM is unavailable.
         private static bool ResolveIsManagingOtherExpenseRecord(
             string? currentAxUserId,
             string? currentCrmUserId,
-            string? ownerUserId,
-            string? axUserIdOverride)
+            string? ownerAxUserId,
+            string? ownerCrmUserId)
         {
-            var normalizedCurrentAxUserId = NormalizeOptionalText(currentAxUserId);
-            var normalizedCurrentCrmUserId = NormalizeOptionalText(currentCrmUserId);
-            var normalizedOwnerUserId = NormalizeOptionalText(ownerUserId);
-            if (!string.IsNullOrWhiteSpace(normalizedOwnerUserId))
+            if (!string.IsNullOrWhiteSpace(currentCrmUserId) && !string.IsNullOrWhiteSpace(ownerCrmUserId))
+                return !IsSameExpenseUserId(currentCrmUserId, ownerCrmUserId);
+
+            return !IsSameExpenseUserId(currentAxUserId, ownerAxUserId);
+        }
+
+        // Returns one fail-closed result for unknown owners or mismatched company context.
+        private ExpenseSheetMutationGuardResult BuildExpenseSheetOwnerDeniedGuard(ExpenseSheetSnapshot? snapshot = null)
+        {
+            return new ExpenseSheetMutationGuardResult
             {
-                var matchesCurrentIdentity =
-                    (!string.IsNullOrWhiteSpace(normalizedCurrentAxUserId) && IsSameExpenseUserId(normalizedCurrentAxUserId, normalizedOwnerUserId)) ||
-                    (!string.IsNullOrWhiteSpace(normalizedCurrentCrmUserId) && IsSameExpenseUserId(normalizedCurrentCrmUserId, normalizedOwnerUserId));
-
-                if (!string.IsNullOrWhiteSpace(normalizedCurrentAxUserId) || !string.IsNullOrWhiteSpace(normalizedCurrentCrmUserId))
-                    return !matchesCurrentIdentity;
-            }
-
-            var normalizedOverride = NormalizeOptionalText(axUserIdOverride);
-            return !string.IsNullOrWhiteSpace(normalizedCurrentAxUserId) &&
-                   !string.IsNullOrWhiteSpace(normalizedOverride) &&
-                   !IsSameExpenseUserId(normalizedCurrentAxUserId, normalizedOverride);
+                Allowed = false,
+                StatusCode = StatusCodes.Status403Forbidden,
+                Message = _sr["Auth_PermissionDenied_Body"].Value,
+                ErrorCode = ExpenseManagedUserReadOnlyErrorCode,
+                Snapshot = snapshot
+            };
         }
 
         // Compares expense user identifiers with stable trimming and casing.
@@ -5556,19 +5594,26 @@ namespace IND_CRM_APP.Controllers
         // Reuses the subordinate scope lookup within one request to avoid duplicate upstream calls.
         private async Task<IReadOnlyList<ExpenseSheetSubordinateDto>> GetExpenseSheetSubordinatesForScopeAsync(string token)
         {
+            var companyId = NormalizeOptionalText(HttpContext?.Session.GetString("INDCompanySelected"));
+            if (string.IsNullOrWhiteSpace(companyId))
+                throw new InvalidOperationException("Expense subordinate scope requires a selected company.");
+
             if (HttpContext?.Items != null &&
                 HttpContext.Items.TryGetValue(ExpenseSubordinatesScopeCacheKey, out var cachedItems) &&
-                cachedItems is IReadOnlyList<ExpenseSheetSubordinateDto> cachedList)
+                cachedItems is ValueTuple<string, IReadOnlyList<ExpenseSheetSubordinateDto>> cachedScope &&
+                IsSameExpenseUserId(cachedScope.Item1, companyId))
             {
-                return cachedList;
+                return cachedScope.Item2;
             }
 
             var result = await _apiClient.GetExpenseSheetSubordinatesAsync(token, GetCurrentSessionAxUserId());
+            if (!result.Success)
+                throw new InvalidOperationException("Expense subordinate scope could not be loaded.");
             var items = result.GetAnyItems().ToList();
 
             if (HttpContext?.Items != null)
             {
-                HttpContext.Items[ExpenseSubordinatesScopeCacheKey] = items;
+                HttpContext.Items[ExpenseSubordinatesScopeCacheKey] = (companyId, (IReadOnlyList<ExpenseSheetSubordinateDto>)items);
             }
 
             return items;
@@ -5622,11 +5667,19 @@ namespace IND_CRM_APP.Controllers
             try
             {
                 var items = await GetExpenseSheetSubordinatesForScopeAsync(token);
-                var matchingSubordinate = items.FirstOrDefault(item => MatchesExpenseSubordinateUserId(item, normalizedOverride));
+                var matchingSubordinate = items.FirstOrDefault(item => MatchesExpenseSubordinateAxUserId(item, normalizedOverride));
 
                 if (matchingSubordinate != null)
                 {
-                    var effectiveAxUserId = ResolveExpenseSubordinateAxUserId(matchingSubordinate) ?? normalizedOverride;
+                    var effectiveAxUserId = ResolveExpenseSubordinateAxUserId(matchingSubordinate);
+                    if (string.IsNullOrWhiteSpace(effectiveAxUserId))
+                        return new ExpenseActingUserGuardResult
+                        {
+                            Allowed = false,
+                            StatusCode = StatusCodes.Status403Forbidden,
+                            Message = _sr["Auth_PermissionDenied_Body"].Value,
+                            ErrorCode = ExpenseManagedUserScopeDeniedErrorCode
+                        };
                     if (!IsSameExpenseUserId(effectiveAxUserId, normalizedOverride))
                     {
                         _logger.LogInformation(
@@ -5711,26 +5764,31 @@ namespace IND_CRM_APP.Controllers
             };
         }
 
-        // Matches one subordinate entry against any stable expense user identifier field.
-        private static bool MatchesExpenseSubordinateUserId(ExpenseSheetSubordinateDto item, string normalizedUserId)
+        // Compares the sheet owner to a subordinate without crossing CRM and AX identifiers.
+        private static bool MatchesExpenseSubordinateOwner(ExpenseSheetSubordinateDto item, ExpenseSheetSnapshot snapshot)
         {
-            return IsSameExpenseUserId(item?.AxUserId, normalizedUserId) ||
-                   IsSameExpenseUserId(item?.CrmUserId, normalizedUserId) ||
-                   IsSameExpenseUserId(item?.UserId, normalizedUserId) ||
-                   IsSameExpenseUserId(GetExtraString(item?.Extra, "axUserId", "AxUserId"), normalizedUserId) ||
-                   IsSameExpenseUserId(GetExtraString(item?.Extra, "crmUserId", "CrmUserId"), normalizedUserId) ||
-                   IsSameExpenseUserId(GetExtraString(item?.Extra, "userId", "UserId"), normalizedUserId);
+            var subordinateCrmUserId = NormalizeOptionalText(item?.CrmUserId)
+                                       ?? NormalizeOptionalText(GetExtraString(item?.Extra, "crmUserId", "CrmUserId"))
+                                       ?? NormalizeOptionalText(item?.UserId)
+                                       ?? NormalizeOptionalText(GetExtraString(item?.Extra, "userId", "UserId"));
+            if (!string.IsNullOrWhiteSpace(snapshot.OwnerCrmUserId) &&
+                !string.IsNullOrWhiteSpace(subordinateCrmUserId))
+                return IsSameExpenseUserId(snapshot.OwnerCrmUserId, subordinateCrmUserId);
+
+            return IsSameExpenseUserId(snapshot.OwnerAxUserId, ResolveExpenseSubordinateAxUserId(item));
+        }
+
+        // The acting-user override is an AX identity and must match an AX subordinate identity.
+        private static bool MatchesExpenseSubordinateAxUserId(ExpenseSheetSubordinateDto item, string? axUserId)
+        {
+            return IsSameExpenseUserId(ResolveExpenseSubordinateAxUserId(item), axUserId);
         }
 
         // Returns the Ax user id that must be sent to upstream for a subordinate match.
-        private static string? ResolveExpenseSubordinateAxUserId(ExpenseSheetSubordinateDto item)
+        private static string? ResolveExpenseSubordinateAxUserId(ExpenseSheetSubordinateDto? item)
         {
             return NormalizeOptionalText(item?.AxUserId)
-                   ?? NormalizeOptionalText(GetExtraString(item?.Extra, "axUserId", "AxUserId"))
-                   ?? NormalizeOptionalText(item?.CrmUserId)
-                   ?? NormalizeOptionalText(GetExtraString(item?.Extra, "crmUserId", "CrmUserId"))
-                   ?? NormalizeOptionalText(item?.UserId)
-                   ?? NormalizeOptionalText(GetExtraString(item?.Extra, "userId", "UserId"));
+                   ?? NormalizeOptionalText(GetExtraString(item?.Extra, "axUserId", "AxUserId"));
         }
 
         // Treats voucher assignment or paid status code as immutable paid state.

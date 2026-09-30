@@ -3,7 +3,7 @@ import { indT } from "../../../utils/indI18n.ts";
 import { resolveExpenseSheetDetailPolicy } from "../detail/expenseSheetDetailPolicy.ts";
 import type { ExpenseSheetDetailDto, ExpenseSheetHeader, ExpenseSheetLine } from "../expenseTypes.ts";
 import { fetchExpenseSheetDetail, mapExpenseSheetHeader, mapExpenseSheetLine } from "./expenseApi.ts";
-import { isManagingOtherExpenseRecord, isSameExpenseUser } from "./expenseManagedUserScope.ts";
+import { isCurrentExpenseOwner, isManagingOtherExpenseRecord } from "./expenseManagedUserScope.ts";
 import { hasAssignedVoucher, safeText } from "./expenseUiUtils.ts";
 
 const EXPENSE_STATUS_PAID = 4;
@@ -44,7 +44,7 @@ const selectSheet = (items: unknown[], sheetId: string): ExpenseSheetDetailDto |
   }
 
   const selected = items.find(
-    (entry) => safeText((entry as { HojaGastosId?: unknown })?.HojaGastosId).toUpperCase() === safeSheetId
+    (entry) => safeText((entry as ExpenseSheetDetailDto)?.HojaGastosId ?? (entry as ExpenseSheetDetailDto)?.hojaGastosId).toUpperCase() === safeSheetId
   );
   if (!selected || typeof selected !== "object") {
     return null;
@@ -124,17 +124,17 @@ export const resolveExpenseSheetEditAccess = async ({
     const mappedLines = rawLines.map(mapExpenseSheetLine);
     const statusCode = typeof mappedHeader.expenseSheetStatus === "number" ? mappedHeader.expenseSheetStatus : null;
     const isPaid = statusCode === EXPENSE_STATUS_PAID || hasAssignedVoucher(mappedHeader.voucher);
-    const recordOwnerUserId = safeText(mappedHeader.ownerAxUserId || mappedHeader.userId);
-    const isCurrentUserExpenseOwner =
-      !!recordOwnerUserId &&
-      (isSameExpenseUser(recordOwnerUserId, currentAxUserId) ||
-        isSameExpenseUser(recordOwnerUserId, currentCrmUserId));
-    const isManagingOtherUser = isManagingOtherExpenseRecord({
-      canManageOtherUsers,
+    const isCurrentUserExpenseOwner = isCurrentExpenseOwner({
       currentAxUserId,
       currentCrmUserId,
-      selectedManagedUserId,
-      recordOwnerUserId,
+      recordOwnerCrmUserId: mappedHeader.userId,
+      recordOwnerAxUserId: mappedHeader.ownerAxUserId,
+    });
+    const isManagingOtherUser = isManagingOtherExpenseRecord({
+      currentAxUserId,
+      currentCrmUserId,
+      recordOwnerCrmUserId: mappedHeader.userId,
+      recordOwnerAxUserId: mappedHeader.ownerAxUserId,
       isCreateMode: false,
     });
     const detailPolicy = resolveExpenseSheetDetailPolicy({

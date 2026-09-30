@@ -93,6 +93,238 @@ Require(lineOnly.Api.Calls.SequenceEqual(new[] { "GetExpenseSheetDetailAsync", "
 Require(lineOnly.Api.LineDeleteArguments![2]?.ToString() == "123" && Equals(lineOnly.Api.LineDeleteArguments[3], false) && Equals(lineOnly.Api.LineDeleteArguments[4], 0), "Line-only arguments changed");
 verified++;
 
+// The real MVC guard must compare CRM to CRM before considering either AX identity.
+var crmOwner = Create();
+crmOwner.Api.Sheet.OwnerAxUserId = "FR-AX";
+Check(await crmOwner.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 200, false, true);
+Require(crmOwner.Api.Calls.Contains("DeleteExpenseSheetLineAsync"), "Same-company CRM owner could not write a draft line");
+verified++;
+
+var ownerAdd = Create();
+ownerAdd.Api.Sheet.OwnerAxUserId = "FR-AX";
+Check(await ownerAdd.Controller.ApiExpenseSheetsCreate(new ExpenseSheetCreateRequest {
+    Mode = 2, ExistingHojaGastosId = "HG-1", Lines = new() { new() {
+        TransDate = "01.09.2026", TypeValue = 1, Description = "Draft line", Qty = 1m, Price = 10m
+    } }
+}), 200, false, true);
+Require(ownerAdd.Api.Calls.Contains("CreateExpenseSheetAsync"), "Same-company CRM owner could not add a draft line");
+verified++;
+
+var normalApprovalOwner = Create();
+normalApprovalOwner.Auth.Context.Companies[0].AllowSelfManagement = false;
+normalApprovalOwner.Api.Sheet.OwnerAxUserId = "FR-AX";
+Check(await normalApprovalOwner.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 200, false, true);
+verified++;
+
+var ownerLink = Create();
+ownerLink.Api.Sheet.OwnerAxUserId = "FR-AX";
+Check(await ownerLink.Controller.ApiExpenseSheetTicketsLinkBulk(new ExpenseSheetTicketLinkBulkRequest {
+    ExpenseSheetId = "HG-1", SelectionMode = "selected", TicketIds = new() { "FILE-1" }
+}), 200, false, true);
+Require(ownerLink.Api.Calls.Contains("LinkExpenseSheetTicketsBulkAsync"), "Same-company CRM owner could not link a ticket");
+verified++;
+
+var wrongLink = Create();
+wrongLink.Api.Sheet.UserId = "OTHER";
+Check(await wrongLink.Controller.ApiExpenseSheetTicketsLinkBulk(new ExpenseSheetTicketLinkBulkRequest {
+    ExpenseSheetId = "HG-1", SelectionMode = "selected", TicketIds = new() { "FILE-1" }
+}), 403, false, false);
+Require(!wrongLink.Api.Calls.Contains("LinkExpenseSheetTicketsBulkAsync"), "Third party linked a ticket");
+verified++;
+
+foreach (var (ownerCrm, ownerAx) in new[] { ("OTHER", "OWNER"), ("OWNER", "OTHER") }) {
+    var identity = Create();
+    identity.Api.Sheet.UserId = ownerCrm;
+    identity.Api.Sheet.OwnerAxUserId = ownerAx;
+    var expected = ownerCrm == "OWNER" ? 200 : 403;
+    Check(await identity.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), expected, false, expected == 200);
+    Require(identity.Api.Calls.Contains("DeleteExpenseSheetLineAsync") == (expected == 200), "CRM comparison did not take priority");
+    verified++;
+}
+
+var collision = Create();
+collision.Api.Sheet.UserId = "OWNER";
+collision.Api.Sheet.OwnerAxUserId = "OTHER";
+collision.Auth.Context.Companies[0].CrmUserId = "OTHER";
+Check(await collision.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 403, false, false);
+verified++;
+
+var unknown = Create();
+unknown.Api.Sheet.UserId = null;
+unknown.Api.Sheet.OwnerAxUserId = null;
+Check(await unknown.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 403, false, false);
+verified++;
+
+var unknownWithOverride = Create();
+unknownWithOverride.Api.Sheet.UserId = null;
+unknownWithOverride.Api.Sheet.OwnerAxUserId = null;
+unknownWithOverride.Controller.Request.Headers["X-IND-AxUserId"] = "OWNER";
+Check(await unknownWithOverride.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 403, false, false);
+verified++;
+
+var axFallback = Create();
+axFallback.Api.Sheet.UserId = null;
+Check(await axFallback.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 200, false, true);
+verified++;
+
+var switched = Create();
+switched.Auth.Context.Companies.Add(new() { CompanyId = "FR01", CrmUserId = "FR-CRM", AllowSelfManagement = true });
+switched.Controller.HttpContext.Session.SetString("INDCompanySelected", "FR01");
+switched.Auth.SelectedCompanyId = "FR01";
+switched.Api.Sheet.UserId = "FR-CRM";
+switched.Api.Sheet.OwnerAxUserId = "FR-AX";
+Check(await switched.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 200, false, true);
+switched.Api.Sheet.UserId = "OWNER";
+Check(await switched.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 403, false, false);
+verified += 2;
+
+var missingCompany = Create();
+missingCompany.Controller.HttpContext.Session.Remove("INDCompanySelected");
+Check(await missingCompany.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 403, false, false);
+Require(!missingCompany.Api.Calls.Contains("GetExpenseSheetDetailAsync"), "Missing company reached upstream detail");
+verified++;
+
+var mismatchedCompany = Create();
+mismatchedCompany.Auth.SelectedCompanyId = "OTHER";
+Check(await mismatchedCompany.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 403, false, false);
+verified++;
+
+var failedDetail = Create();
+failedDetail.Api.DetailSuccess = false;
+Check(await failedDetail.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 403, false, false);
+verified++;
+
+var wrongDetail = Create();
+wrongDetail.Api.Sheet.HojaGastosId = "HG-OTHER";
+Check(await wrongDetail.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 404, false, false);
+verified++;
+
+var wrongQuickLink = Create();
+wrongQuickLink.Api.Sheet.UserId = "OTHER";
+var sampleImage = new FormFile(new MemoryStream(new byte[] { 1 }), 0, 1, "ticketImage", "ticket.jpg") {
+    Headers = new HeaderDictionary(), ContentType = "image/jpeg"
+};
+Check(await wrongQuickLink.Controller.ApiExpenseSheetTicketQuickCreate(
+    sampleImage, "EUR", "Ticket", null, "HG-1", null, null), 403, false, false);
+Require(!wrongQuickLink.Api.Calls.Contains("QuickCreateExpenseSheetTicketAsync"), "Ticket quick-create linked an unrelated sheet");
+verified++;
+
+foreach (var selfManagement in new[] { false, true }) {
+    foreach (var paidByVoucher in new[] { false, true }) {
+        var locked = Create();
+        locked.Auth.Context.Companies[0].AllowSelfManagement = selfManagement;
+        locked.Api.Sheet.ExpenseSheetStatus = paidByVoucher ? 0 : 4;
+        locked.Api.Sheet.Voucher = paidByVoucher ? "V-1" : null;
+        Check(await locked.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 409, false, false);
+        verified++;
+    }
+    var approved = Create();
+    approved.Auth.Context.Companies[0].AllowSelfManagement = selfManagement;
+    approved.Api.Sheet.ExpenseSheetStatus = 2;
+    Check(await approved.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 409, false, false);
+    verified++;
+}
+
+foreach (var (from, to) in new[] { (1, 2), (1, 3), (2, 1), (3, 1) }) {
+    var manager = Create();
+    manager.Api.Sheet.UserId = "SUB-CRM";
+    manager.Api.Sheet.OwnerAxUserId = "SUB-AX";
+    manager.Api.Sheet.ExpenseSheetStatus = from;
+    manager.Api.Sheet.Description = "Original";
+    manager.Api.Sheet.CurrencyCode = "EUR";
+    manager.Api.Sheet.ExchRate = 1m;
+    manager.Api.Sheet.ProjId = "P-1";
+    manager.Api.Sheet.ReimbursableExpense = 1;
+    manager.Api.Subordinates = new[] { new ExpenseSheetSubordinateDto { CrmUserId = "SUB-CRM", AxUserId = "SUB-AX" } };
+    manager.Controller.Request.Headers["X-IND-AxUserId"] = "SUB-AX";
+    Check(await manager.Controller.ApiExpenseSheetUpdate("HG-1", new ExpenseSheetUpdateRequest {
+        Description = "Tampered", CurrencyCode = "USD", ExchRate = 99m, ProjId = "P-OTHER", ProjIdProvided = true,
+        Voucher = "V-OTHER", ReimbursableExpense = 0, ExpenseSheetStatus = to, EstadoComentarios = "Decision"
+    }), 200, false, true);
+    var sent = manager.Api.HeaderUpdateArguments!;
+    var header = (ExpenseSheetUpdateRequest)sent[2]!;
+    Require(header.Description == "Original" && header.CurrencyCode == "EUR" && header.ExchRate == 100m &&
+        header.ProjId == null && header.ProjIdProvided == false && header.Voucher == null &&
+        header.ReimbursableExpense == 1 && header.ExpenseSheetStatus == to && header.EstadoComentarios == "Decision",
+        "Approval changed unrelated header fields: " + JsonSerializer.Serialize(header));
+    Require(Equals(sent[3], "SUB-AX") && Equals(sent[4], "OWNER"), "Real approval actor was not forwarded");
+    verified++;
+}
+
+var legacyApproval = Create();
+legacyApproval.Api.Sheet.UserId = "SUB-CRM";
+legacyApproval.Api.Sheet.OwnerAxUserId = "SUB-AX";
+legacyApproval.Api.Sheet.ExpenseSheetStatus = 1;
+legacyApproval.Api.Subordinates = new[] { new ExpenseSheetSubordinateDto { CrmUserId = "SUB-CRM", AxUserId = "SUB-AX" } };
+legacyApproval.Controller.Request.Headers["X-IND-AxUserId"] = "SUB-AX";
+Check(await legacyApproval.Controller.UpdateExpenseSheetHeader("HG-1", new ExpenseSheetUpdateRequest {
+    ExpenseSheetStatus = 2, Description = "Untrusted"
+}), 200, true, true);
+Require(Equals(legacyApproval.Api.HeaderUpdateArguments?[4], "OWNER"), "Legacy approval did not forward the real actor");
+verified++;
+
+var managerLine = Create();
+managerLine.Api.Sheet.UserId = "SUB-CRM";
+managerLine.Api.Sheet.OwnerAxUserId = "SUB-AX";
+managerLine.Api.Sheet.ExpenseSheetStatus = 1;
+managerLine.Api.Subordinates = new[] { new ExpenseSheetSubordinateDto { CrmUserId = "SUB-CRM", AxUserId = "SUB-AX" } };
+managerLine.Controller.Request.Headers["X-IND-AxUserId"] = "SUB-AX";
+Check(await managerLine.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 409, false, false);
+Require(!managerLine.Api.Calls.Contains("DeleteExpenseSheetLineAsync"), "Manager changed subordinate line");
+verified++;
+
+Check(await managerLine.Controller.ApiExpenseSheetLineUpdate("HG-1", "123", new ExpenseSheetLineRequest {
+    TransDate = "01.09.2026", TypeValue = 1, Description = "Change", Qty = 1m, Price = 10m
+}), 409, false, false);
+Check(await managerLine.Controller.ApiExpenseSheetsCreate(new ExpenseSheetCreateRequest {
+    Mode = 2, ExistingHojaGastosId = "HG-1", Lines = new() { new() {
+        TransDate = "01.09.2026", TypeValue = 1, Description = "New", Qty = 1m, Price = 10m
+    } }
+}), 409, false, false);
+Check(await managerLine.Controller.ApiExpenseSheetLineTicketAttach("HG-1", "123", new ExpenseSheetLineTicketRequest { FileId = "FILE-1" }), 403, false, false);
+Check(await managerLine.Controller.ApiExpenseSheetLineTicketDetach("HG-1", "123"), 403, false, false);
+Check(await managerLine.Controller.ApiExpenseSheetLineDelete("HG-1", "0", true, 2), 409, false, false);
+Check(await managerLine.Controller.ApiExpenseSheetTicketsLinkBulk(new ExpenseSheetTicketLinkBulkRequest {
+    ExpenseSheetId = "HG-1", SelectionMode = "selected", TicketIds = new() { "FILE-1" }
+}), 403, false, false);
+Require(!managerLine.Api.Calls.Contains("CreateExpenseSheetAsync") &&
+        !managerLine.Api.Calls.Contains("UpdateExpenseSheetLineAsync") &&
+        !managerLine.Api.Calls.Contains("LinkExpenseSheetTicketsBulkAsync") &&
+        !managerLine.Api.Calls.Contains("DeleteExpenseSheetWithTicketsAsync"), "Manager reached a subordinate write");
+verified += 6;
+
+var outsider = Create();
+outsider.Api.Sheet.UserId = "OUTSIDE-CRM";
+outsider.Api.Sheet.OwnerAxUserId = "SUB-AX";
+outsider.Api.Sheet.ExpenseSheetStatus = 1;
+outsider.Api.Subordinates = new[] { new ExpenseSheetSubordinateDto { CrmUserId = "SUB-CRM", AxUserId = "SUB-AX" } };
+outsider.Controller.Request.Headers["X-IND-AxUserId"] = "SUB-AX";
+Check(await outsider.Controller.ApiExpenseSheetUpdate("HG-1", new ExpenseSheetUpdateRequest { ExpenseSheetStatus = 2 }), 403, false, false);
+Require(!outsider.Api.Calls.Contains("UpdateExpenseSheetHeaderAsync"), "Outsider reached status update");
+verified++;
+
+var failedScope = Create();
+failedScope.Api.Sheet.UserId = "SUB-CRM";
+failedScope.Api.Sheet.OwnerAxUserId = "SUB-AX";
+failedScope.Api.SubordinateSuccess = false;
+Check(await failedScope.Controller.ApiExpenseSheetLineDelete("HG-1", "123", false, 0), 500, false, false);
+Require(!failedScope.Api.Calls.Contains("DeleteExpenseSheetLineAsync"), "Failed subordinate lookup reached a write");
+verified++;
+
+var scopeSwitch = Create();
+scopeSwitch.Api.Sheet.UserId = "SUB-CRM";
+scopeSwitch.Api.Sheet.OwnerAxUserId = "SUB-AX";
+scopeSwitch.Api.Sheet.ExpenseSheetStatus = 1;
+scopeSwitch.Api.Subordinates = new[] { new ExpenseSheetSubordinateDto { CrmUserId = "SUB-CRM", AxUserId = "SUB-AX" } };
+scopeSwitch.Controller.Request.Headers["X-IND-AxUserId"] = "SUB-AX";
+Check(await scopeSwitch.Controller.ApiExpenseSheetUpdate("HG-1", new ExpenseSheetUpdateRequest { ExpenseSheetStatus = 2 }), 200, false, true);
+scopeSwitch.Auth.Context.Companies.Add(new() { CompanyId = "FR01", CrmUserId = "FR-CRM" });
+scopeSwitch.Auth.SelectedCompanyId = "FR01";
+scopeSwitch.Controller.HttpContext.Session.SetString("INDCompanySelected", "FR01");
+scopeSwitch.Api.Subordinates = Array.Empty<ExpenseSheetSubordinateDto>();
+Check(await scopeSwitch.Controller.ApiExpenseSheetUpdate("HG-1", new ExpenseSheetUpdateRequest { ExpenseSheetStatus = 2 }), 403, false, false);
+verified += 2;
+
 var http = new DefaultHttpContext();
 http.Features.Set<ISessionFeature>(new SessionFeature { Session = new FakeSession() });
 foreach (var entry in new Dictionary<string, string> { ["INDCompanySelected"] = "ES01", ["AxUser"] = "OWNER", ["ENTRAOID"] = "test-oid", ["INDContextVersion"] = "7", ["INDPermissionsRevision"] = "revision", ["INDContextToken"] = "signed-context" }) http.Session.SetString(entry.Key, entry.Value);
@@ -110,7 +342,7 @@ foreach (var request in handler.Requests) {
 }
 Require(handler.Requests[0].Headers["X-IND-AxUserId"] == "FUNCTIONAL" && handler.Requests[1].Headers["X-IND-AxUserId"] == "OWNER", "Functional user override leaked or disappeared");
 verified++;
-Console.WriteLine($"Verified {verified} durable deletion cases.");
+Console.WriteLine($"Verified {verified} expense mutation and deletion cases.");
 
 // Invokes both existing public whole-sheet routes, preserving legacy response casing.
 static Task<IActionResult> Delete(GastosController controller, bool legacy) => legacy
@@ -122,7 +354,7 @@ static ApiTransportResponse<ExpenseSheetDeletionProgressDto> Transport(int statu
 };
 
 // Creates the real controller with own-draft context and API calls that fail on unexpected mutations.
-static (GastosController Controller, FakeApi Api) Create() {
+static (GastosController Controller, FakeApi Api, FakeAuth Auth) Create() {
     var apiClient = DispatchProxy.Create<ICrmApiClient, FakeApi>();
     var api = (FakeApi)(object)apiClient;
     var auth = DispatchProxy.Create<IIndAuthContextService, FakeAuth>();
@@ -134,7 +366,7 @@ static (GastosController Controller, FakeApi Api) Create() {
         ControllerContext = new ControllerContext { HttpContext = http },
         TempData = new TempDataDictionary(http, new FakeTempData())
     };
-    return (controller, api);
+    return (controller, api, (FakeAuth)(object)auth);
 }
 
 // Checks response status and public success state without relying on private implementation.
@@ -156,6 +388,10 @@ static void Require(bool condition, string message) { if (!condition) throw new 
 public class FakeApi : DispatchProxy {
     public List<string> Calls { get; } = new();
     public object?[]? LineDeleteArguments { get; private set; }
+    public object?[]? HeaderUpdateArguments { get; private set; }
+    public bool DetailSuccess { get; set; } = true;
+    public bool SubordinateSuccess { get; set; } = true;
+    public ExpenseSheetSubordinateDto[] Subordinates { get; set; } = Array.Empty<ExpenseSheetSubordinateDto>();
     public ExpenseSheetDetailDto Sheet { get; } = new() { HojaGastosId = "HG-1", OwnerAxUserId = "OWNER", UserId = "OWNER", ExpenseSheetStatus = 0, Lines = new() { new() { RecId = "123", FileId = "FILE-1", Ticket = true } } };
     public ApiTransportResponse<ExpenseSheetDeletionProgressDto> Progress { get; set; } = new() { Response = new() { Success = true, Data = new() } };
     public ApiTransportResponse<ExpenseSheetDeletionProgressDto> Deletion { get; set; } = new() { Response = new() { Success = true, Data = new() { Exists = true, SheetDeleted = true, Complete = true, MetadataAvailable = true } } };
@@ -163,8 +399,11 @@ public class FakeApi : DispatchProxy {
         Calls.Add(method!.Name);
         if (method.Name == "GetExpenseSheetDeletionAsync") return Task.FromResult(Progress);
         if (method.Name == "DeleteExpenseSheetWithTicketsAsync") return Task.FromResult(Deletion);
-        if (method.Name == "GetExpenseSheetDetailAsync") return Task.FromResult(new PagedApiResponse<ExpenseSheetDetailDto> { Success = true, Items = new[] { Sheet } });
-        if (method.Name == "GetExpenseSheetSubordinatesAsync") return Task.FromResult(new PagedApiResponse<ExpenseSheetSubordinateDto> { Success = true, Items = Array.Empty<ExpenseSheetSubordinateDto>() });
+        if (method.Name == "GetExpenseSheetDetailAsync") return Task.FromResult(new PagedApiResponse<ExpenseSheetDetailDto> { Success = DetailSuccess, Items = new[] { Sheet } });
+        if (method.Name == "GetExpenseSheetSubordinatesAsync") return Task.FromResult(new PagedApiResponse<ExpenseSheetSubordinateDto> { Success = SubordinateSuccess, Items = Subordinates });
+        if (method.Name == "CreateExpenseSheetAsync") return Task.FromResult(new ApiResponse<ExpenseSheetCreateResponseData> { Success = true, Data = new() });
+        if (method.Name == "LinkExpenseSheetTicketsBulkAsync") return Task.FromResult(new ApiResponse<ExpenseSheetTicketLinkBulkResultDto> { Success = true, Data = new() });
+        if (method.Name == "UpdateExpenseSheetHeaderAsync") { HeaderUpdateArguments = args; return Task.FromResult(new ApiResponse<object> { Success = true }); }
         if (method.Name == "DeleteExpenseSheetLineAsync") { LineDeleteArguments = args; return Task.FromResult(new ApiResponse<object> { Success = true }); }
         throw new Exception("Unexpected API mutation: " + method.Name);
     }
@@ -172,11 +411,12 @@ public class FakeApi : DispatchProxy {
 
 // Provides a signed-in company owner; API progress independently authorizes durable retries.
 public class FakeAuth : DispatchProxy {
-    private readonly IndWebContext context = new() { Header = new() { AxUserId = "OWNER" }, Companies = new() { new() { CompanyId = "ES01", CrmUserId = "OWNER", AllowSelfManagement = true } } };
+    public IndWebContext Context { get; } = new() { Header = new() { AxUserId = "OWNER" }, Companies = new() { new() { CompanyId = "ES01", CrmUserId = "OWNER", AllowSelfManagement = true } } };
+    public string SelectedCompanyId { get; set; } = "ES01";
     protected override object? Invoke(MethodInfo? method, object?[]? args) => method!.Name switch {
-        "GetCachedContext" => context,
-        "GetSelectedCompanyId" => "ES01",
-        "EnsureContextAsync" => Task.FromResult(new IndAuthContextResult { Success = true, Context = context }),
+        "GetCachedContext" => Context,
+        "GetSelectedCompanyId" => SelectedCompanyId,
+        "EnsureContextAsync" => Task.FromResult(new IndAuthContextResult { Success = true, Context = Context }),
         _ => throw new Exception("Unexpected auth operation")
     };
 }

@@ -8,7 +8,7 @@ import { indFormat, indT } from "../../../utils/indI18n.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
-import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
+import { isManagingOtherExpenseUser } from "../utils/expenseManagedUserScope.ts";
 import { navigateToExpenseUrl, reloadExpensePage } from "../utils/expenseNavigation.ts";
 import { saveExpenseSheetCreatedReturnContext } from "../utils/expenseSheetCreatedReturnContext.ts";
 import { saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
@@ -66,11 +66,10 @@ export const useExpenseSheetDetailPageController = () => {
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const sheetMode = safeText(window.__EXPENSE_SHEET_MODE__).toLowerCase();
   const isCreateMode = sheetMode === "create";
-  const isManagingOtherUserBySelection = isManagingOtherExpenseRecord({
+  const isManagingOtherUserBySelection = isManagingOtherExpenseUser({
     canManageOtherUsers,
     currentAxUserId,
     selectedManagedUserId,
-    recordOwnerUserId: "",
     isCreateMode,
   });
   const canCreateExpenseForSelectedContext = canCreateExpense && !isManagingOtherUserBySelection;

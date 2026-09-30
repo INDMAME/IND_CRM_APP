@@ -397,7 +397,10 @@ test("manual-line ticket actions require Edit and the current sheet owner", () =
 
   for (const source of [expenseLineStateSource, expenseLineStateMirrorSource]) {
     assert.match(source, /isManagingOtherUser,[\s\S]*canCreateExpenseCurrent/);
-    assert.match(source, /recordOwnerUserId:\s*mappedHeader\.ownerAxUserId\s*\|\|\s*mappedHeader\.userId/);
+    assert.match(source, /recordOwnerCrmUserId:\s*mappedHeader\.userId/);
+    assert.match(source, /recordOwnerAxUserId:\s*mappedHeader\.ownerAxUserId/);
+    assert.match(source, /entry\?\.HojaGastosId\s*\?\?\s*entry\?\.hojaGastosId/);
+    assert.doesNotMatch(source, /\|\|\s*sheets\[0\]/);
     assert.match(source, /isCurrentUserExpenseOwner,[\s\S]*isSheetLocked/);
   }
 
@@ -455,7 +458,8 @@ test("line-link selector cannot restore or load another user's tickets", () => {
   for (const source of [expenseSheetEditAccessSource, expenseSheetEditAccessMirrorSource]) {
     assert.match(source, /isManagingOtherUser:\s*boolean/);
     assert.match(source, /isCurrentUserExpenseOwner:\s*boolean/);
-    assert.match(source, /mappedHeader\.ownerAxUserId\s*\|\|\s*mappedHeader\.userId/);
+    assert.match(source, /recordOwnerCrmUserId:\s*mappedHeader\.userId/);
+    assert.match(source, /recordOwnerAxUserId:\s*mappedHeader\.ownerAxUserId/);
     assert.match(source, /"X-IND-AxUserId":\s*requestedOwnerAxUserId/);
     assert.doesNotMatch(source, /return selected as ExpenseSheetDetailDto;[\s\S]*\|\| items\[0\]/);
   }
