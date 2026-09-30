@@ -1,0 +1,27 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expenses",
+    "title":  "Hojas de gastos",
+    "description":  "Creación y mantenimiento de hojas y líneas de gasto.",
+    "order":  5,
+    "aliases":  {
+                    "es-ES":  [
+                                  "hojas de gastos",
+                                  "gastos"
+                              ]
+                },
+    "topicIds":  [
+                     "expenses.modulo-hojas-de-gastos",
+                     "expenses.flujo-general-de-una-hoja-de-gastos",
+                     "expenses.abrir-la-lista-de-hojas",
+                     "expenses.buscar-y-filtrar-hojas",
+                     "expenses.utilizar-el-asistente-de-gastos",
+                     "expenses.crear-la-cabecera-de-una-hoja",
+                     "expenses.comprender-el-detalle-de-la-hoja",
+                     "expenses.anadir-una-linea-manual",
+                     "expenses.divisas-e-importes-de-una-linea",
+                     "expenses.crear-un-ticket-desde-una-hoja",
+                     "expenses.vincular-tickets-existentes",
+                     "expenses.editar-la-cabecera-y-las-lineas"
+                 ]
+}

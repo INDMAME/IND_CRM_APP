@@ -1,7 +1,7 @@
 import React from "react";
 import InfoPopoverIconButton from "../../../components/commons/InfoPopoverIconButton.tsx";
 import { indFormat, indT } from "../../../utils/indI18n.ts";
-import { formatExpenseAmountLabel } from "../expenseFormatters.ts";
+import { formatExpenseAmountLabel, formatExpenseOriginalAmountLabel } from "../expenseFormatters.ts";
 import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
@@ -45,6 +45,7 @@ const MONEY_INPUT_FORMAT = {
 const EXCHANGE_RATE_INPUT_FORMAT = {
   minimumFractionDigits: 7,
   maximumFractionDigits: 7,
+  preferDecimalSeparator: true,
   useGrouping: true,
   fallback: "",
 };
@@ -112,10 +113,11 @@ const ExpenseCurrencySettlementFields = ({
     sameCurrencySettlement ? formatExchangeRateInput("100") : safeText(exchangeRate);
   const effectiveExchangeRateInvalid = exchangeRateInvalid;
   const reimbursementCurrencyLabel = normalizedLocalCurrencyCode || indT("Common_NotAvailable", "N/A");
-  const expenseAmountDisplayLabel = safeText(amountCurrencyLabel) || formatExpenseAmountLabel(normalizedExpenseCurrencyCode);
+  const expenseAmountDisplayLabel = safeText(amountCurrencyLabel) || formatExpenseOriginalAmountLabel(normalizedExpenseCurrencyCode);
   const companyAmountDisplayLabel = safeText(companyAmountLabel) || formatExpenseAmountLabel(normalizedCompanyAmountCurrencyCode);
   const expenseCurrencyLabel = normalizedExpenseCurrencyCode || indT("Common_NotAvailable", "N/A");
   const exchangeRateReferenceValue = formatExpenseInputNumber(effectiveExchangeRate, {
+    preferDecimalSeparator: true,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
     useGrouping: true,

@@ -1,0 +1,35 @@
+@using IND_CRM_APP.Infrastructure.Localization
+@using System.Text.Json
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+
+@{
+    ViewData["Title"] = SR["Nav_Manual"];
+    ViewData["ContentClass"] = "content w-full max-w-5xl mx-auto px-4 md:px-6 flex flex-col";
+    ViewData["HideNavArrows"] = true;
+
+    var cultureFeature = Context.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>();
+    var currentCulture = cultureFeature?.RequestCulture.UICulture.Name ?? "es-ES";
+    var cspNonce = Context.Items["CspNonce"]?.ToString() ?? string.Empty;
+}
+
+<div id="manual-help-root"
+     class="flex min-h-0 w-full flex-1 flex-col py-4 md:py-8"
+     data-response-locale="@currentCulture"></div>
+
+<script nonce="@cspNonce">
+    window.__IND_I18N__ = Object.assign(window.__IND_I18N__ || {}, @Html.Raw(JsonSerializer.Serialize(new
+    {
+        HomeHelp_CatalogTitle = SR["HomeHelp_CatalogTitle"].Value,
+        HomeHelp_CatalogLoading = SR["HomeHelp_CatalogLoading"].Value,
+        HomeHelp_CatalogError = SR["HomeHelp_CatalogError"].Value,
+        HomeHelp_CatalogSearchLabel = SR["HomeHelp_CatalogSearchLabel"].Value,
+        HomeHelp_CatalogSearchPlaceholder = SR["HomeHelp_CatalogSearchPlaceholder"].Value,
+        HomeHelp_CatalogEmpty = SR["HomeHelp_CatalogEmpty"].Value,
+        Topbar_Back = SR["Topbar_Back"].Value,
+        ManualHelp_TopicLoading = SR["ManualHelp_TopicLoading"].Value,
+        ManualHelp_TopicError = SR["ManualHelp_TopicError"].Value,
+        HomeHelp_RenderError = SR["HomeHelp_RenderError"].Value,
+        Api_RequestFailed = SR["Api_RequestFailed"].Value
+    })));
+</script>
+<script nonce="@cspNonce" type="module" src="~/js/manual-help.js" asp-append-version="true"></script>

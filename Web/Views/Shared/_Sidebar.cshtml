@@ -7,6 +7,7 @@
 @using System.Linq
 @using System.Collections.Generic
 @inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 
 @{
     var returnUrl = (Context?.Request?.Path.Value ?? "/") + (Context?.Request?.QueryString.Value ?? string.Empty);
@@ -72,6 +73,7 @@
     var canManageVisits = HasModuleAccess(INDModuleRegistry.ModuleVisitasGestion, IndAccessRights.View);
     var canViewExpenseSheets = HasModuleAccess(INDModuleRegistry.ModuleGastosHojaGasto, IndAccessRights.View);
     var canViewExpenseTickets = HasModuleAccess(INDModuleRegistry.ModuleGastosTickets, IndAccessRights.View);
+    var helpAssistantEnabled = Configuration.GetValue<bool?>("Features:CrmHelpAssistantEnabled") == true;
 }
 
 <div id="sidebar" class="sidebar fixed top-0 left-0 z-2000 flex min-h-screen w-[260px] flex-col bg-primary text-white transform -translate-x-[260px] transition-transform duration-300" aria-hidden="true" inert>
@@ -83,7 +85,7 @@
     </button>
 
     <a asp-controller="Home" asp-action="Index" class="sidebar-logo mt-6 mb-6 flex flex-col items-center text-center hover:scale-[1.02] transition">
-        <img src="~/images/insertec_logo_blanco.png" alt="@SR["Common_AppLogoAlt"]" />
+        <img src="~/images/insertec_logo_blanco.png" asp-append-version="true" alt="@SR["Common_AppLogoAlt"]" />
     </a>
 
     @if (canManageVisits)
@@ -134,6 +136,18 @@
                 </a>
             }
         </div>
+    }
+
+    @if (helpAssistantEnabled)
+    {
+        <a asp-controller="Home" asp-action="Manual" class="w-full text-left px-6 py-3 text-sm font-semibold tracking-wide hover:bg-white/15 transition flex items-center justify-between">
+            <span class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white/90" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253" />
+                </svg>
+                @SR["Nav_Manual"].Value.ToUpperInvariant()
+            </span>
+        </a>
     }
 
     <div class="user-panel mt-auto pb-14 relative">
@@ -248,9 +262,9 @@
             </div>
 
             <div class="mt-1 border-t border-white/10"></div>
-            <form asp-controller="Auth" asp-action="Logout" method="post" class="mt-1">
+            <form asp-controller="Auth" asp-action="Logout" method="post" class="mt-1" data-ind-browser-state-logout>
                 @Html.AntiForgeryToken()
-                <button type="submit" data-clear-expense-cache="logout" class="user-menu-item user-menu-logout flex items-center w-full text-left px-3 py-2 text-sm hover:bg-white/15 transition">
+                <button type="submit" class="user-menu-item user-menu-logout flex items-center w-full text-left px-3 py-2 text-sm hover:bg-white/15 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="me-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M18 12H9.75" />
@@ -266,7 +280,7 @@
 
 <script nonce="@cspNonce">
     (function () {
-        const clearExpenseListCache = (includeUserContext) => {
+        const clearExpenseListCache = () => {
             try {
                 const prefixes = [
                     "expense_tickets_filter_v1",
@@ -276,12 +290,6 @@
                     "expense_sheets_filter_v2",
                     "expense_sheets_return_v2"
                 ];
-                if (includeUserContext) {
-                    prefixes.push(
-                        "expense_management_context_v2",
-                        "expense_acting_user_v1"
-                    );
-                }
                 const keysToRemove = [];
                 for (let i = 0; i < window.sessionStorage.length; i += 1) {
                     const key = window.sessionStorage.key(i);
@@ -299,9 +307,9 @@
         document.addEventListener("click", (event) => {
             const target = event.target;
             if (!(target instanceof Element)) return;
-            const trigger = target.closest("[data-clear-expense-cache]");
+            const trigger = target.closest("a[data-clear-expense-cache]");
             if (!trigger) return;
-            clearExpenseListCache(trigger.getAttribute("data-clear-expense-cache") === "logout");
+            clearExpenseListCache();
         });
     })();
 </script>

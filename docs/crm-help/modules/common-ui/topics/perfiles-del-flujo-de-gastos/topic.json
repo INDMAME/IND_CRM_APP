@@ -1,0 +1,51 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui.perfiles-del-flujo-de-gastos",
+    "moduleId":  "common-ui",
+    "sectionNumber":  "6.4",
+    "title":  "Perfiles del flujo de gastos",
+    "summary":  "Identifique los perfiles del flujo de gastos y compruebe de quién es la hoja antes de actuar.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Perfiles del flujo de gastos",
+                                  "usuario estándar",
+                                  "usuario aprobador",
+                                  "usuario pagador",
+                                  "jerarquía de responsabilidad"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Qué perfiles intervienen en el flujo de gastos?",
+                                          "¿Qué debo comprobar antes de revisar la hoja de otra persona?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "911286225FB39B3B526382FB642F07441E3564CC1DE43F9F98C18695CA74C3DC",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "6.4",
+                   "pageFromTableOfContents":  11
+               }
+}

@@ -316,6 +316,8 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, mode, onForbidd
   );
 
   const resetList = useCallback((source = "unknown") => {
+    // Invalidates late responses even when a transport cannot honor AbortSignal.
+    activeRequestSeqRef.current += 1;
     if (activeRequestControllerRef.current) {
       logExpenseTicketsListWarn("resetList:abort-active-request", {
         source,
@@ -334,6 +336,7 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, mode, onForbidd
     setTotal(0);
     setCurrentPage(1);
     setErrorMessage("");
+    setIsLoading(false);
   }, []);
 
   const clearListCache = useCallback(() => {

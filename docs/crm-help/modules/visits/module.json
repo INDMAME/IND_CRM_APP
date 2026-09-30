@@ -1,0 +1,22 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "visits",
+    "title":  "Visitas",
+    "description":  "Consulta, creación, edición y eliminación de visitas.",
+    "order":  4,
+    "aliases":  {
+                    "es-ES":  [
+                                  "visitas",
+                                  "historial de visitas"
+                              ]
+                },
+    "topicIds":  [
+                     "visits.modulo-visitas",
+                     "visits.abrir-el-historial-de-visitas",
+                     "visits.filtrar-el-historial",
+                     "visits.crear-una-visita-paso-1-cuenta-y-contactos",
+                     "visits.crear-una-visita-paso-2-datos-de-la-visita",
+                     "visits.editor-de-texto-y-dictado",
+                     "visits.consultar-editar-o-eliminar-una-visita"
+                 ]
+}

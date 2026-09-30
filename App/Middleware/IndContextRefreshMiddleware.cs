@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using IND_CRM_APP.Services;
+using IND_CRM_APP.Infrastructure.Security.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -48,6 +49,9 @@ namespace IND_CRM_APP.Middleware
 
         private static bool ShouldSkip(HttpContext context)
         {
+            if (context.GetEndpoint()?.Metadata.GetMetadata<IndErrorEndpointAttribute>() != null)
+                return true;
+
             var lowerPath = (context.Request.Path.Value ?? string.Empty).ToLowerInvariant();
             return lowerPath.StartsWith("/auth/login") ||
                    lowerPath.StartsWith("/auth/logout") ||

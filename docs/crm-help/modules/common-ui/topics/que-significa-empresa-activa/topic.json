@@ -1,0 +1,51 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui.que-significa-empresa-activa",
+    "moduleId":  "common-ui",
+    "sectionNumber":  "6.1",
+    "title":  "Qué significa empresa activa",
+    "summary":  "Compruebe la empresa activa y cambie a una compañía autorizada antes de trabajar con sus datos.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Qué significa empresa activa",
+                                  "empresa activa",
+                                  "cambiar de empresa",
+                                  "Compañías",
+                                  "compañía seleccionada"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Cómo cambio la empresa activa?",
+                                          "¿Cambiar de empresa traslada un registro que ya he creado?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "8F574FFAC5270157B162827C9B28897702FB9DD3EE3FDCF48CFD25B441247D3D",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "6.1",
+                   "pageFromTableOfContents":  10
+               }
+}

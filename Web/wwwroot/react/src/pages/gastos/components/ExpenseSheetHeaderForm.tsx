@@ -6,11 +6,12 @@ import type { ExpenseSheetHeader } from "../expenseTypes.ts";
 import ExpenseSheetHeaderCurrencySection from "./ExpenseSheetHeaderCurrencySection.tsx";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
-import { formatExpenseAmountLabel } from "../expenseFormatters.ts";
+import { formatExpenseAmountLabel, formatExpenseReimbursableAmountLabel } from "../expenseFormatters.ts";
 import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
 import {
   getEditableExpenseReimbursableExpenseOptions,
   getExpenseReimbursableExpenseLabel,
+  isEditableExpenseReimbursableExpense,
   normalizeExpenseReimbursableExpense,
 } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import {
@@ -18,7 +19,7 @@ import {
   normalizeExpenseExchangeRateMode,
 } from "../constants/exchangeRateEntryModeCatalog.ts";
 import { normalizeDescriptionText, safeText } from "../utils/expenseUiUtils.ts";
-import { formatExpenseNumber, parseExpenseNumericInput } from "../utils/expenseNumberFormat.ts";
+import { formatExpenseNumber, parseExpenseExchangeRateInput } from "../utils/expenseNumberFormat.ts";
 
 type ExpenseSheetHeaderFormMode = {
   isCreateMode: boolean;
@@ -65,6 +66,7 @@ type ExpenseSheetHeaderFormProps = {
 const EXCHANGE_RATE_MODE_PREFIX_PATTERN = /^T\.?C\.?\s*/i;
 const ALIGNED_FIELD_CONTAINER_CLASS_NAME = "space-y-1.5";
 const ALIGNED_FIELD_LABEL_CLASS_NAME = "form-label font-semibold inline-flex h-6 items-center leading-none";
+const AMOUNT_FIELD_LABEL_CLASS_NAME = "form-label font-semibold inline-flex min-h-6 items-center leading-tight";
 
 // Pure presentational header form for expense sheet detail/create screens.
 const ExpenseSheetHeaderForm = ({
@@ -122,24 +124,28 @@ const ExpenseSheetHeaderForm = ({
   const reimbursableExpenseValue = normalizeExpenseReimbursableExpense(
     isEditing ? draftReimbursableExpense : header.reimbursableExpense
   );
-  const hasEditableReimbursableExpenseValue = reimbursableExpenseOptions.some(
-    (option) => Number(option.value) === reimbursableExpenseValue
-  );
+  const hasEditableReimbursableExpenseValue = isEditableExpenseReimbursableExpense(reimbursableExpenseValue);
+  const hasKnownReimbursableExpenseValue = reimbursableExpenseValue !== null;
   const reimbursableExpenseLabel = getExpenseReimbursableExpenseLabel(
-    isEditing ? reimbursableExpenseValue : header.reimbursableExpense
+    isEditing ? draftReimbursableExpense : header.reimbursableExpense
   );
   const selectedReimbursableExpenseOption = React.useMemo(
     () =>
-      hasEditableReimbursableExpenseValue
-        ? undefined
-        : { value: String(reimbursableExpenseValue), text: reimbursableExpenseLabel },
-    [hasEditableReimbursableExpenseValue, reimbursableExpenseLabel, reimbursableExpenseValue]
+      hasKnownReimbursableExpenseValue && !hasEditableReimbursableExpenseValue
+        ? { value: String(reimbursableExpenseValue), text: reimbursableExpenseLabel }
+        : undefined,
+    [
+      hasEditableReimbursableExpenseValue,
+      hasKnownReimbursableExpenseValue,
+      reimbursableExpenseLabel,
+      reimbursableExpenseValue,
+    ]
   );
   // Status comment is now edited only in the status transition popup.
   const statusCommentValue = safeText(header.estadoComentarios);
   const showStatusCommentField = !isCreateMode && statusCommentMode !== "hidden";
-  const parsedDraftExchangeRate = parseExpenseNumericInput(draftExchangeRate);
-  const parsedOfficialRawRate = parseExpenseNumericInput(officialExchangeRateRawValue);
+  const parsedDraftExchangeRate = parseExpenseExchangeRateInput(draftExchangeRate);
+  const parsedOfficialRawRate = parseExpenseExchangeRateInput(officialExchangeRateRawValue);
   const baseExchangeRateValue =
     parsedDraftExchangeRate != null
       ? parsedDraftExchangeRate
@@ -199,7 +205,7 @@ const ExpenseSheetHeaderForm = ({
     </div>
   );
   const reimbursableExpenseField =
-    isEditing && canEditHeaderFields ? (
+    isEditing && canEditHeaderFields && hasKnownReimbursableExpenseValue ? (
       <div className={ALIGNED_FIELD_CONTAINER_CLASS_NAME}>
         {reimbursableExpenseLabelContent}
         <SelectCombobox
@@ -208,7 +214,12 @@ const ExpenseSheetHeaderForm = ({
           options={reimbursableExpenseOptions}
           selectedOption={selectedReimbursableExpenseOption}
           value={String(reimbursableExpenseValue)}
-          onChange={(value) => onDraftReimbursableExpenseChange(normalizeExpenseReimbursableExpense(value))}
+          onChange={(value) => {
+            const normalizedValue = normalizeExpenseReimbursableExpense(value);
+            if (isEditableExpenseReimbursableExpense(normalizedValue) && normalizedValue !== null) {
+              onDraftReimbursableExpenseChange(normalizedValue);
+            }
+          }}
           readOnly={!isEditing || !canEditHeaderFields}
           disabled={!isEditing || !canEditHeaderFields}
           idBase="expense-sheet-reimbursable-expense"
@@ -306,20 +317,20 @@ const ExpenseSheetHeaderForm = ({
           <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Project", "Project")} value={projectValue} />
         ) : null}
         {!isCreateMode ? (
-          <div className="grid grid-cols-2 items-start gap-3 md:col-span-2 md:gap-4">
+          <div className="grid grid-cols-2 items-end gap-3 md:col-span-2 md:gap-4">
             <ExpenseReadOnlyField
               label={companyAmountLabel}
               value={grossAmountText}
               valueAlign="right"
               containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
-              labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
+              labelClassName={AMOUNT_FIELD_LABEL_CLASS_NAME}
             />
             <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
+              label={formatExpenseReimbursableAmountLabel(exchangeRateBaseCurrency)}
               value={reimbursableAmountText}
               valueAlign="right"
               containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
-              labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
+              labelClassName={AMOUNT_FIELD_LABEL_CLASS_NAME}
             />
           </div>
         ) : null}

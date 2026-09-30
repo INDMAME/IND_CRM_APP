@@ -1,0 +1,2 @@
+var u=(i=10,d=Number.POSITIVE_INFINITY)=>{let o=Number.isFinite(i)?Math.max(0,Math.floor(i)):10,t=new Map,s=e=>{let n=t.get(e);if(n&&n.expiresAt<=Date.now()){t.delete(e);return}return n};return{get:e=>{let n=s(e);if(n)return t.delete(e),t.set(e,n),n.value},set:(e,n,a=d)=>{if(t.delete(e),!(o===0||!(a>0))){for(let r of t.keys())s(r);for(t.set(e,{value:n,expiresAt:Date.now()+a});t.size>o;){let r=t.keys().next();if(r.done)break;t.delete(r.value)}}},has:e=>s(e)!==void 0,delete:e=>t.delete(e),clear:()=>t.clear()}};export{u as a};
+//# sourceMappingURL=chunk-NGGLDIKP.js.map

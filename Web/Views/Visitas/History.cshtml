@@ -12,7 +12,7 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/historial.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Historial.css" asp-append-version="true" />
 }
 
 <div
@@ -26,6 +26,7 @@
 @section Scripts {
     <script nonce="@cspNonce">
         window.__IND_VISIBLE_VISIT_USERS__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.VisibleVisitUsers ?? new object[] { }));
+        window.__IND_VISIBLE_VISIT_USERS_SUCCEEDED__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.VisibleVisitUsersSucceeded == true));
         window.__IND_I18N__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
             History_From = SR["History_From"].Value,
             History_To = SR["History_To"].Value,

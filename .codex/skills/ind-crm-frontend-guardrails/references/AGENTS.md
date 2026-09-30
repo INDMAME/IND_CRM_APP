@@ -1,388 +1,55 @@
-# IND_CRM_APP agent profile
+# Reglas generales de IND_CRM_APP
 
-## Scope and hierarchy
-- Scope: global project rules for IND_CRM_APP.
-- If conflict: system > this file > other `.codex/*.md` feature docs.
-- Shared UI rules live in `.codex/UI_GUIDE.md`.
+## Alcance y precedencia
 
-## Technical context
+Estas reglas se aplican a todo el repositorio. Los detalles viven en los documentos temáticos indicados en `.codex/README.md`; no deben copiarse aquí.
 
-- Project: ASP.NET Core MVC web application on .NET 10.0 with Razor views (server side rendering).
-- This app consumes the internal IND_CRM_API via HTTP.
-- IND_CRM_API is documented with Swagger 2.0 (OpenAPI) and uses standard wrappers:
-  - IND_CRM_API.Models.Responses.IndApiResponse<T> for command operations (login, create, update, delete, etc.).
-  - IND_CRM_API.Models.Responses.IndPagedResponse<T> for lists and paged results.
-- Solution is organized by CRM modules: authentication (auth), activities (activities), accounts (accounts), visits (visits), expenses (gastos), system (system) and health (health).
-- Internal line-of-business app: focus on clarity, robustness and modern design, not public SEO.
+Cuando dos reglas locales no coincidan, se comprueba el código, la configuración y el flujo que se ejecutan actualmente. Se conserva ese comportamiento salvo que el usuario pida cambiarlo o sea un defecto demostrado.
 
-## IND_CRM_API consumption
+## Principios de trabajo
 
-- Source of truth for contracts: IND_CRM_API OpenAPI (Swagger 2.0) and API DTOs (LoginRequest, CreateActivityRequest, UpdateActivityRequest, CreateVisitaAsistenteRequest, etc.).
-- Long term goal:
-  - Use a strongly typed C# client generated from the IND_CRM_API OpenAPI document (for example NSwag or similar).
-- Short term goal:
-  - Encapsulate all HTTP calls in a clean service (for example ICrmApiClient / ApiClientService) and keep MVC controllers free from low level HTTP logic.
-- Important rules:
-  - Controllers must NEVER build URLs, headers or parse JSON manually.
-  - Controllers must depend on service interfaces (for example ICrmApiClient, IAuthService, ICrmActivitiesService, etc.).
-  - API calls must respect the current response structure and JSON contract used by the Postman collection:
-    - For commands: Success, Message, ErrorCode, Data, Errors, TraceId.
-    - For paged lists: Success, Message, Total, Page, PageSize, Items, TraceId.
-  - Do not invent new response formats in the web app: the API defines the contract, the web consumes it and maps it to view models.
+- Antes de un cambio importante, presentar un plan breve con alcance, propietarios actuales, riesgos y validación.
+- Preferir cambios pequeños, defensivos y reversibles. No ampliar un archivo monolítico si una unidad enfocada ya posee la responsabilidad.
+- Leer el diff y el estado de Git antes de editar. No sobrescribir ni limpiar trabajo ajeno.
+- Reutilizar rutas, servicios, componentes y contratos existentes antes de crear otros.
+- No añadir dependencias sin una necesidad clara y una justificación breve.
+- No ocultar errores ni debilitar pruebas para obtener un resultado verde.
+- Si una decisión cambia de forma material arquitectura, experiencia, contrato de datos o seguridad y no puede deducirse del proyecto, pedir la decisión concreta.
 
-## Response contracts
+## Arquitectura no negociable
 
-- Use these API classes as reference:
-  - IndApiResponse<T>:
-    - Success (bool)
-    - Message (string)
-    - ErrorCode (string)
-    - Data (T)
-    - Errors (list of validation errors)
-    - TraceId (string)
-  - IndPagedResponse<T>:
-    - Success (bool)
-    - Message (string)
-    - Total (int)
-    - Page (int)
-    - PageSize (int)
-    - Items (list of T)
-    - TraceId (string)
-- In the web app:
-  - Define response models/DTOs that mirror these contracts (for example IndApiResult<TViewModel>, IndPagedResult<TViewModel>) if needed, or later use the models from the generated OpenAPI client.
-  - Always check Success before reading Data or Items.
-  - Use Message and ErrorCode to show clear error information to the user.
-  - For lists (activities, accounts, contacts, etc.) use Total, Page, PageSize and Items as the base for UI pagination.
+- ASP.NET Core MVC y Razor son la base; React se utiliza como islas, no como SPA.
+- El código servidor se ubica en `App/`; controladores y vistas en `Web/`; la fuente frontend en `Web/wwwroot/react/src`.
+- Tailwind es el sistema de estilos. No se añade Bootstrap, jQuery ni otra dependencia nueva sobre el legado existente.
+- Los controladores MVC se mantienen delgados y consumen `IND_CRM_API` mediante servicios, sin construir URLs, cabeceras o JSON de forma ad hoc.
+- La API y AX autorizan las operaciones. Ocultar controles en la interfaz es solo una protección adicional.
+- Las reglas detalladas están en `TECH_SPECS.md`, `UI_GUIDE.md`, `COMPONENT_CONTRACTS.md` y `PROJECT_STRUCTURE.md`.
 
-## Mandatory internal MVC API endpoint pattern
+## Seguridad, configuración y datos
 
-- Applies to every endpoint exposed by this app under `/api/...` and consumed by React or JS clients.
-- Define canonical route constants in `App/Services/ApiHelpers/ApiRoutes.cs` and reuse them in service calls. Avoid inline route strings.
-- In controller actions:
-  - Use dedicated API actions (`Api*` naming) separate from page MVC actions.
-  - Declare explicit HTTP verb attributes (`[HttpGet]`, `[HttpPost]`, `[HttpPut]`, `[HttpDelete]`) that exactly match the caller verb.
-  - For JSON API POST endpoints called from React islands, use `[IgnoreAntiforgeryToken]` and validate session/token inside the action.
-  - Return API envelope-compatible payloads (`Success`, `Message`, `Data` or `Items`, `TraceId`) using shared helpers (`CreateApiPagedResponse`, `CreateApiPagedError`, etc.) when available.
-- In routing (`Program.cs`):
-  - Add explicit `app.MapControllerRoute(...)` entries for each `/api/...` endpoint.
-  - Ensure route pattern, controller, and action names match exactly to avoid fallback to `Home/NotFound`.
-- Mandatory validation before completion:
-  - Call each new local endpoint with the expected HTTP verb and confirm no 404/405.
-  - Call the same path with a wrong verb and confirm 405 behavior is intentional.
-  - Confirm response shape matches current API wrapper contracts.
+- Nunca versionar contraseñas, tokens, claves, secretos, cadenas de conexión ni valores privados de entorno.
+- Reutilizar las claves de configuración y su orden de resolución en DEV y PROD; solo cambia el valor externo.
+- No confiar en identificadores de usuario, empresa, propietario o permisos enviados por el navegador cuando el servidor dispone del contexto firmado.
+- Cualquier estado sensible del navegador debe aislarse por usuario Entra y empresa. Los datos de negocio se refrescan desde la API según su flujo; una caché de interfaz nunca sustituye la autorización ni la consulta vigente.
+- Las reglas de AX/XPO son comunes a ambos proyectos y se encuentran exclusivamente en `AX_XPO_WORKFLOW.md`.
 
-## Authentication and tokens
+## Idioma y documentación
 
-- Authentication flow:
-  - POST /api/auth/login returns IndApiResponse<object> with a JWT token in Data or in fields defined by the API.
-  - POST /api/auth/refresh renews the token.
-- JWT token management:
-  - Must be handled in a dedicated service (for example ITokenService or IAuthClient), not scattered across controllers.
-  - Only that service should:
-    - Store and retrieve the token from session or cookies.
-    - Add Authorization: Bearer {token} header to HTTP calls to IND_CRM_API.
-- Controllers must not manipulate the token directly, they just call the authenticated services.
-- For Gastos frontend/session caches, scope keys must always include both `entraOid` and selected `companyId`.
-- Subordinates bootstrap rule: when a Gastos management `AuthProvider` mounts after authenticated context is available, load the expense context and refresh `/api/crm/expensesheets/subordinates` for the selected company in the same `entraOid + companyId` scope.
-- A valid scoped cache may render first, but the provider always attempts an API refresh. If that refresh fails, keep the cached subordinate list instead of clearing it.
+- La documentación del proyecto se escribe en español.
+- Por la política activa superior del repositorio, los comentarios nuevos de código y los mensajes de commit se escriben en inglés simple y ASCII. Los textos visibles para el usuario se localizan y no se introducen como comentarios.
+- No crear bitácoras Markdown, prompts temporales, inventarios fechados ni documentos de cierre por tarea. Git conserva el historial.
+- Los textos visibles deben usar los recursos de localización de todas las culturas soportadas.
 
-## Record-level security and module data visibility
+## Git, publicación y producción
 
-- Applies to any page or feature that filters by visible users, shows records owned by another AX user, or gates create/edit/delete by record ownership.
-- Use the shared module data visibility layer instead of creating page-specific clones:
-  - `Web/wwwroot/react/src/hooks/useModuleDataVisibility.ts`
-  - `Web/wwwroot/react/src/services/moduleDataVisibilityService.ts`
-  - `Web/wwwroot/react/src/utils/moduleDataVisibility.ts`
-- Server and AX authorization remain the source of truth. The frontend only hides or disables controls for a better and safer UX.
-- Record ownership must be evaluated with the functional AX owner id. The preferred detail/list contract field is `OwnerAxUserId`.
-- Strict UI mutation gating requires both:
-  - the record detail or list row returns the owner AX user id, preferably `OwnerAxUserId`;
-  - the visible-users endpoint returns mutation policy fields, including `CanMutate`.
-- If ownership cannot be resolved, do not invent ownership. Preserve an existing compatibility fallback only when the current behavior depends on it and the backend still enforces mutation permissions.
-- Before implementing record-level security on a new page or feature, ask the user these targeted questions:
-  1. What `appCode` and `moduleCode` apply?
-  2. Which API/AX field identifies the record owner AX user, and is `OwnerAxUserId` guaranteed in list and detail responses?
-  3. Which operations are gated: view/filter, create, edit, delete, or all mutations?
-  4. What should the UI do when mutation is not allowed: hide actions, disable actions, show read-only fields, or show a message?
-  5. Which mutation policy is expected: `OwnOnly`, `SameAsVisibility`, or module-specific business rules, and does the endpoint return `CanMutate` plus policy fields?
-  6. Should `includeCrmUserId` be enabled, or is AX ownership enough for this module?
-  7. How should preload/cache scope include company, AX user, and permissions revision?
+- El trabajo normal se realiza en `DEV`. No cambiar a `PROD`/`main` ni publicar allí por inferencia.
+- Un commit o push exige petición explícita del usuario. Un despliegue IIS también exige petición explícita.
+- `publica`, `publica la web` o `publica en IIS` significa publicar la web local con `publish.ps1`; no significa promover a producción.
+- Solo `merge a prod` o `merge DEV a PROD` autoriza promoción. Debe hacerse mediante PR numerada `DEV` → `PROD`, comprobaciones requeridas y auto-merge. Nunca usar push o merge directo como alternativa.
+- Si la promoción protegida queda bloqueada, informar y detenerse.
 
-## UI, design system and frontend architecture
+## Cierre
 
-- Allowed UI architecture:
-  - Keep ASP.NET Core MVC with Razor views as the primary rendering model.
-  - React is allowed only as a complement: React components embedded as islands inside MVC/Razor views when it brings value, but NOT as a full SPA rewrite.
-  - Do not introduce other frontend frameworks (Angular, Vue, Blazor, Svelte, etc.) unless explicitly requested.
-- Mandatory design standard:
-  - Use only Tailwind CSS for styles in new views, partials, Razor components and React components.
-  - Any new HTML/CSHTML/JSX must use Tailwind classes, not Bootstrap classes.
-  - Use base font family "Montserrat", sans-serif in the main layout and in all new components.
-  - Use color #00296b as the primary/base color in the UI (sidebar, headers, primary buttons, main links, active items) and configure it as the primary color in Tailwind.
-  - Use StarBorder for buttons by default. Standard icon size is 16x16 (h-4 w-4). Active button color #00296b, inactive #00296bc4, text color #e2e8f0.
-  - Topbar icons: 24x24 SVG inside 25x25 container, with `aspect-ratio: 1 / 1` and `stroke-width: 1.5 !important` on `path/line/polyline`. When swapping states, keep `hidden` on the inactive SVG (CSS enforces `.topbar svg.hidden { display: none !important; }`).
-  - Input components must accept a readOnly (or mode) prop and apply label/value colors locally:
-    - Label color is always #00296be0.
-    - Value color: edit = #00296be0, read = #64748b.
-    - Do not rely on global CSS overrides or opacity wrappers for read-only.
-- Interactive components:
-  - Use Tailwind CSS components and patterns for modals, menus, dropdown lists, dialogs, steps, etc., integrated with Tailwind (both in Razor and React).
-  - Use Heroicons as the default icon set across the UI.
-  - Dropdown/combobox rules: follow `.codex/UI_GUIDE.md` dropdown pattern (cache, portals, keyboard, chevron toggle) for any new selectable field.
-- Static legacy libraries:
-  - jQuery v3.7.1, jquery-validation and unobtrusive are considered legacy code.
-  - Do not write new code that depends on these libs.
-  - Do not add new jQuery/jq-validation usage.
-  - Only touch this legacy code to safely migrate it to Tailwind + Tailwind CSS + Heroicons + Montserrat + #00296b, using small and safe refactors without breaking current behavior.
-- Reuse:
-  - Create reusable Razor partials/components and React components for:
-    - Main layout (header, navigation, content).
-    - Info cards (for example "Data from Axapta 3.0" blocks and CRM summaries).
-    - Page headers.
-    - Primary buttons (Tailwind classes with #00296b).
-  - Replace duplicated HTML in views with these shared components.
-
-## Tailwind CSS and frontend build
-
-- Tailwind CSS 4.x is built via CLI (npm run build:css) defined in package.json and tailwind.config.js; main output is Web/wwwroot/css/tailwind.css.
-- There should be a single CSS entry point where Tailwind can grow progressively.
-- Configure Tailwind to:
-  - Register "Montserrat" as base font family.
-  - Register #00296b as a primary color in the palette (for example "primary").
-- React islands are bundled by esbuild to ESM entry files under Web/wwwroot/js and shared chunks under Web/wwwroot/js/chunks.
-- Root wwwroot is a compatibility junction to Web/wwwroot. Use Web/wwwroot as the canonical authoring path for source changes.
-- Do not hand-edit generated files under Web/wwwroot/js or Web/wwwroot/js/chunks.
-- Razor pages that load React island bundles must use script type="module".
-- Do not introduce new CSS frameworks or heavy frontend toolchains unless clearly justified.
-- Priority is SSR and utility CSS; React is used only as a complement on top of MVC, not as a full SPA.
-
-## Documentation and code style
-
-- Comments and docstrings:
-  - Must be in simple English and ASCII only (no accents, no special characters).
-  - Briefly explain:
-    - What each controller and public action does.
-    - What each service calling IND_CRM_API does.
-    - What each shared UI component represents (layout, card, header, button, React component).
-- Any new DTO or view model:
-  - Must have a clear English name.
-  - Prefer meaningful names that express function (for example CrmActivityViewModel, CrmAccountListItemViewModel).
-- Do not introduce non ASCII characters in C#, Razor, JSX or comments.
-- When updating .codex guardrail docs, edit root .codex/*.md files or .codex/config.toml first and run npm run sync:skill:local:references to keep skill references aligned.
-
-## I18N rules (UI only)
-
-- Supported UI cultures: es-ES (default), Basque, en, pt, it, zh-Hans.
-- Any user-facing UI string (labels, titles, placeholders, aria-labels, empty states, error messages) must come from localization resources, not hardcoded text.
-- Razor: use `IStringLocalizer<INDSharedResource>` and resource keys under `App/Resources/Infrastructure/Localization/INDSharedResource.*.resx`.
-- React islands / JS: inject a per-page `window.__IND_I18N__` dictionary from Razor and read it via `indT(...)` helpers.
-- When adding a new key, add it to all supported culture .resx files in the same change.
-- Do not translate business data from the API; translate only fixed UI strings.
-
-## Shared UI rules
-
-- See `.codex/UI_GUIDE.md` for overflow preview, read-only guard, dropdowns, and action mark rules.
-
-## Manual visual design validation policy
-
-- Treat appearance-only acceptance as manual validation by the user.
-- Do not create or run automated screenshot, pixel-diff, visual-regression, computer-vision, or browser-automation checks solely to judge spacing, centering, colors, sizing, or responsive presentation unless the user explicitly requests them.
-- Keep automated validation focused on code, compilation, types, static analysis, logic, contracts, permissions, navigation, events, and functional behavior.
-- When a design review is needed, provide a concise manual checklist instead of executing an automated visual test.
-
-## How Codex should work
-
-- Refactoring:
-  - Prefer small, focused changes instead of large rewrites.
-  - Keep existing MVC routes and view models unless there is a clear bug or major inconsistency.
-- View logic:
-  - Keep Razor views as light as possible.
-  - Business rules and integration logic must live in services or helpers.
-- Error handling:
-  - When changing how the API is called, clearly explain how IndApiResponse / IndPagedResponse errors are transformed into user facing messages.
-  - Do not fully hide technical errors, but present them in a way that makes sense for internal users.
-- Dependencies:
-  - Avoid new frontend or backend dependencies unless they clearly reduce complexity.
-  - Any new library must be justified in a short English comment.
-- UI style:
-  - All UI proposals must align with:
-    - ASP.NET Core MVC + Razor as base.
-    - React only as optional islands when needed.
-    - Tailwind CSS as styling framework.
-    - Tailwind CSS as component pattern.
-    - Heroicons as icon set.
-    - "Montserrat", sans-serif as base font.
-    - #00296b as primary corporate color.
-  - Tailwind helper skills (`tailwindcss-v4`, `tailwind-patterns`) are support tools only. They must not override project tokens, spacing rhythm, component contracts, or established page composition.
-  - Do not propose solutions based on Angular, Vue, Blazor, Svelte, Bootstrap, jQuery UI, Material, etc.
-
-## Production-first change policy
-
-- This repository is in production. Default to the smallest safe change that preserves current behavior and deployment stability.
-- Before writing code, Codex must identify:
-  - Exact module(s) and file(s) to touch.
-  - Existing objects that already own the responsibility.
-  - Regression-sensitive flows that could be affected.
-  - Any config, secret, or environment interoperability impact.
-- Prefer extending or extracting focused module-scoped units over broad rewrites.
-- Only create new shared standards or components when at least two flows need the same stable contract; otherwise keep the change module-local.
-- If a request can be implemented in multiple valid ways with different architecture, UX, data-contract, or security consequences, Codex must pause and ask a short targeted clarifying question before coding.
-- If inspection still leaves production-relevant ambiguity, do not guess on behavior that could create regressions.
-
-## Secret and environment configuration rules
-
-- Never hardcode passwords, API keys, bearer tokens, connection strings, client secrets, tenant ids, base URLs, or other environment-bound values in code, tests, scripts, docs, or checked-in config.
-- Reuse existing system-managed configuration keys and abstractions before introducing new ones.
-- Keep DEV and PROD interoperable by preserving the same configuration key names and resolution flow across environments; only the external value source should vary.
-- If a fallback value must exist in git, it must be a non-secret placeholder or a non-operational default.
-- If a new credential, password, or secret is required and there is no existing config path, Codex must stop and ask where the value should come from (environment variable, secret store, IIS/app config, etc.).
-
-## Mandatory skill-first object creation rule
-
-- Before creating any new object of any type, Codex must do a short pre-check:
-  - Object types include (not limited to): class, interface, DTO, view model, controller, service, helper, middleware, React component, hook, context, facade, script, test, Razor view/partial, and resource keys.
-  - First apply the `vercel-react-best-practices` skill when the change touches React, TS/TSX, frontend rendering, fetch flow, bundle output, listeners, or re-render behavior.
-  - Validate destination path against `.codex/PROJECT_STRUCTURE.md` and keep the current folder taxonomy.
-  - Reuse an existing object if the responsibility already exists; do not create parallel duplicates.
-  - Do not create new top-level folders or module trees unless explicitly requested.
-- If a request conflicts with file structure rules, Codex must warn and propose a structure-safe location first.
-- Before creating any new input-like component, Codex must ask which input type is required:
-  - remote-search-dropdown
-  - fixed-enum-instant-search
-  - fixed-enum-select
-- The selected input type must be confirmed before implementation starts.
-
-## Mandatory planning gate for React page work
-
-- Before implementing or refactoring any React page, Codex must produce a short plan that defines:
-  - Smart containers/pages.
-  - Dumb presentational components.
-  - Page-local hooks (state, listeners, mutations).
-  - Shared utilities/services and what will be reused.
-  - Exact destination paths following `.codex/PROJECT_STRUCTURE.md`.
-- If page decomposition is ambiguous, Codex must ask clarifying questions before coding:
-  - Number of sections/steps in the page.
-  - Which blocks must be shared vs page-local.
-  - Expected input types per field (remote-search-dropdown, fixed-enum-instant-search, fixed-enum-select).
-  - Required apply/refresh/caching behavior for API calls.
-- Do not start implementation with unresolved assumptions unless the user explicitly approves those assumptions.
-- The plan must list required skills to be used for the task (at minimum `ind-crm-frontend-guardrails`, plus triggered sub-skills from routing).
-
-## IMPORTANT: Monolith prevention gate (always before new functionality)
-
-- This rule is mandatory and must be read before any implementation work starts.
-- For every new functionality (backend or frontend), Codex must produce a short, conservative, refactor-first plan before writing code.
-- The plan must include:
-  - Current object(s) that would grow and risk becoming monolithic.
-  - Proposed split into focused units (container, hooks, services, mappers, utilities, components).
-  - Exact target file paths inside existing module structure.
-  - Behavior invariants that must stay unchanged.
-- The plan must favor low-risk, incremental steps over speculative redesigns.
-- Codex must prefer extending existing focused objects over adding logic to a single large file.
-- If a file already has high complexity (size, mixed concerns, many side effects), Codex must refactor first or refactor in the same change.
-- Codex must always load and apply best-practice skills for implementation quality:
-  - `vercel-react-best-practices` for React/TS/TSX behavior and performance.
-  - `vercel-composition-patterns` for component API and composition design.
-  - `brainstorming` before new feature behavior changes.
-  - `systematic-debugging` for bugs/regressions.
-- Before closing any implementation task, Codex must run a short clean-code and modular-architecture review on the touched code:
-  - Check whether the new or changed logic should be split into smaller module-scoped objects (page, hook, service, mapper, utility, component, controller, helper).
-  - Refactor when the current change leaves behind obvious mixed concerns, duplicated logic, oversized objects, or weak module boundaries.
-  - Keep the review aligned with `.codex/PROJECT_STRUCTURE.md` and the existing module ownership rules.
-  - If no safe refactor is justified, explicitly confirm that the touched code already fits the modular architecture.
-
-## Critical anti regression rule (dates, calendars and API)
-
-Codex must apply this rule for any change that touches views, scripts or filter logic:
-
-- Never change initialization of interactive components (calendars, datepickers, dropdowns) without validating full behavior.
-- Any change on date filters must check that:
-  1) The calendar still opens and works correctly.
-  2) onChange, click, blur and validation events still work.
-  3) Requests sent to IND_CRM_API keep exactly the expected format.
-  4) No Razor binding, ViewModel or HTML helper is broken.
-- If a visual, structural or logic change has risk on a calendar or filter:
-  - Codex must warn explicitly and offer a no risk alternative.
-- No change is accepted if it breaks the current filtering flow.
-- Absolute priority: zero regressions on date components and any component depending on the API.
-
-# Global Codex working agreements
-
-- Prefer clean, defensive code and small focused functions.
-- Always explain your plan in a few bullet points before big changes.
-- Ask a short targeted question before coding when architecture, UX, data contract, or security choices are materially ambiguous.
-- Use simple English in comments and commit messages (ASCII only).
-- Add short comments to new methods/classes so any developer can understand them.
-- Avoid new dependencies unless clearly justified in a comment.
-- Keep existing behavior stable unless there is a clear bug or requirement.
-- Never hardcode secrets, passwords, tokens, base URLs, or environment-specific configuration; reuse existing system config keys and abstractions.
-- Frontend standard: ASP.NET Core MVC + Razor views, with optional React components; Tailwind CSS only; Tailwind CSS for interactive components; Heroicons for icons; base font "Montserrat", sans-serif; primary color #00296b.
-- Treat jQuery, and jquery-validation as legacy; do not add new usage.
-- Critical anti regression rule: never change calendars/date filters/dropdowns without validating events, payload formats to IND_CRM_API, and Razor bindings; propose a safe alternative if risk exists.
-- Always run a full compile at the end of every task before responding to the user:
-  - npm run build:react
-  - npm run build:css
-  - npm run build
-  - dotnet build
-- Always run `npm run check:react-doctor` before responding to the user.
-  - Treat diagnostics in frontend files touched by the current task as blocking.
-  - Fix those diagnostics and re-run the check before closing the task.
-  - If only unrelated or pre-existing frontend diagnostics remain outside the task scope, call them out explicitly.
-- Before responding, verify whether the touched code can be safely refactored toward cleaner module boundaries.
-  - If the answer is yes, apply the refactor in the same task when it is low-risk and within scope.
-  - If the answer is no, state that the touched code already fits the modular architecture or explain why a larger refactor was intentionally deferred.
-- After any change that must be deployed, publish to C:\inetpub\wwwroot\IND_CRM_APP and restart IIS using iisreset.
-
-## DEV to PROD release command policy
-
-- Only if the user explicitly says `merge a prod` or `merge DEV a PROD`, interpret the request as a git and GitHub production promotion workflow.
-- Do not infer production promotion from `publica`, `publica la web`, `republica`, `publica en iis`, `genera una release`, or `publica DEV en PROD` unless the phrase `merge a prod` is present. Without `merge a prod`, publishing means local IIS deployment with `publish.ps1`.
-- Keep this flow conservative. If branch state, local changes, release numbering, or production divergence are ambiguous, stop and ask before publishing.
-- Local development, commits, release preparation, and release completion must happen from branch `DEV`. Inspect production history through remote metadata or PRs; do not switch the local checkout to `PROD`, `main`, or any production branch for release work.
-- Only push work changes to `origin/DEV`. Never push directly to `origin/PROD`, `origin/main`, or any production branch.
-- Production promotion must happen only through a numbered GitHub PR from `DEV` to `PROD` (or the configured production branch if it is renamed to `main`). The PR title must be `Release <N>` where `N` is incremental.
-- Auto-merge with required checks is mandatory for production promotion. If auto-merge, checks, branch protection, or PR permissions block the release, stop and report the blocker instead of doing a direct merge or direct push.
-- Do not promote uncommitted changes.
-- Do not include unrelated files in the release scope.
-- Do not assume the release number if it cannot be inferred safely.
-
-Required `merge a prod` workflow:
-1. Confirm the active branch is `DEV`.
-2. Run `git status` and verify the release scope is fully committed.
-3. If there are unexpected local changes, unrelated files, conflicts, or ambiguous scope, stop and ask before continuing.
-4. Push `DEV` to `origin/DEV`.
-5. Calculate the next release number as `last release + 1`.
-6. Find the latest `Release <N>` identifier in repository release history. Safe sources include merged PRs, release PR titles, tags, or merge commits. If the last release cannot be determined safely, stop and ask.
-7. Use `Release <N>` as the canonical release name.
-8. Create a PR from `DEV` to `PROD` with title `Release <N>`.
-9. Ensure the PR has required checks enabled and attempt to approve the PR when GitHub and repository permissions allow it.
-10. If GitHub blocks self-approval of the same PR, report that limitation explicitly.
-11. Enable auto-merge on the PR. Do not merge, fast-forward, or push directly to `PROD` or `main`.
-12. If auto-merge cannot be enabled, required checks fail, or repository permissions prevent the PR workflow, stop and report the blocker. Do not use a controlled direct merge fallback.
-13. Verify that the PR is queued for auto-merge or was merged by the protected PR workflow.
-14. Confirm the local working copy remains on `DEV` before finishing.
-15. Final report must include:
-   - `Release <N>`
-   - published commit on `DEV`
-   - PR URL and status
-   - auto-merge/check status
-   - any GitHub limitation or branch-protection blocker encountered
-
-## Local IIS publish command policy
-
-- If the user says `publica`, `publica la web`, `republica`, `publica en iis`, or asks to publish/deploy the web without saying `merge a prod`, interpret that as a local web publish command, not as a DEV to PROD release.
-- For local IIS publish requests, run the local web publish workflow:
-  1. Run full required validation/build steps first.
-  2. Execute `publish.ps1`.
-  3. Confirm IIS restart and local site health before finishing.
-- Never perform a DEV to PROD PR, merge, fast-forward, production branch checkout, or production push unless the user explicitly says `merge a prod`.
-
-## Quick design prompt (visitas/historial)
-- Tailwind only; Bootstrap removed (no `spinner-border`, `page-item`, `page-link`, etc.).
-- Inputs/combos: `rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary`.
-- Dropdowns: portal lists `rounded-xl` with visible scrollbar; options usan 10px de padding left (clase `type-option`), hover/active en primary.
-- Spinners: Tailwind ring `border-2 border-primary border-t-transparent rounded-full animate-spin`.
-- Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
-
-## Last updated
-- 2026-07-23
+- Aplicar la lista proporcional de `QUALITY_CHECKLIST.md`.
+- Revisar el diff final, el impacto contractual y los límites de validación externa.
+- No afirmar que una publicación web/API ha importado, compilado o activado cambios en AX.

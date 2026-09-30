@@ -34,6 +34,7 @@ export type ExpenseTicketsCachedState = {
   selectedTickets: ExpenseTicketLinkCard[];
   total: number;
   linkModeSheetId: string;
+  linkModeLineId: string;
   selectionMode: ExpenseTicketLinkSelectionMode;
   excludedIds: string[];
   filteredSelectionFilters: ExpenseTicketAppliedFilterSnapshot | null;
@@ -171,6 +172,7 @@ const normalizeState = (raw: ExpenseTicketsCachedState | null): ExpenseTicketsCa
     selectedTickets,
     total,
     linkModeSheetId: String((raw as { linkModeSheetId?: unknown }).linkModeSheetId || "").trim(),
+    linkModeLineId: String((raw as { linkModeLineId?: unknown }).linkModeLineId || "").trim(),
     selectionMode: normalizeSelectionMode((raw as { selectionMode?: unknown }).selectionMode),
     excludedIds: normalizeExcludedIds((raw as { excludedIds?: unknown }).excludedIds),
     filteredSelectionFilters: (raw as { filteredSelectionFilters?: ExpenseTicketAppliedFilterSnapshot | null })
@@ -192,12 +194,19 @@ export const useExpenseTicketsFilterCache = () => {
     if (!normalized) return;
 
     const keys = getScopedKeys();
-    setSessionJsonWithExpiry(keys.filterKey, normalized, EXPENSE_TICKETS_CACHE_TTL_MS);
-    if (!getSessionJsonWithExpiry<ExpenseTicketsCachedState>(keys.filterKey)) {
+    removeSessionValueWithExpiry(keys.returnFlagKey);
+    removeSessionValueWithExpiry(keys.returnModeKey);
+    const saved = setSessionJsonWithExpiry(keys.filterKey, normalized, EXPENSE_TICKETS_CACHE_TTL_MS) ||
       setSessionJsonWithExpiry(keys.filterKey, toCompactState(normalized), EXPENSE_TICKETS_CACHE_TTL_MS);
+    if (!saved) {
+      removeSessionValueWithExpiry(keys.filterKey);
+      removeSessionValueWithExpiry(keys.returnFlagKey);
+      removeSessionValueWithExpiry(keys.returnModeKey);
+      return;
     }
-    setSessionValueWithExpiry(keys.returnFlagKey, "1", EXPENSE_TICKETS_CACHE_TTL_MS);
-    setSessionValueWithExpiry(keys.returnModeKey, "restore", EXPENSE_TICKETS_CACHE_TTL_MS);
+    if (setSessionValueWithExpiry(keys.returnModeKey, "restore", EXPENSE_TICKETS_CACHE_TTL_MS)) {
+      setSessionValueWithExpiry(keys.returnFlagKey, "1", EXPENSE_TICKETS_CACHE_TTL_MS);
+    }
   }, []);
 
   const readCachedState = useCallback((): ExpenseTicketsCachedState | null => {

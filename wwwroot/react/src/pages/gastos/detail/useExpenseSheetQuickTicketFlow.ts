@@ -7,11 +7,9 @@ import { createExpenseSheetTicketQuick } from "../utils/expenseApi.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import {
   MAX_TICKET_IMAGE_SIZE_BYTES,
-  cacheImageFile,
   extractTraceIdFromError,
   isSupportedTicketImageFile,
   persistTraceList,
-  removeCachedImageFile,
   resolveRandomKey,
   type QuickFlowProgressKey,
   type TicketImageSource,
@@ -171,7 +169,6 @@ export const useExpenseSheetQuickTicketFlow = ({
   const [attemptId, setAttemptId] = useState("");
   const [traceList, setTraceList] = useState<TicketTraceEntry[]>([]);
   const [partialTicketFailure, setPartialTicketFailure] = useState<QuickCreatePartialTicketState | null>(null);
-  const latestFileRef = useRef<{ cacheKey: string; file: File } | null>(null);
   const progressStartedAtRef = useRef<number | null>(null);
 
   const progressMessage = useMemo(() => {
@@ -335,14 +332,6 @@ export const useExpenseSheetQuickTicketFlow = ({
     });
   }, []);
 
-  const clearCachedCurrentImage = useCallback(() => {
-    const cacheKey = latestFileRef.current?.cacheKey;
-    if (!cacheKey) return;
-    void removeCachedImageFile(cacheKey).catch(() => {
-      // Ignore cache cleanup failures in restricted browser contexts.
-    });
-  }, []);
-
   const clearFlowState = useCallback(() => {
     setErrorMessage("");
     setPartialTicketFailure(null);
@@ -454,10 +443,13 @@ export const useExpenseSheetQuickTicketFlow = ({
   }, []);
 
   const completeFlowSuccess = useCallback(
-    async (fileId: string, linkedToSheet: boolean, cacheKey: string) => {
+    async (
+      fileId: string,
+      linkedToSheet: boolean,
+      processedByAI: boolean | null
+    ) => {
       setProgressKey("done");
       setDisplayProgressKey("done");
-      await removeCachedImageFile(cacheKey);
       setAttemptId("");
       setPartialTicketFailure(null);
       flashActionMark("okProcess", 1200);
@@ -466,13 +458,16 @@ export const useExpenseSheetQuickTicketFlow = ({
       setDisplayProgressKey(null);
       progressStartedAtRef.current = null;
       setProgressElapsedMs(0);
-      onCompleted?.({ fileId, linkedToSheet });
+      onCompleted?.({ fileId, linkedToSheet, processedByAI });
     },
     [onCompleted]
   );
 
   const runQuickCreateFlow = useCallback(
-    async (file: File, cacheKey: string, context: QuickTicketAttemptContext): Promise<void> => {
+    async (
+      file: File,
+      context: QuickTicketAttemptContext
+    ): Promise<void> => {
       setBusy(true);
       setProgressKey("creatingTicket");
       clearFlowState();
@@ -482,7 +477,6 @@ export const useExpenseSheetQuickTicketFlow = ({
         attemptId: context.attemptId,
         source: context.source,
         linkToSheet,
-        cacheKey,
         elapsedSinceSelectionMs: Math.max(0, requestStartedAt - context.startedAt),
         uploadFile: buildFileLogData(file),
         optimization: buildOptimizationLogData(context.optimization),
@@ -524,7 +518,11 @@ export const useExpenseSheetQuickTicketFlow = ({
             throw new Error(indT("ExpenseSheets_NewTicket_Error_NoFileId", "Could not resolve ticket file id."));
           }
 
-          await completeFlowSuccess(fileId, linkedToSheet, cacheKey);
+          await completeFlowSuccess(
+            fileId,
+            linkedToSheet,
+            response.Data?.ProcessedByAI ?? null
+          );
           logQuickTicketInfo("quick-create.request.succeeded", {
             attemptId: context.attemptId,
             source: context.source,
@@ -709,34 +707,8 @@ export const useExpenseSheetQuickTicketFlow = ({
         return;
       }
 
-      const cacheKey = attemptId;
-      latestFileRef.current = { cacheKey, file: uploadFile };
-      logQuickTicketInfo("cache.store.started", {
-        attemptId,
-        source,
-        cacheKey,
-        file: buildFileLogData(uploadFile),
-      });
-      void cacheImageFile(cacheKey, uploadFile)
-        .then(() => {
-          logQuickTicketInfo("cache.store.completed", {
-            attemptId,
-            source,
-            cacheKey,
-            file: buildFileLogData(uploadFile),
-          });
-        })
-        .catch((error) => {
-          logQuickTicketWarn("cache.store.failed", {
-            attemptId,
-            source,
-            cacheKey,
-            file: buildFileLogData(uploadFile),
-            message: error instanceof Error ? safeText(error.message) : "",
-          });
-        });
-
-      await runQuickCreateFlow(uploadFile, cacheKey, {
+      // The upload owns this file for the current attempt; no persistent recovery reader exists.
+      await runQuickCreateFlow(uploadFile, {
         attemptId,
         source,
         startedAt: selectionStartedAt,
@@ -778,14 +750,13 @@ export const useExpenseSheetQuickTicketFlow = ({
   }, []);
 
   const clearError = useCallback(() => {
-    clearCachedCurrentImage();
     setAttemptId("");
     setErrorMessage("");
     setPartialTicketFailure(null);
     setDisplayProgressKey(null);
     progressStartedAtRef.current = null;
     setProgressElapsedMs(0);
-  }, [clearCachedCurrentImage]);
+  }, []);
 
   return {
     sourcePickerOpen,

@@ -5,6 +5,7 @@ type ExpenseNumberFormatOptions = {
   maximumFractionDigits?: number;
   useGrouping?: boolean;
   fallback?: string;
+  preferDecimalSeparator?: boolean;
 };
 
 const sanitizeNumericToken = (value: string): string => {
@@ -20,7 +21,10 @@ const isThousandsGroupedInteger = (value: string, separator: "," | "."): boolean
 };
 
 // Parses numeric input supporting both grouped and decimal values.
-export const parseExpenseNumericInput = (raw: string | number | null | undefined): number | null => {
+export const parseExpenseNumericInput = (
+  raw: string | number | null | undefined,
+  options?: { preferDecimalSeparator?: boolean }
+): number | null => {
   if (raw === null || raw === undefined) return null;
   if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
 
@@ -41,12 +45,14 @@ export const parseExpenseNumericInput = (raw: string | number | null | undefined
   const hasComma = value.includes(",");
   const hasDot = value.includes(".");
 
-  if (hasComma && !hasDot && isThousandsGroupedInteger(value, ",")) {
+  const singleSeparatorIsDecimal = options?.preferDecimalSeparator && (value.match(/[.,]/g)?.length === 1);
+
+  if (!singleSeparatorIsDecimal && hasComma && !hasDot && isThousandsGroupedInteger(value, ",")) {
     const parsedInteger = Number(`${sign}${value.replace(/,/g, "")}`);
     return Number.isFinite(parsedInteger) ? parsedInteger : null;
   }
 
-  if (hasDot && !hasComma && isThousandsGroupedInteger(value, ".")) {
+  if (!singleSeparatorIsDecimal && hasDot && !hasComma && isThousandsGroupedInteger(value, ".")) {
     const parsedInteger = Number(`${sign}${value.replace(/\./g, "")}`);
     return Number.isFinite(parsedInteger) ? parsedInteger : null;
   }
@@ -66,6 +72,11 @@ export const parseExpenseNumericInput = (raw: string | number | null | undefined
 
   const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : null;
+};
+
+// Exchange rates accept fractional digits without confusing them with grouped money.
+export const parseExpenseExchangeRateInput = (raw: string | number | null | undefined): number | null => {
+  return parseExpenseNumericInput(raw, { preferDecimalSeparator: true });
 };
 
 // Compares editable numeric strings by value so blur formatting is not treated as a data edit.
@@ -104,7 +115,7 @@ export const formatExpenseInputNumber = (
   raw: string | number | null | undefined,
   options?: ExpenseNumberFormatOptions
 ): string => {
-  const parsed = parseExpenseNumericInput(raw);
+  const parsed = parseExpenseNumericInput(raw, options);
   if (parsed === null) {
     return options?.fallback ?? "";
   }

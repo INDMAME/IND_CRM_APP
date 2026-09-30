@@ -55,8 +55,9 @@ const ExpenseTicketLinkTimelineItem = ({
       data-ticket-selected={isSelected ? "true" : "false"}
       data-ticket-selectable={canToggleSelection ? "true" : "false"}
     >
-      <div className="relative">
+      <div className="relative expense-ticket-link-card">
         <ExpenseTimelineCard
+          layout="header"
           dateParts={dateParts}
           title={title}
           subtitle={subtitle}

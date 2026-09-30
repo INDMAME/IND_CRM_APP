@@ -1,0 +1,58 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "troubleshooting.no-se-puede-guardar",
+    "moduleId":  "troubleshooting",
+    "sectionNumber":  "12.4",
+    "title":  "No se puede guardar",
+    "summary":  "Revise los campos y el modo de edición, lea el error y compruebe el resultado antes de repetir la operación.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "No se puede guardar",
+                                  "error al guardar",
+                                  "Guardar bloqueado",
+                                  "campos obligatorios",
+                                  "validación del formulario"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Qué debo revisar si no puedo guardar?",
+                                          "¿Qué hago si no sé si se han guardado mis cambios?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "7AA739968AAC642C48356B65BD2E5EEFDD1C3E03A1B664528E1AB377A312B957",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+                         {
+                             "id":  "troubleshooting.no-se-puede-guardar.quick-01",
+                             "question":  "¿Qué debo revisar si no puedo guardar?",
+                             "answer":  "Revise los campos marcados como obligatorios y los mensajes en rojo. En Visitas, compruebe Cuenta, Tipo de visita, Descripción y Comentarios. En una hoja nueva, compruebe Descripción. Divisa Reembolso la proporciona la empresa. En una línea o ticket, revise Fecha, Categoría, importes y divisa. Si el botón está bloqueado, el registro puede estar en solo lectura por su estado, por pago o por permisos.",
+                             "sourceChunkIds":  [
+                                                    "troubleshooting.no-se-puede-guardar--01"
+                                                ]
+                         }
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "12.4",
+                   "pageFromTableOfContents":  32
+               }
+}

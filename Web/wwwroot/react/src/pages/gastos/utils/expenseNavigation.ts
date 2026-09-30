@@ -1,11 +1,22 @@
+import { ensureExpenseActingUserForNavigation } from "./expenseActingUser.ts";
+import { indT } from "../../../utils/indI18n.ts";
+
 type NavigateWithGuardOptions = {
   askConfirmation?: boolean;
   bypassGuardOnce?: boolean;
   message?: string;
+  replace?: boolean;
 };
 
 type ReloadExpensePageOptions = {
   bypassGuardOnce?: boolean;
+};
+
+// Keeps the current page when the destination cannot restore the selected actor.
+const canNavigateWithActingUser = (): boolean => {
+  if (ensureExpenseActingUserForNavigation()) return true;
+  window.alert(indT("Expense_ContextSaveFailed", "Could not preserve the selected user in this browser. Try again before opening another page."));
+  return false;
 };
 
 // Updates the global navigation guard lifecycle for active edit processes.
@@ -39,21 +50,27 @@ export const runGuardedNavigation = (
 export const navigateToExpenseUrl = (
   targetUrl: string,
   options: NavigateWithGuardOptions = {}
-): void => {
+): boolean => {
   const safeUrl = String(targetUrl || "").trim();
-  if (!safeUrl) return;
+  if (!safeUrl) return false;
 
   const { bypassGuardOnce = true } = options;
+  let navigationStarted = false;
   runGuardedNavigation(() => {
+    if (!canNavigateWithActingUser()) return;
     if (bypassGuardOnce) {
       window.__indBypassNavigationGuardOnce?.();
     }
-    window.location.href = safeUrl;
+    if (options.replace) window.location.replace(safeUrl);
+    else window.location.href = safeUrl;
+    navigationStarted = true;
   }, options);
+  return navigationStarted;
 };
 
 // Reloads the current page while bypassing the global unsaved-change guard when needed.
 export const reloadExpensePage = (options: ReloadExpensePageOptions = {}): void => {
+  if (!canNavigateWithActingUser()) return;
   const { bypassGuardOnce = true } = options;
   if (bypassGuardOnce) {
     window.__indBypassNavigationGuardOnce?.();

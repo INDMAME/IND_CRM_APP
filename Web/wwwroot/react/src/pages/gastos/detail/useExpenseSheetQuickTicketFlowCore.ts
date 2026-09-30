@@ -12,10 +12,13 @@ import {
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 import { resolveTicketLineAmount } from "../utils/expenseTicketLineAmount.ts";
+import {
+  canPersistSensitiveBrowserState,
+  getBrowserStorageScopeToken,
+} from "../../../utils/browserStorageScope.ts";
 
-const TICKET_IMAGE_CACHE_NAME = "ind-expense-ticket-image-v1";
-const TICKET_IMAGE_CACHE_PREFIX = "/__ind_cache__/ticket-image/";
-const TICKET_TRACE_STORAGE_KEY = "expense_sheet_ticket_quick_flow_trace_v1";
+const TICKET_BROWSER_SCOPE = getBrowserStorageScopeToken() || "scope-unavailable";
+const TICKET_TRACE_STORAGE_KEY = `expense_sheet_ticket_quick_flow_trace_v2_${TICKET_BROWSER_SCOPE}`;
 
 export const MAX_TICKET_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
 export const TICKET_IMAGE_ACCEPT_ATTRIBUTE =
@@ -61,23 +64,6 @@ export type NormalizedDraft = {
   lines: NormalizedDraftLine[];
 };
 
-export type PendingUploadRetry =
-  | {
-      strategy: "ia-ready";
-      fileId: string;
-      extension: string;
-      cacheKey: string;
-      draft: NormalizedDraft;
-      fileNameHint: string;
-    }
-  | {
-      strategy: "manual-post-upload-draft";
-      fileId: string;
-      extension: string;
-      cacheKey: string;
-      fileNameHint: string;
-    };
-
 export type UploadSyncResult = {
   urlFile: string;
   fileName: string;
@@ -93,7 +79,7 @@ export type UseExpenseSheetQuickTicketFlowArgs = {
   isSheetLocked: boolean;
   linkToSheet?: boolean;
   onForbidden: () => void;
-  onCompleted?: (result: { fileId: string; linkedToSheet: boolean }) => void;
+  onCompleted?: (result: { fileId: string; linkedToSheet: boolean; processedByAI: boolean | null }) => void;
 };
 
 export type QuickFlowProgressKey =
@@ -336,44 +322,16 @@ export const buildSheetLinePayload = (
     ticket: true,
     qty: 1,
     price: effectiveTotal,
-    projId: safeText(projectId) || undefined,
+    projId: safeText(projectId),
+    projIdProvided: true,
   };
 };
 
 export const persistTraceList = (traceList: TicketTraceEntry[]): void => {
+  if (!canPersistSensitiveBrowserState()) return;
   try {
     sessionStorage.setItem(TICKET_TRACE_STORAGE_KEY, JSON.stringify(traceList));
   } catch {
     // Ignore storage failures in restricted browser contexts.
   }
-};
-
-export const cacheImageFile = async (cacheKey: string, file: File): Promise<void> => {
-  if (typeof window === "undefined" || !("caches" in window)) return;
-  const cache = await caches.open(TICKET_IMAGE_CACHE_NAME);
-  const requestUrl = `${TICKET_IMAGE_CACHE_PREFIX}${encodeURIComponent(cacheKey)}`;
-  await cache.put(
-    new Request(requestUrl),
-    new Response(file, {
-      headers: {
-        "Content-Type": safeText(file.type) || "application/octet-stream",
-      },
-    })
-  );
-};
-
-export const readCachedImageFile = async (cacheKey: string): Promise<Blob | null> => {
-  if (typeof window === "undefined" || !("caches" in window)) return null;
-  const cache = await caches.open(TICKET_IMAGE_CACHE_NAME);
-  const requestUrl = `${TICKET_IMAGE_CACHE_PREFIX}${encodeURIComponent(cacheKey)}`;
-  const cachedResponse = await cache.match(requestUrl);
-  if (!cachedResponse) return null;
-  return cachedResponse.blob();
-};
-
-export const removeCachedImageFile = async (cacheKey: string): Promise<void> => {
-  if (typeof window === "undefined" || !("caches" in window)) return;
-  const cache = await caches.open(TICKET_IMAGE_CACHE_NAME);
-  const requestUrl = `${TICKET_IMAGE_CACHE_PREFIX}${encodeURIComponent(cacheKey)}`;
-  await cache.delete(requestUrl);
 };

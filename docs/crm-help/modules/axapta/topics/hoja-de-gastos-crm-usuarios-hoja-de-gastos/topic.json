@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "axapta.hoja-de-gastos-crm-usuarios-hoja-de-gastos",
+    "moduleId":  "axapta",
+    "sectionNumber":  "11.2.1",
+    "title":  "Hoja de gastos: CRM / Usuarios / Hoja de gastos",
+    "summary":  "Gestiona una hoja desde el formulario tradicional de Axapta.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Hoja de gastos: CRM / Usuarios / Hoja de gastos",
+                                  "Axapta",
+                                  "gastos en Axapta"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre hoja de gastos: crm / usuarios / hoja de gastos?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "axapta.gestion-del-flujo-en-axapta"
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "E827443F37171651DEB26A3A91BA9105E8439BC9BC95F8BBAB80D02F3EB416C9",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "11.2.1",
+                   "pageFromTableOfContents":  29
+               }
+}

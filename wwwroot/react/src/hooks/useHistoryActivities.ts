@@ -94,15 +94,24 @@ export const useHistoryActivities = ({
     activeAbortRef.current = null;
   }, []);
 
-  const resetActivities = useCallback(() => {
+  // Invalidates pending work before cancellation can deliver a late completion.
+  const invalidateActiveRequest = useCallback(() => {
+    activeRequestIdRef.current += 1;
+    lastSignatureRef.current = "";
+    retryOnNetworkErrorRef.current = false;
     clearRetryTimer();
     abortActiveRequest();
+  }, [abortActiveRequest, clearRetryTimer]);
+
+  const resetActivities = useCallback(() => {
+    invalidateActiveRequest();
     setItems([]);
     setTotal(0);
+    setCurrentPage(1);
     setErrorMessage("");
     setIsLoading(false);
     setLoadedOwnerAxUserId(null);
-  }, [abortActiveRequest, clearRetryTimer]);
+  }, [invalidateActiveRequest]);
 
   const loadActivities = useCallback(
     async (page: number, override?: LoadOverride) => {
@@ -112,11 +121,7 @@ export const useHistoryActivities = ({
       const ownerAxUserIdStr = override?.ownerAxUserId ?? ownerAxUserIdValue;
 
       if (!fromDateStr || !toDateStr) {
-        setIsLoading(false);
-        setItems([]);
-        setTotal(0);
-        setErrorMessage("");
-        setLoadedOwnerAxUserId(null);
+        resetActivities();
         return;
       }
 
@@ -167,12 +172,15 @@ export const useHistoryActivities = ({
         });
       } catch (err: any) {
         if (requestId !== activeRequestIdRef.current) return;
-        if (err?.name === "AbortError") {
+        if (controller.signal.aborted || err?.name === "AbortError") {
+          lastSignatureRef.current = "";
+          setIsLoading(false);
           activeAbortRef.current = null;
           return;
         }
 
         if (err instanceof ApiFetchError && err.status === 403) {
+          lastSignatureRef.current = "";
           setIsLoading(false);
           activeAbortRef.current = null;
           onForbidden();
@@ -195,13 +203,14 @@ export const useHistoryActivities = ({
           }, retryDelayMs);
           return;
         }
+        lastSignatureRef.current = "";
         setIsLoading(false);
         setErrorMessage(err?.message || indT("Api_RequestFailed", "No se pudo conectar con el servidor (red)."));
         activeAbortRef.current = null;
         return;
       }
 
-      if (requestId !== activeRequestIdRef.current) return;
+      if (requestId !== activeRequestIdRef.current || controller.signal.aborted) return;
 
       onDebug?.("loadActivities:response", {
         status: 200,
@@ -225,6 +234,7 @@ export const useHistoryActivities = ({
       onForbidden,
       ownerAxUserIdValue,
       pageSize,
+      resetActivities,
       retryDelayMs,
       toDateValue,
     ]
@@ -232,10 +242,9 @@ export const useHistoryActivities = ({
 
   useEffect(() => {
     return () => {
-      clearRetryTimer();
-      abortActiveRequest();
+      invalidateActiveRequest();
     };
-  }, [abortActiveRequest, clearRetryTimer]);
+  }, [invalidateActiveRequest]);
 
   return {
     items,

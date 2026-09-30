@@ -6,7 +6,7 @@ Formatversion: 1
 ; Navision Axapta Real: INDReimbursableAmount descargados en Miércoles 29/07/2026
 ; --------------------------------------------------------------------------------
   USERTYPEVERSION 6
-  
+
   USERTYPE #INDReimbursableAmount
   REAL
     PROPERTIES
@@ -31,14 +31,14 @@ Formatversion: 1
       AutoInsSeparator    #Auto
       FormatMST           #Auto
     ENDPROPERTIES
-    
+
     TYPEELEMENTS
     ENDTYPEELEMENTS
-    
+
     TYPEREFERENCES
     ENDTYPEREFERENCES
-    
+
   ENDUSERTYPE
-  
+
 
 ***Element: END

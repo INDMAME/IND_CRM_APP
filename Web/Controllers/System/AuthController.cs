@@ -1,6 +1,7 @@
 using System;
 using IND_CRM_APP.Extensions;
 using IND_CRM_APP.Infrastructure.Security.Auth;
+using IND_CRM_APP.Infrastructure.Session;
 using IND_CRM_APP.Infrastructure.Localization;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
@@ -187,7 +188,8 @@ namespace IND_CRM_APP.Controllers
             try
             {
                 LogAuthContextSnapshot("ApiEntraContext before EnsureContextAsync", _authContext.GetCachedContext(), requestedAppCode);
-                var contextResult = await _authContext.EnsureContextAsync();
+                // Recovery callers need a new signed context even while the local cache is unexpired.
+                var contextResult = await _authContext.EnsureContextAsync(forceRefresh: true);
                 if (!contextResult.Success || contextResult.Context == null)
                 {
                     var (statusCode, errorCode) = ResolveContextFailure(contextResult.ErrorCode, contextResult.Message);
@@ -398,6 +400,8 @@ namespace IND_CRM_APP.Controllers
         // Clears both session values and auth cookie.
         private async Task ClearAuthSessionAsync()
         {
+            if (!AuthenticationSessionRequest.TryClose(HttpContext))
+                return;
             _authContext.ClearSelectedCompanyPreference();
             HttpContext.Session.Clear();
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);

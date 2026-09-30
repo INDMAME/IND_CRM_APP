@@ -22,6 +22,7 @@ import {
 import { resolveExpenseSheetEditAccess } from "../../utils/expenseSheetEditAccess.ts";
 import { clearExpenseTicketSheetSyncState, saveExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
 import { buildExpenseTicketDateTimeUpdate } from "../../utils/expenseTicketDateTime.ts";
+import { parseExpenseExchangeRateInput } from "../../utils/expenseNumberFormat.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 
 type DeleteLinkedExpenseLineContext = {
@@ -213,7 +214,7 @@ export const useExpenseTicketDetailMutations = ({
       }
 
       const parsedAmountMST = parseDecimalInput(draftAmountMST);
-      const parsedExchangeRate = parseDecimalInput(draftExchangeRate);
+      const parsedExchangeRate = parseExpenseExchangeRateInput(draftExchangeRate);
       const normalizedLocalCurrency = safeText(localCurrencyCode).toUpperCase();
       const requiresForeignCurrencySettlement = isExpenseLineForeignCurrency(normalizedCurrency, normalizedLocalCurrency);
       const hasForeignCurrencySettlement =

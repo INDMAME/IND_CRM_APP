@@ -1,0 +1,357 @@
+using System.Net;
+using System.Reflection;
+using System.Security.Claims;
+using System.Text.Json;
+using IND_CRM_APP.Controllers;
+using IND_CRM_APP.Extensions;
+using IND_CRM_APP.Infrastructure.Security.Auth;
+using IND_CRM_APP.Infrastructure.Security.Filters;
+using IND_CRM_APP.Middleware;
+using IND_CRM_APP.Models.Shared;
+using IND_CRM_APP.Services;
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Mvc;
+
+// Uses the application controllers and Razor views with a fake upstream API.
+var repositoryRoot = args[0];
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    ContentRootPath = repositoryRoot,
+    WebRootPath = Path.Combine(repositoryRoot, "Web", "wwwroot"),
+    ApplicationName = typeof(AuthController).Assembly.GetName().Name,
+    EnvironmentName = "Production"
+});
+builder.Logging.ClearProviders();
+builder.WebHost.UseUrls("http://127.0.0.1:0");
+builder.Services.AddLocalization(options => options.ResourcesPath = "App/Resources");
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+    options.Filters.AddService<INDModuleAuthorizeFilter>();
+}).AddSessionStateTempDataProvider().AddApplicationPart(typeof(AuthController).Assembly);
+builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
+builder.Services.AddAuthorization();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
+builder.Services.AddSession();
+builder.Services.AddSingleton<Microsoft.AspNetCore.Session.ISessionStore, IND_CRM_APP.Infrastructure.Session.ConcurrentSessionStore>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ITokenSessionService, TokenSessionService>();
+builder.Services.AddScoped<IIndAuthContextService, IndAuthContextService>();
+builder.Services.AddScoped<INDModuleAuthorizeFilter>();
+builder.Services.AddSingleton(DispatchProxy.Create<ICrmApiClient, FakeApi>());
+// Dummy credentials never leave the fake API implementation.
+Environment.SetEnvironmentVariable("USER_DEFAULT", "audit-service");
+Environment.SetEnvironmentVariable("USER_PASS_DEFAULT", "audit-password");
+
+await using var app = builder.Build();
+app.UseExceptionHandler("/Shared/Error");
+app.UseCrmStatusCodePages();
+app.UseRouting();
+app.UseSession();
+app.UseAuthorization();
+app.Use(async (context, next) =>
+{
+    if (context.Request.Headers.ContainsKey("X-Test-Authenticated"))
+    {
+        context.User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim("oid", "test-user"),
+            new Claim(ClaimTypes.NameIdentifier, "test-user"),
+            new Claim(ClaimTypes.Name, "test-user")
+        }, "audit"));
+    }
+
+    if (context.Request.Headers.ContainsKey("X-Test-Seed-Context"))
+        SeedFreshCache(context);
+
+    // Re-executed errors must still render with an unusable token and stale company header.
+    if (context.Request.Headers.ContainsKey("X-Test-Broken-Context") &&
+        context.GetEndpoint()?.Metadata.GetMetadata<IndErrorEndpointAttribute>() != null)
+    {
+        context.Session.SetString("Token", "expired");
+        context.Session.SetString("TokenExpires", DateTime.UtcNow.AddHours(-1).ToString("o"));
+        context.Session.SetString("INDCompanySelected", "OTHER");
+        context.Request.Headers[ExpectedCompanyContextMiddleware.ExpectedCompanyHeader] = "TEST";
+    }
+    await next();
+});
+app.UseMiddleware<ExpectedCompanyContextMiddleware>();
+app.UseMiddleware<TokenRefreshMiddleware>();
+app.UseMiddleware<IndContextRefreshMiddleware>();
+app.MapControllerRoute("default", "{controller=Auth}/{action=Login}/{id?}");
+var methods = new[] { "GET", "HEAD", "POST", "PUT", "PATCH", "DELETE" };
+foreach (var prefix in new[] { "/audit", "/api/audit" })
+{
+    app.MapMethods(prefix + "/status/{status:int}", methods, (HttpContext context, int status) =>
+        Results.StatusCode(status));
+    app.MapMethods(prefix + "/existing/{status:int}", methods, (int status) =>
+        Results.Json(new { preserved = true }, statusCode: status));
+    app.MapMethods(prefix + "/throw", methods, (HttpContext context) =>
+        Task.FromException(new InvalidOperationException("audit-private-exception-details")));
+}
+app.MapGet("/Auth/AuditCsrf", (HttpContext context, IAntiforgery antiforgery) =>
+    Results.Text(antiforgery.GetAndStoreTokens(context).RequestToken!));
+app.MapGet("/api/audit/recovered", (HttpContext context) =>
+    context.Session.GetString("INDContextToken") == "signed-new"
+        ? Results.Ok(new { Success = true })
+        : Results.Json(new { Success = false, ErrorCode = "AUTH_CONTEXT_STALE" }, statusCode: 403));
+
+await app.StartAsync();
+try
+{
+    var address = app.Services.GetRequiredService<IServer>().Features
+        .Get<IServerAddressesFeature>()!.Addresses.Single();
+    using var handler = new HttpClientHandler { AllowAutoRedirect = false, CookieContainer = new CookieContainer() };
+    using var client = new HttpClient(handler) { BaseAddress = new Uri(address) };
+    var count = 0;
+    foreach (var method in methods)
+    foreach (var status in new[] { 400, 401, 403, 404, 405, 500 })
+    foreach (var kind in new[] { "html", "ajax", "json", "api", "existing" })
+    {
+        var route = kind == "api" ? "/api/audit/status/" :
+            kind == "existing" ? "/audit/existing/" : "/audit/status/";
+        using var request = new HttpRequestMessage(new HttpMethod(method), route + status);
+        if (kind == "ajax") request.Headers.Add("X-Requested-With", "XMLHttpRequest");
+        if (kind == "json") request.Headers.Add("Accept", "application/problem+json");
+        using var response = await client.SendAsync(request);
+        var body = await response.Content.ReadAsStringAsync();
+        Check((int)response.StatusCode == status, $"Status changed: {method} {kind} {status}: {(int)response.StatusCode}; {body}");
+        Check(response.Headers.Location == null, "Error response redirected to authentication");
+        if (method == "HEAD")
+            Check(body.Length == 0, "HEAD returned a body");
+        else if (kind == "existing")
+            Check(body == "{\"preserved\":true}", "Existing payload changed");
+        else if (method == "GET" && kind == "html")
+        {
+            Check(body.Contains("<!DOCTYPE html>"), "Friendly Razor page missing");
+            Check(body.Contains($">{status}</div>"), "Page displays the wrong HTTP status");
+            Check(!body.Contains("ind-browser-state"), "Error page loads session bootstrap scripts");
+        }
+        else
+        {
+            using var json = JsonDocument.Parse(body);
+            Check(json.RootElement.GetProperty("status").GetInt32() == status, "Wrong problem status");
+            Check(response.Content.Headers.ContentType?.MediaType == "application/problem+json", "Wrong problem content type");
+        }
+        count++;
+    }
+    Console.WriteLine($"Verified {count} real HTTP status cases.");
+
+    foreach (var route in new[] { "/audit/throw", "/api/audit/throw" })
+    foreach (var method in new[] { "GET", "HEAD", "POST", "DELETE" })
+    {
+        using var request = new HttpRequestMessage(new HttpMethod(method), route);
+        using var response = await client.SendAsync(request);
+        var body = await response.Content.ReadAsStringAsync();
+        Check(response.StatusCode == HttpStatusCode.InternalServerError, "Exception lost 500 status");
+        Check(response.Headers.Location == null, "Exception redirected");
+        Check(!body.Contains("audit-private-exception-details"), "Exception details leaked");
+        if (method == "HEAD") Check(body.Length == 0, "HEAD exception returned body");
+        else if (route.StartsWith("/api") || method != "GET")
+        {
+            using var json = JsonDocument.Parse(body);
+            Check(json.RootElement.GetProperty("status").GetInt32() == 500, "Exception JSON status differs");
+        }
+        else Check(body.Contains("<!DOCTYPE html>"), "Exception Razor view missing");
+    }
+    foreach (var route in new[] { "/Shared/Error", "/Shared/Status?code=403", "/Home/NotFound?code=403", "/missing-audit-route" })
+    {
+        using var response = await client.GetAsync(route);
+        Check(response.Headers.Location == null, $"Anonymous error page redirects: {route}");
+        Check((int)response.StatusCode == (route.Contains("code=403") ? 403 : route == "/Shared/Error" ? 500 : 404), "Anonymous error page status differs");
+    }
+    // The POST-only logout recovery endpoint still rejects missing CSRF tokens.
+    using (var response = await client.PostAsync("/Auth/ForceRelogin", null))
+        Check(response.StatusCode == HttpStatusCode.BadRequest, "ForceRelogin antiforgery was weakened");
+    Check(FakeApi.CallCount == 0, "Error rendering called the upstream API");
+
+    foreach (var route in new[] { "/audit/throw", "/audit/status/403" })
+    {
+        using var brokenHandler = new HttpClientHandler { AllowAutoRedirect = false, CookieContainer = new CookieContainer() };
+        using var brokenClient = new HttpClient(brokenHandler) { BaseAddress = new Uri(address) };
+        using var request = new HttpRequestMessage(HttpMethod.Get, route);
+        request.Headers.Add("X-Test-Authenticated", "true");
+        request.Headers.Add("X-Test-Broken-Context", "true");
+        using var response = await brokenClient.SendAsync(request);
+        Check((int)response.StatusCode == (route.EndsWith("throw") ? 500 : 403), $"Broken company or token blocks {route}: {(int)response.StatusCode}");
+    }
+
+    using var authHandler = new HttpClientHandler { AllowAutoRedirect = false, CookieContainer = new CookieContainer() };
+    using var authClient = new HttpClient(authHandler) { BaseAddress = new Uri(address) };
+    authClient.DefaultRequestHeaders.Add("X-Test-Authenticated", "true");
+    using var csrfRequest = new HttpRequestMessage(HttpMethod.Get, "/Auth/AuditCsrf");
+    csrfRequest.Headers.Add("X-Test-Seed-Context", "true");
+    using var csrfResponse = await authClient.SendAsync(csrfRequest);
+    var csrf = await csrfResponse.Content.ReadAsStringAsync();
+    using (var denied = await authClient.GetAsync("/api/audit/recovered"))
+        Check(denied.StatusCode == HttpStatusCode.Forbidden, "Fixture should start with stale upstream context");
+    using var refresh = new HttpRequestMessage(HttpMethod.Post, "/Auth/ApiEntraContext");
+    refresh.Headers.Add("RequestVerificationToken", csrf);
+    refresh.Content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json");
+    using var refreshed = await authClient.SendAsync(refresh);
+    var refreshedBody = await refreshed.Content.ReadAsStringAsync();
+    Check(refreshed.StatusCode == HttpStatusCode.OK, "Signed context refresh failed: " + refreshedBody);
+    Check(FakeApi.CallCount == 2, "Explicit context refresh did not authenticate and fetch a fresh upstream context");
+    using (var json = JsonDocument.Parse(refreshedBody))
+        Check(json.RootElement.GetProperty("Items")[0].GetProperty("PermissionsRevision").GetString() == "new-revision", "Context endpoint returned the old revision");
+    using (var recovered = await authClient.GetAsync("/api/audit/recovered"))
+        Check(recovered.StatusCode == HttpStatusCode.OK, "Signed context was not installed into the session");
+
+    // Repeated reads reuse a request-local parsed context, while replacement and removal invalidate it.
+    using (var scope = app.Services.CreateScope())
+    {
+        var accessor = scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
+        var context = new DefaultHttpContext();
+        context.Session = app.Services.GetRequiredService<Microsoft.AspNetCore.Session.ISessionStore>()
+            .Create("parsed-context-test", TimeSpan.FromHours(2), TimeSpan.FromSeconds(10), () => true, true);
+        accessor.HttpContext = context;
+        try
+        {
+            SeedFreshCache(context);
+            var authContext = scope.ServiceProvider.GetRequiredService<IIndAuthContextService>();
+            var first = authContext.GetCachedContext();
+            Check(first != null && ReferenceEquals(first, authContext.GetCachedContext()), "Repeated context read was not reused");
+            context.Session.SetString("INDWebContext", JsonSerializer.Serialize(new IndWebContext { ContextVersion = 99 }));
+            Check(authContext.GetCachedContext()?.ContextVersion == 99, "Parsed context ignored replacement JSON");
+            context.Session.Remove("INDWebContext");
+            Check(authContext.GetCachedContext() == null, "Parsed context survived session removal");
+        }
+        finally
+        {
+            accessor.HttpContext = null;
+        }
+    }
+    // Uses the real company controller and session store with delayed upstream context responses.
+    foreach (var reverse in new[] { false, true })
+    {
+        var store = app.Services.GetRequiredService<Microsoft.AspNetCore.Session.ISessionStore>();
+        var key = "controller-choices-" + reverse;
+        ISession OpenChoiceSession() => store.Create(key, TimeSpan.FromHours(2), TimeSpan.FromSeconds(10), () => true, false);
+        var seed = new DefaultHttpContext { Session = OpenChoiceSession() };
+        SeedFreshCache(seed);
+        await seed.Session.CommitAsync();
+        var contexts = new[]
+        {
+            new DefaultHttpContext { Session = OpenChoiceSession() },
+            new DefaultHttpContext { Session = OpenChoiceSession() }
+        };
+        var choices = contexts.Select((context, index) => new ChoiceAuthContext(context, index + 2)).ToArray();
+        var controllers = contexts.Select((context, index) => new INDCompanyController(choices[index],
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<INDCompanyController>.Instance)
+            { ControllerContext = new ControllerContext { HttpContext = context } }).ToArray();
+        var firstChoice = controllers[0].SetCompany("B", null);
+        var lastChoice = controllers[1].SetCompany("C", null);
+        choices[reverse ? 1 : 0].Ready.SetResult();
+        await (reverse ? lastChoice : firstChoice);
+        choices[reverse ? 0 : 1].Ready.SetResult();
+        await (reverse ? firstChoice : lastChoice);
+        Check(OpenChoiceSession().GetString("INDCompanySelected") == "C", "Controller lost the last explicit company choice");
+        Check(choices[1].Remembered == "C", "Last controller preference does not match its committed choice");
+        if (reverse) Check(choices[0].Remembered == "C", "Late controller wrote an obsolete company preference");
+    }
+    Console.WriteLine("Verified real company controller ordering and committed browser preferences.");
+    Console.WriteLine("Verified exception recovery, anonymous errors, antiforgery and fresh signed context.");
+}
+finally
+{
+    await app.StopAsync();
+}
+
+// Fails the fixture with a precise runtime contract violation.
+static void Check(bool condition, string message)
+{
+    if (!condition) throw new InvalidOperationException(message);
+}
+
+// Seeds a temporally fresh context that the fake upstream no longer accepts.
+static void SeedFreshCache(HttpContext context)
+{
+    context.Session.SetString("ENTRAOID", "test-user");
+    context.Session.SetString("INDEntraOidContext", "test-user");
+    context.Session.SetString("INDCompanySelected", "TEST");
+    context.Session.SetString("INDCompanySelectionSource", "default");
+    context.Session.SetString("INDContextVersion", "1");
+    context.Session.SetString("INDPermissionsRevision", "old-revision");
+    context.Session.SetString("INDContextToken", "signed-old");
+    context.Session.SetString("INDContextExpiresUtc", DateTime.UtcNow.AddHours(1).ToString("o"));
+    context.Session.SetString("INDContextLastActivityUtc", DateTime.UtcNow.ToString("o"));
+    context.Session.SetString("Token", "internal-old");
+    context.Session.SetString("TokenExpires", DateTime.UtcNow.AddHours(1).ToString("o"));
+    context.Session.SetString("INDWebContext", JsonSerializer.Serialize(new IndWebContext
+    {
+        EntraOid = "test-user", ContextVersion = 1, PermissionsRevision = "old-revision",
+        ContextExpiresUtc = DateTime.UtcNow.AddHours(1),
+        Header = new() { Success = true, AxUserId = "test-ax", DefaultCompany = "TEST" },
+        Companies = new() { new() { CompanyId = "TEST", Modules = new() { new() { ModuleCode = "VISITAS_GESTION", AccessRightsInt = 1 } } } }
+    }));
+}
+
+// Replaces all upstream operations and fails if a tested path needs any unexpected call.
+public class FakeApi : DispatchProxy
+{
+    public static int CallCount;
+
+    protected override object? Invoke(MethodInfo? method, object?[]? arguments)
+    {
+        Interlocked.Increment(ref CallCount);
+        return method?.Name switch
+        {
+            nameof(ICrmApiClient.AuthenticateAsync) => Task.FromResult<LoginResult?>(new LoginResult
+            {
+                Token = "internal-new", Expires = DateTime.UtcNow.AddHours(1)
+            }),
+            nameof(ICrmApiClient.GetEntraContextAsync) => Task.FromResult(new IndEntraContextResponse
+            {
+                Success = true,
+                Items = new() { new()
+                {
+                    EntraOid = "test-user", ContextVersion = 2, PermissionsRevision = "new-revision",
+                    ContextToken = "signed-new", ContextExpiresUtc = DateTime.UtcNow.AddHours(1).ToString("o"),
+                    Header = new() { Success = true, AxUserId = "test-ax", DefaultCompany = "TEST", UserActive = true, AppActive = true },
+                    Companies = new() { new() { CompanyId = "TEST", Modules = new() { new() { ModuleCode = "VISITAS_GESTION", AccessRightsInt = 1, IsActive = true } } } }
+                } }
+            }),
+            _ => throw new InvalidOperationException("Unexpected upstream operation: " + method?.Name)
+        };
+    }
+}
+
+// Delays only the upstream lookup; the controller, merge and persisted choice remain production code.
+public sealed class ChoiceAuthContext(HttpContext http, long contextVersion) : IIndAuthContextService
+{
+    public TaskCompletionSource Ready { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public string? Remembered { get; private set; }
+
+    public IndWebContext GetCachedContext() => new()
+    {
+        EntraOid = "test-user", ContextVersion = contextVersion,
+        Header = new() { Success = true, AxUserId = "test-ax", DefaultCompany = "TEST" },
+        Companies = new() { new() { CompanyId = "TEST" }, new() { CompanyId = "B" }, new() { CompanyId = "C" } }
+    };
+
+    public async Task<IndAuthContextResult> EnsureContextAsync(bool forceRefresh = false)
+    {
+        await Ready.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        var context = GetCachedContext();
+        http.Session.SetString("INDContextVersion", contextVersion.ToString());
+        http.Session.SetString("INDContextToken", "choice-" + contextVersion);
+        http.Session.SetString("INDWebContext", JsonSerializer.Serialize(context));
+        return new() { Success = true, Context = context };
+    }
+
+    public Task EnsureFreshContextForRequestAsync() => Task.CompletedTask;
+    public string? GetSelectedCompanyId(IndWebContext? context) => http.Session.GetString("INDCompanySelected");
+    public void RememberSelectedCompanyPreference(string companyId) => Remembered = companyId;
+    public void ClearSelectedCompanyPreference() => Remembered = null;
+    public void ClearContextCache(bool preserveCompanySelection = false)
+    {
+        http.Session.Remove("INDContextVersion");
+        http.Session.Remove("INDContextToken");
+        http.Session.Remove("INDWebContext");
+    }
+}

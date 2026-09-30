@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { HISTORY_FILTER_KEY, HISTORY_RETURN_FLAG_KEY } from "../utils/visitasHistory.ts";
+import { HISTORY_CACHE_TTL_MS, HISTORY_FILTER_KEY, HISTORY_RETURN_FLAG_KEY } from "../utils/visitasHistory.ts";
 import {
   getSessionJsonWithExpiry,
   getSessionValueWithExpiry,
@@ -17,8 +17,6 @@ export type HistoryCachedFilter = {
   ownerAxUserId?: string;
   ownerText?: string;
 };
-
-const HISTORY_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 const normalizeCachedFilter = (value: HistoryCachedFilter | null): HistoryCachedFilter | null => {
   if (!value || typeof value !== "object") return null;
@@ -55,7 +53,11 @@ export const useHistoryFilterCache = () => {
   }, []);
 
   const saveCachedFilter = useCallback((filter: HistoryCachedFilter) => {
-    setSessionJsonWithExpiry(HISTORY_FILTER_KEY, filter, HISTORY_CACHE_TTL_MS);
+    if (!setSessionJsonWithExpiry(HISTORY_FILTER_KEY, filter, HISTORY_CACHE_TTL_MS)) {
+      removeSessionValueWithExpiry(HISTORY_FILTER_KEY);
+      removeSessionValueWithExpiry(HISTORY_RETURN_FLAG_KEY);
+      return;
+    }
     setSessionValueWithExpiry(HISTORY_RETURN_FLAG_KEY, "1", HISTORY_CACHE_TTL_MS);
   }, []);
 

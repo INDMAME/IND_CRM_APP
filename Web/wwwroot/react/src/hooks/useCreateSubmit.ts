@@ -1,15 +1,43 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { fetchJson } from "../services/apiService.ts";
 import { indExtractId, indExtractSignedId } from "../utils/indIds.ts";
 import { indFormat, indT } from "../utils/indI18n.ts";
 import { showPermissionModal } from "../utils/permissions.ts";
 import { flashActionMark, setHistoryFilterForDate } from "../utils/visitasHistory.ts";
-import { VISIT_DRAFT_KEY } from "../utils/visitasStorage.ts";
+import { CREATE_FRESH_PARAM, VISIT_CREATE_PROGRESS_KEY, VISIT_DRAFT_KEY } from "../utils/visitasStorage.ts";
+import { getSessionJsonWithExpiry, removeSessionValueWithExpiry, setSessionJsonWithExpiry } from "../utils/sessionExpiry.ts";
 import { wait } from "../utils/wait.ts";
 
 type ContactOption = {
   value: string;
   text: string;
+};
+
+type VisitCreateProgress = {
+  recId: string;
+  signature: string;
+  completedContactIds: Set<string>;
+};
+
+// Restores only valid progress in the current user and company storage scope.
+const readCreateProgress = (): VisitCreateProgress | null => {
+  if (typeof window !== "undefined" && new URLSearchParams(window.location.search).has(CREATE_FRESH_PARAM)) return null;
+  const stored = getSessionJsonWithExpiry<{ recId?: unknown; signature?: unknown; completedContactIds?: unknown }>(VISIT_CREATE_PROGRESS_KEY);
+  if (!stored || typeof stored.recId !== "string" || !/^-?[1-9]\d*$/.test(stored.recId) || typeof stored.signature !== "string") return null;
+  return {
+    recId: stored.recId,
+    signature: stored.signature,
+    completedContactIds: new Set(Array.isArray(stored.completedContactIds) ? stored.completedContactIds.filter((id): id is string => typeof id === "string") : []),
+  };
+};
+
+// Retains confirmed writes across retries and text-editor navigation.
+const saveCreateProgress = (progress: VisitCreateProgress): void => {
+  setSessionJsonWithExpiry(VISIT_CREATE_PROGRESS_KEY, {
+    recId: progress.recId,
+    signature: progress.signature,
+    completedContactIds: Array.from(progress.completedContactIds),
+  }, 24 * 60 * 60 * 1000);
 };
 
 type LegacyCommandResponse = {
@@ -163,12 +191,16 @@ export const useCreateSubmit = ({
   openConfirm,
   closeConfirm,
 }: UseCreateSubmitArgs) => {
+  const progressRef = useRef<VisitCreateProgress | null | undefined>(undefined);
+  const createInFlightRef = useRef(false);
+
   const doCreate = useCallback(async () => {
-    if (busy) return false;
+    if (busy || createInFlightRef.current) return false;
     if (!canCreateVisit) {
       showPermissionModal();
       return false;
     }
+    if (progressRef.current === undefined) progressRef.current = readCreateProgress();
     setModalError("");
     if (!selectedClient) {
       setStatus(indT("Visits_Create_SelectClientRequired", "Select a client."));
@@ -179,38 +211,60 @@ export const useCreateSubmit = ({
       setStatus(indT("Visits_Create_CompleteRequired", "Complete required fields."));
       return false;
     }
+    const payloadActivity = {
+      accountNum: selectedClient.value,
+      visitType: toNullableEnumNumber(visitType),
+      contactMethod: toNullableEnumNumber(contactMethod || "0"),
+      description,
+      transDate,
+      comentarios,
+      antecedentes,
+      conclusiones,
+    };
+    const contacts = Array.from(new Map(selectedContacts.map((contact) => [contact.value, contact])).values());
+    const signature = JSON.stringify({
+      activity: payloadActivity,
+      assistantType: defaultAsistenteTipo,
+      contacts: contacts.map((contact) => [contact.value, contact.text]).sort((left, right) => left[0].localeCompare(right[0])),
+    });
+    if (progressRef.current && progressRef.current.signature !== signature) {
+      const message = indFormat(
+        "Visits_Create_PartialChanged",
+        "Activity {0} already exists. Restore the original form values to retry pending contacts, or edit the activity from history.",
+        progressRef.current.recId
+      );
+      setModalError(message);
+      setStatus(message);
+      return false;
+    }
+
+    createInFlightRef.current = true;
     setBusy(true);
     setStatus(indT("Visits_Create_CreatingActivity", "Creating activity..."));
 
-    let createdRecId = "";
     try {
-      const payloadActivity = {
-        accountNum: selectedClient.value,
-        visitType: toNullableEnumNumber(visitType),
-        contactMethod: toNullableEnumNumber(contactMethod || "0"),
-        description,
-        transDate,
-        comentarios,
-        antecedentes,
-        conclusiones,
-      };
+      if (!progressRef.current) {
+        const resAct = await fetchJson<LegacyCommandResponse>("/Visitas/CreateActivity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payloadActivity),
+        });
 
-      const resAct = await fetchJson<LegacyCommandResponse>("/Visitas/CreateActivity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payloadActivity),
-      });
+        if (!getLegacyResponseSuccess(resAct)) {
+          throw new Error(getLegacyResponseMessage(resAct) || indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
+        }
 
-      if (!getLegacyResponseSuccess(resAct)) {
-        throw new Error(getLegacyResponseMessage(resAct) || indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
+        const recIdActividad = resolveCreateActivityRecId(resAct);
+        if (!recIdActividad) throw new Error(indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
+        logCreateActivityDiagnostics(resAct, String(recIdActividad));
+        progressRef.current = { recId: String(recIdActividad), signature, completedContactIds: new Set() };
+        saveCreateProgress(progressRef.current);
       }
+      const progress = progressRef.current;
+      const recIdActividad = progress.recId;
 
-      const recIdActividad = resolveCreateActivityRecId(resAct);
-      if (!recIdActividad) throw new Error(indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
-      logCreateActivityDiagnostics(resAct, String(recIdActividad));
-      createdRecId = String(recIdActividad);
-
-      if (selectedContacts.length > 0) {
+      const pendingContacts = contacts.filter((contact) => !progress.completedContactIds.has(contact.value));
+      if (pendingContacts.length > 0) {
         const assistantBatchSize = 4;
         const createAssistant = async (contact: ContactOption) => {
           const payloadVisita = {
@@ -227,15 +281,27 @@ export const useCreateSubmit = ({
           if (!getLegacyResponseSuccess(resVis)) {
             throw new Error(getLegacyResponseMessage(resVis) || indT("Visits_Create_CreateVisitFailed", "Failed to create visit."));
           }
+          progress.completedContactIds.add(contact.value);
+          saveCreateProgress(progress);
         };
 
-        for (let idx = 0; idx < selectedContacts.length; idx += assistantBatchSize) {
-          const batch = selectedContacts.slice(idx, idx + assistantBatchSize);
+        for (let idx = 0; idx < pendingContacts.length; idx += assistantBatchSize) {
+          const batch = pendingContacts.slice(idx, idx + assistantBatchSize);
           const first = batch[0];
           if (first) {
             setStatus(indFormat("Visits_Create_CreatingVisitFor", "Creating visit for {0}...", first.text));
           }
-          await Promise.all(batch.map((contact) => createAssistant(contact)));
+          // Wait for every started write before attempting compensation or enabling retry.
+          const results = await Promise.all(batch.map(async (contact) => {
+            try {
+              await createAssistant(contact);
+              return { success: true as const };
+            } catch (error) {
+              return { success: false as const, error };
+            }
+          }));
+          const failure = results.find((result) => !result.success);
+          if (failure && !failure.success) throw failure.error;
         }
       }
 
@@ -251,26 +317,41 @@ export const useCreateSubmit = ({
       flashActionMark("okProcess", 1200);
       await wait(1200);
       window.__indBypassNavigationGuardOnce?.();
+      removeSessionValueWithExpiry(VISIT_CREATE_PROGRESS_KEY);
       window.location.href = "/Historial/History";
       return true;
     } catch (e: unknown) {
-      if (createdRecId && canRollbackDelete) {
+      if (progressRef.current && canRollbackDelete) {
         try {
           setStatus(indT("Visits_Create_Rollback", "Rolling back activity..."));
-          await fetchJson(`/Visitas/DeleteActivity/${encodeURIComponent(createdRecId)}`, {
+          const rollback = await fetchJson<LegacyCommandResponse>(`/Visitas/DeleteActivity/${encodeURIComponent(progressRef.current.recId)}`, {
             method: "DELETE",
             suppressPermissionModal: true,
           });
+          if (getLegacyResponseSuccess(rollback)) {
+            progressRef.current = null;
+            removeSessionValueWithExpiry(VISIT_CREATE_PROGRESS_KEY);
+          }
         } catch {
           // Keep original error flow.
         }
       }
-      const msg = e instanceof Error ? e.message : indT("Visits_Create_CreateVisitError", "Failed to create the visit.");
+      const errorMessage = e instanceof Error ? e.message : indT("Visits_Create_CreateVisitError", "Failed to create the visit.");
+      const msg = progressRef.current
+        ? indFormat(
+            "Visits_Create_PartialRetry",
+            "Activity {0} was created, but some contacts are pending. Retry without changing the form to complete the same activity. {1}",
+            progressRef.current.recId,
+            errorMessage
+          )
+        : errorMessage;
       setModalError(msg);
       setStatus(msg);
       flashActionMark("errorProcess", 1500);
       setBusy(false);
       return false;
+    } finally {
+      createInFlightRef.current = false;
     }
   }, [
     antecedentes,

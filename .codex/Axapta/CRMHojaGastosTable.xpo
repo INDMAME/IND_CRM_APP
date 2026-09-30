@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosTable unloaded at Miércoles 29/07/2026
+; Navision Axapta Table : CRMHojaGastosTable unloaded at Lunes 24/08/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -1190,6 +1190,8 @@ Formatversion: 1
         #            hojaGastosTableUpdate.TransDateAprobacion   = _operacion == 1 ? today() : datenull();
         #            //MMS - Ajustes CRM - 2026.05.27
         #            newExpenseSheetStatus                       = hojaGastosTableUpdate.ExpenseSheetStatus;
+        #
+        #            hojaGastosTableUpdate.MostrarParaPago       = hojaGastosTableUpdate.MostrarParaPago(); //IJL.27/07/26
         #            //MMS - Ajustes CRM - 2026.05.27
         #            hojaGastosTableNotificacion                 = hojaGastosTableUpdate;
         #            hojaGastosTableUpdate.doUpdate();
@@ -1250,7 +1252,8 @@ Formatversion: 1
         #    index hint index1
         #    Order by TransDate
         #    where hojaGastosLine.HojaGastosId        == this.HojaGastosId
-        #       && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes {
+        #       //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #    {
         #
         #        //POs si acaso pongo esto para no procesar dos veces la misma línea.
         #        //if (_operacion == 1 && hojaGastosLine.VoucherPhysical)
@@ -1343,8 +1346,12 @@ Formatversion: 1
         #
         #        journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
         #
-        #        journalTrans.AmountCurCredit    = _operacion == 1 ? hojaGastosLine.ReimbursableAmount : 0;
-        #        journalTrans.AmountCurDebit     = _operacion == 1 ? 0                                  : hojaGastosLine.ReimbursableAmount;
+        #        //journalTrans.AmountCurCredit    = _operacion == 1 ? hojaGastosLine.ReimbursableAmount : 0;
+        #        //journalTrans.AmountCurDebit     = _operacion == 1 ? 0                                  : hojaGastosLine.ReimbursableAmount;
+        #
+        #        journalTrans.AmountCurCredit    = _operacion == 1 ? hojaGastosLine.LineAmountMST() : 0;
+        #        journalTrans.AmountCurDebit     = _operacion == 1 ? 0                                  : hojaGastosLine.LineAmountMST();
+        #
         #        journalTrans.INDRemesaLineRecId = 0;
         #        journalTrans.INDRefRecId        = hojaGastosLine.RecId;
         #        journalTrans.INDRefTableId      = hojaGastosLine.TableId;
@@ -1617,7 +1624,7 @@ Formatversion: 1
         #
         #        select maxOf(TransDate) from hojaGastosLine
         #        where hojaGastosLine.HojaGastosId        == this.HojaGastosId
-        #           && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #           //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #           && (hojaGastosLine.Type == CRMGastoType::Km || hojaGastosLine.Type == CRMGastoType::Gasolina);
         #
         #        transDate = hojaGastosLine.TransDate;
@@ -1756,7 +1763,7 @@ Formatversion: 1
         #                index hint index1
         #                Order by TransDate
         #                where hojaGastosLine.HojaGastosId   == this.HojaGastosId
-        #                      && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #                      //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #                      && (hojaGastosLine.Type        == CRMGastoType::Km ||
         #                          hojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::TarjetaGasolina){
         #
@@ -1779,7 +1786,7 @@ Formatversion: 1
         #        index hint index1
         #        Order by TransDate
         #        where    hojaGastosLine.HojaGastosId    == this.HojaGastosId
-        #              && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #              //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #              && hojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::Efectivo;
         #    }
         #    else {
@@ -1789,7 +1796,7 @@ Formatversion: 1
         #        index hint index1
         #        Order by TransDate
         #        where    hojaGastosLine.HojaGastosId    == this.HojaGastosId
-        #              && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #              //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #              && hojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::Efectivo
         #              && hojaGastosLine.Type            != CRMGastoType::Gasolina
         #              && hojaGastosLine.Type            != CRMGastoType::Km;
@@ -1818,7 +1825,8 @@ Formatversion: 1
         #
         #
         #            //MMS - La contabilizacion con factura usa el importe MST reembolsable persistido - 2026.07.29
-        #            amountAnticipo      = hojaGastosLine.ReimbursableAmount;
+        #            //IJL.04/08/26. En México de momento el importe reembolsable no afecta a este proceso.
+        #            amountAnticipo      = hojaGastosLine.LineAmountMST();//ReimbursableAmount;
         #            amountIVA           = hojaGastosLine.AmountIVA;
         #            amountRetencion     = hojaGastosLine.AmountRetencion;
         #            amountGasto         = amountAnticipo + amountRetencion - amountIVA;
@@ -2019,7 +2027,8 @@ Formatversion: 1
         #            //La línea NO Tiene Factura . Asiento es Gasto contra ANTICIPO
         #
         #            //MMS - La contabilizacion sin factura usa el importe MST reembolsable persistido - 2026.07.29
-        #            amount      = hojaGastosLine.ReimbursableAmount;
+        #            //IJL.04/08/26. El importe reembolsable no afecta a este proceso de momento.
+        #            amount      = hojaGastosLine.LineAmountMST();//ReimbursableAmount;
         #            transDate   = ValidaTransDate(hojaGastosLine.TransDate);
         #
         #            //GASTO
@@ -2405,6 +2414,15 @@ Formatversion: 1
         #    ttscommit;
         #}
       ENDSOURCE
+      SOURCE #defaultProjectForNewLine
+        #//MMS - Ajustes CRM - 2026.08.24
+        #// Precarga solo el proyecto elegible de cabecera; vacio y VARIOS dejan la linea sin proyecto.
+        #ProjId defaultProjectForNewLine()
+        #{
+        #    return CRMHojaGastosLine::resolveEligibleProjectId(this.ProjId);
+        #}
+        #
+      ENDSOURCE
       SOURCE #delete
         #public void delete()
         #{
@@ -2584,6 +2602,14 @@ Formatversion: 1
         #    ;
         #    this.updateSearchKey();   //IND_MMS - PROYECTO API - 2025.11.10
         #    this.normalizeReimbursementCurrencyDefaults(); //MMS - Ajustes CRM - 2026.06.26
+        #
+        #    //MMS - Ajustes CRM - 2026.08.24
+        #    // VARIOS solo puede aparecer como agregado derivado despues de insertar la cabecera.
+        #    if (this.ProjId &&
+        #        !CRMHojaGastosLine::resolveEligibleProjectId(this.ProjId))
+        #    {
+        #        throw error(strFmt("El proyecto %1 no existe, esta cerrado, esta reservado o no permite imputar gastos.", this.ProjId));
+        #    }
         #    //this.SelfApproved();      //INDMMS_ExternalCRM - 2026.03.10
         #
         #    //IJL.11/05/26. Si no Activamos el módulo de aprobación hay que marcar las HG como necesario papel para justificar y Pagar.
@@ -2737,7 +2763,8 @@ Formatversion: 1
         #    CRMUsuarioTable         usuarioTable    = CRMUsuarioTable::Find(this.UserId);
         #
         #    //boolean                 dimensionObligatoria;
-        #    Amount                  totalAmountFromHojaGastos   = this.TotalAmountMST(); //MMS - Este metodo MST heredado devuelve intencionadamente el importe reembolsable - 2026.07.29
+        #    //Amount                  totalAmountFromHojaGastos   = this.TotalAmountMST(); //MMS - Este metodo MST heredado devuelve intencionadamente el importe reembolsable - 2026.07.29
+        #    Amount                  totalAmountFromHojaGastos   = this.TotalBrutoAmountMST(); //IJL.06/08/26. Se toma el valor total independientemente de que haya que reembolsarlo o no.
         #    Amount                  totalEnMapa;
         #    ;
         #
@@ -2756,9 +2783,11 @@ Formatversion: 1
         #    while select hojaGastosLine
         #    index hint index1
         #    where hojaGastosLine.HojaGastosId        == this.HojaGastosId
-        #       && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes {
+        #          //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #    {
         #
-        #        amountLine              = hojaGastosLine.ReimbursableAmount;
+        #
+        #        amountLine              = hojaGastosLine.LineAmountMST();//hojaGastosLine.ReimbursableAmount;
         #        amountLineTotalFromCust = 0;
         #
         #        while select hojaGastosLineCust
@@ -2874,30 +2903,18 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #markHeaderVariousFromLine
-        #//MMS - Ajustes CRM - 2026.06.26
+        #//MMS - Ajustes CRM - 2026.08.21
+        #// Mantiene sincronizados los agregados de proyecto y reembolso de cabecera.
         #void markHeaderVariousFromLine(CRMHojaGastosLine _hojaGastosLine)
         #{
-        #    PurchParameters      purchParameters   = PurchParameters::find();
-        #    ProjId               projIdVarios;
         #    boolean              mustUpdate;
         #    ;
         #
-        #    // Solo mantiene marcadores de proyecto/reembolso; la divisa de cabecera no se marca como varios.
-        #    if (!this.RecId || !_hojaGastosLine)
+        #    if (!this.RecId)
         #        return;
         #
         #    this.normalizeReimbursementCurrencyDefaults();
-        #    projIdVarios   = purchParameters.INDProjIdVarious;
-        #
-        #    if (projIdVarios &&
-        #        this.ProjId &&
-        #        this.ProjId != projIdVarios &&
-        #        ((_hojaGastosLine.ProjId && _hojaGastosLine.ProjId != this.ProjId) ||
-        #         (_hojaGastosLine.ProjIdHornos && _hojaGastosLine.ProjIdHornos != this.ProjId)))
-        #    {
-        #        this.ProjId = projIdVarios;
-        #        mustUpdate = true;
-        #    }
+        #    mustUpdate = this.recalculateProjectFromLines();
         #
         #    if (this.recalculateReimbursableExpenseFromLines())
         #    {
@@ -2968,6 +2985,87 @@ Formatversion: 1
         #    this.CurrencyCode     = CompanyInfo::standardCurrency();
         #    this.ExchRate         = 100;
         #    this.ExchangeRateMode = INDExchangeRateMode::Manual;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #recalculateProjectFromLines
+        #//MMS - Ajustes CRM - 2026.08.24
+        #// Recalcula el proyecto de cabecera desde todas las lineas persistidas.
+        #boolean recalculateProjectFromLines()
+        #{
+        #    CRMHojaGastosLine hojaGastosLine;
+        #    PurchParameters   purchParameters = PurchParameters::find();
+        #    ProjId            commonProjectId;
+        #    ProjId            lineProjectId;
+        #    ProjId            calculatedProjectId;
+        #    boolean           hasLines;
+        #    boolean           hasDifferentProjects;
+        #    ;
+        #
+        #    if (!this.RecId)
+        #        return false;
+        #
+        #    while select hojaGastosLine
+        #    index hint index1
+        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId
+        #       && hojaGastosLine.UserId        == this.UserId
+        #    {
+        #        if (purchParameters.INDProjIdVarious &&
+        #            (hojaGastosLine.ProjIdHornos == purchParameters.INDProjIdVarious ||
+        #             hojaGastosLine.ProjId       == purchParameters.INDProjIdVarious))
+        #        {
+        #            //MMS - Ajustes CRM - 2026.08.24
+        #            // Una linea historica contaminada fuerza VARIOS sin bloquear su correccion o borrado.
+        #            hasLines             = true;
+        #            hasDifferentProjects = true;
+        #            continue;
+        #        }
+        #
+        #        lineProjectId = CRMHojaGastosLine::resolveRealProjectId(hojaGastosLine.ProjIdHornos);
+        #
+        #        if (hojaGastosLine.ProjIdHornos && !lineProjectId)
+        #        {
+        #            //MMS - Ajustes CRM - 2026.08.24
+        #            // Un proyecto historico inexistente se representa como una inconsistencia de cabecera.
+        #            hasLines             = true;
+        #            hasDifferentProjects = true;
+        #            continue;
+        #        }
+        #
+        #        if (!hasLines)
+        #        {
+        #            commonProjectId = lineProjectId;
+        #            hasLines = true;
+        #        }
+        #        else if (lineProjectId != commonProjectId)
+        #        {
+        #            hasDifferentProjects = true;
+        #        }
+        #    }
+        #
+        #    if (!hasLines)
+        #    {
+        #        calculatedProjectId = '';
+        #    }
+        #    else if (hasDifferentProjects)
+        #    {
+        #        if (!purchParameters.INDProjIdVarious)
+        #            throw error("Configure INDProjIdVarious para representar hojas con proyectos distintos.");
+        #
+        #            calculatedProjectId = purchParameters.INDProjIdVarious;
+        #        }
+        #    else
+        #    {
+        #        calculatedProjectId = commonProjectId;
+        #    }
+        #
+        #    if (this.ProjId != calculatedProjectId)
+        #    {
+        #        this.ProjId = calculatedProjectId;
+        #        return true;
+        #    }
+        #
+        #    return false;
         #}
         #
       ENDSOURCE
@@ -3447,6 +3545,28 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #TotalEfectivo_Gasolina
+        #//IJL.06/08/26. Este método no dbe ser modificado por el momento.
+        #display Amount TotalEfectivo_Gasolina()
+        #{
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    Amount              amount;
+        #    ;
+        #    if (this.NoContabilizarGasolina)
+        #        return 0;
+        #
+        #    while select hojaGastosLine
+        #    index hint index1
+        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId
+        #          && hojaGastosLine.Type == CRMGastoType::Gasolina
+        #          && hojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo {
+        #
+        #        amount  += hojaGastosLine.LineAmountMST();
+        #
+        #    }
+        #
+        #    return amount;
+        #}
+        #/*
         #//INDMMS_ExternalCRM - 2026.05.21
         #display Amount TotalEfectivo_Gasolina()
         #{
@@ -3460,9 +3580,26 @@ Formatversion: 1
         #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo
         #               && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #}
+        #*/
         #
       ENDSOURCE
       SOURCE #TotalEfectivo_GasolinaMST
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #//IJL.06/08/26. Este método no debe ser modificado por el momento.
+        #display Amount TotalEfectivo_GasolinaMST()
+        #{
+        #    ;
+        #
+        #    if (this.NoContabilizarGasolina)
+        #        return 0;
+        #
+        #    return (select sum(AmountMST) from CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId  == this.HojaGastosId
+        #               && CRMHojaGastosLine.Type          == CRMGastoType::Gasolina
+        #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo).AmountMST;
+        #}
+        #
+        #/*
         #//INDMMS_ExternalCRM - 2026.05.21
         #display Amount TotalEfectivo_GasolinaMST()
         #{
@@ -3478,6 +3615,7 @@ Formatversion: 1
         #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo
         #               && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #}
+        #*/
         #
       ENDSOURCE
       SOURCE #TotalModalidadPago
@@ -3506,6 +3644,36 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #TotalPorModalidadPago
+        #//IJL.06/08/26. Este método no debe ser modificado por el momento
+        #Map TotalPorModalidadPago()
+        #{
+        #    CRMHojaGAstosLine   hojaGastosLine;
+        #    Map                 map;
+        #    ;
+        #
+        #    map = new Map(Types::String, Types::Real);
+        #
+        #    while select hojaGastosLine
+        #    where hojaGastosLine.HojaGastosId   == this.HojaGastosId
+        #          //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #          /*
+        #          &&
+        #          hojaGastosLine.Ticket         == NoYes::Yes         &&
+        #          hojaGastosLine.NoCobrar       == NoYes::No          &&
+        #          hojaGastosLine.Internacional  == NoYes::No          &&
+        #          hojaGastosLine.VisaEmpresa    == Noyes::No
+        #          */
+        #    {
+        #        if (map.exists(hojaGastosLine.ModalidadPago)){
+        #            map.insert(hojaGastosLine.ModalidadPago, map.lookup(hojaGastosLine.ModalidadPago) + hojaGastosLine.Amount);
+        #        }
+        #        else {
+        #            map.insert(hojaGastosLine.ModalidadPago, hojaGastosLine.Amount);
+        #        }
+        #    }
+        #    return map;
+        #}
+        #/*
         #Map TotalPorModalidadPago()
         #{
         #    CRMHojaGAstosLine   hojaGastosLine;
@@ -3534,9 +3702,37 @@ Formatversion: 1
         #    }
         #    return map;
         #}
+        #*/
         #
       ENDSOURCE
       SOURCE #TotalPorModalidadPagoMST
+        #//MMS - Divisa desde línea - 2026.05.21
+        #//IJL.06/08/26. Este método no debe ser modificado por el momento.
+        #Map TotalPorModalidadPagoMST()
+        #{
+        #    CRMHojaGAstosLine   hojaGastosLine;
+        #    Map                 map;
+        #    Amount            amount;
+        #    ;
+        #
+        #    map = new Map(Types::String, Types::Real);
+        #
+        #    while select hojaGastosLine
+        #    index hint index1
+        #        where hojaGastosLine.HojaGastosId   == this.HojaGastosId
+        #              //&& hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #    {
+        #        amount = hojaGastosLine.AmountMST;
+        #
+        #        if (map.exists(hojaGastosLine.ModalidadPago))
+        #            map.insert(hojaGastosLine.ModalidadPago, map.lookup(hojaGastosLine.ModalidadPago) + amount);
+        #        else
+        #            map.insert(hojaGastosLine.ModalidadPago, amount);
+        #    }
+        #
+        #    return map;
+        #}
+        #/*
         #//MMS - Divisa desde línea - 2026.05.21
         #Map TotalPorModalidadPagoMST()
         #{
@@ -3563,6 +3759,7 @@ Formatversion: 1
         #
         #    return map;
         #}
+        #*/
         #
       ENDSOURCE
       SOURCE #TotalReembolsarMexico
@@ -3749,6 +3946,15 @@ Formatversion: 1
         #    this.updateSearchKey();//IND_MMS - PROYECTO API - 2025.11.10
         #    this.normalizeReimbursementCurrencyDefaults(); //MMS - Ajustes CRM - 2026.06.26
         #
+        #    //MMS - Ajustes CRM - 2026.08.24
+        #    // Bloquea cambios programaticos a un proyecto no elegible; doUpdate queda para agregados derivados.
+        #    if (this.ProjId != tableOrig.ProjId &&
+        #        this.ProjId &&
+        #        !CRMHojaGastosLine::resolveEligibleProjectId(this.ProjId))
+        #    {
+        #        throw error(strFmt("El proyecto %1 no existe, esta cerrado, esta reservado o no permite imputar gastos.", this.ProjId));
+        #    }
+        #
         #    this.NecesariaHGImpresa = this.NecesitaHGFisica();//this.createdBy == "APIAX" ? NoYes::No : NoYes::Yes; //IJL.26/05/26
         #    this.MostrarParaPago    = this.MostrarParaPago(); //IJL.29/05/26
         #
@@ -3782,33 +3988,70 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #updateProjectDefaultInLines
-        #//INDMMS_ExternalCRM - 2026.05.21
-        #int updateProjectDefaultInLines()
+        #//MMS - Ajustes CRM - 2026.08.21
+        #// Aplica un proyecto a cabecera y lineas dentro de una unica transaccion.
+        #int updateProjectDefaultInLines(ProjId _projectId)
         #{
-        #    CRMHojaGastosLine hojaGastosLine;
-        #    int               updated;
+        #    CRMHojaGastosTable header;
+        #    CRMHojaGastosLine  hojaGastosLine;
+        #    PurchParameters    purchParameters = PurchParameters::find();
+        #    ProjId              resolvedProjectId;
+        #    ProjId              eligibleProjectId;
+        #    int                 updated;
         #    ;
         #
-        #    // Aplica el proyecto de cabecera a todas las lineas actuales. Llamar solo despues de que el usuario confirme la propagacion.
         #    if (!this.HojaGastosId)
         #        return 0;
         #
-        #    if (!this.ProjId || this.isVariousProjectDefault())
-        #        return 0;
+        #    if (purchParameters.INDProjIdVarious &&
+        #        _projectId == purchParameters.INDProjIdVarious)
+        #    {
+        #        throw error("El marcador de varios proyectos no se puede propagar a las lineas.");
+        #    }
+        #
+        #    resolvedProjectId = CRMHojaGastosLine::resolveRealProjectId(_projectId);
+        #    eligibleProjectId = CRMHojaGastosLine::resolveEligibleProjectId(_projectId);
+        #
+        #    if (_projectId && !resolvedProjectId)
+        #        throw error(strFmt("El proyecto %1 no existe o esta reservado.", _projectId));
+        #
+        #    if (resolvedProjectId && !eligibleProjectId)
+        #        throw error(strFmt("El proyecto %1 esta cerrado o no permite imputar gastos.", _projectId));
         #
         #    ttsbegin;
+        #    header = CRMHojaGastosTable::FindRecId(this.RecId, true);
+        #
+        #    if (!header.RecId)
+        #        throw error(strFmt("No existe la hoja de gastos %1.", this.HojaGastosId));
+        #
+        #    header.ProjId = resolvedProjectId;
+        #
+        #    if (!header.validateWrite())
+        #        throw error("El proyecto no cumple las validaciones de la cabecera.");
+        #
+        #    if (header.ProjId != header.orig().ProjId)
+        #        header.update();
+        #
         #    while select forupdate hojaGastosLine
         #    index hint index1
         #    where hojaGastosLine.HojaGastosId == this.HojaGastosId
+        #       && hojaGastosLine.UserId        == this.UserId
         #    {
-        #        hojaGastosLine.ProjId       = this.ProjId;
-        #        hojaGastosLine.ProjIdHornos = this.ProjId;
+        #        hojaGastosLine.ProjId       = resolvedProjectId;
+        #        hojaGastosLine.ProjIdHornos = resolvedProjectId;
         #        hojaGastosLine.doUpdate();
         #
         #        hojaGastosLine.BorrarTodosProyecto();
-        #        hojaGastosLine.CreaLineaProyecto(this.ProjId);
+        #        hojaGastosLine.CreaLineaProyecto(resolvedProjectId);
+        #        //MMS - Ajustes CRM - 2026.08.21
+        #        // doUpdate omite el metodo update de la linea; se sincroniza la contabilidad de forma explicita.
+        #        INDProjCostRevenueTable::CreateProjCostFromCommon(hojaGastosLine);
         #        updated++;
         #    }
+        #
+        #    if (updated && header.recalculateProjectFromLines())
+        #        header.doUpdate();
+        #
         #    ttscommit;
         #
         #    return updated;
@@ -3820,7 +4063,7 @@ Formatversion: 1
         #void UpdateProjIdEnLineas()
         #{
         #    // Conserva el nombre del metodo heredado, pero delega en el auxiliar de propagacion de proyecto.
-        #    this.updateProjectDefaultInLines(); //INDMMS_ExternalCRM - 2026.05.21
+        #    this.updateProjectDefaultInLines(this.ProjId); //INDMMS_ExternalCRM - 2026.05.21
         #    }
         #
       ENDSOURCE
@@ -3883,6 +4126,10 @@ Formatversion: 1
         #    oldExpenseSheetStatus                       = hojaGastosTableUpdate.ExpenseSheetStatus;
         #    hojaGastosTableUpdate.ExpenseSheetStatus    = _newStatus;
         #    hojaGastosTableUpdate.EstadoComentarios     = hojaGastosTableUpdate.EstadoComentarios ? strfmt("%1\n\n%2", hojaGastosTableUpdate.EstadoComentarios, _estadoComentarios) : _estadoComentarios;
+        #
+        #    hojaGastosTableUpdate.NecesariaHGImpresa    = hojaGastosTableUpdate.NecesitaHGFisica(); //IJL.27/07/26
+        #    hojaGastosTableUpdate.MostrarParaPago       = hojaGastosTableUpdate.MostrarParaPago(); //IJL.27/07/26
+        #
         #    hojaGastosTableUpdate.doUpdate();
         #    ttscommit;
         #
@@ -3961,14 +4208,25 @@ Formatversion: 1
         #    switch (_fieldIdToCheck){
         #        case FieldNum(CRMHojaGastosTable, ProjId):
         #
+        #            //MMS - Ajustes CRM - 2026.08.21
+        #            // Un cambio explicito debe usar un proyecto abierto e imputable.
+        #            if (this.ProjId &&
+        #                !CRMHojaGastosLine::resolveEligibleProjectId(this.ProjId))
+        #            {
+        #                ret = checkFailed("El proyecto no existe, esta cerrado o no permite la imputacion de gastos.");
+        #                break;
+        #            }
+        #
         #            //IJL.20/01/26
         #            //Si estoy creando la línea e informo el proyecto no necesito hacer nada. Debo actualizar si la línea ya se ha creado previamente.
         #            if (this.RecId){
         #                if (BOX::yesNo("Se van a actualizar los proyectos en todas las líneas, ¿deseas continuar?", DialogButton::No) == DialogButton::Yes){
-        #                    //Actualizar
+        #                    //MMS - Ajustes CRM - 2026.08.21
+        #                    // Guarda la cabecera y propaga el proyecto en una unica transaccion.
+        #                    ttsbegin;
         #                    this.write();
-        #
-        #                    this.UpdateProjIdEnLineas();
+        #                    this.updateProjectDefaultInLines(this.ProjId);
+        #                    ttscommit;
         #                }
         #                else {
         #                    //NO actualizar y no cambiar el valor del campo
@@ -3986,8 +4244,10 @@ Formatversion: 1
         #public boolean validateWrite()
         #{
         #    boolean ret;
+        #    boolean projectChanged;
         #
         #    ProjTable       projTable, projTableOrig; //IJL.09/10/23
+        #    ProjId          eligibleProjectId;
         #    ;
         #
         #    //MMS - Ajustes CRM - 2026.06.26
@@ -3997,16 +4257,29 @@ Formatversion: 1
         #    //IJL.09/10/23
         #    projTableOrig   = ProjTable::find(this.orig().ProjId);
         #    projTable       = ProjTable::find(this.ProjId);
+        #    projectChanged  = this.ProjId != this.orig().ProjId;
+        #
+        #    //MMS - Ajustes CRM - 2026.08.24
+        #    // Valida solo cambios explicitos y conserva proyectos historicos sin modificar.
+        #    if (projectChanged && this.ProjId)
+        #        eligibleProjectId = CRMHojaGastosLine::resolveEligibleProjectId(this.ProjId);
         #
         #    ret = super();
         #
         #    //IJL.09/10/23
+        #    if (projectChanged)
+        #    {
         #    ret = ret && ProjTable::PermitirCambioProyecto(projTableOrig.ProjId, projTable.ProjId);
         #    if (! ret)
         #        return false;
+        #    }
         #
-        #    if (this.ProjId && !this.isVariousProjectDefault() && this.ProjId != PurchParameters::find().INDProjIdVarious && !ProjTable::find(this.ProjId).INDPermitirImputarGastos){
+        #    if (projectChanged && this.ProjId && !this.isVariousProjectDefault() && this.ProjId != PurchParameters::find().INDProjIdVarious && !ProjTable::find(this.ProjId).INDPermitirImputarGastos){
         #        ret = checkFailed(strfmt("El proyecto %1 no permite la imputación de gastos", this.ProjId));
+        #    }
+        #    else if (projectChanged && this.ProjId && !eligibleProjectId)
+        #    {
+        #        ret = checkFailed(strFmt("El proyecto %1 no existe, esta cerrado, esta reservado o no permite imputar gastos.", this.ProjId));
         #    }
         #
         #    return ret;
@@ -4383,6 +4656,35 @@ Formatversion: 1
         #    sysTableLookup.parmQuery(query);
         #    sysTableLookup.performFormLookup();
         #}
+      ENDSOURCE
+      SOURCE #migrateVariousProjectMarker
+        #//MMS - Ajustes CRM - 2026.08.21
+        #// Migra solo los marcadores de cabecera despues de cambiar el parametro.
+        #static server int migrateVariousProjectMarker(ProjId _oldMarker, ProjId _newMarker)
+        #{
+        #    CRMHojaGastosTable header;
+        #    int                 updated;
+        #    ;
+        #
+        #    if (!_oldMarker || _oldMarker == _newMarker)
+        #        return 0;
+        #
+        #    if (!_newMarker)
+        #        throw error("El nuevo marcador de varios proyectos es obligatorio.");
+        #
+        #    ttsbegin;
+        #    while select forupdate header
+        #        where header.ProjId == _oldMarker
+        #    {
+        #        header.ProjId = _newMarker;
+        #        header.doUpdate();
+        #        updated++;
+        #    }
+        #    ttscommit;
+        #
+        #    return updated;
+        #}
+        #
       ENDSOURCE
       SOURCE #RechazarHojaDeGastosFromForm
         #static void RechazarHojaDeGastosFromForm(CRMHojaGastosTable  _hojaGastosTable,

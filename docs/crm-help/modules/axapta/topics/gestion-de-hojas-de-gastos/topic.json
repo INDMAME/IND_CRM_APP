@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "axapta.gestion-de-hojas-de-gastos",
+    "moduleId":  "axapta",
+    "sectionNumber":  "11.2.2",
+    "title":  "Gestión de hojas de gastos",
+    "summary":  "Usa la pantalla de gestión de hojas de gastos en Axapta.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Gestión de hojas de gastos",
+                                  "Axapta",
+                                  "gastos en Axapta"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre gestión de hojas de gastos?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "axapta.gestion-del-flujo-en-axapta"
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "43205CAB656A0C1C57373AD9453E921A6EEEEE64168EBD307D536F038C6DB3DA",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "11.2.2",
+                   "pageFromTableOfContents":  30
+               }
+}

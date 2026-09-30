@@ -1,0 +1,58 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui.cambiar-el-idioma",
+    "moduleId":  "common-ui",
+    "sectionNumber":  "6.2",
+    "title":  "Cambiar el idioma",
+    "summary":  "Seleccione el idioma de la interfaz y compruebe el cambio después de la recarga.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Cambiar el idioma",
+                                  "idioma del CRM",
+                                  "Idiomas",
+                                  "menú de usuario",
+                                  "interfaz en español"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Cómo cambio el idioma del CRM?",
+                                          "¿Se traducen mis descripciones cuando cambio de idioma?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "05E0DD5E71CB6ABA791D63C7DF87B7C0E0683BD7B96B3097638A93FA21426C8D",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+                         {
+                             "id":  "common-ui.cambiar-el-idioma.quick-01",
+                             "question":  "¿Cómo cambio el idioma del CRM?",
+                             "answer":  "Guarde o cancele las ediciones pendientes. Abra el menú lateral, pulse su nombre de usuario y entre en Idiomas. Seleccione el idioma y espere a que la pantalla vuelva a cargarse. Compruebe la selección en el menú de usuario; los datos de negocio escritos por los usuarios no se traducen.",
+                             "sourceChunkIds":  [
+                                                    "common-ui.cambiar-el-idioma--01"
+                                                ]
+                         }
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "6.2",
+                   "pageFromTableOfContents":  11
+               }
+}

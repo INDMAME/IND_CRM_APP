@@ -82,7 +82,7 @@ const ExpenseSheetCreateLinesEditor = ({
             <div className="space-y-1.5">
               <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Type", "Category")}</label>
               <select
-                className="form-control"
+                className="form-control ind-native-select-chevron"
                 value={line.typeValueCode}
                 onChange={(event) => onLineChange(line.localId, { typeValueCode: event.target.value || "" })}
               >
@@ -161,7 +161,7 @@ const ExpenseSheetCreateLinesEditor = ({
             <div className="space-y-1.5">
               <label className="form-label font-semibold">{indT("ExpenseSheets_Field_International", "International")}</label>
               <select
-                className="form-control"
+                className="form-control ind-native-select-chevron"
                 value={line.internacional ? "true" : "false"}
                 onChange={(event) => onLineChange(line.localId, { internacional: event.target.value === "true" })}
               >

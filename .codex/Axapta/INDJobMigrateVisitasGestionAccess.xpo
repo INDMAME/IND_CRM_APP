@@ -10,17 +10,28 @@ Formatversion: 1
   SOURCE #INDJobMigrateVisitasGestionAccess
     #static void INDJobMigrateVisitasGestionAccess(Args _args)
     #{
-    #    boolean                 execute = FALSE;
-    #    str         50            appCode = "CRM";
-    #    str         50            legacyCreateModule = "VISITAS_CREACION";
-    #    str         50            legacyHistoryModule = "VISITAS_HISTORIAL";
-    #    str         50            targetModule = "VISITAS_GESTION";
+    #    boolean                         execute = FALSE;
+    #    str         50                  appCode = "CRM";
+    #    str         50                  legacyCreateModule = "VISITAS_CREACION";
+    #    str         50                  legacyHistoryModule = "VISITAS_HISTORIAL";
+    #    str         50                  targetModule = "VISITAS_GESTION";
     #
-    #    INDWebModuleAccessLevel moduleAccess;
+    #    INDWebModuleAccessLevel         sourceAccess;
+    #    INDWebModuleAccessLevel         targetAccess;
+    #    INDCiasPermitidas               sourceCiaPerm;
+    #    INDCiasPermitidas               targetCiaPerm;
+    #    INDModuleDataVisibilityTarget   sourceTarget;
+    #    INDModuleDataVisibilityTarget   duplicateTarget;
     #
-    #    str                     executeMode;
-    #    int                     recordsUpdated = 0;
-    #    int                     recordsDeleted = 0;
+    #    str                             executeMode;
+    #    int                             recordsUpdated = 0;
+    #    int                             recordsMerged = 0;
+    #    int                             recordsDeleted = 0;
+    #    int                             targetRowsMoved = 0;
+    #    int                             targetRowsDeleted = 0;
+    #    int                             historyTargetRowsDeleted = 0;
+    #    int                             targetRightsCopied = 0;
+    #    int                             accessRightsConflicts = 0;
     #    ;
     #
     #    // Keep execute false first to preview the affected rows.
@@ -35,48 +46,224 @@ Formatversion: 1
     #    {
     #        ttsbegin;
     #
-    #        while select forUpdate moduleAccess
-    #            where moduleAccess.AppCode == appCode
-    #               && moduleAccess.ModuleCode == legacyCreateModule
+    #        while select forUpdate sourceAccess
+    #            where sourceAccess.AppCode == appCode
+    #               && sourceAccess.ModuleCode == legacyCreateModule
     #        {
-    #            moduleAccess.ModuleCode = targetModule;
-    #            moduleAccess.update();
-    #            recordsUpdated++;
+    #            targetAccess.clear();
+    #
+    #            select firstOnly forUpdate targetAccess
+    #                where targetAccess.RefRecIdCiaPermitida == sourceAccess.RefRecIdCiaPermitida
+    #                   && targetAccess.AppCode              == sourceAccess.AppCode
+    #                   && targetAccess.ModuleCode           == targetModule;
+    #
+    #            if (!targetAccess.RecId)
+    #            {
+    #                sourceCiaPerm.clear();
+    #
+    #                select firstOnly sourceCiaPerm
+    #                    where sourceCiaPerm.RecId == sourceAccess.RefRecIdCiaPermitida;
+    #
+    #                if (sourceCiaPerm.RecId)
+    #                {
+    #                    targetAccess.clear();
+    #
+    #                    select firstOnly forUpdate targetAccess
+    #                        where targetAccess.RecId        != sourceAccess.RecId
+    #                           && targetAccess.AppCode      == sourceAccess.AppCode
+    #                           && targetAccess.ModuleCode   == targetModule
+    #                           && targetAccess.AccessRights != 0
+    #                    join targetCiaPerm
+    #                        where targetCiaPerm.RecId  == targetAccess.RefRecIdCiaPermitida
+    #                           && targetCiaPerm.UserId == sourceCiaPerm.UserId
+    #                           && targetCiaPerm.CiaId  == sourceCiaPerm.CiaId;
+    #                }
+    #            }
+    #
+    #            if (targetAccess.RecId)
+    #            {
+    #                //MMS - CRM access migration merges duplicate VISITAS_GESTION rows safely - 2026.07.03
+    #                while select forUpdate sourceTarget
+    #                    where sourceTarget.INDWebModuleAccessLevel == sourceAccess.RecId
+    #                {
+    #                    duplicateTarget.clear();
+    #
+    #                    select firstOnly duplicateTarget
+    #                        where duplicateTarget.INDWebModuleAccessLevel == targetAccess.RecId
+    #                           && duplicateTarget.TargetPersonAlias       == sourceTarget.TargetPersonAlias
+    #                           && duplicateTarget.TargetScope             == sourceTarget.TargetScope
+    #                           && (duplicateTarget.ValidFrom == dateNull()
+    #                            || sourceTarget.ValidTo == dateNull()
+    #                            || duplicateTarget.ValidFrom <= sourceTarget.ValidTo)
+    #                           && (sourceTarget.ValidFrom == dateNull()
+    #                            || duplicateTarget.ValidTo == dateNull()
+    #                            || sourceTarget.ValidFrom <= duplicateTarget.ValidTo);
+    #
+    #                    if (duplicateTarget.RecId)
+    #                    {
+    #                        sourceTarget.delete();
+    #                        targetRowsDeleted++;
+    #                    }
+    #                    else
+    #                    {
+    #                        sourceTarget.INDWebModuleAccessLevel = targetAccess.RecId;
+    #                        sourceTarget.update();
+    #                        targetRowsMoved++;
+    #                    }
+    #                }
+    #
+    #                if (targetAccess.AccessRights == 0
+    #                 && sourceAccess.AccessRights != 0)
+    #                {
+    #                    targetAccess.AccessRights = sourceAccess.AccessRights;
+    #                    targetAccess.update();
+    #                    targetRightsCopied++;
+    #                }
+    #                else if (sourceAccess.AccessRights != 0
+    #                      && targetAccess.AccessRights != sourceAccess.AccessRights)
+    #                {
+    #                    accessRightsConflicts++;
+    #                    info(strFmt(
+    #                        "VISITAS_GESTION RecId %1 already exists for source RecId %2 with different AccessRights. Keeping target value.",
+    #                        targetAccess.RecId,
+    #                        sourceAccess.RecId));
+    #                }
+    #
+    #                sourceAccess.delete();
+    #                recordsMerged++;
+    #            }
+    #            else
+    #            {
+    #                sourceAccess.ModuleCode = targetModule;
+    #                sourceAccess.update();
+    #                recordsUpdated++;
+    #            }
     #        }
     #
     #        info(strFmt("VISITAS_CREACION records updated to VISITAS_GESTION: %1", recordsUpdated));
+    #        info(strFmt("VISITAS_CREACION duplicate records merged into existing VISITAS_GESTION: %1", recordsMerged));
+    #        info(strFmt("Visibility target rows moved to existing VISITAS_GESTION records: %1", targetRowsMoved));
+    #        info(strFmt("Duplicate visibility target rows deleted during merge: %1", targetRowsDeleted));
+    #        info(strFmt("Target AccessRights copied from legacy rows: %1", targetRightsCopied));
+    #        info(strFmt("AccessRights conflicts preserved on target rows: %1", accessRightsConflicts));
     #
-    #        while select forUpdate moduleAccess
-    #            where moduleAccess.AppCode == appCode
-    #               && moduleAccess.ModuleCode == legacyHistoryModule
+    #        while select forUpdate sourceAccess
+    #            where sourceAccess.AppCode == appCode
+    #               && sourceAccess.ModuleCode == legacyHistoryModule
     #        {
-    #            moduleAccess.delete();
+    #            while select forUpdate sourceTarget
+    #                where sourceTarget.INDWebModuleAccessLevel == sourceAccess.RecId
+    #            {
+    #                sourceTarget.delete();
+    #                historyTargetRowsDeleted++;
+    #            }
+    #
+    #            sourceAccess.delete();
     #            recordsDeleted++;
     #        }
     #
     #        ttscommit;
     #        info(strFmt("VISITAS_HISTORIAL records deleted: %1", recordsDeleted));
+    #        info(strFmt("VISITAS_HISTORIAL visibility target rows deleted: %1", historyTargetRowsDeleted));
     #    }
     #    else
     #    {
-    #        while select moduleAccess
-    #            where moduleAccess.AppCode == appCode
-    #               && moduleAccess.ModuleCode == legacyCreateModule
+    #        while select sourceAccess
+    #            where sourceAccess.AppCode == appCode
+    #               && sourceAccess.ModuleCode == legacyCreateModule
     #        {
-    #            recordsUpdated++;
+    #            targetAccess.clear();
+    #
+    #            select firstOnly targetAccess
+    #                where targetAccess.RefRecIdCiaPermitida == sourceAccess.RefRecIdCiaPermitida
+    #                   && targetAccess.AppCode              == sourceAccess.AppCode
+    #                   && targetAccess.ModuleCode           == targetModule;
+    #
+    #            if (!targetAccess.RecId)
+    #            {
+    #                sourceCiaPerm.clear();
+    #
+    #                select firstOnly sourceCiaPerm
+    #                    where sourceCiaPerm.RecId == sourceAccess.RefRecIdCiaPermitida;
+    #
+    #                if (sourceCiaPerm.RecId)
+    #                {
+    #                    targetAccess.clear();
+    #
+    #                    select firstOnly targetAccess
+    #                        where targetAccess.RecId        != sourceAccess.RecId
+    #                           && targetAccess.AppCode      == sourceAccess.AppCode
+    #                           && targetAccess.ModuleCode   == targetModule
+    #                           && targetAccess.AccessRights != 0
+    #                    join targetCiaPerm
+    #                        where targetCiaPerm.RecId  == targetAccess.RefRecIdCiaPermitida
+    #                           && targetCiaPerm.UserId == sourceCiaPerm.UserId
+    #                           && targetCiaPerm.CiaId  == sourceCiaPerm.CiaId;
+    #                }
+    #            }
+    #
+    #            if (targetAccess.RecId)
+    #            {
+    #                recordsMerged++;
+    #
+    #                while select sourceTarget
+    #                    where sourceTarget.INDWebModuleAccessLevel == sourceAccess.RecId
+    #                {
+    #                    duplicateTarget.clear();
+    #
+    #                    select firstOnly duplicateTarget
+    #                        where duplicateTarget.INDWebModuleAccessLevel == targetAccess.RecId
+    #                           && duplicateTarget.TargetPersonAlias       == sourceTarget.TargetPersonAlias
+    #                           && duplicateTarget.TargetScope             == sourceTarget.TargetScope
+    #                           && (duplicateTarget.ValidFrom == dateNull()
+    #                            || sourceTarget.ValidTo == dateNull()
+    #                            || duplicateTarget.ValidFrom <= sourceTarget.ValidTo)
+    #                           && (sourceTarget.ValidFrom == dateNull()
+    #                            || duplicateTarget.ValidTo == dateNull()
+    #                            || sourceTarget.ValidFrom <= duplicateTarget.ValidTo);
+    #
+    #                    if (duplicateTarget.RecId)
+    #                        targetRowsDeleted++;
+    #                    else
+    #                        targetRowsMoved++;
+    #                }
+    #
+    #                if (targetAccess.AccessRights == 0
+    #                 && sourceAccess.AccessRights != 0)
+    #                    targetRightsCopied++;
+    #                else if (sourceAccess.AccessRights != 0
+    #                      && targetAccess.AccessRights != sourceAccess.AccessRights)
+    #                    accessRightsConflicts++;
+    #            }
+    #            else
+    #            {
+    #                recordsUpdated++;
+    #            }
     #        }
     #
     #        info(strFmt("VISITAS_CREACION records to update to VISITAS_GESTION: %1", recordsUpdated));
+    #        info(strFmt("VISITAS_CREACION duplicate records to merge into existing VISITAS_GESTION: %1", recordsMerged));
+    #        info(strFmt("Visibility target rows to move to existing VISITAS_GESTION records: %1", targetRowsMoved));
+    #        info(strFmt("Duplicate visibility target rows to delete during merge: %1", targetRowsDeleted));
+    #        info(strFmt("Target AccessRights to copy from legacy rows: %1", targetRightsCopied));
+    #        info(strFmt("AccessRights conflicts that will keep the target value: %1", accessRightsConflicts));
     #
-    #        while select moduleAccess
-    #            where moduleAccess.AppCode == appCode
-    #               && moduleAccess.ModuleCode == legacyHistoryModule
+    #        while select sourceAccess
+    #            where sourceAccess.AppCode == appCode
+    #               && sourceAccess.ModuleCode == legacyHistoryModule
     #        {
+    #            while select sourceTarget
+    #                where sourceTarget.INDWebModuleAccessLevel == sourceAccess.RecId
+    #            {
+    #                historyTargetRowsDeleted++;
+    #            }
+    #
     #            recordsDeleted++;
     #        }
     #
     #        info("Preview only. Change execute to true to rename VISITAS_CREACION and delete VISITAS_HISTORIAL.");
     #        info(strFmt("VISITAS_HISTORIAL records to delete: %1", recordsDeleted));
+    #        info(strFmt("VISITAS_HISTORIAL visibility target rows to delete: %1", historyTargetRowsDeleted));
     #    }
     #}
   ENDSOURCE

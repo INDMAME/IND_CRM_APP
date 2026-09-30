@@ -1,0 +1,52 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "glossary.glosario-basico",
+    "moduleId":  "glossary",
+    "sectionNumber":  "13",
+    "title":  "Glosario básico",
+    "summary":  "Consulte términos de la interfaz, de los registros y de la relación entre tickets y hojas.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Glosario básico",
+                                  "glosario",
+                                  "definiciones",
+                                  "solo lectura",
+                                  "modo edición",
+                                  "campo obligatorio"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Qué significa modo edición o solo lectura?",
+                                          "¿Dónde consulto el significado de los términos del manual?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "B5CAC99F4F72BB57A991BA7E2BB3558903CDB59E437FB709F69874CAB8EB1677",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "13",
+                   "pageFromTableOfContents":  32
+               }
+}

@@ -1,7 +1,6 @@
 import {
   useCallback,
   useEffect,
-  useEffectEvent,
   useMemo,
   useRef,
   useState,
@@ -22,13 +21,14 @@ import { parseStructuredChatMessages } from "../../../components/commons/chat/ch
 import { buildStructuredAssistantAnswerInstructions } from "../../../components/commons/chat/chatPromptConventions.ts";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
+import { captureSensitiveBrowserState } from "../../../utils/browserStorageScope.ts";
 import { askExpenseSheetsQuestion, fetchExpenseSheetListSourceJson } from "../utils/expenseApi.ts";
 import { runExpenseReadRequestWithRetry } from "../utils/expenseRequestRetry.ts";
+import { createExpenseAssistantSourceCache, getExpenseAssistantQueryKey } from "../utils/expenseAssistantSource.ts";
 import type { ExpenseSheetListResponseEnvelope, ExpenseSheetsAskResult, IndValidationError } from "../expenseTypes.ts";
 import { safeText, sanitizeAssistantText } from "../utils/expenseUiUtils.ts";
 import {
   buildExpenseSheetsVisualizationSelectionMessage,
-  formatExpenseSheetsRetryAfterMessage,
   resolveExpenseSheetsAssistantCopy,
   type ExpenseSheetsAssistantCopy,
 } from "./expenseSheetsAssistantI18n.ts";
@@ -70,12 +70,6 @@ type UseExpenseSheetsAssistantResult = {
 const MAX_TEXTAREA_HEIGHT_PX = 168;
 const DEFAULT_ASSISTANT_VISUAL_WIDTH_PX = 304;
 const DEFAULT_ASSISTANT_VISUAL_HEIGHT_PX = 264;
-
-type ExpenseSheetsAssistantSourceJsonCache = {
-  contextVersion: number;
-  axUserIdOverride: string;
-  response: ExpenseSheetListResponseEnvelope;
-};
 
 type SendQuestionOptions = {
   requestedVisualizationType?: VisualizationType | null;
@@ -119,7 +113,27 @@ const extractTraceIdFromApiError = (error: ApiFetchError): string => {
   }
 };
 
-const isRetryableStatus = (status: number | undefined): boolean => {
+const ASSISTANT_QUERY_RATE_LIMIT_ERROR_CODE = "ASSISTANT_QUERY_RATE_LIMIT_EXCEEDED";
+
+// Extracts the stable API error code without exposing the raw response body.
+const extractErrorCodeFromApiError = (error: ApiFetchError): string => {
+  const payload = safeText(error.responseBody);
+  if (!payload) return "";
+
+  try {
+    const parsed = JSON.parse(payload) as Record<string, unknown>;
+    return safeText(parsed.ErrorCode ?? parsed.errorCode);
+  } catch {
+    return "";
+  }
+};
+
+const isAssistantQueryRateLimit = (status: number | undefined, errorCode: string): boolean => {
+  return status === 429 && errorCode === ASSISTANT_QUERY_RATE_LIMIT_ERROR_CODE;
+};
+
+const isRetryableStatus = (status: number | undefined, errorCode: string): boolean => {
+  if (isAssistantQueryRateLimit(status, errorCode)) return false;
   return status === 429 || status === 500 || status === 502 || status === 503 || status === 504;
 };
 
@@ -129,18 +143,16 @@ const resolveFailedAskMessage = (
 ): string => {
   const validationText = formatValidationErrors(response.Errors);
   const responseMessage = sanitizeAssistantText(response.Message);
-  const retryAfter = safeText(response.RetryAfter);
-
   if (response.HttpStatus === 422) {
     return validationText || responseMessage || assistantCopy.errorValidation;
   }
 
+  if (isAssistantQueryRateLimit(response.HttpStatus, safeText(response.ErrorCode))) {
+    return assistantCopy.errorRateLimit;
+  }
+
   if (response.HttpStatus === 429) {
-    const parts = [responseMessage || assistantCopy.errorRateLimit];
-    if (retryAfter) {
-      parts.push(formatExpenseSheetsRetryAfterMessage(retryAfter));
-    }
-    return parts.filter(Boolean).join(" ");
+    return responseMessage || indT("Api_RequestFailed", "Request failed.");
   }
 
   if (response.HttpStatus === 500) {
@@ -153,22 +165,25 @@ const resolveFailedAskMessage = (
 const resolveThrownAskMessage = (
   error: unknown,
   assistantCopy: ExpenseSheetsAssistantCopy
-): { message: string; status?: number; traceId: string } => {
+): { message: string; status?: number; traceId: string; errorCode: string } => {
   if (error instanceof ApiFetchError) {
+    const errorCode = extractErrorCodeFromApiError(error);
     const validationText = formatValidationErrors(error.validationErrors);
     if (validationText) {
       return {
         message: validationText,
         status: error.status,
         traceId: extractTraceIdFromApiError(error),
+        errorCode,
       };
     }
 
-    if (error.status === 429) {
+    if (isAssistantQueryRateLimit(error.status, errorCode)) {
       return {
-        message: sanitizeAssistantText(error.message) || assistantCopy.errorRateLimit,
+        message: assistantCopy.errorRateLimit,
         status: error.status,
         traceId: extractTraceIdFromApiError(error),
+        errorCode,
       };
     }
 
@@ -177,6 +192,7 @@ const resolveThrownAskMessage = (
         message: assistantCopy.errorServer,
         status: error.status,
         traceId: extractTraceIdFromApiError(error),
+        errorCode,
       };
     }
 
@@ -184,6 +200,7 @@ const resolveThrownAskMessage = (
       message: sanitizeAssistantText(error.message) || indT("Api_RequestFailed", "Request failed."),
       status: error.status,
       traceId: extractTraceIdFromApiError(error),
+      errorCode,
     };
   }
 
@@ -193,6 +210,7 @@ const resolveThrownAskMessage = (
       : indT("Api_RequestFailed", "Request failed."),
     status: undefined,
     traceId: "",
+    errorCode: "",
   };
 };
 
@@ -202,13 +220,14 @@ const buildErrorMessage = (
   message: string,
   status: number | undefined,
   traceId: string,
-  retryAfter?: string | null
+  retryAfter?: string | null,
+  errorCode = ""
 ): ExpenseSheetsAssistantMessage => ({
   id,
   role: "assistant",
   message: createMarkdownMessage(message),
   state: "error",
-  retryQuestion: isRetryableStatus(status) ? question : null,
+  retryQuestion: isRetryableStatus(status, errorCode) ? question : null,
   meta: {
     httpStatus: status,
     traceId,
@@ -339,7 +358,10 @@ export const useExpenseSheetsAssistant = ({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const previousContextVersionRef = useRef(context.contextVersion);
-  const sourceJsonCacheRef = useRef<ExpenseSheetsAssistantSourceJsonCache | null>(null);
+  const [sourceJsonCache] = useState(createExpenseAssistantSourceCache);
+  const sourceQueryKey = context.lastExpenseSheetsListRequest
+    ? getExpenseAssistantQueryKey(context.lastExpenseSheetsListRequest, safeText(context.lastExpenseSheetsListAxUserIdOverride), captureSensitiveBrowserState())
+    : "";
 
   const hasContext = useMemo(
     () =>
@@ -473,11 +495,10 @@ export const useExpenseSheetsAssistant = ({
   }, [isOpen]);
 
   useEffect(() => {
-    const cachedSourceJson = sourceJsonCacheRef.current;
-    if (!cachedSourceJson) return;
-    if (cachedSourceJson.contextVersion === context.contextVersion) return;
-    sourceJsonCacheRef.current = null;
-  }, [context.contextVersion]);
+    sourceJsonCache.selectQuery(sourceQueryKey);
+  }, [sourceJsonCache, sourceQueryKey]);
+
+  useEffect(() => () => sourceJsonCache.clear(), [sourceJsonCache]);
 
   useEffect(() => {
     if (previousContextVersionRef.current === context.contextVersion) {
@@ -496,39 +517,24 @@ export const useExpenseSheetsAssistant = ({
     );
   }, [assistantCopy.contextUpdated, assistantCopy.noContextMessage, context.contextVersion, hasContext, messages.length]);
 
-  const resolveFullSourceJson = useEffectEvent(async (): Promise<ExpenseSheetListResponseEnvelope | null> => {
+  const resolveFullSourceJson = useCallback(async (): Promise<ExpenseSheetListResponseEnvelope | null> => {
     if (!context.lastExpenseSheetsListRequest || !context.lastExpenseSheetsListResponse) {
       return null;
     }
 
     const axUserIdOverride = safeText(context.lastExpenseSheetsListAxUserIdOverride);
-    const cachedSourceJson = sourceJsonCacheRef.current;
-    if (
-      cachedSourceJson &&
-      cachedSourceJson.contextVersion === context.contextVersion &&
-      cachedSourceJson.axUserIdOverride === axUserIdOverride
-    ) {
-      return cachedSourceJson.response;
-    }
-
-    const fullSourceJson = await runExpenseReadRequestWithRetry(
-      () =>
-        fetchExpenseSheetListSourceJson(context.lastExpenseSheetsListRequest, {
-          suppressPermissionModal: true,
-          axUserIdOverride: axUserIdOverride || undefined,
-          seedResponse: context.lastExpenseSheetsListResponse,
-        }),
-      {}
-    );
-
-    sourceJsonCacheRef.current = {
-      contextVersion: context.contextVersion,
-      axUserIdOverride,
-      response: fullSourceJson,
-    };
-
-    return fullSourceJson;
-  });
+    const request = context.lastExpenseSheetsListRequest;
+    const response = context.lastExpenseSheetsListResponse;
+    return sourceJsonCache.load(sourceQueryKey, response, (signal) => runExpenseReadRequestWithRetry(
+      () => fetchExpenseSheetListSourceJson(request, {
+        suppressPermissionModal: true,
+        axUserIdOverride: axUserIdOverride || undefined,
+        seedResponse: response,
+        signal,
+      }),
+      { signal }
+    ));
+  }, [context.lastExpenseSheetsListRequest, context.lastExpenseSheetsListResponse, context.lastExpenseSheetsListAxUserIdOverride, sourceJsonCache, sourceQueryKey]);
 
   const sendQuestion = useCallback(
     async (rawQuestion: string, options?: SendQuestionOptions) => {
@@ -655,7 +661,8 @@ export const useExpenseSheetsAssistant = ({
             resolveFailedAskMessage(response, assistantCopy),
             response.HttpStatus,
             safeText(response.TraceId),
-            response.RetryAfter
+            response.RetryAfter,
+            safeText(response.ErrorCode)
           );
           setMessages((previous) => previous.map((entry) => (entry.id === assistantMessageId ? failedMessage : entry)));
           return;
@@ -691,7 +698,9 @@ export const useExpenseSheetsAssistant = ({
           question,
           thrown.message,
           thrown.status,
-          thrown.traceId
+          thrown.traceId,
+          null,
+          thrown.errorCode
         );
         setMessages((previous) => previous.map((entry) => (entry.id === assistantMessageId ? failedMessage : entry)));
       } finally {

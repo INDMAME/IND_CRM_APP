@@ -2,7 +2,7 @@ import { indFormat, indT } from "../../../utils/indI18n.ts";
 import type { ExchangeRateDto } from "../expenseTypes.ts";
 import { getExchangeRate } from "./expenseApi.ts";
 import { EXPENSE_LINE_EXCHANGE_RATE_REFERENCE_AMOUNT, normalizeExpenseLineCurrencyCode } from "./expenseLineCurrency.ts";
-import { formatExpenseInputNumber, parseExpenseNumericInput } from "./expenseNumberFormat.ts";
+import { formatExpenseInputNumber, parseExpenseExchangeRateInput } from "./expenseNumberFormat.ts";
 import { safeText } from "./expenseUiUtils.ts";
 
 type RawExchangeRateDto = ExchangeRateDto & {
@@ -27,6 +27,7 @@ export const formatExpenseExchangeRateInputValue = (value: number | string | nul
   return formatExpenseInputNumber(value, {
     minimumFractionDigits: 7,
     maximumFractionDigits: 7,
+    preferDecimalSeparator: true,
     useGrouping: true,
     fallback: "",
   });
@@ -36,6 +37,7 @@ export const formatExpenseExchangeRateRawValue = (value: number | string | null 
   return formatExpenseInputNumber(value, {
     minimumFractionDigits: 7,
     maximumFractionDigits: 7,
+    preferDecimalSeparator: true,
     useGrouping: false,
     fallback: "",
   });
@@ -102,7 +104,7 @@ export const buildExpenseExchangeRateInfoMessage = ({
   source?: string;
 }): string => {
   const rawRateText = formatExpenseExchangeRateRawValue(rawRate);
-  const parsedExchangeRate = parseExpenseNumericInput(exchangeRate);
+  const parsedExchangeRate = parseExpenseExchangeRateInput(exchangeRate);
   if (rawRateText) {
     return indFormat(
       "ExpenseSheets_ExchangeRate_InfoPopover_Detail",

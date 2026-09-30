@@ -1,2 +1,2 @@
-import{a as o}from"./chunks/chunk-RJ76LKAU.js";import{c as r,d as n,e as m}from"./chunks/chunk-VNW6EX3T.js";import{c as e}from"./chunks/chunk-FZAF5VMJ.js";var d=e(r()),u=()=>{let t=document.getElementById("ind-audio-recorder-root");t&&n(t,(0,d.jsx)(o,{}))},c=()=>{u()};m(c);var f=o;export{f as default,u as mountAudioRecorder};
+import{a as o}from"./chunks/chunk-4ATL4SN7.js";import{b as n,c as m,d as u}from"./chunks/chunk-VSFFU3AN.js";import{b as r}from"./chunks/chunk-5CCUPKHG.js";import{d as e}from"./chunks/chunk-ORJLERH4.js";u();var d=e(r()),c=()=>{let t=document.getElementById("ind-audio-recorder-root");t&&n(t,(0,d.jsx)(o,{}))},i=()=>{c()};m(i);var l=o;export{l as default,c as mountAudioRecorder};
 //# sourceMappingURL=audio-recorder.js.map

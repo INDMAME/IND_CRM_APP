@@ -6,7 +6,7 @@ Formatversion: 1
 ; Navision Axapta Job: INDRecalcularAmountMST_HojasGastos descargados en Jueves 02/07/2026
 ; --------------------------------------------------------------------------------
   JOBVERSION 1
-  
+
   SOURCE #INDRecalcularAmountMST_HojasGastos
     #static void INDRecalcularAmountMST_HojasGastos(Args _args)
     #{
@@ -17,6 +17,8 @@ Formatversion: 1
     #    int                scanned;
     #    int                updated;
     #    int                skippedNoCalculation;
+    #    INDReimbursableAmount origReimbursableAmount;
+    #    NoYes             origVisaEmpresa;
     #    ;
     #
     #    while select hojaGastosLine
@@ -37,14 +39,30 @@ Formatversion: 1
     #
     #            if (newAmountMST == 0)
     #            {
+    #                origReimbursableAmount = hojaGastosLineUpdate.ReimbursableAmount;
+    #                origVisaEmpresa        = hojaGastosLineUpdate.VisaEmpresa;
+    #                hojaGastosLineUpdate.recalculateReimbursableAmount();
+    #
+    #                //MMS - Persiste el importe derivado y la sincronizacion inversa con el valor historico de Visa - 2026.07.29
+    #                if (origReimbursableAmount != hojaGastosLineUpdate.ReimbursableAmount ||
+    #                    origVisaEmpresa        != hojaGastosLineUpdate.VisaEmpresa)
+    #                {
+    #                    hojaGastosLineUpdate.doUpdate();
+    #
+    #                    if (origReimbursableAmount != hojaGastosLineUpdate.ReimbursableAmount)
+    #                        INDProjCostRevenueTable::CreateProjCostFromCommon(hojaGastosLineUpdate);
+    #                }
+    #
     #                skippedNoCalculation++;
     #                ttscommit;
     #                continue;
     #            }
     #
-    #            // Backfill historico: solo se rellena AmountMST. No tocar divisa, tasa, estados ni totales.
+    #            //MMS - Mantiene alineado el importe derivado durante la carga historica - 2026.07.29
     #            hojaGastosLineUpdate.AmountMST = newAmountMST;
+    #            hojaGastosLineUpdate.recalculateReimbursableAmount();
     #            hojaGastosLineUpdate.doUpdate();
+    #            INDProjCostRevenueTable::CreateProjCostFromCommon(hojaGastosLineUpdate);
     #
     #            updated++;
     #        }

@@ -4,6 +4,7 @@ import { indT } from "../../../utils/indI18n.ts";
 import {
   getExpenseLineReimbursableExpenseLabel,
   getExpenseLineReimbursableExpenseOptions,
+  isEditableExpenseLineReimbursableExpense,
   normalizeExpenseLineReimbursableExpense,
 } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
@@ -11,7 +12,7 @@ import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 
 type ExpenseTicketLinkedSheetLineSectionProps = {
   projectId: string;
-  reimbursableExpense: number;
+  reimbursableExpense: number | null;
   isEditing: boolean;
   isLoading: boolean;
   disabled?: boolean;
@@ -33,6 +34,9 @@ const ExpenseTicketLinkedSheetLineSection = ({
 }: ExpenseTicketLinkedSheetLineSectionProps) => {
   const reimbursableExpenseOptions = React.useMemo(() => getExpenseLineReimbursableExpenseOptions(), []);
   const normalizedReimbursableExpense = normalizeExpenseLineReimbursableExpense(reimbursableExpense);
+  const hasEditableReimbursableExpenseValue = isEditableExpenseLineReimbursableExpense(
+    normalizedReimbursableExpense
+  );
   const reimbursableExpenseLabel = getExpenseLineReimbursableExpenseLabel(normalizedReimbursableExpense);
   const reimbursableStatusLabel = indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable");
   const projectField = isEditing ? (
@@ -50,12 +54,17 @@ const ExpenseTicketLinkedSheetLineSection = ({
       value={projectId || "-"}
     />
   );
-  const reimbursableExpenseField = isEditing ? (
+  const reimbursableExpenseField = isEditing && hasEditableReimbursableExpenseValue ? (
     <SelectCombobox
       label={reimbursableStatusLabel}
       options={reimbursableExpenseOptions}
       value={String(normalizedReimbursableExpense)}
-      onChange={(value) => onReimbursableExpenseChange(normalizeExpenseLineReimbursableExpense(value))}
+      onChange={(value) => {
+        const normalizedValue = normalizeExpenseLineReimbursableExpense(value);
+        if (isEditableExpenseLineReimbursableExpense(normalizedValue) && normalizedValue !== null) {
+          onReimbursableExpenseChange(normalizedValue);
+        }
+      }}
       placeholder={reimbursableStatusLabel}
       disabled={disabled}
       readOnly={disabled}
