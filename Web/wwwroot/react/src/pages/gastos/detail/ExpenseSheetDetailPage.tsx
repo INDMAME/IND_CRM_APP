@@ -1,3 +1,4 @@
+import ActionErrorNotice from "../../../components/commons/ActionErrorNotice.tsx";
 import React from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
@@ -151,10 +152,7 @@ const ExpenseSheetDetailPageContent = () => {
         quickTicketProgressStages={controller.quickTicketFlow.progressStages}
         quickTicketElapsedMs={controller.quickTicketFlow.progressElapsedMs}
         quickTicketErrorMessage={controller.quickTicketFlow.errorMessage}
-        quickTicketAttemptId={controller.quickTicketFlow.attemptId}
-        quickTicketTraceList={controller.quickTicketFlow.traceList}
         hasPendingUploadRetry={controller.quickTicketFlow.hasPendingUploadRetry}
-        hasPartialTicketFailure={controller.quickTicketFlow.hasPartialTicketFailure}
         onConfirm={controller.handleModalButtonConfirm}
         onCancel={controller.closeConfirm}
         onSelectedCameraFile={(file) => {
@@ -184,7 +182,7 @@ const ExpenseSheetDetailPageContent = () => {
         {indT("Common_Loading", "Loading")}
       </div>
 
-      {controller.errorMessage ? <div className="text-danger">{controller.errorMessage}</div> : null}
+      {controller.errorMessage ? <ActionErrorNotice error={controller.errorMessage} /> : null}
 
       {!controller.isLoading && !controller.isRedirectingAfterCreate && !controller.errorMessage && controller.header ? (
         <ExpenseSheetHeaderForm

@@ -1,3 +1,5 @@
+import ActionErrorNotice from "../../../../components/commons/ActionErrorNotice.tsx";
+import { resolveActionError, type ActionError } from "../../../../utils/actionError.ts";
 import React, { useCallback, useMemo } from "react";
 import VisitasPageProviders from "../../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../../components/commons/ConfirmModal.tsx";
@@ -72,7 +74,7 @@ type ExpenseTicketLineDetailModalProps = {
   cancelText: string;
   loadingText: string;
   busy: boolean;
-  error: string;
+  error: ActionError;
   status: string;
   onConfirm: () => void;
   onCancel: () => void;
@@ -280,7 +282,7 @@ const useExpenseTicketLineDetailViewModel = () => {
         safeText(linkSheetBlockedMessage) ||
         resolveLinkedTicketBlockedMessage(false);
       setModalError(message);
-      setStatus(message);
+      setStatus("");
       return;
     }
 
@@ -290,7 +292,7 @@ const useExpenseTicketLineDetailViewModel = () => {
         "No se puede editar esta hoja de gastos en el estado actual."
       );
       setModalError(message);
-      setStatus(message);
+      setStatus("");
       return;
     }
 
@@ -405,9 +407,10 @@ const useExpenseTicketLineDetailViewModel = () => {
     setModalError("");
     await handleConfirm({
       busy,
-      onError: (msg) => {
-        setModalError(msg);
-        setStatus(msg);
+      onError: (msg, error) => {
+        const feedback = resolveActionError(error, msg);
+        setModalError(feedback);
+        setStatus(feedback.message);
       },
     });
   }, [busy, handleConfirm, setModalError, setStatus]);
@@ -446,7 +449,7 @@ const useExpenseTicketLineDetailViewModel = () => {
       bypassGuardOnce: shouldBlockWorkflowExit,
     });
   }, [handleCancelEdit, isCreateMode, preferredTicketDetailUrl, shouldBlockWorkflowExit]);
-  const { handleUpdate, handleDelete } = useExpenseTicketLineDetailMutations({
+  const { handleUpdate, handleDelete, isSaveComplete, getSaveWarning } = useExpenseTicketLineDetailMutations({
     busy,
     isEditing,
     isCreateMode,
@@ -516,6 +519,8 @@ const useExpenseTicketLineDetailViewModel = () => {
     handleEnableEdit: handleEnableEditInContext,
     handleCancelEdit: handleCancelEditInContext,
     handleUpdate,
+    isSaveComplete,
+    getSaveWarning,
     handleDelete,
     onSaveSuccess: handleTicketLineSaveSuccess,
     onDeleteSuccess: handleTicketLineDeleteSuccess,
@@ -574,7 +579,7 @@ const ExpenseTicketLineDetailContent = () => {
 
       <ExpenseTicketLineDetailLoader isLoading={view.isLoading} />
 
-      {view.errorMessage ? <div className="text-danger">{view.errorMessage}</div> : null}
+      {view.errorMessage ? <ActionErrorNotice error={view.errorMessage} /> : null}
 
       {!view.isLoading && !view.errorMessage && view.header && (view.line || view.isCreateMode) ? (
         <ExpenseTicketLineDetailForm

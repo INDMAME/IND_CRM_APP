@@ -8,6 +8,7 @@ declare global {
   };
 
   interface Window {
+    __IND_COMMON_I18N__?: Record<string, string>;
     __IND_I18N__?: Record<string, string>;
     __IND_MODULE_ACCESS__?: Record<string, number>;
     __IND_SELECTED_COMPANY__?: string;
@@ -67,6 +68,7 @@ declare global {
   }
 
   interface GlobalThis {
+    __IND_COMMON_I18N__?: Record<string, string>;
     __IND_I18N__?: Record<string, string>;
     __IND_MODULE_ACCESS__?: Record<string, number>;
     __IND_SELECTED_COMPANY__?: string;

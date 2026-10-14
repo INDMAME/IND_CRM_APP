@@ -1,3 +1,4 @@
+import { resolveActionError, type ActionError } from "../utils/actionError.ts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiFetchError, fetchJson } from "../services/apiService.ts";
 import { indT } from "../utils/indI18n.ts";
@@ -47,7 +48,7 @@ type UseHistoryActivitiesArgs = {
   pageSize: number;
   retryDelayMs?: number;
   normalizeRange: (from: string, to: string) => { from: string; to: string };
-  onForbidden: () => void;
+  onForbidden: (options?: Record<string, unknown>) => void;
   onDebug?: (message: string, data?: Record<string, unknown>) => void;
 };
 
@@ -67,7 +68,7 @@ export const useHistoryActivities = ({
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<ActionError>("");
   // Tracks the owner filter that produced the current rows, independently from draft filter edits.
   const [loadedOwnerAxUserId, setLoadedOwnerAxUserId] = useState<string | null>(null);
 
@@ -183,7 +184,7 @@ export const useHistoryActivities = ({
           lastSignatureRef.current = "";
           setIsLoading(false);
           activeAbortRef.current = null;
-          onForbidden();
+          onForbidden({ traceId: resolveActionError(err).traceId });
           return;
         }
 
@@ -205,7 +206,7 @@ export const useHistoryActivities = ({
         }
         lastSignatureRef.current = "";
         setIsLoading(false);
-        setErrorMessage(err?.message || indT("Api_RequestFailed", "No se pudo conectar con el servidor (red)."));
+        setErrorMessage({ ...resolveActionError(err), message: err?.message || indT("Api_RequestFailed", "No se pudo conectar con el servidor (red).") });
         activeAbortRef.current = null;
         return;
       }

@@ -1,5 +1,6 @@
 import { ensureExpenseActingUserForNavigation } from "./expenseActingUser.ts";
 import { indT } from "../../../utils/indI18n.ts";
+import { showActionError } from "../../../services/actionFeedback.ts";
 
 type NavigateWithGuardOptions = {
   askConfirmation?: boolean;
@@ -15,7 +16,7 @@ type ReloadExpensePageOptions = {
 // Keeps the current page when the destination cannot restore the selected actor.
 const canNavigateWithActingUser = (): boolean => {
   if (ensureExpenseActingUserForNavigation()) return true;
-  window.alert(indT("Expense_ContextSaveFailed", "Could not preserve the selected user in this browser. Try again before opening another page."));
+  showActionError({ message: indT("Expense_ContextSaveFailed", "Could not preserve the selected user in this browser. Try again before opening another page."), severity: "warning" });
   return false;
 };
 

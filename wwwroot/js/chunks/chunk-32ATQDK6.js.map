@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../react/src/components/commons/ActionErrorNotice.tsx"],
+  "sourcesContent": ["import { useEffect } from \"react\";\nimport { showActionError } from \"../../services/actionFeedback.ts\";\nimport { resolveActionError } from \"../../utils/actionError.ts\";\n\ntype Props = { error?: unknown; severity?: \"error\" | \"warning\" };\n\n// Routes standalone feedback to the common popup while leaving source error state intact.\nexport default function ActionErrorNotice({ error, severity }: Props) {\n  const details = resolveActionError(error);\n  useEffect(() => {\n    if (details.message) showActionError(details, severity ? { severity } : {});\n  }, [details.message, details.traceId, details.errorCode, details.severity, severity]);\n  return null;\n}\n"],
+  "mappings": "mHAOe,SAARA,EAAmC,CAAE,MAAAC,EAAO,SAAAC,CAAS,EAAU,CACpE,IAAMC,EAAUC,EAAmBH,CAAK,EACxC,sBAAU,IAAM,CACVE,EAAQ,SAASE,EAAgBF,EAASD,EAAW,CAAE,SAAAA,CAAS,EAAI,CAAC,CAAC,CAC5E,EAAG,CAACC,EAAQ,QAASA,EAAQ,QAASA,EAAQ,UAAWA,EAAQ,SAAUD,CAAQ,CAAC,EAC7E,IACT,CAbA,IAAAI,EAAAC,EAAAC,EAAA,KAAAF,EAA0B,OAC1BG,IACAC",
+  "names": ["ActionErrorNotice", "error", "severity", "details", "resolveActionError", "showActionError", "import_react", "init_ActionErrorNotice", "__esmMin", "init_actionFeedback", "init_actionError"]
+}

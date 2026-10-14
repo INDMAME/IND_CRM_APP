@@ -1,3 +1,5 @@
+import { indT } from "../../../utils/indI18n.ts";
+
 const DDMMYYYY_COMPACT_REGEX = /^\d{8}$/;
 const DDMMYY_COMPACT_REGEX = /^\d{6}$/;
 const DDMMYYYY_DOTTED_REGEX = /^\d{2}\.\d{2}\.\d{4}$/;
@@ -8,7 +10,7 @@ const MIN_SUPPORTED_EXPENSE_YEAR = 1900;
 const MAX_SUPPORTED_EXPENSE_YEAR = 2100;
 const TWO_DIGIT_YEAR_PIVOT = 50;
 
-export const EXPENSE_API_DATE_FORMAT_MESSAGE = "Formato requerido: DDMMYYYY o DD.MM.YYYY";
+export const EXPENSE_API_DATE_FORMAT_MESSAGE = indT("Common_Validation_DateFormat", "Required format: DDMMYYYY or DD.MM.YYYY.");
 
 const safeText = (value: unknown): string => {
   if (value === null || value === undefined) return "";

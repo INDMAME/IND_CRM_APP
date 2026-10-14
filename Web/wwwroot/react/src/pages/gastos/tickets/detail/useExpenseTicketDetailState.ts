@@ -1,3 +1,4 @@
+import { resolveActionError, type ActionError } from "../../../../utils/actionError.ts";
 import { useCallback, useEffect, useState } from "react";
 import { ApiFetchError } from "../../../../services/apiService.ts";
 import { indT } from "../../../../utils/indI18n.ts";
@@ -9,7 +10,7 @@ import { mapExpenseTicketDetailHeader, mapExpenseTicketDetailLine } from "./expe
 type UseExpenseTicketDetailStateArgs = {
   hasAccess: boolean;
   fileId: string;
-  onForbidden: () => void;
+  onForbidden: (options?: Record<string, unknown>) => void;
   enabled?: boolean;
 };
 
@@ -18,7 +19,7 @@ export const useExpenseTicketDetailState = ({ hasAccess, fileId, onForbidden, en
   const [header, setHeader] = useState<ExpenseTicketDetailHeader | null>(null);
   const [lines, setLines] = useState<ExpenseTicketDetailLine[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<ActionError>("");
 
   const reloadDetail = useCallback(async () => {
     if (!enabled) {
@@ -51,7 +52,7 @@ export const useExpenseTicketDetailState = ({ hasAccess, fileId, onForbidden, en
       });
 
       if (response?.Success === false) {
-        setErrorMessage(response?.Message || indT("Tickets_Detail_LoadError", "Could not load ticket detail."));
+        setErrorMessage(resolveActionError(response, response?.Message || indT("Tickets_Detail_LoadError", "Could not load ticket detail.")));
         setHeader(null);
         setLines([]);
         return;
@@ -76,11 +77,11 @@ export const useExpenseTicketDetailState = ({ hasAccess, fileId, onForbidden, en
       setLines(mappedLines);
     } catch (error) {
       if (error instanceof ApiFetchError && error.status === 403) {
-        onForbidden();
+        onForbidden({ traceId: resolveActionError(error).traceId });
         return;
       }
 
-      setErrorMessage(error instanceof Error ? error.message : indT("Tickets_Detail_LoadError", "Could not load ticket detail."));
+      setErrorMessage({ ...resolveActionError(error), message: error instanceof Error ? error.message : indT("Tickets_Detail_LoadError", "Could not load ticket detail.") });
       setHeader(null);
       setLines([]);
     } finally {

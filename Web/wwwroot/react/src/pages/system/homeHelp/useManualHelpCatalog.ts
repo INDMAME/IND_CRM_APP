@@ -1,3 +1,4 @@
+import { type ActionError } from "../../../utils/actionError.ts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import { fetchHelpCatalog, fetchHelpTopic } from "./helpService.ts";
@@ -11,11 +12,11 @@ import type {
 type UseManualHelpCatalogResult = {
   catalog: HelpCatalog | null;
   catalogLoading: boolean;
-  catalogError: string;
+  catalogError: ActionError;
   selectedTopicId: string;
   topic: HelpTopic | null;
   topicLoading: boolean;
-  topicError: string;
+  topicError: ActionError;
   selectTopic: (topic: HelpTopicSummary) => Promise<void>;
 };
 
@@ -25,11 +26,11 @@ export const useManualHelpCatalog = (
 ): UseManualHelpCatalogResult => {
   const [catalog, setCatalog] = useState<HelpCatalog | null>(null);
   const [catalogLoading, setCatalogLoading] = useState(true);
-  const [catalogError, setCatalogError] = useState("");
+  const [catalogError, setCatalogError] = useState<ActionError>("");
   const [selectedTopicId, setSelectedTopicId] = useState("");
   const [topic, setTopic] = useState<HelpTopic | null>(null);
   const [topicLoading, setTopicLoading] = useState(false);
-  const [topicError, setTopicError] = useState("");
+  const [topicError, setTopicError] = useState<ActionError>("");
   const topicControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {

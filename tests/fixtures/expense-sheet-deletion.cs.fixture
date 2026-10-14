@@ -358,6 +358,12 @@ foreach (var deleteTickets in new[] { false, true })
         "HTTP client did not serialize the cleanup choice");
     verified++;
 }
+// Local MVC errors return the same trace identifier used by the server log.
+var localFailure = Create();
+localFailure.Controller.HttpContext.TraceIdentifier = "local-error-trace";
+var localError = Check(await localFailure.Controller.ApiExpenseSheetLineDelete("", "123", false, 0), 400, false, false);
+Require(localError.GetProperty("TraceId").GetString() == "local-error-trace", "Local command error lost its log trace");
+verified++;
 Console.WriteLine($"Verified {verified} expense mutation and deletion cases.");
 
 // Invokes both existing public whole-sheet routes, preserving legacy response casing.

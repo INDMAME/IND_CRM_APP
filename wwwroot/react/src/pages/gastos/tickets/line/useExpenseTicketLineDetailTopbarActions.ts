@@ -1,3 +1,4 @@
+import { type ActionError } from "../../../../utils/actionError.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 import { useExpenseTopbarCrudActions } from "../../hooks/useExpenseTopbarCrudActions.ts";
 import { navigateToExpenseUrl } from "../../utils/expenseNavigation.ts";
@@ -13,10 +14,12 @@ type UseExpenseTicketLineDetailTopbarActionsArgs = {
   canEditTicket: boolean;
   canDeleteTicket: boolean;
   fileId: string;
-  setModalError: (value: string) => void;
+  setModalError: (value: ActionError) => void;
   handleEnableEdit: () => void;
   handleCancelEdit: () => void;
   handleUpdate: () => Promise<boolean>;
+  isSaveComplete?: () => boolean;
+  getSaveWarning?: () => ActionError;
   handleDelete: () => Promise<boolean>;
   onSaveSuccess: () => void;
   onDeleteSuccess?: () => void;
@@ -46,6 +49,8 @@ export const useExpenseTicketLineDetailTopbarActions = ({
   handleEnableEdit,
   handleCancelEdit,
   handleUpdate,
+  isSaveComplete,
+  getSaveWarning,
   handleDelete,
   onSaveSuccess,
   onDeleteSuccess,
@@ -78,7 +83,10 @@ export const useExpenseTicketLineDetailTopbarActions = ({
     handleEnableEdit,
     handleCancelEdit,
     handleSave: handleUpdate,
+    isSaveComplete,
+    getSaveWarning,
     handleDelete,
+    getDeleteWarning: getSaveWarning,
     saveConfirmTitle: indT("ExpenseSheets_Detail_SaveChanges_Title", "Save changes"),
     saveConfirmMessage: indT("ExpenseSheets_Detail_SaveChanges_Body", "Do you want to save changes?"),
     saveConfirmText: indT("Common_Save", "Save"),

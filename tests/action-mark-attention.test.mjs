@@ -282,10 +282,11 @@ test("shared modal and quick-ticket feedback expose the attention contract", asy
   const [modalSource, sheetSource, ticketsSource] = await Promise.all(sourcePaths.map((sourcePath) => readFile(sourcePath, "utf8")));
 
   assert.match(modalSource, /data-ind-action-feedback="modal"/u);
-  assert.match(sheetSource, /data-ind-action-feedback="page"/u);
-  assert.match(ticketsSource, /data-ind-action-feedback="page"/u);
-  for (const source of [modalSource, sheetSource, ticketsSource]) {
-    assert.match(source, /role="alert"/u);
-    assert.match(source, /tabIndex=\{-1\}/u);
-  }
+  assert.match(sheetSource, /<ExpenseTicketErrorModal\b/u);
+  assert.match(ticketsSource, /<ExpenseTicketErrorModal\b/u);
+  const ticketPopup = await readFile(path.join(repositoryRoot,
+    "Web/wwwroot/react/src/pages/gastos/components/ExpenseTicketErrorModal.tsx"), "utf8");
+  assert.match(ticketPopup, /<ConfirmModal\b/u);
+  assert.match(modalSource, /role="alert"/u);
+  assert.match(modalSource, /tabIndex=\{-1\}/u);
 });

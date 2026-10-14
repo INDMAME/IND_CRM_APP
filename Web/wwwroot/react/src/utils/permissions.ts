@@ -1,4 +1,5 @@
 import { indT } from "./indI18n.ts";
+import { showActionError } from "../services/actionFeedback.ts";
 
 export const ACCESS_RIGHTS = {
   View: 1,
@@ -30,5 +31,5 @@ export const showPermissionModal = (opts?: Record<string, unknown>) => {
   }
   const perm = getPermissionI18n();
   const fallback = perm.message || indT("Auth_PermissionDenied_Body", "Auth_PermissionDenied_Body");
-  alert(fallback);
+  showActionError({ message: fallback, traceId: opts?.traceId, severity: "warning", errorCode: "AUTH_PERMISSION_DENIED" });
 };

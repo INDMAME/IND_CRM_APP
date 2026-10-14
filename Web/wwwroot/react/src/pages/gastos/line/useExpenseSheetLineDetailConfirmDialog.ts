@@ -1,11 +1,12 @@
+import { resolveActionError, type ActionError } from "../../../utils/actionError.ts";
 import React, { useCallback } from "react";
 import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
 import { indT } from "../../../utils/indI18n.ts";
 
 type UseExpenseSheetLineDetailConfirmDialogArgs = {
   busy: boolean;
-  modalError: string;
-  setModalError: React.Dispatch<React.SetStateAction<string>>;
+  modalError: ActionError;
+  setModalError: React.Dispatch<React.SetStateAction<ActionError>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
 };
 
@@ -25,9 +26,10 @@ export const useExpenseSheetLineDetailConfirmDialog = ({
     setModalError("");
     await handleConfirm({
       busy,
-      onError: (msg) => {
-        setModalError(msg);
-        setStatus(msg);
+      onError: (msg, error) => {
+        const feedback = resolveActionError(error, msg);
+        setModalError(feedback);
+        setStatus(feedback.message);
       },
     });
   }, [busy, handleConfirm, setModalError, setStatus]);

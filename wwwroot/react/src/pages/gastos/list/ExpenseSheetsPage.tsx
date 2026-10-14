@@ -1,3 +1,4 @@
+import ActionErrorNotice from "../../../components/commons/ActionErrorNotice.tsx";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
@@ -702,7 +703,7 @@ const ExpenseSheetsPageContent = ({ assistantBotImageSrc, assistantLauncherImage
         {indT("Common_Loading", "Loading")}
       </div>
 
-      {errorMessage ? <div className="text-danger">{errorMessage}</div> : null}
+      {errorMessage ? <ActionErrorNotice error={errorMessage} /> : null}
 
       {!isLoading && !errorMessage && items.length === 0 ? (
         <div className="timeline-box timeline-empty" data-empty-text={indT("Common_NoData", "No data")} />

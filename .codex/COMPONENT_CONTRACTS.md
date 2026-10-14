@@ -25,6 +25,17 @@ Este catálogo define responsabilidades estables. Los detalles visuales pertenec
 
 ## Controles comunes
 
+### `ConfirmModal` y errores de la aplicación
+
+- `error` admite texto de validación local o `{ message, traceId?, errorCode?, severity? }`; los errores HTTP y lógicos conservan sus metadatos hasta el popup.
+- `ActionFeedbackHost` presenta errores independientes de las islas React, permisos y vistas servidor. `showActionError` publica mensajes; `ActionErrorNotice` adapta estados existentes sin borrar el fallo al cerrar el popup. El hook del host encola y deduplica por mensaje, traza, código y severidad.
+- El mensaje se localiza por código conocido. Las claves deben figurar en los siete recursos RESX y en el diccionario Razor de la página o en el diccionario común de `_ActionFeedbackHost`.
+- El Trace ID real aparece al pie, seleccionable; no se inventa para validaciones locales o fallos de red sin respuesta. Nunca se muestra el cuerpo HTTP completo.
+- `ExpenseTicketErrorModal` reutiliza este popup para la creación rápida y mantiene el reintento de adjuntos cuando hay un resultado parcial.
+- Los errores de comandos generados por MVC devuelven `HttpContext.TraceIdentifier` y lo registran como `TraceId` junto al código, estado y ruta. Los errores de la API conservan su identificador original.
+- `acknowledgeActionError` permite esperar a que se lea un resultado parcial antes de navegar. El resultado parcial conserva su traza y nunca emite marca de éxito; su estado de recuperación no depende de que el navegador permita guardar datos.
+- `node --test tests/action-feedback-sweep.test.mjs` comprueba alertas nativas, salidas JSX de error y traducciones de claves de error. `node scripts/audit-error-feedback.mjs` muestra las ubicaciones que requieren revisión.
+
 ### `FilterButton` y `ActionButton`
 
 - Rutas bajo `components/commons/`.

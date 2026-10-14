@@ -1,3 +1,4 @@
+import { type ActionError } from "../../../utils/actionError.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { useExpenseTopbarCrudActions } from "../hooks/useExpenseTopbarCrudActions.ts";
 import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
@@ -15,7 +16,7 @@ type UseExpenseSheetDetailTopbarActionsArgs = {
   canEditExpense: boolean;
   canCreateExpense: boolean;
   canDeleteExpense: boolean;
-  setModalError: (value: string) => void;
+  setModalError: (value: ActionError) => void;
   handleEnableEdit: () => void;
   handleCancelEdit: () => void;
   handleUpdate: () => Promise<boolean>;

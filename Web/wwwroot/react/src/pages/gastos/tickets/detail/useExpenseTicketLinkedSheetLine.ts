@@ -1,3 +1,4 @@
+import { resolveActionError, type ActionError } from "../../../../utils/actionError.ts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiFetchError } from "../../../../services/apiService.ts";
 import { indT } from "../../../../utils/indI18n.ts";
@@ -23,7 +24,7 @@ type UseExpenseTicketLinkedSheetLineArgs = {
   sheetId: string;
   lineRecId: string;
   initializeMissingLine: boolean;
-  onForbidden: () => void;
+  onForbidden: (options?: Record<string, unknown>) => void;
 };
 
 const selectSheet = (items: ExpenseSheetDetailDto[], sheetId: string): ExpenseSheetDetailDto | null => {
@@ -63,7 +64,7 @@ export const useExpenseTicketLinkedSheetLine = ({
   const [draftReimbursableExpense, setDraftReimbursableExpense] = useState<number | null>(null);
   const [localCurrencyCode, setLocalCurrencyCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<ActionError>("");
   const latestRequestIdRef = useRef(0);
 
   const reloadLine = useCallback(async () => {
@@ -100,7 +101,7 @@ export const useExpenseTicketLinkedSheetLine = ({
         setOriginalReimbursableExpense(null);
         setDraftReimbursableExpense(null);
         setLocalCurrencyCode("");
-        setErrorMessage(response?.Message || indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."));
+        setErrorMessage(resolveActionError(response, response?.Message || indT("ExpenseSheets_LoadError", "Could not load expense sheet detail.")));
         return;
       }
 
@@ -164,7 +165,7 @@ export const useExpenseTicketLinkedSheetLine = ({
       if (requestId !== latestRequestIdRef.current) return;
 
       if (error instanceof ApiFetchError && error.status === 403) {
-        onForbidden();
+        onForbidden({ traceId: resolveActionError(error).traceId });
         return;
       }
 
@@ -175,7 +176,7 @@ export const useExpenseTicketLinkedSheetLine = ({
       setOriginalReimbursableExpense(null);
       setDraftReimbursableExpense(null);
       setLocalCurrencyCode("");
-      setErrorMessage(error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."));
+      setErrorMessage({ ...resolveActionError(error), message: error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail.") });
     } finally {
       if (requestId !== latestRequestIdRef.current) return;
       setIsLoading(false);

@@ -1,3 +1,6 @@
+import ActionErrorNotice from "../../../components/commons/ActionErrorNotice.tsx";
+import ExpenseTicketErrorModal from "../components/ExpenseTicketErrorModal.tsx";
+import { resolveActionError, type ActionError } from "../../../utils/actionError.ts";
 import React, { useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
@@ -262,9 +265,9 @@ const ExpenseTicketsPageContent = () => {
 
   const [linkFlowBusy, setLinkFlowBusy] = useState(false);
   const [linkFlowStatus, setLinkFlowStatus] = useState("");
-  const [linkFlowError, setLinkFlowError] = useState("");
+  const [linkFlowError, setLinkFlowError] = useState<ActionError>("");
   const [selectAllBusy, setSelectAllBusy] = useState(false);
-  const [selectAllError, setSelectAllError] = useState("");
+  const [selectAllError, setSelectAllError] = useState<ActionError>("");
   const [linkBulkResult, setLinkBulkResult] = useState<ExpenseSheetTicketLinkBulkResultDto | null>(null);
   const failedLinkTicketIds = useMemo(() => {
     const failedItems = Array.isArray(linkBulkResult?.failed) ? linkBulkResult.failed : [];
@@ -532,10 +535,7 @@ const ExpenseTicketsPageContent = () => {
     progressStages: quickTicketProgressStages,
     progressElapsedMs: quickTicketElapsedMs,
     errorMessage: quickTicketErrorMessage,
-    attemptId: quickTicketAttemptId,
     hasPendingUploadRetry,
-    hasPartialTicketFailure,
-    traceList: quickTicketTraceList,
     openSourcePicker,
     closeSourcePicker,
     selectFromCamera,
@@ -886,7 +886,7 @@ const ExpenseTicketsPageContent = () => {
       selectAllByFilters(activeFilters, total);
     } catch (error) {
       const message = error instanceof Error ? error.message : indT("Tickets_LoadError", "Could not load tickets.");
-      setSelectAllError(message);
+      setSelectAllError({ ...resolveActionError(error), message: message });
     } finally {
       setSelectAllBusy(false);
     }
@@ -977,7 +977,7 @@ const ExpenseTicketsPageContent = () => {
         if (!response.Success) {
           const failureMessage =
             response.Message || indT("ExpenseTickets_LinkLine_AttachFailed", "Could not attach the ticket.");
-          setLinkFlowError(failureMessage);
+          setLinkFlowError({ ...resolveActionError(response), message: failureMessage });
           setLinkFlowStatus(failureMessage);
           flashActionMark("errorProcess", 1500);
           return false;
@@ -1020,7 +1020,7 @@ const ExpenseTicketsPageContent = () => {
       const result = response.Data || null;
       if (!result) {
         const failureMessage = response.Message || indT("Api_RequestFailed", "Request failed.");
-        setLinkFlowError(failureMessage);
+        setLinkFlowError({ ...resolveActionError(response), message: failureMessage });
         setLinkFlowStatus(failureMessage);
         flashActionMark("errorProcess", 1500);
         return false;
@@ -1100,8 +1100,9 @@ const ExpenseTicketsPageContent = () => {
       await loadList(currentPage < 1 ? 1 : currentPage, activeFilters);
       return true;
     } catch (error) {
-      const failureMessage = error instanceof Error ? error.message : indT("Api_RequestFailed", "Request failed.");
-      setLinkFlowError(failureMessage);
+      const feedback = resolveActionError(error, indT("Api_RequestFailed", "Request failed."));
+      const failureMessage = feedback.message;
+      setLinkFlowError(feedback);
       setLinkFlowStatus(failureMessage);
       flashActionMark("errorProcess", 1500);
       return false;
@@ -1195,9 +1196,10 @@ const ExpenseTicketsPageContent = () => {
     setLinkFlowError("");
     await handleConfirm({
       busy: linkFlowBusy,
-      onError: (message) => {
-        setLinkFlowError(message);
-        setLinkFlowStatus(message);
+      onError: (message, error) => {
+        const feedback = resolveActionError(error, message);
+        setLinkFlowError(feedback);
+        setLinkFlowStatus(feedback.message);
       },
       defaultErrorMessage: indT("Api_RequestFailed", "Request failed."),
     });
@@ -1786,62 +1788,11 @@ const ExpenseTicketsPageContent = () => {
         />
       ) : null}
 
-      {!isLinkMode && quickTicketErrorMessage ? (
-        <div
-          data-ind-action-feedback="page"
-          role="alert"
-          aria-live="assertive"
-          aria-atomic="true"
-          tabIndex={-1}
-          className={
-            hasPartialTicketFailure
-              ? "glass-panel shadow-card space-y-2 rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
-              : "glass-panel shadow-card space-y-2 rounded-[var(--radius-xl)] border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"
-          }
-        >
-          <p>{quickTicketErrorMessage}</p>
-          {quickTicketAttemptId ? (
-            <p
-              className={
-                hasPartialTicketFailure
-                  ? "rounded-[var(--radius-xl)] border border-amber-200 bg-white px-2 py-1 font-mono text-[11px] text-amber-900 break-all"
-                  : "rounded-[var(--radius-xl)] border border-rose-200 bg-white px-2 py-1 font-mono text-[11px] text-rose-800 break-all"
-              }
-            >
-              {`attemptId: ${quickTicketAttemptId}`}
-            </p>
-          ) : null}
-          {quickTicketTraceList.length > 0 ? (
-            <div
-              className={
-                hasPartialTicketFailure
-                  ? "rounded-[var(--radius-xl)] border border-amber-200 bg-white p-2 text-xs text-amber-800"
-                  : "rounded-[var(--radius-xl)] border border-rose-200 bg-white p-2 text-xs text-rose-700"
-              }
-            >
-              {quickTicketTraceList.map((entry) => (
-                <p key={`${entry.step}-${entry.at}`}>{`${entry.step}: ${entry.traceId}`}</p>
-              ))}
-            </div>
-          ) : null}
-          <div className="flex flex-wrap gap-2">
-            {hasPendingUploadRetry ? (
-              <button
-                type="button"
-                className="ind-action-btn px-3 py-1.5 text-xs"
-                onClick={() => {
-                  void retryPendingUpload();
-                }}
-              >
-                {indT("ExpenseSheets_NewTicket_RetryUpload", "Reintentar upload")}
-              </button>
-            ) : null}
-            <button type="button" className="ind-action-btn px-3 py-1.5 text-xs" onClick={clearQuickTicketError}>
-              {indT("Common_Close", "Close")}
-            </button>
-          </div>
-        </div>
-      ) : null}
+      {!isLinkMode && <ExpenseTicketErrorModal
+        error={quickTicketBusy ? "" : quickTicketErrorMessage}
+        onClose={clearQuickTicketError}
+        onRetry={hasPendingUploadRetry ? () => { void retryPendingUpload(); } : undefined}
+      />}
 
       {showSummary && lineLinkTargetReady ? (
         <div className="filter-card filter-card--summary p-3 sm:p-4 mt-1 mb-3">
@@ -1899,7 +1850,7 @@ const ExpenseTicketsPageContent = () => {
       {isLinkMode ? (
         <div className="space-y-2 px-0.5">
           {!canProcessLinkMode ? (
-            <div className="text-sm text-rose-700">{indT("Auth_PermissionDenied_Body", "No permission.")}</div>
+            <ActionErrorNotice error={indT("Auth_PermissionDenied_Body", "No permission.")} severity="warning" />
           ) : null}
 
           {canProcessLinkMode && linkSheetCheckBusy ? (
@@ -1917,14 +1868,12 @@ const ExpenseTicketsPageContent = () => {
           ) : null}
 
           {canProcessLinkMode && !linkSheetCheckBusy && linkFlowLocked ? (
-            <div className="text-sm text-rose-700">
-              {linkFlowBlockedMessage ||
-                indT("ExpenseSheets_Detail_ReadOnlyByStatus", "No se puede editar esta hoja de gastos en el estado actual.")}
-            </div>
+            <ActionErrorNotice severity="warning" error={linkFlowBlockedMessage ||
+              indT("ExpenseSheets_Detail_ReadOnlyByStatus", "No se puede editar esta hoja de gastos en el estado actual.")} />
           ) : null}
 
           {canProcessLinkMode && !isLineLinkMode && !linkSheetCheckBusy && !linkFlowLocked && selectAllError ? (
-            <div className="text-sm text-rose-700">{selectAllError}</div>
+            <ActionErrorNotice error={selectAllError} />
           ) : null}
 
           {canProcessLinkMode && !isLineLinkMode && !linkSheetCheckBusy && !linkFlowLocked ? (
@@ -1968,7 +1917,7 @@ const ExpenseTicketsPageContent = () => {
         {indT("Common_Loading", "Loading")}
       </div>
 
-      {lineLinkTargetReady && errorMessage ? <div className="text-danger">{errorMessage}</div> : null}
+      {lineLinkTargetReady && errorMessage ? <ActionErrorNotice error={errorMessage} /> : null}
 
       {lineLinkTargetReady && !showListLoading && !errorMessage && items.length === 0 ? (
         <div className="timeline-box timeline-empty" data-empty-text={indT("Common_NoData", "No data")} />

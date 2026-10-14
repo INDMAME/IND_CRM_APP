@@ -1,3 +1,9 @@
+import { showActionError } from "../../services/actionFeedback.ts";
+import { flashActionMark } from "../../utils/visitasHistory.ts";
+import { wait } from "../../utils/wait.ts";
+import { resolveActionError, type ActionError } from "../../utils/actionError.ts";
+import { indT } from "../../utils/indI18n.ts";
+import ActionErrorNotice from "../../components/commons/ActionErrorNotice.tsx";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeftIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import AudioRecorderMinimal from "./AudioRecorderMinimal.tsx";
@@ -6,8 +12,7 @@ import { TEXT_EDITOR_PREFIX } from "../../utils/textEditor.ts";
 import { getSessionValueWithExpiry, removeSessionValueWithExpiry, setSessionValueWithExpiry } from "../../utils/sessionExpiry.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../utils/reactIsland.tsx";
 
-const IND_I18N = globalThis.__IND_I18N__ || {};
-const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
+
 
 const STORAGE_PREFIX = TEXT_EDITOR_PREFIX;
 const TOPBAR_HEIGHT = 64;
@@ -104,8 +109,8 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
   const [recorderResetKey, setRecorderResetKey] = useState(0);
   const [recorderHeightPx, setRecorderHeightPx] = useState(0);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [transcribeError, setTranscribeError] = useState("");
-  const [saveError, setSaveError] = useState("");
+  const [transcribeError, setTranscribeError] = useState<ActionError>("");
+  const returnInFlightRef = useRef(false);
   const [isTyping, setIsTyping] = useState(false);
   const recorderBoxRef = useRef(null);
   const typingTimerRef = useRef(null);
@@ -224,7 +229,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
 
         if (!ok) {
           const msg = payload && payload.message ? String(payload.message) : indT("TextEditor_TranscribeFailed", "Transcribe failed.");
-          setTranscribeError(msg);
+          setTranscribeError(resolveActionError({ ...payload, status: response.status }, msg));
           return;
         }
 
@@ -239,9 +244,10 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
         // Hide the recorder after a successful transcription.
         setRecorderOpen(false);
         setRecorderResetKey((k) => k + 1);
+        flashActionMark("okProcess", 1200);
       } catch (err) {
         const msg = err && err.message ? String(err.message) : indT("TextEditor_TranscribeFailed", "Transcribe failed.");
-        setTranscribeError(msg);
+        setTranscribeError({ ...resolveActionError(err), message: msg });
       } finally {
         // Re-enable the editor after completion.
         setIsTranscribing(false);
@@ -256,7 +262,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
   }, []);
 
   const handleRecordingError = useCallback((message) => {
-    // Show a warning action mark; keep the recorder open to display the error label.
+    // Keep the recorder open so the user can retry after the shared warning.
     try {
       if (window.IND && typeof window.IND.flashActionMark === "function") {
         window.IND.flashActionMark({ type: "warningProcess", durationMs: 1500 });
@@ -347,7 +353,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
   }, []);
 
   const enableEdit = useCallback(() => {
-    if (!canEdit || !isReadOnly) return;
+    if (!canEdit || !isReadOnly || returnInFlightRef.current) return;
     setIsReadOnly(false);
     if (normalizedEditModeKey) safeSetSessionValue(normalizedEditModeKey, "true");
   }, [canEdit, isReadOnly, normalizedEditModeKey]);
@@ -359,10 +365,9 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
       (safeSetSessionValue(normalizedEditModeKey, "true") &&
         safeSetSessionValue(`${normalizedEditModeKey}_return`, "1"));
     if (!saved || !editModeSaved) {
-      setSaveError(indT("TextEditor_SaveFailed", "Could not save the text in this browser. Copy the text or try again before leaving."));
+      showActionError({ message: indT("TextEditor_SaveFailed", "Could not save the text in this browser. Copy the text or try again before leaving."), severity: "warning" });
       return false;
     }
-    setSaveError("");
     return true;
   }, [storageKey, normalizedEditModeKey]);
 
@@ -386,9 +391,14 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
     window.history.back();
   }, [resolvedReturnUrl, allowHistoryNav]);
 
-  const onSave = () => {
-    if (isReadOnly || isTranscribing || isTyping) return;
+  const onSave = async () => {
+    if (isReadOnly || isTranscribing || isTyping || returnInFlightRef.current) return;
     if (!persistForReturn(text, true)) return;
+    returnInFlightRef.current = true;
+    setIsReadOnly(true);
+    flashActionMark("okProcess", 900);
+    await wait(900);
+    returnInFlightRef.current = false;
     window.__indBypassNavigationGuardOnce?.();
     goBackAfterSave();
   };
@@ -503,12 +513,8 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
             </div>
           )}
 
-          {saveError ? (
-            <div role="alert" className="mb-3 text-sm text-rose-700 text-center">{saveError}</div>
-          ) : null}
-
           {transcribeError ? (
-            <div className="mb-3 text-xs text-rose-700 text-center">{transcribeError}</div>
+            <ActionErrorNotice error={transcribeError} />
           ) : null}
 
           <div className={editorBoxClass}>

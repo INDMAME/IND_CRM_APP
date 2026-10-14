@@ -1,3 +1,4 @@
+import ActionErrorNotice from "./ActionErrorNotice.tsx";
 import React from "react";
 
 type Props = {
@@ -26,7 +27,7 @@ class AppErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return <div className="p-4 rounded-[var(--radius-xl)] border border-rose-200 bg-rose-50 text-rose-700">{this.props.fallbackMessage}</div>;
+      return <ActionErrorNotice error={this.props.fallbackMessage} />;
     }
     return this.props.children;
   }

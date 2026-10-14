@@ -1885,4 +1885,31 @@
   <data name="ExpenseSheets_DeleteTickets_Keep" xml:space="preserve">
     <value>Keep tickets</value>
   </data>
+  <data name="Common_Error_Title" xml:space="preserve">
+    <value>Unable to complete the operation</value>
+  </data>
+  <data name="Common_TraceId" xml:space="preserve">
+    <value>Trace ID</value>
+  </data>
+  <data name="Tickets_Error_Duplicate" xml:space="preserve">
+    <value>Another ticket of yours already has the same date and time. Review the existing ticket, or correct the date and time if these are different expenses.</value>
+  </data>
+  <data name="ExpenseSheets_Delete_CleanupPending" xml:space="preserve">
+    <value>The sheet and its lines have been deleted. Some tickets or attachments still need to be removed. Retry with the same option.</value>
+  </data>
+  <data name="ExpenseSheets_Delete_ChoiceConflict" xml:space="preserve">
+    <value>Deletion already started with a different ticket option. Retry with your original choice.</value>
+  </data>
+  <data name="Common_Warning_Title" xml:space="preserve">
+    <value>Please review this information</value>
+  </data>
+  <data name="Tickets_Validation_TotalAmountRequired" xml:space="preserve">
+    <value>The total amount must be greater than or equal to 0.</value>
+  </data>
+  <data name="Common_Error_Validation" xml:space="preserve">
+    <value>Review the entered information and complete the required fields before trying again.</value>
+  </data>
+  <data name="Common_Validation_DateFormat" xml:space="preserve">
+    <value>Required format: DDMMYYYY or DD.MM.YYYY.</value>
+  </data>
 </root>

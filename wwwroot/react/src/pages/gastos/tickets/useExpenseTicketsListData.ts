@@ -1,3 +1,4 @@
+import { resolveActionError, type ActionError } from "../../../utils/actionError.ts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
@@ -22,7 +23,7 @@ type UseExpenseTicketsListDataArgs = {
   hasAccess: boolean;
   pageSize: number;
   mode: "general" | "link";
-  onForbidden: () => void;
+  onForbidden: (options?: Record<string, unknown>) => void;
 };
 
 const EXPENSE_TICKETS_LIST_LOG_PREFIX = "[expense-tickets:list]";
@@ -118,7 +119,7 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, mode, onForbidd
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<ActionError>("");
   const activeRequestControllerRef = useRef<AbortController | null>(null);
   const activeRequestKeyRef = useRef("");
   const activeRequestSeqRef = useRef(0);
@@ -247,7 +248,7 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, mode, onForbidd
             mode,
             message: response.Message,
           });
-          setErrorMessage(response.Message || indT("Tickets_LoadError", "Could not load tickets."));
+          setErrorMessage(resolveActionError(response, response.Message || indT("Tickets_LoadError", "Could not load tickets.")));
           setItems([]);
           setTotal(0);
           setCurrentPage(page);
@@ -283,7 +284,7 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, mode, onForbidd
             mode,
             requestSeq,
           });
-          onForbidden();
+          onForbidden({ traceId: resolveActionError(error).traceId });
           return;
         }
 
@@ -294,7 +295,7 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, mode, onForbidd
           message: error instanceof Error ? error.message : error,
         });
         const message = error instanceof Error ? error.message : indT("Tickets_LoadError", "Could not load tickets.");
-        setErrorMessage(message);
+        setErrorMessage({ ...resolveActionError(error), message: message });
         setItems([]);
         setTotal(0);
         setCurrentPage(page);

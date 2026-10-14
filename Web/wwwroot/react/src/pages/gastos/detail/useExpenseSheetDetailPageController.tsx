@@ -1,3 +1,4 @@
+import { resolveActionError } from "../../../utils/actionError.ts";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import type { FloatingActionButtonMenuItem } from "../../../components/commons/FloatingActionButton.tsx";
 import { useAuthContext } from "../../../context/AuthContext.tsx";
@@ -197,9 +198,10 @@ export const useExpenseSheetDetailPageController = () => {
     setModalError("");
     await handleConfirm({
       busy,
-      onError: (msg) => {
-        setModalError(msg);
-        setStatus(msg);
+      onError: (msg, error) => {
+        const feedback = resolveActionError(error, msg);
+        setModalError(feedback);
+        setStatus(feedback.message);
       },
     });
   }, [busy, handleConfirm, setModalError, setStatus]);

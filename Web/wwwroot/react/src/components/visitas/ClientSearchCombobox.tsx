@@ -1,3 +1,5 @@
+import { resolveActionError } from "../../utils/actionError.ts";
+import { showActionError } from "../../services/actionFeedback.ts";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FloatingList from "../commons/FloatingList.tsx";
 import Spinner from "../commons/Spinner.tsx";
@@ -191,9 +193,11 @@ const ClientSearchCombobox = ({
       if (err?.name === "AbortError") {
         setStatus(indT("Visits_Create_SearchCanceled", "Search canceled."));
       } else if (String(err?.message || "").toLowerCase().includes("timeout")) {
-        setStatus(indT("Visits_Create_SearchTimeout", "The search took too long. Type more characters to narrow down."));
+        showActionError({ ...resolveActionError(err), message: indT("Visits_Create_SearchTimeout", "The search took too long. Type more characters to narrow down."), severity: "error" });
+        setStatus("");
       } else {
-        setStatus(indT("Visits_Create_LoadClientsError", "Failed to load clients."));
+        showActionError({ ...resolveActionError(err), message: indT("Visits_Create_LoadClientsError", "Failed to load clients."), severity: "error" });
+        setStatus("");
       }
     } finally {
       if (abortRef.current === controller) {
@@ -224,9 +228,10 @@ const ClientSearchCombobox = ({
       setOptions((prev) => [...prev, ...items]);
       setPage(nextPage);
       setHasMore(items.length === 10);
-    } catch {
+    } catch (error) {
       if (!controller.signal.aborted && abortRef.current === controller) {
-        setStatus(indT("Visits_Create_LoadClientsError", "Failed to load clients."));
+        showActionError({ ...resolveActionError(error), message: indT("Visits_Create_LoadClientsError", "Failed to load clients."), severity: "error" });
+        setStatus("");
       }
     } finally {
       if (abortRef.current === controller) {

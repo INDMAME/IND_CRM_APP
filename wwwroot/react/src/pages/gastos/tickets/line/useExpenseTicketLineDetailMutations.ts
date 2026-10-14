@@ -1,4 +1,5 @@
-import React, { useCallback } from "react";
+import { createActionError, resolveActionError, type ActionError } from "../../../../utils/actionError.ts";
+import React, { useCallback, useRef } from "react";
 import { indT } from "../../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../../utils/permissions.ts";
 import type { ExpenseSheetTicketUpdateRequest } from "../../expenseTypes.ts";
@@ -53,7 +54,7 @@ type UseExpenseTicketLineDetailMutationsArgs = {
   onLinkedSheetSyncFailure?: (message: string) => void;
   onLinkedSheetSyncSuccess?: () => void;
   onHeaderUpdateSuccess?: (payload: ExpenseSheetTicketUpdateRequest) => void;
-  setModalError: React.Dispatch<React.SetStateAction<string>>;
+  setModalError: React.Dispatch<React.SetStateAction<ActionError>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
@@ -117,7 +118,7 @@ export const useExpenseTicketLineDetailMutations = ({
       safeText(accessResult.blockedMessage) ||
       indT("ExpenseSheets_Detail_ReadOnlyByStatus", "No se puede editar esta hoja de gastos en el estado actual.");
     setModalError(message);
-    setStatus(message);
+    setStatus("");
     return null;
   }, [
     allowSelfManagement,
@@ -130,7 +131,14 @@ export const useExpenseTicketLineDetailMutations = ({
     setStatus,
   ]);
 
+  // Tracks completion independently of storage and React render timing.
+  const saveCompleteRef = useRef(true);
+  const saveWarningRef = useRef<ActionError>("");
+  const getSaveWarning = useCallback(() => saveWarningRef.current, []);
+  const isSaveComplete = useCallback(() => saveCompleteRef.current, []);
   const handleUpdate = useCallback(async () => {
+    saveCompleteRef.current = true;
+    saveWarningRef.current = "";
     if (busy || !isEditing) return false;
     const canProceed = isCreateMode ? canCreateTicket : canEditTicket;
     if (!canProceed) {
@@ -153,7 +161,7 @@ export const useExpenseTicketLineDetailMutations = ({
         "La cantidad no puede ser negativa, el precio no puede ser 0 y la cantidad 0 solo se permite en descuentos negativos."
       );
       setModalError(message);
-      setStatus(message);
+      setStatus("");
       return false;
     }
 
@@ -165,13 +173,13 @@ export const useExpenseTicketLineDetailMutations = ({
     });
     if (dateTimeUpdate.invalidDate) {
       setModalError(EXPENSE_API_DATE_FORMAT_MESSAGE);
-      setStatus(EXPENSE_API_DATE_FORMAT_MESSAGE);
+      setStatus("");
       return false;
     }
     if (dateTimeUpdate.invalidTime) {
       const message = indT("Tickets_Validation_TimeFormat", "Required format: HH:mm or HH:mm:ss.");
       setModalError(message);
-      setStatus(message);
+      setStatus("");
       return false;
     }
     const hasHeaderChanges = Object.keys(dateTimeUpdate.payload).length > 0;
@@ -234,7 +242,7 @@ export const useExpenseTicketLineDetailMutations = ({
 
           const headerResponse = await updateExpenseSheetTicket(fileId, headerPayload);
           if (!headerResponse.Success) {
-            throw new Error(headerResponse.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+            throw createActionError(headerResponse, indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
           }
           onHeaderUpdateSuccess?.(headerPayload);
         }
@@ -251,7 +259,7 @@ export const useExpenseTicketLineDetailMutations = ({
             : await updateExpenseSheetTicketLine(fileId, lineRecId, payload);
 
           if (!response.Success) {
-            throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+            throw createActionError(response, indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
           }
         } catch (error) {
           if (hasHeaderChanges && validatedSheetId) {
@@ -265,7 +273,7 @@ export const useExpenseTicketLineDetailMutations = ({
               message,
             });
             onLinkedSheetSyncFailure?.(message);
-            throw new Error(message);
+            throw createActionError(error, message, message);
           }
           throw error;
         }
@@ -292,8 +300,10 @@ export const useExpenseTicketLineDetailMutations = ({
               message,
             });
             onLinkedSheetSyncFailure?.(message);
+            saveCompleteRef.current = false;
+            saveWarningRef.current = { ...resolveActionError(error, message), message, severity: "warning" };
             if (!isCreateMode) {
-              throw new Error(message);
+              throw createActionError(error, message, message);
             }
           }
         } else if (isCreateMode) {
@@ -344,6 +354,7 @@ export const useExpenseTicketLineDetailMutations = ({
   ]);
 
   const handleDelete = useCallback(async () => {
+    saveWarningRef.current = "";
     if (busy) return false;
     if (!canDeleteTicket) {
       showPermissionModal();
@@ -364,7 +375,7 @@ export const useExpenseTicketLineDetailMutations = ({
       action: async () => {
         const response = await deleteExpenseSheetTicketLine(fileId, lineRecId);
         if (!response.Success) {
-          throw new Error(response.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
+          throw createActionError(response, indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
         }
 
         if (validatedSheetId) {
@@ -389,7 +400,8 @@ export const useExpenseTicketLineDetailMutations = ({
               message,
             });
             onLinkedSheetSyncFailure?.(message);
-            setStatus(message);
+            saveWarningRef.current = { ...resolveActionError(error, message), message, severity: "warning" };
+            setStatus("");
           }
         }
 
@@ -413,6 +425,8 @@ export const useExpenseTicketLineDetailMutations = ({
   ]);
 
   return {
+    isSaveComplete,
+    getSaveWarning,
     handleUpdate,
     handleDelete,
   };

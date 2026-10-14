@@ -1,3 +1,4 @@
+import type { ActionError } from "../../../utils/actionError.ts";
 import React from "react";
 import ActionButton from "../../../components/commons/ActionButton.tsx";
 import FilterButton from "../../../components/commons/FilterButton.tsx";
@@ -56,7 +57,7 @@ type Props = {
   selectedOwnerAxUserId: string;
   visibleUsersLoading: boolean;
   ownerFilterDisabled: boolean;
-  visibleUsersError: string;
+  visibleUsersError: ActionError;
   ownerAllOption?: VisitOwnerSelectOption | null;
   ownerNoUsersLabel: string;
   ownerLoadingLabel: string;

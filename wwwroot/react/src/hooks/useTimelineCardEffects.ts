@@ -1,3 +1,4 @@
+import { type ActionError } from "../utils/actionError.ts";
 ﻿import React, { useEffect, useRef } from "react";
 
 const TOOLTIP_TOUCH_DELAY_MS = 120;
@@ -22,7 +23,7 @@ type PixelState = {
 
 export type UseTimelineCardEffectsArgs = {
   containerRef: React.RefObject<HTMLDivElement | null>;
-  errorMessage: string;
+  errorMessage: ActionError;
   items: unknown[];
   resolveClickableCard: (target: EventTarget | null) => HTMLElement | null;
 };

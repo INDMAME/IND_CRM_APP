@@ -1,11 +1,12 @@
+import { resolveActionError, type ActionError } from "../../../../utils/actionError.ts";
 import { useCallback } from "react";
 import { useConfirmDialog } from "../../../../hooks/useConfirmDialog.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 
 type UseExpenseTicketDetailConfirmStateArgs = {
   busy: boolean;
-  modalError: string;
-  setModalError: (value: string) => void;
+  modalError: ActionError;
+  setModalError: (value: ActionError) => void;
   setStatus: (value: string) => void;
 };
 
@@ -25,9 +26,10 @@ export const useExpenseTicketDetailConfirmState = ({
     setModalError("");
     await handleConfirm({
       busy,
-      onError: (msg) => {
-        setModalError(msg);
-        setStatus(msg);
+      onError: (msg, error) => {
+        const feedback = resolveActionError(error, msg);
+        setModalError(feedback);
+        setStatus(feedback.message);
       },
     });
   }, [busy, handleConfirm, setModalError, setStatus]);

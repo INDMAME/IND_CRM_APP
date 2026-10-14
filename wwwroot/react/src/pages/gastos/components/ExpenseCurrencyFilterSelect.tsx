@@ -1,3 +1,5 @@
+import { resolveActionError, type ActionError } from "../../../utils/actionError.ts";
+import ActionErrorNotice from "../../../components/commons/ActionErrorNotice.tsx";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import { useAuthContext } from "../../../context/AuthContext.tsx";
@@ -144,7 +146,7 @@ const ExpenseCurrencyFilterSelect = ({
     codes: readRecentExpenseCurrencyCodes(recentCurrencyUserScope),
   }));
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
-  const [loadErrorMessage, setLoadErrorMessage] = useState("");
+  const [loadErrorMessage, setLoadErrorMessage] = useState<ActionError>("");
   const [emptyMessage, setEmptyMessage] = useState("");
   const onChangeRef = useRef(onChange);
   const valueRef = useRef(normalizeCurrencyCode(value));
@@ -184,7 +186,7 @@ const ExpenseCurrencyFilterSelect = ({
 
         if (!response.Success) {
           setOptions([]);
-          setLoadErrorMessage(response.Message || indT("ExpenseSheets_LoadError", "Could not load expense sheets."));
+          setLoadErrorMessage(resolveActionError(response, response.Message || indT("ExpenseSheets_LoadError", "Could not load expense sheets.")));
           return;
         }
 
@@ -224,7 +226,7 @@ const ExpenseCurrencyFilterSelect = ({
         const fallbackError = indT("ExpenseSheets_LoadError", "Could not load expense sheets.");
         const message = error instanceof ApiFetchError ? error.message || fallbackError : fallbackError;
         setOptions([]);
-        setLoadErrorMessage(message);
+        setLoadErrorMessage({ ...resolveActionError(error), message: message });
       } finally {
         if (!isCancelled) {
           setIsLoadingOptions(false);
@@ -313,7 +315,7 @@ const ExpenseCurrencyFilterSelect = ({
         panelStyle={CURRENCY_DROPDOWN_PANEL_STYLE}
       />
       {showLoadingStateText && isLoadingOptions ? <p className="text-xs text-slate-500">{loadingMessage}</p> : null}
-      {!isLoadingOptions && loadErrorMessage ? <p className="text-xs text-danger">{loadErrorMessage}</p> : null}
+      {!isLoadingOptions && loadErrorMessage ? <ActionErrorNotice error={loadErrorMessage} /> : null}
       {!isLoadingOptions && !loadErrorMessage && emptyMessage ? <p className="text-xs text-slate-500">{emptyMessage}</p> : null}
     </div>
   );

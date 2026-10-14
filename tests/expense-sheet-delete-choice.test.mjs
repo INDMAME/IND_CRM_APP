@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { after, before, test } from "node:test";
 import { chromium, expect } from "@playwright/test";
@@ -135,5 +135,26 @@ test("both choices are disabled while a deletion is in flight", async () => {
     await page.evaluate(() => window.releaseDeletion());
     await expect(page.getByText("Completed", { exact: true })).toBeVisible();
     assert.deepEqual(await page.evaluate(() => window.decisions), [false]);
+  } finally { await page.close(); }
+});
+
+test("the real Spanish Razor dictionary reaches the second deletion confirmation", async () => {
+  const view = readFileSync(path.join(root, "Web/Views/Gastos/ExpenseSheetDetail.cshtml"), "utf8");
+  const resource = readFileSync(path.join(root, "App/Resources/Infrastructure/Localization/INDSharedResource.es-ES.resx"), "utf8");
+  const dictionary = {};
+  for (const suffix of ["Title", "Body", "Delete", "Keep"]) {
+    const key = `ExpenseSheets_DeleteTickets_${suffix}`;
+    assert.ok(view.includes(`${key} = SR["${key}"].Value`));
+    dictionary[key] = resource.match(new RegExp(`<data name="${key}"[^>]*>\\s*<value>([^<]*)</value>`))?.[1];
+    assert.ok(dictionary[key]);
+  }
+  const page = await mount();
+  try {
+    await page.evaluate(values => { window.__IND_I18N__ = values; }, dictionary);
+    await page.getByRole("button", { name: "Delete sheet", exact: true }).click();
+    await expect(page.getByText("¿Eliminar también los tickets?", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Conservar tickets", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Eliminar tickets", exact: true })).toBeVisible();
+    assert.deepEqual(await page.evaluate(() => window.decisions), []);
   } finally { await page.close(); }
 });

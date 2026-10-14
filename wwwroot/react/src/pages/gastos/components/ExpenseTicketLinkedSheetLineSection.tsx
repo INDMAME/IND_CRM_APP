@@ -1,3 +1,5 @@
+import ActionErrorNotice from "../../../components/commons/ActionErrorNotice.tsx";
+import type { ActionError } from "../../../utils/actionError.ts";
 import React from "react";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import { indT } from "../../../utils/indI18n.ts";
@@ -16,7 +18,7 @@ type ExpenseTicketLinkedSheetLineSectionProps = {
   isEditing: boolean;
   isLoading: boolean;
   disabled?: boolean;
-  errorMessage?: string;
+  errorMessage?: ActionError;
   onProjectIdChange: (value: string) => void;
   onReimbursableExpenseChange: (value: number) => void;
 };
@@ -90,7 +92,7 @@ const ExpenseTicketLinkedSheetLineSection = ({
   }
 
   if (errorMessage) {
-    return <div className="md:col-span-2 text-danger text-sm">{errorMessage}</div>;
+    return <ActionErrorNotice error={errorMessage} />;
   }
 
   return (

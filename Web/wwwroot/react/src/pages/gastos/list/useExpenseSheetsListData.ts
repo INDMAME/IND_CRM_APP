@@ -1,3 +1,4 @@
+import { resolveActionError, type ActionError } from "../../../utils/actionError.ts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
@@ -13,7 +14,7 @@ import type { ExpenseSheetsAssistantContextSnapshot } from "./expenseSheetsAssis
 type UseExpenseSheetsListDataArgs = {
   hasAccess: boolean;
   pageSize: number;
-  onForbidden: () => void;
+  onForbidden: (options?: Record<string, unknown>) => void;
 };
 
 const buildEmptyAssistantContextSnapshot = (): ExpenseSheetsAssistantContextSnapshot => ({
@@ -31,7 +32,7 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<ActionError>("");
   const [assistantContext, setAssistantContext] = useState<ExpenseSheetsAssistantContextSnapshot>(
     buildEmptyAssistantContextSnapshot
   );
@@ -135,7 +136,7 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
 
         if (response?.Success === false) {
           invalidateAssistantContext();
-          setErrorMessage(response.Message || indT("ExpenseSheets_LoadError", "Could not load expense sheets."));
+          setErrorMessage(resolveActionError(response, response.Message || indT("ExpenseSheets_LoadError", "Could not load expense sheets.")));
           setItems([]);
           setTotal(0);
           setCurrentPage(page);
@@ -155,12 +156,12 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
         invalidateAssistantContext();
 
         if (error instanceof ApiFetchError && error.status === 403) {
-          onForbidden();
+          onForbidden({ traceId: resolveActionError(error).traceId });
           return;
         }
 
         const message = error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load expense sheets.");
-        setErrorMessage(message);
+        setErrorMessage({ ...resolveActionError(error), message: message });
         setItems([]);
         setTotal(0);
         setCurrentPage(page);

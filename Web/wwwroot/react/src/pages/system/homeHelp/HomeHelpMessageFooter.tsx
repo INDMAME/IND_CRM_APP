@@ -1,3 +1,5 @@
+import { resolveActionError, type ActionError } from "../../../utils/actionError.ts";
+import ActionErrorNotice from "../../../components/commons/ActionErrorNotice.tsx";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowTopRightOnSquareIcon,
@@ -28,7 +30,7 @@ type SourcePreview = {
   heading: string;
   body: string;
   loading: boolean;
-  error: string;
+  error: ActionError;
 };
 
 const FEEDBACK_REASONS: HelpFeedbackReason[] = [
@@ -112,7 +114,7 @@ const HomeHelpMessageFooter = ({
           heading: source.heading,
           body: "",
           loading: false,
-          error: indT("HomeHelp_SourceError", "The cited section could not be loaded."),
+          error: { ...resolveActionError(error), message: indT("HomeHelp_SourceError", "The cited section could not be loaded.") },
         },
       }));
     } finally {
@@ -189,7 +191,7 @@ const HomeHelpMessageFooter = ({
                   {expanded ? (
                     <div className="border-t border-slate-100 px-2 py-2 text-slate-600">
                       {preview?.loading ? indT("HomeHelp_SourceLoading", "Loading source...") : null}
-                      {preview?.error ? <p className="text-rose-700">{preview.error}</p> : null}
+                      {preview?.error ? <ActionErrorNotice error={preview.error} /> : null}
                       {preview?.body ? (
                         <div>
                           <p className="font-semibold text-slate-700">{preview.heading}</p>
@@ -306,9 +308,7 @@ const HomeHelpMessageFooter = ({
               ) : null}
 
               {feedbackStatus === "error" ? (
-                <p className="mt-2 text-rose-700" role="alert">
-                  {indT("HomeHelp_FeedbackError", "Feedback could not be saved. Please try again.")}
-                </p>
+                <ActionErrorNotice error={indT("HomeHelp_FeedbackError", "Feedback could not be saved. Please try again.")} />
               ) : null}
             </>
           )}

@@ -1,3 +1,5 @@
+import ActionErrorNotice from "../../../../components/commons/ActionErrorNotice.tsx";
+import { type ActionError } from "../../../../utils/actionError.ts";
 import React from "react";
 import type { RefObject } from "react";
 import ConfirmModal from "../../../../components/commons/ConfirmModal.tsx";
@@ -28,7 +30,7 @@ type ExpenseTicketDetailViewProps = {
     showCancel: boolean;
     showConfirm: boolean;
     busy: boolean;
-    error: string;
+    error: ActionError;
     status: string;
     onConfirm: () => void;
     onCancel: () => void;
@@ -36,7 +38,7 @@ type ExpenseTicketDetailViewProps = {
   preview: {
     open: boolean;
     busy: boolean;
-    error: string;
+    error: ActionError;
     imageUrl: string;
     imageAlt: string;
     scale: number;
@@ -49,11 +51,11 @@ type ExpenseTicketDetailViewProps = {
   };
   content: {
     isLoading: boolean;
-    errorMessage: string;
+    errorMessage: ActionError;
     header: ExpenseTicketDetailHeader | null;
     showStickyPreview: boolean;
     previewBusy: boolean;
-    previewError: string;
+    previewError: ActionError;
     previewImageUrl: string;
     previewFileName: string;
     previewAltText: string;
@@ -106,7 +108,7 @@ type ExpenseTicketDetailViewProps = {
       projectId: string;
       reimbursableExpense: number | null;
       isLoading: boolean;
-      errorMessage: string;
+      errorMessage: ActionError;
       disabled: boolean;
       onProjectIdChange: (value: string) => void;
       onReimbursableExpenseChange: (value: number) => void;
@@ -241,7 +243,7 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         {indT("Common_Loading", "Loading")}
       </div>
 
-      {content.errorMessage ? <div className="text-danger">{content.errorMessage}</div> : null}
+      {content.errorMessage ? <ActionErrorNotice error={content.errorMessage} /> : null}
 
       {!content.isLoading && !content.errorMessage && content.header ? (
         content.showStickyPreview ? (

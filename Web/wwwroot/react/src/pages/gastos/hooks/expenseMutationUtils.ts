@@ -1,9 +1,10 @@
 import type React from "react";
 import { flashActionMark } from "../../../utils/visitasHistory.ts";
 import { parseExpenseNumericInput } from "../utils/expenseNumberFormat.ts";
+import { getActionErrorMark, resolveActionError, type ActionError } from "../../../utils/actionError.ts";
 
 type MutationSetters = {
-  setModalError: React.Dispatch<React.SetStateAction<string>>;
+  setModalError: React.Dispatch<React.SetStateAction<ActionError>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
 };
@@ -38,14 +39,11 @@ export const executeExpenseMutation = async <T>({
     const value = await action();
     return { ok: true, value };
   } catch (error) {
-    const message =
-      error instanceof Error && error.message
-        ? error.message
-        : fallbackErrorMessage;
-    setModalError(message);
-    setStatus(message);
+    const feedback = resolveActionError(error, fallbackErrorMessage);
+    setModalError(feedback);
+    setStatus("");
     if (flashOnError) {
-      flashActionMark("errorProcess", 1500);
+      flashActionMark(getActionErrorMark(feedback), 1500);
     }
     return { ok: false };
   } finally {

@@ -12,7 +12,7 @@ type Args = {
   ownerText: string;
   navDelayMs: number;
   saveCachedFilter: (filter: HistoryCachedFilter) => void;
-  onForbidden: () => void;
+  onForbidden: (options?: Record<string, unknown>) => void;
 };
 
 // Creates the detail navigation handler and persists the current history filter.

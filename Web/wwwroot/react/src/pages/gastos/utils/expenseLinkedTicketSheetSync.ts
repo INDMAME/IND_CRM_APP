@@ -1,3 +1,4 @@
+import { createActionError } from "../../../utils/actionError.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import type {
   ExpenseSheetCreateLineRequest,
@@ -268,15 +269,11 @@ export const syncExpenseLinkedTicketSheetLine = async (args: SyncExpenseLinkedTi
   ]);
 
   if (sheetResponse?.Success === false) {
-    throw new Error(
-      safeText(sheetResponse.Message) || indT("ExpenseSheets_LoadError", "Could not load expense sheet detail.")
-    );
+    throw createActionError(sheetResponse, indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."));
   }
 
   if (ticketResponse?.Success === false) {
-    throw new Error(
-      safeText(ticketResponse.Message) || indT("Tickets_Detail_LoadError", "Could not load ticket detail.")
-    );
+    throw createActionError(ticketResponse, indT("Tickets_Detail_LoadError", "Could not load ticket detail."));
   }
 
   const selectedSheet = selectSheet(sheetResponse?.Items || [], safeSheetId);
@@ -336,9 +333,7 @@ export const syncExpenseLinkedTicketSheetLine = async (args: SyncExpenseLinkedTi
   if (existingLine?.lineRecId) {
     const updateResponse = await updateExpenseSheetLine(safeSheetId, existingLine.lineRecId, payload);
     if (!updateResponse.Success) {
-      throw new Error(
-        safeText(updateResponse.Message) || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed.")
-      );
+      throw createActionError(updateResponse, indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
     }
     return;
   }
@@ -349,6 +344,6 @@ export const syncExpenseLinkedTicketSheetLine = async (args: SyncExpenseLinkedTi
     lines: [payload],
   });
   if (!createResponse.Success) {
-    throw new Error(safeText(createResponse.Message) || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+    throw createActionError(createResponse, indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
   }
 };

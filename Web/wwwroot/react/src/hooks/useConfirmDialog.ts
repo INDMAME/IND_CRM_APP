@@ -25,7 +25,7 @@ type UseConfirmDialogArgs = {
 
 type HandleConfirmArgs = {
   busy: boolean;
-  onError: (message: string) => void;
+  onError: (message: string, error?: unknown) => void;
   defaultErrorMessage?: string;
 };
 
@@ -95,7 +95,7 @@ export const useConfirmDialog = ({ defaultConfirmText, defaultCancelText }: UseC
           err?.message ||
           defaultErrorMessage ||
           indT("Api_RequestFailed", "Api_RequestFailed");
-        onError(msg);
+        onError(msg, err);
       } finally {
         confirmInFlightRef.current = false;
       }

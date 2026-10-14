@@ -1,10 +1,12 @@
+import { type ActionError } from "../../../../utils/actionError.ts";
+import ActionErrorNotice from "../../../../components/commons/ActionErrorNotice.tsx";
 import React from "react";
 import { indT } from "../../../../utils/indI18n.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 
 type ExpenseTicketStickyPreviewProps = {
   busy: boolean;
-  error: string;
+  error: ActionError;
   imageUrl: string;
   imageAlt: string;
   fileName: string;
@@ -73,7 +75,7 @@ const ExpenseTicketStickyPreview = ({
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-slate-900">{safeFileName}</p>
-                      <p className="line-clamp-2 text-xs text-slate-500">{error || previewLabel}</p>
+                      <><ActionErrorNotice error={error} /><span>{previewLabel}</span></>
                     </div>
                   </div>
                 )}

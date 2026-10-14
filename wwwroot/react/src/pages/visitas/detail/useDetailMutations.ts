@@ -1,3 +1,4 @@
+import { createActionError, getActionErrorMark, resolveActionError, type ActionError } from "../../../utils/actionError.ts";
 ﻿import React, { useCallback } from "react";
 import { fetchJson } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
@@ -82,7 +83,7 @@ type UseDetailMutationsArgs = {
   clearDraft: () => void;
   syncEditModeFlag: (enabled: boolean) => void;
   onPermissionBlocked?: (operation: "update" | "delete") => void;
-  setModalError: React.Dispatch<React.SetStateAction<string>>;
+  setModalError: React.Dispatch<React.SetStateAction<ActionError>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
@@ -130,9 +131,10 @@ export const useDetailMutations = ({
     const safeRecIdValue = resolveSafeRecId(recId);
     if (safeRecIdValue === null) {
       const message = indT("Visits_Detail_InvalidRecId", "Could not resolve activity identifier. Reload and try again.");
-      setModalError(message);
-      setStatus(message);
-      flashActionMark("errorProcess", 1500);
+      const feedback = { message, severity: "warning" as const };
+      setModalError(feedback);
+      setStatus("");
+      flashActionMark(getActionErrorMark(feedback), 1500);
       return false;
     }
 
@@ -174,7 +176,7 @@ export const useDetailMutations = ({
       });
 
       if (!isCommandSuccess(response)) {
-        throw new Error(getCommandMessage(response) || indT("Visits_Detail_UpdateFailed", "Update failed."));
+        throw createActionError(response, indT("Visits_Detail_UpdateFailed", "Update failed."));
       }
 
       setStatus(indT("Visits_Detail_Updated", "Activity updated"));
@@ -186,9 +188,10 @@ export const useDetailMutations = ({
       const message = error instanceof Error && error.message
         ? error.message
         : indT("Visits_Detail_UpdateError", "Update error.");
-      setModalError(message);
-      setStatus(message);
-      flashActionMark("errorProcess", 1500);
+      const feedback = { ...resolveActionError(error), message };
+      setModalError(feedback);
+      setStatus("");
+      flashActionMark(getActionErrorMark(feedback), 1500);
       return false;
     } finally {
       setBusy(false);
@@ -234,9 +237,10 @@ export const useDetailMutations = ({
     const safeRecIdValue = resolveSafeRecId(recId);
     if (safeRecIdValue === null) {
       const message = indT("Visits_Detail_InvalidRecId", "Could not resolve activity identifier. Reload and try again.");
-      setModalError(message);
-      setStatus(message);
-      flashActionMark("errorProcess", 1500);
+      const feedback = { message, severity: "warning" as const };
+      setModalError(feedback);
+      setStatus("");
+      flashActionMark(getActionErrorMark(feedback), 1500);
       return false;
     }
 
@@ -249,7 +253,7 @@ export const useDetailMutations = ({
       const safeRecId = encodeURIComponent(safeRecIdValue);
       const response = await fetchJson<VisitCommandResponse>(`/Visitas/DeleteActivity/${safeRecId}`, { method: "DELETE" });
       if (!isCommandSuccess(response)) {
-        throw new Error(getCommandMessage(response) || indT("Visits_Detail_DeleteFailed", "Delete failed."));
+        throw createActionError(response, indT("Visits_Detail_DeleteFailed", "Delete failed."));
       }
 
       setStatus(indT("Visits_Detail_Deleted", "Activity deleted"));
@@ -258,9 +262,10 @@ export const useDetailMutations = ({
       const message = error instanceof Error && error.message
         ? error.message
         : indT("Visits_Detail_DeleteError", "Delete error.");
-      setModalError(message);
-      setStatus(message);
-      flashActionMark("errorProcess", 1500);
+      const feedback = { ...resolveActionError(error), message };
+      setModalError(feedback);
+      setStatus("");
+      flashActionMark(getActionErrorMark(feedback), 1500);
       return false;
     } finally {
       setBusy(false);

@@ -1,3 +1,4 @@
+import { indT } from "../../utils/indI18n.ts";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useFloatingPosition } from "../../hooks/useFloatingPosition.ts";
@@ -10,8 +11,7 @@ import {
 // Single date picker matching the Historial DRP visual style.
 // Returns an ISO string (yyyy-MM-dd) via onChange.
 
-const IND_I18N = globalThis.__IND_I18N__ || {};
-const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
+
 const MIN_POPOVER_WIDTH_PX = 360;
 
 const pad = (n) => String(n).padStart(2, "0");

@@ -1,3 +1,4 @@
+import { resolveActionError, type ActionError } from "../../../utils/actionError.ts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indFormat, indT } from "../../../utils/indI18n.ts";
@@ -165,7 +166,7 @@ export const useExpenseSheetQuickTicketFlow = ({
   const [progressKey, setProgressKey] = useState<QuickFlowProgressKey | null>(null);
   const [displayProgressKey, setDisplayProgressKey] = useState<QuickFlowProgressKey | null>(null);
   const [progressElapsedMs, setProgressElapsedMs] = useState(0);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<ActionError>("");
   const [attemptId, setAttemptId] = useState("");
   const [traceList, setTraceList] = useState<TicketTraceEntry[]>([]);
   const [partialTicketFailure, setPartialTicketFailure] = useState<QuickCreatePartialTicketState | null>(null);
@@ -364,6 +365,8 @@ export const useExpenseSheetQuickTicketFlow = ({
   }, [canCreateExpense, isCreateMode, isSheetLocked, linkToSheet, onForbidden, sheetId]);
 
   const resolveUiErrorMessage = useCallback((error: unknown): string => {
+    const feedback = resolveActionError(error);
+    if (feedback.errorCode === "CRM_EXPENSESHEET_TICKET_DUPLICATE") return feedback.message;
     if (error instanceof ApiFetchError) {
       const validationText = formatValidationErrors(error.validationErrors);
       if (validationText) {
@@ -404,7 +407,7 @@ export const useExpenseSheetQuickTicketFlow = ({
     const data = response.Data;
     const fileId = safeText(data?.FileId);
     const completedStage = safeText(data?.CompletedStage);
-    const responseMessage = safeText(response.Message);
+    const responseMessage = resolveActionError(response).message;
     const validationText = formatValidationErrors(response.Errors);
     const retryAfter = safeText(response.RetryAfter);
     const messageParts: string[] = [];
@@ -416,6 +419,8 @@ export const useExpenseSheetQuickTicketFlow = ({
           indFormat("ExpenseSheets_NewTicket_Error_RetryAfterHint", "Retry after {0}.", retryAfter)
         );
       }
+    } else if (response.ErrorCode === "CRM_EXPENSESHEET_TICKET_DUPLICATE") {
+      messageParts.push(responseMessage);
     } else if (validationText) {
       messageParts.push(validationText);
     } else if (responseMessage) {
@@ -574,7 +579,7 @@ export const useExpenseSheetQuickTicketFlow = ({
           errors: Array.isArray(response.Errors) ? response.Errors : [],
           stepTraceIds: response.Data?.StepTraceIds ?? null,
         });
-        setErrorMessage(resolvedMessage);
+        setErrorMessage({ ...resolveActionError(response), message: resolvedMessage });
       } catch (error) {
         if (error instanceof ApiFetchError) {
           addTrace("ticket-quick-create-error", extractTraceIdFromError(error));
@@ -596,7 +601,7 @@ export const useExpenseSheetQuickTicketFlow = ({
         setDisplayProgressKey(null);
         progressStartedAtRef.current = null;
         setProgressElapsedMs(0);
-        setErrorMessage(resolveUiErrorMessage(error));
+        setErrorMessage({ ...resolveActionError(error), message: resolveUiErrorMessage(error) });
       }
     },
     [

@@ -1,3 +1,4 @@
+import { resolveActionError, type ActionError } from "../../../../utils/actionError.ts";
 ﻿import { useCallback, useEffect, useRef, useState } from "react";
 import type React from "react";
 import { indT } from "../../../../utils/indI18n.ts";
@@ -38,7 +39,7 @@ const getPreviewPointCenter = (left: TicketPreviewPoint, right: TicketPreviewPoi
 export const useExpenseTicketImagePreview = ({ fileId, sourceUrl, enabled = true }: UseExpenseTicketImagePreviewArgs) => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewBusy, setPreviewBusy] = useState(false);
-  const [previewError, setPreviewError] = useState("");
+  const [previewError, setPreviewError] = useState<ActionError>("");
   const [previewImageUrl, setPreviewImageUrl] = useState("");
   const [previewScale, setPreviewScale] = useState(1);
   const [previewTranslate, setPreviewTranslate] = useState<TicketPreviewPoint>({ x: 0, y: 0 });
@@ -151,7 +152,7 @@ export const useExpenseTicketImagePreview = ({ fileId, sourceUrl, enabled = true
         return objectUrl;
       } catch (error) {
         if (previewRequestKeyRef.current === requestKey) {
-          setPreviewError(error instanceof Error ? error.message : indT("Api_RequestFailed", "Request failed."));
+          setPreviewError({ ...resolveActionError(error), message: error instanceof Error ? error.message : indT("Api_RequestFailed", "Request failed.") });
         }
         return "";
       } finally {

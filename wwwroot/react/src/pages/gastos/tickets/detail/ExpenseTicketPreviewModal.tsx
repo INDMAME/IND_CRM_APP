@@ -1,3 +1,5 @@
+import { type ActionError } from "../../../../utils/actionError.ts";
+import ActionErrorNotice from "../../../../components/commons/ActionErrorNotice.tsx";
 ﻿import React from "react";
 import { createPortal } from "react-dom";
 import { indT } from "../../../../utils/indI18n.ts";
@@ -6,7 +8,7 @@ import type { TicketPreviewPoint } from "./useExpenseTicketImagePreview.ts";
 type ExpenseTicketPreviewModalProps = {
   open: boolean;
   busy: boolean;
-  error: string;
+  error: ActionError;
   imageUrl: string;
   imageAlt: string;
   scale: number;
@@ -69,7 +71,7 @@ const ExpenseTicketPreviewModal = ({
             {indT("Common_Loading", "Loading")}
           </div>
         ) : error ? (
-          <p className="text-sm text-rose-200">{error}</p>
+          <ActionErrorNotice error={error} />
         ) : imageUrl ? (
           <div
             ref={surfaceRef}

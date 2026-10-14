@@ -100,9 +100,8 @@ namespace IND_CRM_APP.Controllers
                 if (loginResult == null || string.IsNullOrWhiteSpace(loginResult.Token))
                 {
                     _tokenSession.Clear();
-                    ViewBag.Error = !string.IsNullOrWhiteSpace(loginResult?.Message)
-                        ? loginResult.Message
-                        : _sr["Auth_InvalidCredentials"].Value;
+                    _logger.LogWarning("Authentication did not return a token. TraceId={TraceId}", HttpContext.TraceIdentifier);
+                    ViewBag.Error = _sr["Auth_InvalidCredentials"].Value;
                     return View(model);
                 }
 

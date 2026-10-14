@@ -19,6 +19,7 @@ if (typecheckResult.status !== 0) {
 }
 
 const entryPoints = {
+  "action-feedback": "Web/wwwroot/react/src/pages/system/ActionFeedbackHost.tsx",
   create: "Web/wwwroot/react/src/pages/visitas/creacion/CreatePage.tsx",
   detail: "Web/wwwroot/react/src/pages/visitas/detail/DetailPage.tsx",
   history: "Web/wwwroot/react/src/pages/visitas/historial/HistoryPage.tsx",

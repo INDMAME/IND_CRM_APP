@@ -1016,6 +1016,7 @@
                 if (titleEl && title) titleEl.textContent = title;
                 if (bodyEl && message) bodyEl.textContent = message;
                 if (okBtn && i18n.ok) okBtn.textContent = i18n.ok;
+                modal.dataset.indTraceId = opts && typeof opts.traceId === "string" ? opts.traceId : "";
                 modal.classList.remove("hidden");
                 modal.setAttribute("aria-hidden", "false");
             };
@@ -1044,6 +1045,7 @@
         </script>
     }
 
+    <partial name="_ActionFeedbackHost" />
     @RenderSection("Scripts", required: false)
 </body>
 </html>

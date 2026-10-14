@@ -1,3 +1,4 @@
+import ActionErrorNotice from "../../../components/commons/ActionErrorNotice.tsx";
 import { useEffect, useRef } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import HomeHelpTopicBrowser from "./HomeHelpTopicBrowser.tsx";
@@ -70,12 +71,7 @@ const ManualHelpView = ({ responseLocale }: ManualHelpViewProps) => {
             {indT("HomeHelp_CatalogLoading", "Loading topics…")}
           </p>
         ) : catalogError ? (
-          <p
-            className="rounded-[var(--radius-xl)] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
-            role="alert"
-          >
-            {catalogError}
-          </p>
+          <ActionErrorNotice error={catalogError} />
         ) : (
           <HomeHelpTopicBrowser
             modules={catalog?.modules || []}
@@ -106,9 +102,7 @@ const ManualHelpView = ({ responseLocale }: ManualHelpViewProps) => {
         ) : null}
 
         {topicError ? (
-          <p className="rounded-[var(--radius-xl)] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert">
-            {topicError}
-          </p>
+          <ActionErrorNotice error={topicError} />
         ) : null}
 
         {topic ? (

@@ -111,11 +111,41 @@ test("the actual rate field blur and ticket mutation send the same rate and reim
   }
 });
 
+// A created ticket line remains persisted even when its linked sheet still needs recovery.
+for (const operation of ["create", "delete"]) test(`partial ticket-line ${operation} retains the sync trace independently of browser storage`, async () => {
+  const load = createSourceLoader({
+    react: { useCallback: callback => callback, useRef: current => ({ current }) },
+    "indI18n.ts": i18n,
+    "permissions.ts": { showPermissionModal: noop },
+    "visitasHistory.ts": { flashActionMark: noop },
+    "expenseSheetEditAccess.ts": { resolveExpenseSheetEditAccess: async () => ({ isLocked: false }) },
+    "expenseApi.ts": { createExpenseSheetTicketLine: async () => ({ Success: true }), deleteExpenseSheetTicketLine: async () => ({ Success: true }) },
+    "expenseLinkedTicketSheetSync.ts": { syncExpenseLinkedTicketSheetLine: async () => {
+      throw Object.assign(new Error("Sheet sync failed"), { traceId: "sync-trace-1" });
+    } },
+    "expenseTicketSheetSyncState.ts": { saveExpenseTicketSheetSyncState: () => false, clearExpenseTicketSheetSyncState: noop },
+  });
+  const { useExpenseTicketLineDetailMutations } = load("pages/gastos/tickets/line/useExpenseTicketLineDetailMutations.ts");
+  const mutations = useExpenseTicketLineDetailMutations({
+    busy: false, isEditing: true, isCreateMode: true, canCreateTicket: true, canEditTicket: true,
+    canDeleteTicket: true, fileId: "F1", lineRecId: "LINE1", draftDescription: "Expense", draftQty: "2", draftPrice: "5",
+    draftTransDate: "2026-09-09", draftTicketTime: "12:00", originalTicketDate: "2026-09-09", originalTicketTime: "12:00",
+    headerCurrencyCode: "EUR", headerTotalAmount: 10, localCurrencyCode: "EUR", linkedExpenseSheetId: "HG1",
+    allowSelfManagement: true, canManageOtherUsers: false, currentAxUserId: "USER1", currentCrmUserId: "CRM1",
+    selectedManagedUserId: "", setModalError: noop, setBusy: noop, setStatus: noop, setIsEditing: noop,
+  });
+  assert.equal(await (operation === "create" ? mutations.handleUpdate() : mutations.handleDelete()), true, "The completed mutation must not be repeated");
+  if (operation === "create") assert.equal(mutations.isSaveComplete(), false, "The caller must show a recovery warning instead of success");
+  assert.equal(mutations.getSaveWarning().traceId, "sync-trace-1");
+  assert.equal(mutations.getSaveWarning().severity, "warning");
+});
+
 // Keeps React refs stable across simulated renders and session state across remounts.
 function createVisitHarness(fetchJson, storage = new Map(), search = "") {
   let refs = [];
   let cursor = 0;
   const messages = [];
+  const popupErrors = [];
   const state = { busy: false, location: { href: "", search } };
   const load = createSourceLoader({
     react: { useCallback: (callback) => callback, useRef: (initial) => refs[cursor++] ?? (refs[cursor - 1] = { current: initial }) },
@@ -137,12 +167,12 @@ function createVisitHarness(fetchJson, storage = new Map(), search = "") {
     selectedClient: { value: "CLIENT" }, selectedContacts: [{ value: "CONTACT-A", text: "Contact A" }],
     visitType: "1", contactMethod: "0", defaultAsistenteTipo: "1", description: "Audit", transDate: "2026-09-09",
     comentarios: "Comment", antecedentes: "", conclusiones: "", setBusy: (value) => { state.busy = value; },
-    setStatus: (message) => messages.push(message), setModalError: noop, setShowRequired: noop, openConfirm: noop, closeConfirm: noop,
+    setStatus: (message) => messages.push(message), setModalError: (error) => popupErrors.push(error), setShowRequired: noop, openConfirm: noop, closeConfirm: noop,
   };
   return {
     render: (args = {}) => { cursor = 0; return useCreateSubmit({ ...defaults, ...args }); },
     remount: () => { refs = []; },
-    storage, messages, state,
+    storage, messages, popupErrors, state,
   };
 }
 
@@ -158,7 +188,8 @@ test("a create-only user resumes the same activity and skips contacts already cr
   });
   const args = { selectedContacts: [{ value: "CONTACT-A", text: "A" }, { value: "CONTACT-B", text: "B" }] };
   assert.equal(await harness.render(args).doCreate(), false);
-  assert.match(harness.messages.at(-1), /Activity 1000 was created/);
+  assert.match(harness.popupErrors.findLast(value => value && typeof value === "object")?.message || "", /Activity 1000 was created/);
+  assert.equal(harness.messages.at(-1), "", "Failure text belongs to the popup rather than the status label");
   assert.equal(harness.state.busy, false);
   assert.equal(await harness.render(args).doCreate(), true);
   assert.equal(calls.filter((call) => call.url === "/Visitas/CreateActivity").length, 1);
@@ -179,7 +210,8 @@ test("pending progress survives remount, but changed form data never creates a s
   assert.equal(await harness.render().doCreate(), false);
   harness.remount();
   assert.equal(await harness.render({ description: "Changed description" }).doCreate(), false);
-  assert.match(harness.messages.at(-1), /Activity 1000 already exists/);
+  assert.match(harness.popupErrors.at(-1), /Activity 1000 already exists/);
+  assert.equal(harness.messages.at(-1), "");
   assert.equal(activityCalls, 1);
   assert.equal(await harness.render().doCreate(), true);
   assert.equal(activityCalls, 1);

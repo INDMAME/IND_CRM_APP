@@ -1,3 +1,4 @@
+import { type ActionError } from "../../../../utils/actionError.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 import { useExpenseTopbarCrudActions } from "../../hooks/useExpenseTopbarCrudActions.ts";
 import { navigateToExpenseUrl } from "../../utils/expenseNavigation.ts";
@@ -13,7 +14,7 @@ type UseExpenseTicketDetailTopbarActionsArgs = {
   canEditTicket: boolean;
   canDeleteTicket: boolean;
   fileId: string;
-  setModalError: (value: string) => void;
+  setModalError: (value: ActionError) => void;
   handleEnableEdit: () => void;
   handleCancelEdit: () => void;
   canOpenSaveConfirm?: () => boolean;

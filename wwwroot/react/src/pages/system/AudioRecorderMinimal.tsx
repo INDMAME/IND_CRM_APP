@@ -1,8 +1,8 @@
+import { indT } from "../../utils/indI18n.ts";
+import ActionErrorNotice from "../../components/commons/ActionErrorNotice.tsx";
 import React, { useEffect, useRef, useState } from "react";
 
-const IND_I18N = globalThis.__IND_I18N__ || {};
-const indT = (key: string, fallback?: string) =>
-  (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
+
 
 type AudioRecorderProps = {
   embedded?: boolean;
@@ -1372,10 +1372,7 @@ export default function AudioRecorderMinimal({
           <div className="mt-3 flex flex-col items-center justify-center gap-1 min-h-[22px]">
             {uiError ? (
               <>
-                <div className="text-xs text-rose-700 text-center leading-tight">{uiError}</div>
-                {uiHint ? (
-                  <div className="text-[11px] text-slate-600 text-center leading-tight">{uiHint}</div>
-                ) : null}
+                <ActionErrorNotice error={[uiError, uiHint].filter(Boolean).join(" ")} severity="warning" />
               </>
             ) : (
               <div className="text-xs leading-tight" style={{ color: brandRgba(statusAlpha) }}>

@@ -1,3 +1,5 @@
+import { resolveActionError } from "../../utils/actionError.ts";
+import { showActionError } from "../../services/actionFeedback.ts";
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import FloatingList from "../commons/FloatingList.tsx";
@@ -244,9 +246,10 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
       setHasMore(rawItems.length === 10);
       setPage(pageToLoad);
       setStatus(mapped.length ? indFormat("Visits_Create_ContactCount", "{0} contacts", mapped.length) : indT("Visits_Create_NoContacts", "No contacts"));
-    } catch {
+    } catch (error) {
       if (controller.signal.aborted || abortRef.current !== controller) return;
-      setStatus(indT("Visits_Create_LoadContactsError", "Failed to load contacts."));
+      showActionError({ ...resolveActionError(error), message: indT("Visits_Create_LoadContactsError", "Failed to load contacts."), severity: "error" });
+      setStatus("");
     } finally {
       if (abortRef.current === controller) {
         abortRef.current = null;

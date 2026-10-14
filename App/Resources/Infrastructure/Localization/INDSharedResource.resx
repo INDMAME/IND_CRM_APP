@@ -1885,4 +1885,31 @@
   <data name="ExpenseSheets_DeleteTickets_Keep" xml:space="preserve">
     <value>Keep tickets</value>
   </data>
+  <data name="Common_Error_Title" xml:space="preserve">
+    <value>No se ha podido completar la operación</value>
+  </data>
+  <data name="Common_TraceId" xml:space="preserve">
+    <value>ID de seguimiento (Trace ID)</value>
+  </data>
+  <data name="Tickets_Error_Duplicate" xml:space="preserve">
+    <value>Ya existe otro ticket tuyo con la misma fecha y hora. Revisa el ticket existente o corrige la fecha y hora si son gastos diferentes.</value>
+  </data>
+  <data name="ExpenseSheets_Delete_CleanupPending" xml:space="preserve">
+    <value>La hoja y sus líneas ya se han eliminado. Queda pendiente eliminar algunos tickets o adjuntos. Reintenta con la misma opción.</value>
+  </data>
+  <data name="ExpenseSheets_Delete_ChoiceConflict" xml:space="preserve">
+    <value>El borrado ya comenzó con otra opción de tickets. Reintenta con la opción que elegiste inicialmente.</value>
+  </data>
+  <data name="Common_Warning_Title" xml:space="preserve">
+    <value>Revisa esta información</value>
+  </data>
+  <data name="Tickets_Validation_TotalAmountRequired" xml:space="preserve">
+    <value>El importe total debe ser mayor o igual que 0.</value>
+  </data>
+  <data name="Common_Error_Validation" xml:space="preserve">
+    <value>Revisa los datos introducidos y completa los campos obligatorios antes de volver a intentarlo.</value>
+  </data>
+  <data name="Common_Validation_DateFormat" xml:space="preserve">
+    <value>Required format: DDMMYYYY or DD.MM.YYYY.</value>
+  </data>
 </root>

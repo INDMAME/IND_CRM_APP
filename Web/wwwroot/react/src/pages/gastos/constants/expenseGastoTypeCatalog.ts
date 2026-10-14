@@ -160,5 +160,5 @@ export const formatExpenseGastoTypeAllowedMessage = ({ allowNone = true }: { all
     .filter((code) => allowNone || code !== 0)
     .join(",");
 
-  return `gastoType must be one of: ${codes}.`;
+  return indT("Common_Error_Validation", `gastoType must be one of: ${codes}.`);
 };

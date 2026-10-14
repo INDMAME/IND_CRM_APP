@@ -1,3 +1,4 @@
+import { resolveActionError, type ActionError } from "../../../utils/actionError.ts";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
@@ -78,7 +79,7 @@ type UseExpenseSheetDetailStateArgs = {
   selectedManagedUserId: string;
   sheetId: string;
   isCreateMode: boolean;
-  onForbidden: () => void;
+  onForbidden: (options?: Record<string, unknown>) => void;
 };
 
 // Owns state and behavior for expense sheet detail page (read, edit, create).
@@ -98,11 +99,11 @@ export const useExpenseSheetDetailState = ({
   const [lines, setLines] = useState<ExpenseSheetLine[]>([]);
   const [linePage, setLinePage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<ActionError>("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [modalError, setModalError] = useState("");
+  const [modalError, setModalError] = useState<ActionError>("");
   const [draftDescription, setDraftDescription] = useState("");
   const [draftProjectId, setDraftProjectId] = useState("");
   const [draftCurrencyCode, setDraftCurrencyCode] = useState("");
@@ -175,7 +176,7 @@ export const useExpenseSheetDetailState = ({
         });
 
         if (response?.Success === false) {
-          setErrorMessage(response?.Message || indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."));
+          setErrorMessage(resolveActionError(response, response?.Message || indT("ExpenseSheets_LoadError", "Could not load expense sheet detail.")));
           setHeader(null);
           setLines([]);
           return;
@@ -200,12 +201,12 @@ export const useExpenseSheetDetailState = ({
         setLines(nextLines);
       } catch (error) {
         if (error instanceof ApiFetchError && error.status === 403) {
-          onForbidden();
+          onForbidden({ traceId: resolveActionError(error).traceId });
           return;
         }
 
         setErrorMessage(
-          error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail.")
+          { ...resolveActionError(error), message: error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail.") }
         );
         setHeader(null);
         setLines([]);

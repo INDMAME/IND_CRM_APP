@@ -1,3 +1,5 @@
+import { showActionError } from "../../../services/actionFeedback.ts";
+import { indT } from "../../../utils/indI18n.ts";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
 import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
@@ -122,11 +124,13 @@ export const useExpenseSheetLineTypeValidation = ({
 
   const canOpenSaveConfirm = useCallback(() => {
     if (!String(draftDescription || "").trim()) {
+      showActionError({ message: indT("ExpenseSheets_Validation_DescriptionRequired", "Description is required."), severity: "warning" });
       focusDescriptionField();
       return false;
     }
 
     if (toExpenseGastoTypeCode(draftTypeValueCode, { allowNone: false }) === null) {
+      showActionError({ message: indT("Tickets_Validation_CategoryRequired", "Category is required."), severity: "warning" });
       focusTypeField();
       return false;
     }
@@ -138,6 +142,7 @@ export const useExpenseSheetLineTypeValidation = ({
       return true;
     }
 
+    showActionError({ message: indT("ExpenseSheets_Line_Validation_AmountQty", "Check the line date, category, quantity and price."), severity: "warning" });
     focusAmountFields();
     return false;
   }, [draftDescription, draftPrice, draftQty, draftTypeValueCode, focusAmountFields, focusDescriptionField, focusTypeField]);

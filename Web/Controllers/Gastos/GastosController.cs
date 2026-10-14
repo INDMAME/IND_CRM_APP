@@ -4874,14 +4874,18 @@ namespace IND_CRM_APP.Controllers
         }
 
         // Builds a standard command API error payload.
-        private static JsonResult CreateApiCommandError(int statusCode, string message, string errorCode)
+        private JsonResult CreateApiCommandError(int statusCode, string message, string errorCode)
         {
+            var traceId = HttpContext.TraceIdentifier;
+            _logger.LogWarning("Expense command failed. TraceId={TraceId}; ErrorCode={ErrorCode}; StatusCode={StatusCode}; Path={Path}",
+                traceId, errorCode, statusCode, HttpContext.Request.Path.Value);
             return CreateApiResponse(
                 new
                 {
                     Success = false,
                     Message = message,
                     ErrorCode = errorCode,
+                    TraceId = traceId,
                     Data = (object?)null,
                     Errors = Array.Empty<object>()
                 },

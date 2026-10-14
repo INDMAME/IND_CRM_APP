@@ -1,3 +1,4 @@
+import { type ActionError } from "../../../../utils/actionError.ts";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FloatingActionButton, { type FloatingActionButtonMenuItem } from "../../../../components/commons/FloatingActionButton.tsx";
 import VisitasPageProviders from "../../../../components/commons/VisitasPageProviders.tsx";
@@ -100,7 +101,7 @@ const buildExpenseTicketDetailModalView = ({
   modalCancelText: string;
   modalLoadingText: string;
   busy: boolean;
-  modalError: string;
+  modalError: ActionError;
   status: string;
   handleModalButtonConfirm: () => void;
   closeConfirm: () => void;
@@ -136,7 +137,7 @@ const buildExpenseTicketDetailPreviewView = ({
 }: {
   previewOpen: boolean;
   previewBusy: boolean;
-  previewError: string;
+  previewError: ActionError;
   previewImageUrl: string;
   previewAltText: string;
   previewScale: number;
@@ -166,7 +167,7 @@ type ExpenseTicketLinkedSheetLineView = {
   projectId: string;
   reimbursableExpense: number | null;
   isLoading: boolean;
-  errorMessage: string;
+  errorMessage: ActionError;
   disabled: boolean;
   onProjectIdChange: (value: string) => void;
   onReimbursableExpenseChange: (value: number) => void;
@@ -236,11 +237,11 @@ const buildExpenseTicketDetailContentView = ({
   openLineDetail,
 }: {
   isLoading: boolean;
-  errorMessage: string;
+  errorMessage: ActionError;
   header: ExpenseTicketDetailHeader | null;
   showStickyPreview: boolean;
   previewBusy: boolean;
-  previewError: string;
+  previewError: ActionError;
   previewImageUrl: string;
   previewAltText: string;
   openFile: () => void;
@@ -812,7 +813,7 @@ const useExpenseTicketDetailPageViewModel = () => {
         safeText(linkSheetBlockedMessage) ||
         resolveLinkedTicketBlockedMessage(false);
       setModalError(message);
-      setStatus(message);
+      setStatus("");
       return;
     }
 

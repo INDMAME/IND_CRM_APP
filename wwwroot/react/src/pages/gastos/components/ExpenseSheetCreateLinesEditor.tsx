@@ -1,3 +1,4 @@
+import ActionErrorNotice from "../../../components/commons/ActionErrorNotice.tsx";
 import React, { useMemo } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetCreateLineDraft } from "../expenseTypes.ts";
@@ -45,7 +46,7 @@ const ExpenseSheetCreateLinesEditor = ({
         </button>
       </div>
 
-      {validationMessage ? <p className="text-danger text-sm">{validationMessage}</p> : null}
+      {validationMessage ? <ActionErrorNotice error={validationMessage} severity="warning" /> : null}
 
       {lines.length === 0 ? (
         <div className="rounded-[var(--radius-xl)] border border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-sm text-slate-600">

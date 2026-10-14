@@ -1,3 +1,5 @@
+import { showActionError } from "../services/actionFeedback.ts";
+import { createActionError, getActionErrorMark, resolveActionError, type ActionError } from "../utils/actionError.ts";
 import { useCallback, useRef } from "react";
 import { fetchJson } from "../services/apiService.ts";
 import { indExtractId, indExtractSignedId } from "../utils/indIds.ts";
@@ -157,7 +159,7 @@ type UseCreateSubmitArgs = {
   conclusiones: string;
   setBusy: (value: boolean) => void;
   setStatus: (value: string) => void;
-  setModalError: (value: string) => void;
+  setModalError: (value: ActionError) => void;
   setShowRequired: (value: boolean) => void;
   openConfirm: (opts: {
     title: string;
@@ -203,12 +205,14 @@ export const useCreateSubmit = ({
     if (progressRef.current === undefined) progressRef.current = readCreateProgress();
     setModalError("");
     if (!selectedClient) {
-      setStatus(indT("Visits_Create_SelectClientRequired", "Select a client."));
+      showActionError({ message: indT("Visits_Create_SelectClientRequired", "Select a client."), severity: "warning" });
+      setStatus("");
       return false;
     }
     if (String(visitType || "") === "" || String(visitType) === "0" || !description.trim() || !comentarios.trim()) {
       setShowRequired(true);
-      setStatus(indT("Visits_Create_CompleteRequired", "Complete required fields."));
+      showActionError({ message: indT("Visits_Create_CompleteRequired", "Complete required fields."), severity: "warning" });
+      setStatus("");
       return false;
     }
     const payloadActivity = {
@@ -234,7 +238,7 @@ export const useCreateSubmit = ({
         progressRef.current.recId
       );
       setModalError(message);
-      setStatus(message);
+      setStatus("");
       return false;
     }
 
@@ -251,7 +255,7 @@ export const useCreateSubmit = ({
         });
 
         if (!getLegacyResponseSuccess(resAct)) {
-          throw new Error(getLegacyResponseMessage(resAct) || indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
+          throw createActionError(resAct, indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
         }
 
         const recIdActividad = resolveCreateActivityRecId(resAct);
@@ -279,7 +283,7 @@ export const useCreateSubmit = ({
             body: JSON.stringify(payloadVisita),
           });
           if (!getLegacyResponseSuccess(resVis)) {
-            throw new Error(getLegacyResponseMessage(resVis) || indT("Visits_Create_CreateVisitFailed", "Failed to create visit."));
+            throw createActionError(resVis, indT("Visits_Create_CreateVisitFailed", "Failed to create visit."));
           }
           progress.completedContactIds.add(contact.value);
           saveCreateProgress(progress);
@@ -345,9 +349,10 @@ export const useCreateSubmit = ({
             errorMessage
           )
         : errorMessage;
-      setModalError(msg);
-      setStatus(msg);
-      flashActionMark("errorProcess", 1500);
+      const feedback = { ...resolveActionError(e), message: msg, severity: progressRef.current ? "warning" as const : "error" as const };
+      setModalError(feedback);
+      setStatus("");
+      flashActionMark(getActionErrorMark(feedback), 1500);
       setBusy(false);
       return false;
     } finally {
@@ -382,12 +387,14 @@ export const useCreateSubmit = ({
     }
     if (modalOpen) return;
     if (!selectedClient) {
-      setStatus(indT("Visits_Create_SelectClientRequired", "Select a client."));
+      showActionError({ message: indT("Visits_Create_SelectClientRequired", "Select a client."), severity: "warning" });
+      setStatus("");
       return;
     }
     if (String(visitType || "") === "" || String(visitType) === "0" || !description.trim() || !comentarios.trim()) {
       setShowRequired(true);
-      setStatus(indT("Visits_Create_CompleteRequired", "Complete required fields."));
+      showActionError({ message: indT("Visits_Create_CompleteRequired", "Complete required fields."), severity: "warning" });
+      setStatus("");
       return;
     }
     setModalError("");

@@ -53,16 +53,12 @@
 
                 @if (TempData["AuthError"] != null)
                 {
-                    <div class="bg-red-50 text-red-700 text-sm rounded-xl px-3 py-2 mb-3 border border-red-100">
-                        @TempData["AuthError"]
-                    </div>
+                    <div data-ind-error-message="@TempData["AuthError"]" data-ind-error-trace="@(Context?.TraceIdentifier)" data-ind-error-severity="warning"></div>
                 }
 
                 @if (ViewBag.Error != null)
                 {
-                    <div class="bg-red-50 text-red-700 text-sm rounded-xl px-3 py-2 mb-3 border border-red-100">
-                        @ViewBag.Error
-                    </div>
+                    <div data-ind-error-message="@ViewBag.Error" data-ind-error-trace="@(Context?.TraceIdentifier)" data-ind-error-severity="warning"></div>
                 }
 
                 <a asp-controller="Auth"
@@ -120,5 +116,6 @@
             // Defensive: do not break login when partial is unavailable.
         }
     }
+    <partial name="_ActionFeedbackHost" />
 </body>
 </html>

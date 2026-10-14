@@ -1,0 +1,2 @@
+import{a as o}from"./chunk-ORJLERH4.js";var g,c,u,_=o(()=>{g=()=>typeof globalThis<"u"&&globalThis.__IND_I18N__||{},c=(t,i)=>{let n=g()[t];if(typeof n=="string"&&n.trim()&&n!==t)return n;let r=globalThis.__IND_COMMON_I18N__?.[t];return typeof r=="string"&&r.trim()&&r!==t?r:i||t},u=(t,i,...e)=>{let n=c(t,i);return String(n).replace(/\{(\d+)\}/g,(r,s)=>String(e[Number(s)]??""))}});export{c as a,u as b,_ as c};
+//# sourceMappingURL=chunk-62LZKFYA.js.map

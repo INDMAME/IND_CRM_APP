@@ -1,3 +1,4 @@
+import { type ActionError } from "../../../utils/actionError.ts";
 import { useEffect, useRef, useState } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import { fetchHelpCatalog } from "./helpService.ts";
@@ -13,7 +14,7 @@ type UseHomeHelpModuleCatalogArgs = {
 type UseHomeHelpModuleCatalogResult = {
   modules: HelpModule[];
   state: HomeHelpCatalogState;
-  errorMessage: string;
+  errorMessage: ActionError;
 };
 
 const EMPTY_MODULES: HelpModule[] = [];
@@ -25,7 +26,7 @@ export const useHomeHelpModuleCatalog = ({
 }: UseHomeHelpModuleCatalogArgs): UseHomeHelpModuleCatalogResult => {
   const [catalog, setCatalog] = useState<HelpCatalog | null>(null);
   const [state, setState] = useState<HomeHelpCatalogState>("idle");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<ActionError>("");
   const loadedLocaleRef = useRef("");
 
   useEffect(() => {

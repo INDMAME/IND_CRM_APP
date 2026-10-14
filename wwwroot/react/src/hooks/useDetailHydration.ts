@@ -1,3 +1,5 @@
+import { resolveActionError } from "../utils/actionError.ts";
+import { showActionError } from "../services/actionFeedback.ts";
 import { useCallback, useEffect } from "react";
 import { fetchJson } from "../services/apiService.ts";
 import { indT } from "../utils/indI18n.ts";
@@ -95,7 +97,8 @@ export const useDetailHydration = ({
       const responseData = getResponseData(res);
 
       if (!isResponseSuccess(res) || !responseData) {
-        setStatus(getResponseMessage(res) || indT("Visits_Detail_LoadActivityFailed", "Failed to load activity details."));
+        showActionError({ ...resolveActionError(res), message: getResponseMessage(res) || indT("Visits_Detail_LoadActivityFailed", "Failed to load activity details."), severity: "error" });
+        setStatus("");
         return;
       }
 

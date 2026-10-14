@@ -1,3 +1,4 @@
+import { createActionError, getActionErrorMark, resolveActionError, type ActionError } from "../../../utils/actionError.ts";
 ﻿import React, { useEffect, useMemo, useState, useRef } from "react";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import AppErrorBoundary from "../../../components/commons/AppErrorBoundary.tsx";
@@ -51,7 +52,7 @@ function VisitasApp() {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [showRequired, setShowRequired] = useState(false);
-  const [modalError, setModalError] = useState("");
+  const [modalError, setModalError] = useState<ActionError>("");
 
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
     defaultConfirmText: indT("Confirm_Yes", "Confirm_Yes"),
@@ -62,10 +63,11 @@ function VisitasApp() {
     setModalError("");
     await handleConfirm({
       busy,
-      onError: (msg) => {
-        setModalError(msg);
-        setStatus(msg);
-        flashActionMark("errorProcess", 1500);
+      onError: (msg, error) => {
+        const feedback = resolveActionError(error, msg);
+        setModalError(feedback);
+        setStatus("");
+        flashActionMark(getActionErrorMark(feedback), 1500);
       }
     });
   }, [busy, handleConfirm]);

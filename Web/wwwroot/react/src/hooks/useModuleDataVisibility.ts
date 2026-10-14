@@ -1,3 +1,4 @@
+import { resolveActionError, type ActionError } from "../utils/actionError.ts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiFetchError } from "../services/apiService.ts";
 import {
@@ -34,7 +35,7 @@ type UseModuleDataVisibilityArgs = {
   allowCachedUsers?: boolean;
   preloadedUsers?: unknown[] | null;
   preloadedUsersSucceeded?: boolean;
-  onForbidden?: () => void;
+  onForbidden?: (options?: Record<string, unknown>) => void;
   onDebug?: (message: string, data?: Record<string, unknown>) => void;
 };
 
@@ -104,7 +105,7 @@ export const useModuleDataVisibility = ({
   const [visibleUsers, setVisibleUsers] = useState<ModuleDataVisibilityVisibleUser[]>(() =>
     hasPreloadedUsers(preloadedUsers, preloadedUsersSucceeded) ? readPreloadedUsers(preloadedUsers) : []);
   const [visibleUsersLoading, setVisibleUsersLoading] = useState(false);
-  const [visibleUsersError, setVisibleUsersError] = useState("");
+  const [visibleUsersError, setVisibleUsersError] = useState<ActionError>("");
   const [visibleUsersReady, setVisibleUsersReady] = useState(() => hasPreloadedUsers(preloadedUsers, preloadedUsersSucceeded));
   const activeAbortRef = useRef<AbortController | null>(null);
   const activeRequestIdRef = useRef(0);
@@ -212,13 +213,13 @@ export const useModuleDataVisibility = ({
           setVisibleUsersLoading(false);
           setVisibleUsersReady(true);
           activeAbortRef.current = null;
-          onForbidden?.();
+          onForbidden({ traceId: resolveActionError(err).traceId });
           return;
         }
 
         setVisibleUsers([]);
         setVisibleUsersLoading(false);
-        setVisibleUsersError(err?.message || indT("Api_RequestFailed", "Could not load visible users."));
+        setVisibleUsersError({ ...resolveActionError(err), message: err?.message || indT("Api_RequestFailed", "Could not load visible users.") });
         setVisibleUsersReady(true);
         activeAbortRef.current = null;
         onDebug?.("moduleDataVisibility:error", { appCode, moduleCode, message: err?.message || "" });

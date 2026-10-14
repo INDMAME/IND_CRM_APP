@@ -47,6 +47,9 @@ Antes de crear un selector nuevo se confirma qué tipo corresponde.
 - Las acciones destructivas o de guardado usan el modal integrado, no `confirm`, `alert` ni avisos nativos de salida.
 - En Visitas: edición inmediata; una confirmación antes de crear/actualizar/eliminar; spinner durante la petición; después, marca `okProcess`, `okDelProcess`, `warningProcess` o `errorProcess` según el resultado.
 - Los controles de crear, editar y eliminar reflejan permisos en UI, pero el servidor sigue siendo la autoridad.
+- Los errores textuales se presentan mediante `ConfirmModal`, con título localizado según sean advertencias de negocio o fallos técnicos y el Trace ID real al pie cuando exista. No repetir el mismo error en una tarjeta o barra de estado.
+- `ActionMark` permanece por encima del popup: `warningProcess` para validaciones y resultados parciales, `errorProcess` para fallos técnicos y marcas de éxito solo tras completar el proceso. Cerrar un error no confirma éxito.
+- El elemento `dialog` del popup usa `open` sin entrar en la capa superior del navegador, que ocultaría la marca global. Mantener su nombre accesible y el texto de error como alerta enfocable.
 
 ## Patrones específicos que siguen vigentes
 

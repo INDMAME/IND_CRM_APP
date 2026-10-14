@@ -1,3 +1,4 @@
+import { resolveActionError, type ActionError } from "../../../utils/actionError.ts";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
@@ -192,7 +193,7 @@ type UseExpenseSheetLineDetailStateArgs = {
   lineId: string;
   isCreateMode: boolean;
   startInEditMode: boolean;
-  onForbidden: () => void;
+  onForbidden: (options?: Record<string, unknown>) => void;
 };
 
 // Owns state and behavior for expense line detail page (read, edit, create).
@@ -213,11 +214,11 @@ export const useExpenseSheetLineDetailState = ({
   const [header, setHeader] = useState<ExpenseSheetHeader | null>(null);
   const [line, setLine] = useState<ExpenseSheetLine | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<ActionError>("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [modalError, setModalError] = useState("");
+  const [modalError, setModalError] = useState<ActionError>("");
   const [draftDescription, setDraftDescription] = useState("");
   const [draftTransDate, setDraftTransDate] = useState("");
   const [draftTypeValueCode, setDraftTypeValueCode] = useState("");
@@ -314,7 +315,7 @@ export const useExpenseSheetLineDetailState = ({
           if (isCancelled) return;
 
           if (response?.Success === false) {
-            setErrorMessage(response?.Message || indT("ExpenseSheets_LoadError", "Could not load line detail."));
+            setErrorMessage(resolveActionError(response, response?.Message || indT("ExpenseSheets_LoadError", "Could not load line detail.")));
             setHeader(null);
             setLine(null);
             setLineNavigation(EMPTY_LINE_NAVIGATION);
@@ -401,7 +402,7 @@ export const useExpenseSheetLineDetailState = ({
         if (isCancelled) return;
 
         if (response?.Success === false) {
-          setErrorMessage(response?.Message || indT("ExpenseSheets_LoadError", "Could not load line detail."));
+          setErrorMessage(resolveActionError(response, response?.Message || indT("ExpenseSheets_LoadError", "Could not load line detail.")));
           setHeader(null);
           setLine(null);
           setLineNavigation(EMPTY_LINE_NAVIGATION);
@@ -472,11 +473,11 @@ export const useExpenseSheetLineDetailState = ({
       } catch (error) {
         if (isCancelled) return;
         if (error instanceof ApiFetchError && error.status === 403) {
-          onForbidden();
+          onForbidden({ traceId: resolveActionError(error).traceId });
           return;
         }
 
-        setErrorMessage(error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load line detail."));
+        setErrorMessage({ ...resolveActionError(error), message: error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load line detail.") });
         setHeader(null);
         setLine(null);
         setLineNavigation(EMPTY_LINE_NAVIGATION);

@@ -1,3 +1,5 @@
+import { showActionError } from "../../../../services/actionFeedback.ts";
+import { type ActionError } from "../../../../utils/actionError.ts";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { indT } from "../../../../utils/indI18n.ts";
@@ -41,7 +43,7 @@ type EditorState = {
   busy: boolean;
   status: string;
   isEditing: boolean;
-  modalError: string;
+  modalError: ActionError;
   linePage: number;
   amountMSTManuallyEdited: boolean;
   draft: DraftState;
@@ -57,7 +59,7 @@ type UseExpenseTicketDetailEditorArgs = {
   isLoading: boolean;
   allowAssignedDraftEdit: boolean;
   isSheetLinkReadOnly: boolean;
-  onForbidden: () => void;
+  onForbidden: (options?: Record<string, unknown>) => void;
 };
 
 type EditorAction =
@@ -378,7 +380,7 @@ export const useExpenseTicketDetailEditor = ({
     [state.isEditing]
   );
 
-  const setModalError = useCallback<Dispatch<SetStateAction<string>>>(
+  const setModalError = useCallback<Dispatch<SetStateAction<ActionError>>>(
     (value) => {
       dispatch({ type: "patch_state", patch: { modalError: resolveSetStateValue(value, state.modalError) } });
     },
@@ -708,9 +710,11 @@ export const useExpenseTicketDetailEditor = ({
       type: "patch_state",
       patch: {
         modalError: message,
-        status: message,
+        status: "",
       },
     });
+
+    showActionError({ message, severity: "warning" });
 
     window.requestAnimationFrame(() => {
       if (!descriptionIsValid) {

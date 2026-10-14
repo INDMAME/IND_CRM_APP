@@ -1,3 +1,5 @@
+import ActionErrorNotice from "../ActionErrorNotice.tsx";
+import { indT } from "../../../utils/indI18n.ts";
 import React, {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -199,6 +201,18 @@ const AssistantChatMessageBubble = ({
   const shouldHideAssistantAvatar = false;
   const shouldWrapMarkdownAroundAvatar = !shouldHideAssistantAvatar && message.message.type === "markdown";
 
+  if (message.role === "assistant" && message.state === "error") {
+    return <div className="flex justify-start">
+      <ActionErrorNotice error={{
+        message: message.message.type === "markdown" ? message.message.markdown : indT("Api_RequestFailed", "Request failed."),
+        traceId: message.meta?.traceId,
+        status: message.meta?.httpStatus,
+      }} />
+      {message.retryQuestion && <button type="button" className="ind-action-btn px-3 py-2 text-sm"
+        disabled={isSending} onClick={() => onRetry(message.retryQuestion || "", message.id)}>{retryLabel}</button>}
+    </div>;
+  }
+
   if (message.role === "user") {
     return (
       <div className="flex justify-end">
@@ -220,11 +234,8 @@ const AssistantChatMessageBubble = ({
     );
   }
 
-  const bubbleClassName =
-    message.state === "error"
-      ? "border-rose-200 bg-rose-50 text-rose-900"
-      : "border-slate-200 bg-white text-slate-700";
-  const bubbleTailClassName = message.state === "error" ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-white";
+  const bubbleClassName = "border-slate-200 bg-white text-slate-700";
+  const bubbleTailClassName = "border-slate-200 bg-white";
 
   if (isFramelessVisualMessage) {
     return (
@@ -238,17 +249,7 @@ const AssistantChatMessageBubble = ({
             />
           </div>
 
-          {message.state === "error" && message.retryQuestion ? (
-            <button
-              type="button"
-              className="mt-2 inline-flex items-center gap-1 rounded-[var(--radius-xl)] border border-rose-200 bg-white px-2.5 py-1.5 text-[12px] font-semibold text-rose-800 transition hover:bg-rose-100 focus:outline-hidden focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isSending}
-              onClick={() => onRetry(message.retryQuestion || "", message.id)}
-            >
-              <ArrowPathIcon className="h-3.5 w-3.5" />
-              {retryLabel}
-            </button>
-          ) : null}
+
 
           {message.state === "done" && warnings.length > 0 ? (
             <div className="mt-2">
@@ -337,17 +338,7 @@ const AssistantChatMessageBubble = ({
             </div>
           )}
 
-        {message.state === "error" && message.retryQuestion ? (
-          <button
-            type="button"
-            className="mt-2 inline-flex items-center gap-1 rounded-[var(--radius-xl)] border border-rose-200 bg-white px-2.5 py-1.5 text-[12px] font-semibold text-rose-800 transition hover:bg-rose-100 focus:outline-hidden focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isSending}
-            onClick={() => onRetry(message.retryQuestion || "", message.id)}
-          >
-            <ArrowPathIcon className="h-3.5 w-3.5" />
-            {retryLabel}
-          </button>
-        ) : null}
+
 
         {message.state === "done" && warnings.length > 0 ? (
           <div className="mt-2">

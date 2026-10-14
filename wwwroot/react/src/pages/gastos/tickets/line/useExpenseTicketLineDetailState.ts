@@ -1,3 +1,4 @@
+import { resolveActionError, type ActionError } from "../../../../utils/actionError.ts";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiFetchError } from "../../../../services/apiService.ts";
 import { indT } from "../../../../utils/indI18n.ts";
@@ -27,7 +28,7 @@ type UseExpenseTicketLineDetailStateArgs = {
   canEditTicket: boolean;
   fileId: string;
   lineRecId: string;
-  onForbidden: () => void;
+  onForbidden: (options?: Record<string, unknown>) => void;
 };
 
 // Owns state and behavior for ticket line detail page (read and edit).
@@ -42,11 +43,11 @@ export const useExpenseTicketLineDetailState = ({
   const [header, setHeader] = useState<ExpenseTicketDetailHeader | null>(null);
   const [line, setLine] = useState<ExpenseTicketDetailLine | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<ActionError>("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [isEditing, setIsEditing] = useState(() => isCreateMode);
-  const [modalError, setModalError] = useState("");
+  const [modalError, setModalError] = useState<ActionError>("");
   const [draftDescription, setDraftDescription] = useState("");
   const [draftQty, setDraftQty] = useState("");
   const [draftPrice, setDraftPrice] = useState("");
@@ -123,7 +124,7 @@ export const useExpenseTicketLineDetailState = ({
         if (isCancelled) return;
 
         if (response?.Success === false) {
-          setErrorMessage(response?.Message || indT("Tickets_Detail_LoadError", "Could not load ticket detail."));
+          setErrorMessage(resolveActionError(response, response?.Message || indT("Tickets_Detail_LoadError", "Could not load ticket detail.")));
           setHeader(null);
           setLine(null);
           return;
@@ -166,11 +167,11 @@ export const useExpenseTicketLineDetailState = ({
       } catch (error) {
         if (isCancelled) return;
         if (error instanceof ApiFetchError && error.status === 403) {
-          onForbidden();
+          onForbidden({ traceId: resolveActionError(error).traceId });
           return;
         }
 
-        setErrorMessage(error instanceof Error ? error.message : indT("Tickets_Detail_LoadError", "Could not load ticket detail."));
+        setErrorMessage({ ...resolveActionError(error), message: error instanceof Error ? error.message : indT("Tickets_Detail_LoadError", "Could not load ticket detail.") });
         setHeader(null);
         setLine(null);
       } finally {

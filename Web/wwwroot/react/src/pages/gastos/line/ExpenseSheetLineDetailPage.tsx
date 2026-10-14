@@ -1,3 +1,4 @@
+import ActionErrorNotice from "../../../components/commons/ActionErrorNotice.tsx";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import RecordNavigator from "../../../components/commons/RecordNavigator.tsx";
@@ -1037,7 +1038,7 @@ const ExpenseSheetLineDetailContent = () => {
           {indT("Common_Loading", "Loading")}
         </div>
       ) : linkedTicketDetail.errorMessage ? (
-        <div className="text-danger">{linkedTicketDetail.errorMessage}</div>
+        <ActionErrorNotice error={linkedTicketDetail.errorMessage} />
       ) : (
         <ExpenseTicketLinesList
           visibleLines={visibleLinkedTicketLines}

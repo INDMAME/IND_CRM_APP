@@ -1,3 +1,4 @@
+import { type ActionError } from "../../../utils/actionError.ts";
 import React from "react";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
 import HistoryTable, { type TimelineItem } from "./HistoryTable.tsx";
@@ -15,7 +16,7 @@ type Props = {
   loadingLabel: string;
   timelineItems: TimelineItem[];
   noDataText: string;
-  errorMessage: string;
+  errorMessage: ActionError;
   totalPages: number;
   currentPage: number;
   pageWindow: number;

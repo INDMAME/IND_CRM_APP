@@ -1885,4 +1885,31 @@
   <data name="ExpenseSheets_DeleteTickets_Keep" xml:space="preserve">
     <value>Conservar tickets</value>
   </data>
+  <data name="Common_Error_Title" xml:space="preserve">
+    <value>Não foi possível concluir a operação</value>
+  </data>
+  <data name="Common_TraceId" xml:space="preserve">
+    <value>ID de rastreio (Trace ID)</value>
+  </data>
+  <data name="Tickets_Error_Duplicate" xml:space="preserve">
+    <value>Já existe outro ticket teu com a mesma data e hora. Revê o ticket existente ou corrige a data e hora se forem despesas diferentes.</value>
+  </data>
+  <data name="ExpenseSheets_Delete_CleanupPending" xml:space="preserve">
+    <value>A folha e as suas linhas foram eliminadas. Ainda faltam eliminar alguns tickets ou anexos. Tenta novamente com a mesma opção.</value>
+  </data>
+  <data name="ExpenseSheets_Delete_ChoiceConflict" xml:space="preserve">
+    <value>A eliminação já começou com outra opção de tickets. Tenta novamente com a opção inicial.</value>
+  </data>
+  <data name="Common_Warning_Title" xml:space="preserve">
+    <value>Revê esta informação</value>
+  </data>
+  <data name="Tickets_Validation_TotalAmountRequired" xml:space="preserve">
+    <value>O valor total deve ser maior ou igual a 0.</value>
+  </data>
+  <data name="Common_Error_Validation" xml:space="preserve">
+    <value>Revê os dados introduzidos e preenche os campos obrigatórios antes de tentar novamente.</value>
+  </data>
+  <data name="Common_Validation_DateFormat" xml:space="preserve">
+    <value>Formato obrigatorio: DDMMYYYY ou DD.MM.YYYY.</value>
+  </data>
 </root>

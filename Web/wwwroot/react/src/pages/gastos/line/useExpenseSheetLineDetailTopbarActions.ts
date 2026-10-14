@@ -1,3 +1,4 @@
+import { type ActionError } from "../../../utils/actionError.ts";
 import { useCallback } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import { useExpenseTopbarCrudActions } from "../hooks/useExpenseTopbarCrudActions.ts";
@@ -15,7 +16,7 @@ type UseExpenseSheetLineDetailTopbarActionsArgs = {
   canEditExpense: boolean;
   canDeleteExpense: boolean;
   sheetId: string;
-  setModalError: (value: string) => void;
+  setModalError: (value: ActionError) => void;
   handleEnableEdit: () => void;
   handleCancelEdit: () => void;
   canOpenSaveConfirm?: () => boolean;

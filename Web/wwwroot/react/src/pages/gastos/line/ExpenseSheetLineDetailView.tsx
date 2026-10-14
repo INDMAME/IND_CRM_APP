@@ -1,3 +1,5 @@
+import ActionErrorNotice from "../../../components/commons/ActionErrorNotice.tsx";
+import { type ActionError } from "../../../utils/actionError.ts";
 import React from "react";
 import type { RefObject, ReactNode } from "react";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
@@ -18,7 +20,7 @@ type ExpenseSheetLineDetailViewProps = {
     showCancel: boolean;
     showConfirm: boolean;
     busy: boolean;
-    error: string;
+    error: ActionError;
     status: string;
     onConfirm: () => void;
     onCancel: () => void;
@@ -26,7 +28,7 @@ type ExpenseSheetLineDetailViewProps = {
   preview: {
     open: boolean;
     busy: boolean;
-    error: string;
+    error: ActionError;
     imageUrl: string;
     imageAlt: string;
     fileName: string;
@@ -43,7 +45,7 @@ type ExpenseSheetLineDetailViewProps = {
   content: {
     isLoading: boolean;
     isRedirectingAfterCreate: boolean;
-    errorMessage: string;
+    errorMessage: ActionError;
     lineNavigator: ReactNode;
     detailBody: ReactNode;
   };
@@ -95,7 +97,7 @@ const ExpenseSheetLineDetailView = ({ modal, preview, content }: ExpenseSheetLin
         {indT("Common_Loading", "Loading")}
       </div>
 
-      {content.errorMessage ? <div className="text-danger">{content.errorMessage}</div> : null}
+      {content.errorMessage ? <ActionErrorNotice error={content.errorMessage} /> : null}
 
       {content.detailBody ? (
         preview.showStickyPreview ? (

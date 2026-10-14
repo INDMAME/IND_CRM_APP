@@ -1,3 +1,5 @@
+import { type ActionError } from "../../../utils/actionError.ts";
+import ActionErrorNotice from "../../../components/commons/ActionErrorNotice.tsx";
 import React, { useCallback, useRef } from "react";
 import { classNames } from "../../../utils/classNames.ts";
 import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
@@ -25,7 +27,7 @@ export type TimelineItem = {
 type Props = {
   items: TimelineItem[];
   noDataText: string;
-  errorMessage: string;
+  errorMessage: ActionError;
   onNavigate: (linkId: string) => void;
 };
 
@@ -128,7 +130,7 @@ const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) =>
   const showEmpty = !errorMessage && !hasItems;
 
   const content = errorMessage ? (
-    <div className="text-danger">{errorMessage}</div>
+    <ActionErrorNotice error={errorMessage} />
   ) : hasItems ? (
     items.map((item, index) => {
       const key = item.id || item.recId?.toString() || `timeline-${index}`;

@@ -1,3 +1,5 @@
+import { resolveActionError, type ActionError } from "../../../utils/actionError.ts";
+import ActionErrorNotice from "../../../components/commons/ActionErrorNotice.tsx";
 import React, { useMemo } from "react";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import { classNames } from "../../../utils/classNames.ts";
@@ -14,7 +16,7 @@ type Props = {
   selectedOwnerAxUserId: string;
   loading: boolean;
   disabled: boolean;
-  errorMessage: string;
+  errorMessage: ActionError;
   label: string;
   allOption?: VisitOwnerSelectOption | null;
   noUsersLabel: string;
@@ -76,9 +78,8 @@ const VisibleVisitOwnerSelect = ({
       />
       {statusText && (
         <div className="w-full flex justify-end">
-          <span className={classNames("text-xs tech-info", errorMessage ? "text-amber-700" : "text-slate-500")}>
-            {statusText}
-          </span>
+          {errorMessage ? <ActionErrorNotice error={errorMessage} severity="warning" /> :
+            <span className="text-xs tech-info text-slate-500">{resolveActionError(statusText).message}</span>}
         </div>
       )}
     </div>

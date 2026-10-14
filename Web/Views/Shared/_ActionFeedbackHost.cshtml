@@ -1,0 +1,17 @@
+@using System.Linq
+@using System.Text.Json
+@using IND_CRM_APP.Infrastructure.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+@{
+    var feedbackNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
+    var feedbackTexts = SR.GetAllStrings(includeParentCultures: true)
+        .Where(item => item.Name.StartsWith("Common_") || item.Name.StartsWith("Api_") ||
+            item.Name.Contains("Error") || item.Name.Contains("Validation") || item.Name.EndsWith("Failed") ||
+            item.Name.EndsWith("Required") || item.Name.EndsWith("ReadOnly") || item.Name.StartsWith("Auth_PermissionDenied"))
+        .GroupBy(item => item.Name).ToDictionary(group => group.Key, group => group.First().Value);
+}
+<script nonce="@feedbackNonce">
+    window.__IND_COMMON_I18N__ = @Html.Raw(JsonSerializer.Serialize(feedbackTexts));
+</script>
+<div id="indActionFeedbackRoot"></div>
+<script nonce="@feedbackNonce" type="module" src="~/js/action-feedback.js" asp-append-version="true"></script>

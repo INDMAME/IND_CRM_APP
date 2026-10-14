@@ -1,3 +1,4 @@
+import { createActionError, type ActionError } from "../../../utils/actionError.ts";
 import React, { useCallback } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
@@ -55,7 +56,7 @@ type UseExpenseSheetLineDetailMutationsArgs = {
   draftAmountMST: string;
   draftExchangeRate: string;
   localCurrencyCode: string;
-  setModalError: React.Dispatch<React.SetStateAction<string>>;
+  setModalError: React.Dispatch<React.SetStateAction<ActionError>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
@@ -170,7 +171,7 @@ export const useExpenseSheetLineDetailMutations = ({
 
     if (!normalizedDate) {
       setModalError(EXPENSE_API_DATE_FORMAT_MESSAGE);
-      setStatus(EXPENSE_API_DATE_FORMAT_MESSAGE);
+      setStatus("");
       return false;
     }
 
@@ -250,7 +251,7 @@ export const useExpenseSheetLineDetailMutations = ({
           : await updateExpenseSheetLine(sheetId, lineId, updateLinePayload);
 
         if (!response.Success) {
-          throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+          throw createActionError(response, indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
         }
 
         if (isCreateMode) {
@@ -331,9 +332,7 @@ export const useExpenseSheetLineDetailMutations = ({
             try {
               const deleteFileResponse = await deleteExpenseSheetTicketFile(safeLinkedTicketFileId);
               if (!deleteFileResponse.Success && !isMissingTicketFileMessage(deleteFileResponse.Message)) {
-                throw new Error(
-                  deleteFileResponse.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed.")
-                );
+                throw createActionError(deleteFileResponse, indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
               }
             } catch (error) {
               if (!isNotFoundError(error)) {
@@ -344,9 +343,7 @@ export const useExpenseSheetLineDetailMutations = ({
             try {
               const deleteTicketResponse = await deleteExpenseSheetTicket(safeLinkedTicketFileId);
               if (!deleteTicketResponse.Success) {
-                throw new Error(
-                  deleteTicketResponse.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed.")
-                );
+                throw createActionError(deleteTicketResponse, indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
               }
             } catch (error) {
               if (!isNotFoundError(error)) {
@@ -359,7 +356,7 @@ export const useExpenseSheetLineDetailMutations = ({
         const response = await deleteExpenseSheetLine(sheetId, lineId);
 
         if (!response.Success) {
-          throw new Error(response.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
+          throw createActionError(response, indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
         }
 
         setStatus(indT("ExpenseSheets_Line_Detail_Deleted", "Expense line deleted"));
@@ -397,9 +394,7 @@ export const useExpenseSheetLineDetailMutations = ({
       action: async () => {
         const response = await detachExpenseSheetLineTicket(sheetId, lineId);
         if (!response.Success) {
-          throw new Error(
-            response.Message || indT("ExpenseSheets_Line_Ticket_DetachFailed", "Could not detach the ticket.")
-          );
+          throw createActionError(response, indT("ExpenseSheets_Line_Ticket_DetachFailed", "Could not detach the ticket."));
         }
 
         setStatus(indT("ExpenseSheets_Line_Ticket_Detached", "Ticket detached."));

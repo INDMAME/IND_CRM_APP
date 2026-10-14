@@ -6,6 +6,8 @@ export const indT = (key: string, fallback?: string): string => {
   const dict = getI18n();
   const value = dict[key];
   if (typeof value === "string" && value.trim() && value !== key) return value;
+  const commonValue = globalThis.__IND_COMMON_I18N__?.[key];
+  if (typeof commonValue === "string" && commonValue.trim() && commonValue !== key) return commonValue;
   return fallback || key;
 };
 

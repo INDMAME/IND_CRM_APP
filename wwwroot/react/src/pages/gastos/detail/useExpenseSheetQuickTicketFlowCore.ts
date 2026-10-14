@@ -78,7 +78,7 @@ export type UseExpenseSheetQuickTicketFlowArgs = {
   isCreateMode: boolean;
   isSheetLocked: boolean;
   linkToSheet?: boolean;
-  onForbidden: () => void;
+  onForbidden: (options?: Record<string, unknown>) => void;
   onCompleted?: (result: { fileId: string; linkedToSheet: boolean; processedByAI: boolean | null }) => void;
 };
 

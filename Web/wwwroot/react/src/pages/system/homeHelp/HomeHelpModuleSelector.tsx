@@ -1,3 +1,5 @@
+import { type ActionError } from "../../../utils/actionError.ts";
+import ActionErrorNotice from "../../../components/commons/ActionErrorNotice.tsx";
 import React from "react";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import type { HelpModule } from "./helpTypes.ts";
@@ -10,7 +12,7 @@ type HomeHelpModuleChoicesProps = {
   selectedModuleId: string;
   ariaLabel: string;
   loadingLabel: string;
-  errorLabel: string;
+  errorLabel: ActionError;
   emptyLabel: string;
   firstOptionRef: React.RefObject<HTMLButtonElement | null>;
   onSelect: (moduleId: string) => void;
@@ -54,9 +56,7 @@ const HomeHelpModuleSelector = (props: HomeHelpModuleSelectorProps) => {
 
   if (props.catalogState === "error") {
     return (
-      <p className="rounded-[var(--radius-xl)] border border-rose-200 bg-rose-50 px-3 py-2 text-left text-[11px] leading-4 text-rose-800" role="alert">
-        {props.errorLabel}
-      </p>
+      <ActionErrorNotice error={props.errorLabel} />
     );
   }
 

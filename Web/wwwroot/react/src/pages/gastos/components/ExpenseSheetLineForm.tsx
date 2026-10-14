@@ -1,4 +1,5 @@
 import React from "react";
+import ActionErrorNotice from "../../../components/commons/ActionErrorNotice.tsx";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import SingleDatePicker from "../../../components/commons/SingleDatePicker.tsx";
 import { indT } from "../../../utils/indI18n.ts";
@@ -354,6 +355,7 @@ const ExpenseSheetLineForm = ({
       valueAlign="right"
     />
   );
+  const fuelPriceStatus = fuelPriceMessageIsError ? "" : fuelPriceMessage;
   const priceField = isEditing ? (
     <div className="space-y-1.5">
       <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Price", "Price")}</label>
@@ -388,7 +390,10 @@ const ExpenseSheetLineForm = ({
         </p>
       ) : null}
       {isKmType && !isFuelPriceLoading && fuelPriceMessage ? (
-        <p className={fuelPriceMessageIsError ? "text-danger text-sm" : "text-slate-500 text-xs"}>{fuelPriceMessage}</p>
+        <>
+          <ActionErrorNotice error={fuelPriceMessageIsError ? fuelPriceMessage : ""} />
+          {fuelPriceStatus && <p className="text-slate-500 text-xs">{fuelPriceStatus}</p>}
+        </>
       ) : null}
     </div>
   ) : (

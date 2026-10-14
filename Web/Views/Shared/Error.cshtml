@@ -13,7 +13,7 @@
     </div>
 
     <h2 class="mt-4 text-xl font-semibold text-rose-700">@SR["Error_Heading"]</h2>
-    <p class="mt-2 max-w-xl text-sm text-slate-600">@SR["Error_Body"]</p>
+    <div data-ind-error-message="@SR["Error_Body"]" data-ind-error-trace="@(Context?.TraceIdentifier)"></div>
 
     <a asp-controller="Home" asp-action="Index" class="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-white font-semibold shadow-sm hover:bg-primary/90 transition">
         <span aria-hidden="true">&larr;</span>

@@ -567,7 +567,7 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): O
   const first = items[0] as RawEntraContextItem | undefined;
   const header = first?.Header ?? first?.header;
   if (!first || !header) {
-    throw new ApiFetchError("Could not load Entra context.");
+    throw new ApiFetchError(indT("Api_RequestFailed", "Could not load Entra context."));
   }
 
   const axUserId = safeText(header.AxUserId ?? header.axUserId);
@@ -605,7 +605,7 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): O
   const defaultCurrencyCode = safeText(selectedCompany?.currencyCode) || headerDefaultCurrencyCode;
 
   if (!axUserId || !companyId) {
-    throw new ApiFetchError("Could not resolve Entra company context.");
+    throw new ApiFetchError(indT("Api_RequestFailed", "Could not resolve Entra company context."));
   }
 
   return {
@@ -1242,19 +1242,19 @@ export const createExpenseSheet = async (
   });
 
   if (payload.expenseSheetStatus !== undefined && !isNonNegativeNumber(payload.expenseSheetStatus)) {
-    throw new ApiFetchError("expenseSheetStatus must be greater or equal to 0.");
+    throw new ApiFetchError(indT("Common_Error_Validation", "expenseSheetStatus must be greater or equal to 0."));
   }
 
   if (payload.exchangeRateMode !== undefined && !isNonNegativeNumber(payload.exchangeRateMode)) {
-    throw new ApiFetchError("exchangeRateMode must be greater or equal to 0.");
+    throw new ApiFetchError(indT("Common_Error_Validation", "exchangeRateMode must be greater or equal to 0."));
   }
 
   if (payload.exchangeRateMode !== undefined && payload.expenseSheetStatus === undefined) {
-    throw new ApiFetchError("exchangeRateMode requires expenseSheetStatus.");
+    throw new ApiFetchError(indT("Common_Error_Validation", "exchangeRateMode requires expenseSheetStatus."));
   }
 
   if (hasInvalidLinePayload) {
-    throw new ApiFetchError("Each line requires transDate, typeValue, qty > 0 and price > 0.");
+    throw new ApiFetchError(indT("Common_Error_Validation", "Each line requires transDate, typeValue, qty > 0 and price > 0."));
   }
 
   if (normalizedLines.some((line) => hasMissingForeignLineSettlement(line, localCurrencyCode))) {
@@ -1263,23 +1263,23 @@ export const createExpenseSheet = async (
 
   if (mode === 0) {
     if (!safeText(payload.description) || lines.length < 1) {
-      throw new ApiFetchError("Invalid create payload for mode 0.");
+      throw new ApiFetchError(indT("Common_Error_Validation", "Invalid create payload for mode 0."));
     }
   }
 
   if (mode === 1) {
     if (!safeText(payload.description)) {
-      throw new ApiFetchError("Invalid create payload for mode 1.");
+      throw new ApiFetchError(indT("Common_Error_Validation", "Invalid create payload for mode 1."));
     }
 
     if (lines.length > 0) {
-      throw new ApiFetchError("Mode 1 requires lines to be null or empty.");
+      throw new ApiFetchError(indT("Common_Error_Validation", "Mode 1 requires lines to be null or empty."));
     }
   }
 
   if (mode === 2) {
     if (!safeText(payload.existingHojaGastosId) || lines.length < 1) {
-      throw new ApiFetchError("Invalid create payload for mode 2.");
+      throw new ApiFetchError(indT("Common_Error_Validation", "Invalid create payload for mode 2."));
     }
   }
 
@@ -1318,11 +1318,11 @@ export const updateExpenseSheetHeader = async (
   const safeSheetId = encodeURIComponent(String(hojaGastosId || "").trim());
 
   if (payload.expenseSheetStatus !== undefined && !isNonNegativeNumber(payload.expenseSheetStatus)) {
-    throw new ApiFetchError("expenseSheetStatus must be greater or equal to 0.");
+    throw new ApiFetchError(indT("Common_Error_Validation", "expenseSheetStatus must be greater or equal to 0."));
   }
 
   if (payload.exchangeRateMode !== undefined && !isNonNegativeNumber(payload.exchangeRateMode)) {
-    throw new ApiFetchError("exchangeRateMode must be greater or equal to 0.");
+    throw new ApiFetchError(indT("Common_Error_Validation", "exchangeRateMode must be greater or equal to 0."));
   }
 
   const safePayload: ExpenseSheetHeaderUpdateRequest = {
@@ -1441,7 +1441,7 @@ export const updateExpenseSheetLine = async (
     !isPositiveNumber(normalizedPayload.qty) ||
     !isPositiveNumber(normalizedPayload.price)
   ) {
-    throw new ApiFetchError("transDate, typeValue, qty > 0 and price > 0 are required.");
+    throw new ApiFetchError(indT("Common_Error_Validation", "transDate, typeValue, qty > 0 and price > 0 are required."));
   }
 
   if (hasMissingForeignLineSettlement(normalizedPayload, localCurrencyCode)) {
@@ -1620,7 +1620,7 @@ export const askExpenseSheetsQuestion = async (
 ): Promise<ExpenseSheetsAskResult> => {
   const question = safeText(payload?.question);
   if (!question) {
-    throw new ApiFetchError("question is required.");
+    throw new ApiFetchError(indT("Common_Error_Validation", "question is required."));
   }
 
   const context = await ensureExpenseApiContext(options);
@@ -1669,7 +1669,7 @@ export const askExpenseSheetsQuestion = async (
       throw new ApiFetchError(readApiMessageFromRaw(raw) || "Request failed.", response.status, raw);
     }
 
-    throw new ApiFetchError("Invalid server response.", response.status, raw);
+    throw new ApiFetchError(indT("Api_InvalidJson", "Invalid server response."), response.status, raw);
   }
 
   return normalizeExpenseSheetsAskResponse({
@@ -1720,7 +1720,7 @@ export const createExpenseSheetTicketQuick = async (
   options?: ApiFetchOptions
 ): Promise<ExpenseSheetTicketQuickCreateResult> => {
   if (!payload?.ticketImage) {
-    throw new ApiFetchError("ticketImage is required.");
+    throw new ApiFetchError(indT("Common_Error_Validation", "ticketImage is required."));
   }
 
   const { suppressPermissionModal: _suppressPermissionModal, ...fetchOptions } = options || {};
@@ -1796,7 +1796,7 @@ export const createExpenseSheetTicketQuick = async (
     if (!response.ok) {
       throw new ApiFetchError(readApiMessageFromRaw(raw) || "Request failed.", response.status, raw);
     }
-    throw new ApiFetchError("Invalid server response.", response.status, raw);
+    throw new ApiFetchError(indT("Api_InvalidJson", "Invalid server response."), response.status, raw);
   }
 
   return normalizeTicketQuickCreateResponse({
@@ -2031,7 +2031,7 @@ export const fetchExpenseSheetTicketPreviewBlob = async (
   const safeFileId = safeText(fileId);
   const safeUrlFile = safeText(urlFile);
   if (!safeFileId || !safeUrlFile) {
-    throw new ApiFetchError("Missing ticket preview payload.");
+    throw new ApiFetchError(indT("Api_RequestFailed", "Missing ticket preview payload."));
   }
 
   const { suppressPermissionModal: _suppressPermissionModal, ...fetchOptions } = options || {};
@@ -2071,7 +2071,7 @@ export const fetchExpenseSheetTicketPreviewBlob = async (
 
   const blob = await response.blob();
   if (!blob || blob.size === 0) {
-    throw new ApiFetchError("Could not load ticket preview.");
+    throw new ApiFetchError(indT("Api_RequestFailed", "Could not load ticket preview."));
   }
 
   return blob;
@@ -2125,7 +2125,7 @@ export const adjustExpenseSheetTicketTotalAmount = async (
   const safeFileId = encodeURIComponent(String(fileId || "").trim());
   const totalAmount = toNullableNumber(payload?.totalAmount);
   if (!safeFileId || totalAmount == null || totalAmount < 0) {
-    throw new ApiFetchError("Invalid ticket total adjustment payload.");
+    throw new ApiFetchError(indT("Common_Error_Validation", "Invalid ticket total adjustment payload."));
   }
 
   const response = await fetchJson<IndApiResponse<ExpenseSheetTicketTotalAdjustmentResultDto>>(
@@ -2209,7 +2209,7 @@ export const createExpenseSheetTicketLine = async (
   options?: ApiFetchOptions
 ): Promise<IndApiResponse<object>> => {
   if (!safeText(payload?.description) || !isValidTicketLineAmount(payload)) {
-    throw new ApiFetchError("description and a valid signed ticket line amount are required.");
+    throw new ApiFetchError(indT("Common_Error_Validation", "description and a valid signed ticket line amount are required."));
   }
 
   const context = await ensureExpenseApiContext(options);
@@ -2236,7 +2236,7 @@ export const updateExpenseSheetTicketLine = async (
   options?: ApiFetchOptions
 ): Promise<IndApiResponse<object>> => {
   if (!safeText(payload?.description) || !isValidTicketLineAmount(payload)) {
-    throw new ApiFetchError("description and a valid signed ticket line amount are required.");
+    throw new ApiFetchError(indT("Common_Error_Validation", "description and a valid signed ticket line amount are required."));
   }
 
   const context = await ensureExpenseApiContext(options);

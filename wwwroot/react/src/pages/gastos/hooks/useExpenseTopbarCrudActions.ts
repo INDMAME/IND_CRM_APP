@@ -1,3 +1,6 @@
+import { acknowledgeActionError } from "../../../services/actionFeedback.ts";
+import { indT } from "../../../utils/indI18n.ts";
+import { type ActionError } from "../../../utils/actionError.ts";
 import { useEffect } from "react";
 import { wait } from "../../../utils/wait.ts";
 import { showPermissionModal } from "../../../utils/permissions.ts";
@@ -34,11 +37,14 @@ type UseExpenseTopbarCrudActionsArgs = {
   canCreate: boolean;
   canEdit: boolean;
   canDelete: boolean;
-  setModalError: (value: string) => void;
+  setModalError: (value: ActionError) => void;
   handleEnableEdit: () => void;
   handleCancelEdit: () => void;
   canOpenSaveConfirm?: () => boolean;
   handleSave: () => Promise<boolean>;
+  isSaveComplete?: () => boolean;
+  getSaveWarning?: () => ActionError;
+  getDeleteWarning?: () => ActionError;
   handleDelete: () => Promise<boolean>;
   saveConfirmTitle: string;
   saveConfirmMessage: string;
@@ -82,6 +88,9 @@ export const useExpenseTopbarCrudActions = ({
   handleCancelEdit,
   canOpenSaveConfirm,
   handleSave,
+  isSaveComplete,
+  getSaveWarning,
+  getDeleteWarning,
   handleDelete,
   saveConfirmTitle,
   saveConfirmMessage,
@@ -289,8 +298,15 @@ export const useExpenseTopbarCrudActions = ({
               closeConfirm();
               await wait(200);
               const successDurationMs = isCreateMode ? 900 : 1200;
-              flashActionMark("okProcess", successDurationMs);
-              await wait(successDurationMs);
+              if (isSaveComplete?.() === false) {
+                await acknowledgeActionError(getSaveWarning?.() || {
+                  message: indT("ExpenseTickets_SheetSync_RetryRequired", "Ticket data changed, but the expense line still needs synchronization. Save again before leaving."),
+                  severity: "warning",
+                });
+              } else {
+                flashActionMark("okProcess", successDurationMs);
+                await wait(successDurationMs);
+              }
               onSaveSuccess();
             }
             return ok;
@@ -320,8 +336,13 @@ export const useExpenseTopbarCrudActions = ({
           if (ok) {
             closeConfirm();
             await wait(200);
-            flashActionMark("okDelProcess", 1200);
-            await wait(1200);
+            const warning = getDeleteWarning?.();
+            if (warning) {
+              await acknowledgeActionError(warning);
+            } else {
+              flashActionMark("okDelProcess", 1200);
+              await wait(1200);
+            }
             onDeleteSuccess();
           }
           return ok;
@@ -362,6 +383,9 @@ export const useExpenseTopbarCrudActions = ({
     handleDelete,
     handleEnableEdit,
     handleSave,
+    isSaveComplete,
+    getSaveWarning,
+    getDeleteWarning,
     isCreateMode,
     isEditing,
     modalOpen,

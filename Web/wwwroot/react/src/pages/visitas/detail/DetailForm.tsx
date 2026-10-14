@@ -1,3 +1,4 @@
+import { createActionError, getActionErrorMark, resolveActionError, type ActionError } from "../../../utils/actionError.ts";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import SingleDatePicker from "../../../components/commons/SingleDatePicker.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
@@ -252,7 +253,7 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   const [busy, setBusy] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isHydrating, setIsHydrating] = useState(false);
-  const [modalError, setModalError] = useState("");
+  const [modalError, setModalError] = useState<ActionError>("");
   const readOnlySurfaceRef = useRef(null);
   const editSnapshotRef = useRef(null);
   const permissionTraceRef = useRef("");
@@ -513,10 +514,11 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
     setModalError("");
     await handleConfirm({
       busy,
-      onError: (msg) => {
-        setModalError(msg);
-        setStatus(msg);
-        flashActionMark("errorProcess", 1500);
+      onError: (msg, error) => {
+        const feedback = resolveActionError(error, msg);
+        setModalError(feedback);
+        setStatus("");
+        flashActionMark(getActionErrorMark(feedback), 1500);
       }
     });
   }, [busy, handleConfirm]);

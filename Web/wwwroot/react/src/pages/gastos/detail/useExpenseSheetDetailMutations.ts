@@ -1,3 +1,4 @@
+import { createActionError, type ActionError } from "../../../utils/actionError.ts";
 import React, { useCallback, useRef } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../utils/permissions.ts";
@@ -50,7 +51,7 @@ type UseExpenseSheetDetailMutationsArgs = {
   currentExpenseSheetStatus?: number | null;
   onCreateSuccess: (createdSheetId: string) => void;
   onReimbursablePropagationHeaderUpdated?: () => void;
-  setModalError: React.Dispatch<React.SetStateAction<string>>;
+  setModalError: React.Dispatch<React.SetStateAction<ActionError>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
@@ -148,7 +149,7 @@ export const useExpenseSheetDetailMutations = ({
           const response = await createExpenseSheet(payload);
 
           if (!response.Success) {
-            throw new Error(response.Message || indT("Api_RequestFailed", "Request failed."));
+            throw createActionError(response, indT("Api_RequestFailed", "Request failed."));
           }
 
           // Accept both casing variants from backend envelopes.
@@ -167,7 +168,7 @@ export const useExpenseSheetDetailMutations = ({
         const response = await updateExpenseSheetHeader(sheetId, payloadResult.payload);
 
         if (!response.Success) {
-          throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+          throw createActionError(response, indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
         }
 
         setStatus(indT("ExpenseSheets_Detail_Updated", "Expense sheet updated"));
@@ -237,13 +238,13 @@ export const useExpenseSheetDetailMutations = ({
             reimbursableExpense: normalizedReimbursableExpense,
           });
           if (!headerResponse.Success) {
-            throw new Error(headerResponse.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+            throw createActionError(headerResponse, indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
           }
           onReimbursablePropagationHeaderUpdated?.();
 
           const response = await propagateExpenseSheetReimbursableExpense(sheetId);
           if (!response.Success) {
-            throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+            throw createActionError(response, indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
           }
 
           setStatus(indT("ExpenseSheets_Detail_Updated", "Expense sheet updated"));
@@ -293,7 +294,7 @@ export const useExpenseSheetDetailMutations = ({
             suppressPermissionModal: true,
           });
           if (!response.Success) {
-            throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+            throw createActionError(response, indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
           }
 
           setStatus(indT("ExpenseSheets_Detail_Updated", "Expense sheet updated"));
@@ -346,7 +347,7 @@ export const useExpenseSheetDetailMutations = ({
           const response = await updateExpenseSheetHeader(sheetId, payload);
 
           if (!response.Success) {
-            throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+            throw createActionError(response, indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
           }
 
           setStatus(indT("ExpenseSheets_Detail_Updated", "Expense sheet updated"));
@@ -391,7 +392,7 @@ export const useExpenseSheetDetailMutations = ({
         const response = await deleteExpenseSheet(sheetId, { deleteTickets });
 
         if (!response.Success) {
-          throw new Error(response.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
+          throw createActionError(response, indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
         }
 
         setStatus(indT("ExpenseSheets_Detail_Deleted", "Expense sheet deleted"));
