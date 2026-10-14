@@ -1912,4 +1912,7 @@
   <data name="Common_Validation_DateFormat" xml:space="preserve">
     <value>Formato richiesto: DDMMYYYY o DD.MM.YYYY.</value>
   </data>
+  <data name="Tickets_Error_DuplicateWithId" xml:space="preserve">
+    <value>Esiste già un altro tuo ticket ({0}) con la stessa data e ora. Controlla il ticket esistente oppure correggi data e ora se si tratta di spese diverse.</value>
+  </data>
 </root>

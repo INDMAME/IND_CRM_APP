@@ -27,7 +27,8 @@ Este catálogo define responsabilidades estables. Los detalles visuales pertenec
 
 ### `ConfirmModal` y errores de la aplicación
 
-- `error` admite texto de validación local o `{ message, traceId?, errorCode?, severity? }`; los errores HTTP y lógicos conservan sus metadatos hasta el popup.
+- `error` admite texto de validación local o `{ message, traceId?, errorCode?, existingTicketId?, severity? }`; los errores HTTP y lógicos conservan sus metadatos hasta el popup.
+- En duplicados, `existingTicketId` conserva el identificador recibido de AX antes de traducir el mensaje. Se acepta el campo explícito o el formato legado `Ya existe otro ticket (ID)`; nunca se utiliza el `FileId` del ticket que se está guardando. Si no hay un ID reconocible, se conserva el aviso genérico.
 - `ActionFeedbackHost` presenta errores independientes de las islas React, permisos y vistas servidor. `showActionError` publica mensajes; `ActionErrorNotice` adapta estados existentes sin borrar el fallo al cerrar el popup. El hook del host encola y deduplica por mensaje, traza, código y severidad.
 - El mensaje se localiza por código conocido. Las claves deben figurar en los siete recursos RESX y en el diccionario Razor de la página o en el diccionario común de `_ActionFeedbackHost`.
 - El Trace ID real aparece al pie, seleccionable; no se inventa para validaciones locales o fallos de red sin respuesta. Nunca se muestra el cuerpo HTTP completo.

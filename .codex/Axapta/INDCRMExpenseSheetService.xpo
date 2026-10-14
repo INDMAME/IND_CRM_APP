@@ -1946,6 +1946,25 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #deleteExpenseLinePreservingTicket
+        #// Persists the broken FileId relation before delete actions run; the caller owns the transaction.
+        #static server void deleteExpenseLinePreservingTicket(CRMHojaGastosLine _line)
+        #{
+        #    if (_line.FileId)
+        #    {
+        #        _line.FileId = '';
+        #        _line.doUpdate();
+        #    }
+        #    _line.delete();
+        #}
+      ENDSOURCE
+      SOURCE #deleteExpenseSheetLinePreservingTickets
+        #// Versioned entry point: older AX classes cannot silently run the unsafe ticket cascade.
+        #static server container deleteExpenseSheetLinePreservingTickets(container _data)
+        #{
+        #    return INDCRMExpenseSheetService::deleteExpenseSheetLine(_data);
+        #}
+      ENDSOURCE
       SOURCE #deleteExpenseSheetLine
         #// Metodo: deleteExpenseSheetLine
         #// Proposito: Elimina una linea o toda la hoja de gastos (cabecera + lineas) segun el indicador.
@@ -2102,7 +2121,7 @@ Formatversion: 1
         #                       && line.HojaGastosId == hojaId
         #                {
         #                    fileIdToRelease = line.FileId;
-        #                    line.delete();
+        #                    INDCRMExpenseSheetService::deleteExpenseLinePreservingTicket(line);
         #
         #                    if (fileIdToRelease)
         #                        INDCRMExpenseSheetService::refreshTicketStatusByFileId(axUserId, fileIdToRelease);
@@ -2128,7 +2147,7 @@ Formatversion: 1
         #            }
         #
         #            fileIdToRelease = line.FileId;
-        #            line.delete();
+        #            INDCRMExpenseSheetService::deleteExpenseLinePreservingTicket(line);
         #
         #            if (fileIdToRelease)
         #                INDCRMExpenseSheetService::refreshTicketStatusByFileId(axUserId, fileIdToRelease);

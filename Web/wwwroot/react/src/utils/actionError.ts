@@ -1,6 +1,6 @@
-import { indT } from "./indI18n.ts";
+import { indFormat, indT } from "./indI18n.ts";
 
-export type ActionErrorDetails = { message: string; traceId?: string; errorCode?: string; severity?: "error" | "warning" };
+export type ActionErrorDetails = { message: string; traceId?: string; errorCode?: string; existingTicketId?: string; severity?: "error" | "warning" };
 export type ActionError = string | ActionErrorDetails;
 
 const messageKeys: Record<string, string> = {
@@ -36,19 +36,27 @@ export const resolveActionError = (error: unknown, fallback = ""): ActionErrorDe
   const rawTraceId = text(payload.TraceId ?? payload.traceId ?? source.TraceId ?? source.traceId);
   const traceId = /^[A-Za-z0-9._:|\-]{1,128}$/.test(rawTraceId) ? rawTraceId : "";
   const serverMessage = text(payload.Message ?? payload.message ?? source.Message ?? source.message) || fallback;
+  // Keep only a validated existing-ticket ID, never the current ticket's FileId or raw diagnostics.
+  const ticketId = text(payload.ExistingTicketId ?? payload.existingTicketId ?? source.ExistingTicketId ?? source.existingTicketId);
+  const legacyTicketId = serverMessage.match(/\bYa existe otro ticket\s*\(\s*([A-Za-z0-9][A-Za-z0-9._/-]{0,99})\s*\)/i)?.[1] || "";
+  const duplicateTicketId = /^[A-Za-z0-9][A-Za-z0-9._/-]{0,99}$/.test(ticketId) ? ticketId : legacyTicketId;
+  const existingTicketId = errorCode === "CRM_EXPENSESHEET_TICKET_DUPLICATE" ? duplicateTicketId : "";
   const validationFailure = /MISSING_FIELDS|VALIDATION|INVALID_(?:DATE|TIME|FIELD|AMOUNT|CURRENCY|REQUEST)/.test(errorCode);
   const messageKey = messageKeys[errorCode] || (validationFailure ? "Common_Error_Validation" : "");
-  const message = messageKey ? indT(messageKey, serverMessage) : serverMessage;
+  const message = existingTicketId
+    ? indFormat("Tickets_Error_DuplicateWithId", "Another ticket of yours ({0}) already has the same date and time. Review the existing ticket, or correct the date and time if these are different expenses.", existingTicketId)
+    : messageKey ? indT(messageKey, serverMessage) : serverMessage;
   const businessFailure = /DUPLICATE|VALIDATION|MISSING_FIELDS|CONFLICT|FORBIDDEN|PERMISSION|READ_ONLY|CLEANUP_PENDING/.test(errorCode)
     || [400, 403, 404, 409, 422, 429].includes(status);
   const severity = source.severity === "warning" || source.severity === "error" ? source.severity : businessFailure ? "warning" : "error";
-  return { message, severity, ...(traceId ? { traceId } : {}), ...(errorCode ? { errorCode } : {}) };
+  return { message, severity, ...(traceId ? { traceId } : {}), ...(errorCode ? { errorCode } : {}), ...(existingTicketId ? { existingTicketId } : {}) };
 };
 
 // Keeps a logical API failure's trace when mutation callers throw it for shared handling.
 export const createActionError = (response: unknown, fallback: string, messageOverride?: string): Error => {
   const details = resolveActionError(response, fallback);
-  return Object.assign(new Error(messageOverride || details.message), { traceId: details.traceId, errorCode: details.errorCode, severity: details.severity });
+  return Object.assign(new Error(messageOverride || details.message), { traceId: details.traceId, errorCode: details.errorCode,
+    existingTicketId: details.existingTicketId, severity: details.severity });
 };
 
 // Uses warnings for recoverable business failures and errors for technical failures.

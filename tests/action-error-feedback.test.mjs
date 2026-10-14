@@ -51,7 +51,8 @@ async function mount(options = {}) {
   await page.setContent('<div id="root"></div>');
   await page.evaluate((values) => Object.assign(window, {
     __IND_I18N__: { Common_Error_Title: "No se ha podido completar la operación", Common_Warning_Title: "Revisa esta información", Common_TraceId: "ID de seguimiento",
-      Tickets_Error_Duplicate: "Ya existe otro ticket tuyo con la misma fecha y hora. Revisa el ticket existente." },
+      Tickets_Error_Duplicate: "Ya existe otro ticket tuyo con la misma fecha y hora. Revisa el ticket existente.",
+      Tickets_Error_DuplicateWithId: "Ya existe otro ticket tuyo ({0}) con la misma fecha y hora. Revisa el ticket existente." },
     failure: { Success: false, Message: "Private raw diagnostic", TraceId: "trace-duplicate-123",
       ErrorCode: "CRM_EXPENSESHEET_TICKET_DUPLICATE", privateField: "Do not display raw payloads" },
   }, values), options);
@@ -79,6 +80,46 @@ for (const logicalFailure of [false, true]) {
   });
 }
 
+for (const logicalFailure of [false, true]) {
+  test(`${logicalFailure ? "logical" : "HTTP"} duplicate keeps the existing ticket ID through repeated error normalization`, async () => {
+    const page = await mount({ logicalFailure, failure: { Success: false,
+      Message: "Error al guardar. Ya existe otro ticket (F000000151) con la misma fecha (14.10.2026) y hora (12:00:00).",
+      ErrorCode: "CRM_EXPENSESHEET_TICKET_DUPLICATE", TraceId: "duplicate-with-id-trace",
+      FileId: "F000000999" } });
+    try {
+      await expect(page.getByRole("alert")).toHaveText("Ya existe otro ticket tuyo (F000000151) con la misma fecha y hora. Revisa el ticket existente.");
+      await expect(page.getByRole("alert")).not.toContainText("F000000999");
+      await expect(page.locator("[data-ind-error-trace] code")).toHaveText("duplicate-with-id-trace");
+    } finally { await page.close(); }
+  });
+}
+
+test("explicit existing-ticket metadata takes precedence over the current ticket ID", async () => {
+  const page = await mount({ failure: { Message: "Raw duplicate diagnostic", ErrorCode: "CRM_EXPENSESHEET_TICKET_DUPLICATE",
+    ExistingTicketId: "F000000152", FileId: "F000000999" } });
+  try {
+    await expect(page.getByRole("alert")).toContainText("(F000000152)");
+    await expect(page.getByRole("alert")).not.toContainText("F000000999");
+  } finally { await page.close(); }
+});
+
+test("the common translation supplies the ticket ID when the page only defines the older generic message", async () => {
+  const page = await mount({ __IND_I18N__: { Tickets_Error_Duplicate: "Mensaje anterior sin identificador" },
+    __IND_COMMON_I18N__: { Tickets_Error_DuplicateWithId: "Ya existe el ticket {0}. Revisa ese ticket." },
+    failure: { Message: "Ya existe otro ticket (F000000153) con la misma fecha y hora.", ErrorCode: "CRM_EXPENSESHEET_TICKET_DUPLICATE" } });
+  try { await expect(page.getByRole("alert")).toHaveText("Ya existe el ticket F000000153. Revisa ese ticket."); }
+  finally { await page.close(); }
+});
+
+test("unrecognized duplicate IDs retain the generic localized message without exposing diagnostics", async () => {
+  const page = await mount({ failure: { Message: "Ya existe otro ticket (<img src=x>) con la misma fecha y hora.",
+    ExistingTicketId: "<script>private</script>", ErrorCode: "CRM_EXPENSESHEET_TICKET_DUPLICATE" } });
+  try {
+    await expect(page.getByRole("alert")).toHaveText("Ya existe otro ticket tuyo con la misma fecha y hora. Revisa el ticket existente.");
+    await expect(page.locator("[data-ind-error-trace]")).toHaveCount(0);
+  } finally { await page.close(); }
+});
+
 test("a non-JSON error response never displays the raw response or an invented trace", async () => {
   const page = await mount({ rawFailure: "<html>Private proxy response</html>" });
   try {
@@ -92,7 +133,7 @@ for (const [culture, expectedPrefix] of [["es-ES", "Ya existe otro ticket tuyo"]
   ["eu-ES", "Zure beste ticket"], ["it", "Esiste già"], ["pt", "Já existe"], ["zh-Hans", "你已有另一张"]]) {
   test(`duplicate error popup uses the actual ${culture} resources`, async () => {
     const resource = readFileSync(path.join(root, `App/Resources/Infrastructure/Localization/INDSharedResource.${culture}.resx`), "utf8");
-    const dict = Object.fromEntries(["Common_Error_Title", "Common_Warning_Title", "Common_TraceId", "Tickets_Error_Duplicate"].map(key => {
+    const dict = Object.fromEntries(["Common_Error_Title", "Common_Warning_Title", "Common_TraceId", "Tickets_Error_Duplicate", "Tickets_Error_DuplicateWithId"].map(key => {
       const value = resource.match(new RegExp(`<data name="${key}"[^>]*>\\s*<value>([^<]*)</value>`))?.[1];
       assert.ok(value, `Missing ${culture} resource ${key}`);
       return [key, value];
@@ -103,6 +144,16 @@ for (const [culture, expectedPrefix] of [["es-ES", "Ya existe otro ticket tuyo"]
       await expect(page.getByText(dict.Common_Warning_Title, { exact: true })).toBeVisible();
       await expect(page.locator("[data-ind-error-trace]")).toContainText(dict.Common_TraceId);
     } finally { await page.close(); }
+  });
+
+  test(`duplicate ticket ID uses the actual ${culture} translation`, async () => {
+    const resource = readFileSync(path.join(root, `App/Resources/Infrastructure/Localization/INDSharedResource.${culture}.resx`), "utf8");
+    const template = resource.match(/<data name="Tickets_Error_DuplicateWithId"[^>]*>\s*<value>([^<]*)<\/value>/)?.[1];
+    assert.ok(template?.includes("{0}"), `Missing translated ticket-ID placeholder for ${culture}`);
+    const page = await mount({ __IND_I18N__: { Tickets_Error_DuplicateWithId: template }, logicalFailure: true,
+      failure: { Message: "Ya existe otro ticket (F000000151) con la misma fecha y hora.", ErrorCode: "CRM_EXPENSESHEET_TICKET_DUPLICATE" } });
+    try { await expect(page.getByRole("alert")).toHaveText(template.replace("{0}", "F000000151")); }
+    finally { await page.close(); }
   });
 }
 

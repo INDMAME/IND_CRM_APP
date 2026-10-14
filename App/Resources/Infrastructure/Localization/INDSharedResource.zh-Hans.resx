@@ -1912,4 +1912,7 @@
   <data name="Common_Validation_DateFormat" xml:space="preserve">
     <value>所需格式：DDMMYYYY 或 DD.MM.YYYY。</value>
   </data>
+  <data name="Tickets_Error_DuplicateWithId" xml:space="preserve">
+    <value>你已有另一张日期和时间相同的票据（{0}）。请检查现有票据；如果是不同的费用，请修改日期和时间。</value>
+  </data>
 </root>
