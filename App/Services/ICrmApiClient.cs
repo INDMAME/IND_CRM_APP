@@ -229,7 +229,8 @@ namespace IND_CRM_APP.Services
             string token,
             string hojaGastosId,
             string? axUserIdOverride = null,
-            CancellationToken cancellationToken = default
+            CancellationToken cancellationToken = default,
+            bool? deleteTickets = null
         );
 
         // Reads authorized progress so cleanup can resume after the sheet is gone.

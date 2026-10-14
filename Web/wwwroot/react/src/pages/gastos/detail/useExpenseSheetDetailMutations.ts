@@ -373,7 +373,7 @@ export const useExpenseSheetDetailMutations = ({
     ]
   );
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = useCallback(async (deleteTickets = false) => {
     if (busy) return false;
     if (isDeleteLocked) return false;
     if (!canDeleteExpense) {
@@ -388,7 +388,7 @@ export const useExpenseSheetDetailMutations = ({
       setBusy,
       setStatus,
       action: async () => {
-        const response = await deleteExpenseSheet(sheetId);
+        const response = await deleteExpenseSheet(sheetId, { deleteTickets });
 
         if (!response.Success) {
           throw new Error(response.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));

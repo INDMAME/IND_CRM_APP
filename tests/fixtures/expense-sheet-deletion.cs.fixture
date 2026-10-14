@@ -16,6 +16,15 @@ using Microsoft.Extensions.Logging.Abstractions;
 var verified = 0;
 foreach (var legacy in new[] { false, true })
 {
+    foreach (var deleteTickets in new[] { false, true })
+    {
+        var choice = Create();
+        Check(await (legacy
+            ? choice.Controller.DeleteExpenseSheet("HG-1", false, deleteTickets)
+            : choice.Controller.ApiExpenseSheetLineDelete("HG-1", "0", true, 2, deleteTickets)), 200, legacy, true);
+        Require(Equals(choice.Api.DeletionArguments![4], deleteTickets), "Explicit ticket choice was not forwarded");
+        verified++;
+    }
     foreach (var metadata in new[] { false, true })
     {
         var scenario = Create();
@@ -342,6 +351,13 @@ foreach (var request in handler.Requests) {
 }
 Require(handler.Requests[0].Headers["X-IND-AxUserId"] == "FUNCTIONAL" && handler.Requests[1].Headers["X-IND-AxUserId"] == "OWNER", "Functional user override leaked or disappeared");
 verified++;
+foreach (var deleteTickets in new[] { false, true })
+{
+    await client.DeleteExpenseSheetWithTicketsAsync("bearer", "HG 1", deleteTickets: deleteTickets);
+    Require(handler.Requests.Last().Path == "/api/crm/expensesheets/HG%201/with-tickets?deleteTickets=" + (deleteTickets ? "true" : "false"),
+        "HTTP client did not serialize the cleanup choice");
+    verified++;
+}
 Console.WriteLine($"Verified {verified} expense mutation and deletion cases.");
 
 // Invokes both existing public whole-sheet routes, preserving legacy response casing.
@@ -386,6 +402,7 @@ static void Require(bool condition, string message) { if (!condition) throw new 
 
 // Accepts only expected controller operations, making accidental pre-detach or blob deletion fail.
 public class FakeApi : DispatchProxy {
+    public object?[]? DeletionArguments { get; private set; }
     public List<string> Calls { get; } = new();
     public object?[]? LineDeleteArguments { get; private set; }
     public object?[]? HeaderUpdateArguments { get; private set; }
@@ -398,7 +415,7 @@ public class FakeApi : DispatchProxy {
     protected override object? Invoke(MethodInfo? method, object?[]? args) {
         Calls.Add(method!.Name);
         if (method.Name == "GetExpenseSheetDeletionAsync") return Task.FromResult(Progress);
-        if (method.Name == "DeleteExpenseSheetWithTicketsAsync") return Task.FromResult(Deletion);
+        if (method.Name == "DeleteExpenseSheetWithTicketsAsync") { DeletionArguments = args; return Task.FromResult(Deletion); }
         if (method.Name == "GetExpenseSheetDetailAsync") return Task.FromResult(new PagedApiResponse<ExpenseSheetDetailDto> { Success = DetailSuccess, Items = new[] { Sheet } });
         if (method.Name == "GetExpenseSheetSubordinatesAsync") return Task.FromResult(new PagedApiResponse<ExpenseSheetSubordinateDto> { Success = SubordinateSuccess, Items = Subordinates });
         if (method.Name == "CreateExpenseSheetAsync") return Task.FromResult(new ApiResponse<ExpenseSheetCreateResponseData> { Success = true, Data = new() });
@@ -459,7 +476,7 @@ public sealed class FakeEnvironment : IHostEnvironment {
 public sealed class RecordingHandler : HttpMessageHandler {
     public List<(string Method, string Path, Dictionary<string, string> Headers)> Requests { get; } = new();
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
-        Requests.Add((request.Method.Method, request.RequestUri!.AbsolutePath, request.Headers.ToDictionary(header => header.Key, header => string.Join(",", header.Value))));
+        Requests.Add((request.Method.Method, request.RequestUri!.PathAndQuery, request.Headers.ToDictionary(header => header.Key, header => string.Join(",", header.Value))));
         var deleting = request.Method == HttpMethod.Delete;
         return Task.FromResult(new HttpResponseMessage(deleting ? HttpStatusCode.Conflict : HttpStatusCode.OK) { Content = new StringContent(deleting
             ? "{\"Success\":false,\"ErrorCode\":\"CRM_EXPENSESHEET_CLEANUP_PENDING\",\"Data\":{\"Exists\":true,\"SheetDeleted\":true,\"Complete\":false}}"

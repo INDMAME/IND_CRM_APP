@@ -8,5 +8,6 @@ namespace IND_CRM_APP.Models.CRM
         public bool DeleteAttempted { get; set; }
         public bool Complete { get; set; }
         public bool MetadataAvailable { get; set; }
+        public bool? DeleteTickets { get; set; }
     }
 }

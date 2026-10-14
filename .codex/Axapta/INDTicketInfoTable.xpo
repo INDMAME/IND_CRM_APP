@@ -754,7 +754,9 @@ Formatversion: 1
         #
         #    if (_amountMSTChanged)
         #    {
-        #        this.ExchRate = this.calcExchRateFromAmountMST();
+        #        // Preserve a rate that already produces the supplied rounded reimbursement.
+        #        if (this.ExchRate <= 0 || this.AmountMST != this.ticketAmountMST())
+        #            this.ExchRate = this.calcExchRateFromAmountMST();
         #        return;
         #    }
         #

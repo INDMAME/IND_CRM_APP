@@ -19,6 +19,7 @@ import {
   normalizeExpenseReimbursableExpense,
 } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
+import { useExpenseSheetDeleteChoice } from "./useExpenseSheetDeleteChoice.ts";
 import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
 import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
 import { useExpenseSheetQuickTicketFlow } from "./useExpenseSheetQuickTicketFlow.ts";
@@ -192,11 +193,6 @@ export const useExpenseSheetDetailPageController = () => {
     closeConfirm();
   }, [closeConfirm, resetStatusTransitionDialog]);
 
-  const handleCancelConfirm = useCallback(() => {
-    resetStatusTransitionDialog();
-    cancelConfirm();
-  }, [cancelConfirm, resetStatusTransitionDialog]);
-
   const handleModalConfirm = useCallback(async () => {
     setModalError("");
     await handleConfirm({
@@ -207,23 +203,6 @@ export const useExpenseSheetDetailPageController = () => {
       },
     });
   }, [busy, handleConfirm, setModalError, setStatus]);
-
-  const modalLoadingText = indT("Common_Loading", "Loading");
-  const modalCancelText = modal.cancelText || indT("Confirm_No", "Cancel");
-  const modalConfirmText = busy
-    ? modalLoadingText
-    : !busy && modalError
-      ? indT("Common_OK", "OK")
-      : (modal.confirmText || indT("Confirm_Yes", "OK"));
-
-  const handleModalButtonConfirm = useCallback(() => {
-    if (!busy && modalError) {
-      handleCancelConfirm();
-      return;
-    }
-
-    void handleModalConfirm();
-  }, [busy, handleCancelConfirm, handleModalConfirm, modalError]);
 
   const visibleLines = useMemo(() => pagedSlice(lines, linePage, LINES_PAGE_SIZE), [linePage, lines]);
   const totalLinePages = Math.ceil((lines.length || 0) / LINES_PAGE_SIZE);
@@ -295,6 +274,46 @@ export const useExpenseSheetDetailPageController = () => {
     setStatus,
     setIsEditing,
   });
+
+  const handleDeleteSuccess = useCallback(() => {
+    invalidateCachedListForRefetch();
+    navigateToExpenseUrl("/Gastos/ExpenseSheets");
+  }, [invalidateCachedListForRefetch]);
+
+  const { choosingTickets, requestDeletion, preserveTickets } = useExpenseSheetDeleteChoice({
+    busy,
+    hasLinkedTickets: lines.some((line) => !!safeText(line.fileId)),
+    onDelete: handleDelete,
+    onSuccess: handleDeleteSuccess,
+    openConfirm,
+  });
+
+  const handleCancelConfirm = useCallback(() => {
+    if (busy) return;
+    if (choosingTickets) {
+      setModalError("");
+      void preserveTickets();
+      return;
+    }
+    resetStatusTransitionDialog();
+    cancelConfirm();
+  }, [busy, cancelConfirm, choosingTickets, preserveTickets, resetStatusTransitionDialog, setModalError]);
+
+  const modalLoadingText = indT("Common_Loading", "Loading");
+  const modalCancelText = modal.cancelText || indT("Confirm_No", "Cancel");
+  const modalConfirmText = busy
+    ? modalLoadingText
+    : modalError && !choosingTickets
+      ? indT("Common_OK", "OK")
+      : (modal.confirmText || indT("Confirm_Yes", "OK"));
+
+  const handleModalButtonConfirm = useCallback(() => {
+    if (!busy && modalError && !choosingTickets) {
+      handleCancelConfirm();
+      return;
+    }
+    void handleModalConfirm();
+  }, [busy, choosingTickets, handleCancelConfirm, handleModalConfirm, modalError]);
 
   React.useEffect(() => {
     if (isEditing) return;
@@ -596,12 +615,9 @@ export const useExpenseSheetDetailPageController = () => {
     handleEnableEdit,
     handleCancelEdit,
     handleUpdate: handleUpdateWithProjectPropagation,
-    handleDelete,
+    handleDelete: requestDeletion,
     onSaveSuccess: handleSaveSuccess,
-    onDeleteSuccess: () => {
-      invalidateCachedListForRefetch();
-      navigateToExpenseUrl("/Gastos/ExpenseSheets");
-    },
+    onDeleteSuccess: handleDeleteSuccess,
     saveConfirmTitle: projectPropagationSaveTitle,
     saveConfirmMessage: projectPropagationSaveMessage,
     saveConfirmText: projectPropagationSaveConfirmText,

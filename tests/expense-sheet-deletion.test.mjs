@@ -28,7 +28,7 @@ test("expense mutations preserve ownership, status, and durable deletion behavio
     const result = spawnSync("dotnet", ["run", "--project", path.join(fixture, "Deletion.csproj")],
       { cwd: fixture, encoding: "utf8", timeout: 120000 });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert.match(result.stdout, /Verified 64 expense mutation and deletion cases\./u);
+    assert.match(result.stdout, /Verified 70 expense mutation and deletion cases\./u);
   } finally {
     const resolved = path.resolve(fixture);
     assert.equal(path.dirname(resolved), path.resolve(tmpdir()));

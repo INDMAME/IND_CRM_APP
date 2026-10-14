@@ -1963,8 +1963,11 @@ namespace IND_CRM_APP.Controllers
             string hojaGastosId,
             string lineRecId,
             [FromQuery] bool deleteWholeSheet = false,
-            [FromQuery] int? deleteMode = null)
+            [FromQuery] int? deleteMode = null,
+            [FromQuery] bool? deleteTickets = null)
         {
+            if (!ModelState.IsValid)
+                return CreateApiCommandError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value, "INVALID_REQUEST");
             var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
                 return CreateApiCommandError(
@@ -1993,7 +1996,8 @@ namespace IND_CRM_APP.Controllers
                 return actingUser.Error;
             var requestAxUserId = actingUser.AxUserId;
             if (resolvedDeleteWholeSheet)
-                return await ExecuteExpenseSheetDeletionAsync(token, safeSheetId, requestAxUserId, nameof(ApiExpenseSheetLineDelete));
+                return await ExecuteExpenseSheetDeletionAsync(token, safeSheetId, requestAxUserId, nameof(ApiExpenseSheetLineDelete),
+                    deleteTickets: deleteTickets);
 
             var mutationGuard = await ValidateExpenseSheetMutationAsync(
                 token,
@@ -4054,8 +4058,11 @@ namespace IND_CRM_APP.Controllers
         // Deletes a whole sheet through the same durable operation used by React clients.
         [HttpDelete("Gastos/DeleteExpenseSheet/{hojaGastosId}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteExpenseSheet(string hojaGastosId, [FromQuery] bool IND_SetActionMark = false)
+        public async Task<IActionResult> DeleteExpenseSheet(string hojaGastosId, [FromQuery] bool IND_SetActionMark = false,
+            [FromQuery] bool? deleteTickets = null)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value, errorCode = "INVALID_REQUEST" });
             var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
                 return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
@@ -4068,7 +4075,7 @@ namespace IND_CRM_APP.Controllers
                 return actingUser.Error;
             return await ExecuteExpenseSheetDeletionAsync(
                 token, safeSheetId, actingUser.AxUserId, nameof(DeleteExpenseSheet),
-                legacyResponse: true, setActionMark: IND_SetActionMark);
+                legacyResponse: true, setActionMark: IND_SetActionMark, deleteTickets: deleteTickets);
         }
 
         // API route used by React clients for /api/crm/projects/list.

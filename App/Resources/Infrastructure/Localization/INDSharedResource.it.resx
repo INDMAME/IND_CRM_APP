@@ -1873,4 +1873,16 @@
   <data name="ExpenseSheets_CreatedOpenPending" xml:space="preserve">
     <value>Il foglio spese {0} è stato creato. Premi di nuovo Salva per aprirlo.</value>
   </data>
+  <data name="ExpenseSheets_DeleteTickets_Title" xml:space="preserve">
+    <value>Eliminare anche i ticket?</value>
+  </data>
+  <data name="ExpenseSheets_DeleteTickets_Body" xml:space="preserve">
+    <value>Il foglio spese e tutte le sue righe verranno eliminati. Puoi conservare i ticket scollegati oppure eliminare anche i ticket e i relativi allegati.</value>
+  </data>
+  <data name="ExpenseSheets_DeleteTickets_Delete" xml:space="preserve">
+    <value>Elimina ticket</value>
+  </data>
+  <data name="ExpenseSheets_DeleteTickets_Keep" xml:space="preserve">
+    <value>Conserva ticket</value>
+  </data>
 </root>

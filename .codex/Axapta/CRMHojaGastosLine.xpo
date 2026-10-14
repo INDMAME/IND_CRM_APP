@@ -2281,7 +2281,9 @@ Formatversion: 1
         #
         #    if (_amountMSTChanged)
         #    {
-        #        if (this.Currency != reimbursementCurrencyCode)
+        #        // Derive a rate only when a manual reimbursement differs from the current rounded result.
+        #        if (this.Currency != reimbursementCurrencyCode &&
+        #            (this.ExchRate <= 0 || this.AmountMST != Currency::amount(this.Amount * 100 / this.ExchRate, reimbursementCurrencyCode)))
         #            this.ExchRate = this.calcExchRateFromAmountMST();
         #
         #        this.recalculateReimbursableAmount();

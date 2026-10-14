@@ -1873,4 +1873,16 @@
   <data name="ExpenseSheets_CreatedOpenPending" xml:space="preserve">
     <value>A folha de despesas {0} foi criada. Prima Guardar novamente para a abrir.</value>
   </data>
+  <data name="ExpenseSheets_DeleteTickets_Title" xml:space="preserve">
+    <value>Eliminar também os tickets?</value>
+  </data>
+  <data name="ExpenseSheets_DeleteTickets_Body" xml:space="preserve">
+    <value>A folha de despesas e todas as suas linhas serão eliminadas. Pode conservar os tickets desvinculados ou eliminar também os tickets e os respetivos anexos.</value>
+  </data>
+  <data name="ExpenseSheets_DeleteTickets_Delete" xml:space="preserve">
+    <value>Eliminar tickets</value>
+  </data>
+  <data name="ExpenseSheets_DeleteTickets_Keep" xml:space="preserve">
+    <value>Conservar tickets</value>
+  </data>
 </root>

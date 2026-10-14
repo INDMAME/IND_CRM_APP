@@ -15,7 +15,8 @@ namespace IND_CRM_APP.Controllers
             string? axUserId,
             string operation,
             bool legacyResponse = false,
-            bool setActionMark = false)
+            bool setActionMark = false,
+            bool? deleteTickets = null)
         {
             try
             {
@@ -39,7 +40,7 @@ namespace IND_CRM_APP.Controllers
                 }
 
                 var deletion = await _apiClient.DeleteExpenseSheetWithTicketsAsync(
-                    token, sheetId, axUserId, HttpContext.RequestAborted);
+                    token, sheetId, axUserId, HttpContext.RequestAborted, deleteTickets);
                 var result = CreateExpenseSheetDeletionResponse(deletion, legacyResponse, requireComplete: true);
                 if (setActionMark && result.StatusCode == StatusCodes.Status200OK)
                     TempData.INDSetActionMarkDanger();

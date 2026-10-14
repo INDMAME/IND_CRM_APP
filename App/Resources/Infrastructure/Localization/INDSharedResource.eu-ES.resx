@@ -1873,4 +1873,16 @@
   <data name="ExpenseSheets_CreatedOpenPending" xml:space="preserve">
     <value>{0} gastu-orria sortu da. Sakatu Gorde berriro irekitzeko.</value>
   </data>
+  <data name="ExpenseSheets_DeleteTickets_Title" xml:space="preserve">
+    <value>Lotutako tiketak ere ezabatu?</value>
+  </data>
+  <data name="ExpenseSheets_DeleteTickets_Body" xml:space="preserve">
+    <value>Gastu-orria eta haren lerro guztiak ezabatuko dira. Tiketak loturarik gabe gorde ditzakezu, edo tiketak eta haien eranskinak ere ezabatu.</value>
+  </data>
+  <data name="ExpenseSheets_DeleteTickets_Delete" xml:space="preserve">
+    <value>Ezabatu tiketak</value>
+  </data>
+  <data name="ExpenseSheets_DeleteTickets_Keep" xml:space="preserve">
+    <value>Gorde tiketak</value>
+  </data>
 </root>

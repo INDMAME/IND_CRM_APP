@@ -1614,7 +1614,8 @@ namespace IND_CRM_APP.Services
             string token,
             string hojaGastosId,
             string? axUserIdOverride = null,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            bool? deleteTickets = null)
         {
             PrepareRequestHeaders(
                 token,
@@ -1623,8 +1624,11 @@ namespace IND_CRM_APP.Services
                 includeCompanyHeader: true,
                 includeAxUserHeader: true,
                 axUserIdOverride: axUserIdOverride);
+            var route = ApiRoutes.ExpenseSheetWithTickets(EscapePathSegment(hojaGastosId));
+            if (deleteTickets.HasValue)
+                route += "?deleteTickets=" + (deleteTickets.Value ? "true" : "false");
             var result = await SendDeleteAsync(
-                ApiRoutes.ExpenseSheetWithTickets(EscapePathSegment(hojaGastosId)),
+                route,
                 cancellationToken);
             return new ApiTransportResponse<ExpenseSheetDeletionProgressDto>
             {

@@ -1395,19 +1395,20 @@ export const propagateExpenseSheetProjectDefault = async (
   return normalizeApiResponse(response);
 };
 
-// Deletes a full expense sheet using /api/crm/expensesheets/{hojaGastosId}/lines/0?deleteWholeSheet=true.
+// Deletes a full sheet and forwards the explicit ticket-cleanup decision.
 export const deleteExpenseSheet = async (
   hojaGastosId: string,
-  options?: ApiFetchOptions
+  options?: ApiFetchOptions & { deleteTickets?: boolean }
 ): Promise<IndApiResponse<null>> => {
-  const context = await ensureExpenseApiContext(options);
+  const { deleteTickets = false, ...fetchOptions } = options || {};
+  const context = await ensureExpenseApiContext(fetchOptions);
   const safeSheetId = encodeURIComponent(String(hojaGastosId || "").trim());
   const response = await fetchJson<IndApiResponse<null>>(
-    `/api/crm/expensesheets/${safeSheetId}/lines/0?deleteMode=2&deleteWholeSheet=true`,
+    `/api/crm/expensesheets/${safeSheetId}/lines/0?deleteMode=2&deleteWholeSheet=true&deleteTickets=${deleteTickets}`,
     {
-      ...options,
+      ...fetchOptions,
       method: "DELETE",
-      headers: buildExpenseHeaders(context, options),
+      headers: buildExpenseHeaders(context, fetchOptions),
     }
   );
 

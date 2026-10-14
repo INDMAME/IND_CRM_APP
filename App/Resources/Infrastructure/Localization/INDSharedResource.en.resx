@@ -1873,4 +1873,16 @@
   <data name="ExpenseSheets_CreatedOpenPending" xml:space="preserve">
     <value>Expense sheet {0} was created. Save again to open it.</value>
   </data>
+  <data name="ExpenseSheets_DeleteTickets_Title" xml:space="preserve">
+    <value>Delete linked tickets too?</value>
+  </data>
+  <data name="ExpenseSheets_DeleteTickets_Body" xml:space="preserve">
+    <value>The expense sheet and all its lines will be deleted. Keep the tickets unlinked, or delete the tickets and their attachments too.</value>
+  </data>
+  <data name="ExpenseSheets_DeleteTickets_Delete" xml:space="preserve">
+    <value>Delete tickets</value>
+  </data>
+  <data name="ExpenseSheets_DeleteTickets_Keep" xml:space="preserve">
+    <value>Keep tickets</value>
+  </data>
 </root>
