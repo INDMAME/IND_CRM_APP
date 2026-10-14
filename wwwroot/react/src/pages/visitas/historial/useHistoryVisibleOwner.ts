@@ -43,6 +43,7 @@ export const useHistoryVisibleOwner = ({
     appCode: APP_CODE,
     moduleCode: MODULE_CODE,
     preloadedUsers: typeof window !== "undefined" ? window.__IND_VISIBLE_VISIT_USERS__ : undefined,
+    preloadedUsersSucceeded: typeof window !== "undefined" ? window.__IND_VISIBLE_VISIT_USERS_SUCCEEDED__ : undefined,
     onForbidden: showPermissionModal,
     onDebug,
   });

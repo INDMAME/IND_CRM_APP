@@ -8,19 +8,24 @@ import { indFormat, indT } from "../../../utils/indI18n.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
-import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
+import { isManagingOtherExpenseUser } from "../utils/expenseManagedUserScope.ts";
 import { navigateToExpenseUrl, reloadExpensePage } from "../utils/expenseNavigation.ts";
 import { saveExpenseSheetCreatedReturnContext } from "../utils/expenseSheetCreatedReturnContext.ts";
 import { saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
 import { clearExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
 import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
-import { normalizeExpenseReimbursableExpense } from "../constants/expenseReimbursableExpenseCatalog.ts";
+import {
+  isEditableExpenseReimbursableExpense,
+  normalizeExpenseReimbursableExpense,
+} from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
+import { useExpenseSheetDeleteChoice } from "./useExpenseSheetDeleteChoice.ts";
 import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
 import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
 import { useExpenseSheetQuickTicketFlow } from "./useExpenseSheetQuickTicketFlow.ts";
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
-import { LinkTicketIcon, NewLineIcon, NewTicketIcon } from "./ExpenseSheetDetailIcons.tsx";
+import { LinkTicketIcon, NewLineIcon, NewTicketIcon } from "../components/ExpenseSheetActionIcons.tsx";
+import { EXPENSE_AI_DETECTION_QUERY_PARAM } from "../hooks/useExpenseGastoTypeWarning.ts";
 
 const LINES_PAGE_SIZE = 6;
 const EXPENSE_STATUS_APPROVAL_REQUESTED = 1;
@@ -62,11 +67,10 @@ export const useExpenseSheetDetailPageController = () => {
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const sheetMode = safeText(window.__EXPENSE_SHEET_MODE__).toLowerCase();
   const isCreateMode = sheetMode === "create";
-  const isManagingOtherUserBySelection = isManagingOtherExpenseRecord({
+  const isManagingOtherUserBySelection = isManagingOtherExpenseUser({
     canManageOtherUsers,
     currentAxUserId,
     selectedManagedUserId,
-    recordOwnerUserId: "",
     isCreateMode,
   });
   const canCreateExpenseForSelectedContext = canCreateExpense && !isManagingOtherUserBySelection;
@@ -189,11 +193,6 @@ export const useExpenseSheetDetailPageController = () => {
     closeConfirm();
   }, [closeConfirm, resetStatusTransitionDialog]);
 
-  const handleCancelConfirm = useCallback(() => {
-    resetStatusTransitionDialog();
-    cancelConfirm();
-  }, [cancelConfirm, resetStatusTransitionDialog]);
-
   const handleModalConfirm = useCallback(async () => {
     setModalError("");
     await handleConfirm({
@@ -204,23 +203,6 @@ export const useExpenseSheetDetailPageController = () => {
       },
     });
   }, [busy, handleConfirm, setModalError, setStatus]);
-
-  const modalLoadingText = indT("Common_Loading", "Loading");
-  const modalCancelText = modal.cancelText || indT("Confirm_No", "Cancel");
-  const modalConfirmText = busy
-    ? modalLoadingText
-    : !busy && modalError
-      ? indT("Common_OK", "OK")
-      : (modal.confirmText || indT("Confirm_Yes", "OK"));
-
-  const handleModalButtonConfirm = useCallback(() => {
-    if (!busy && modalError) {
-      handleCancelConfirm();
-      return;
-    }
-
-    void handleModalConfirm();
-  }, [busy, handleCancelConfirm, handleModalConfirm, modalError]);
 
   const visibleLines = useMemo(() => pagedSlice(lines, linePage, LINES_PAGE_SIZE), [linePage, lines]);
   const totalLinePages = Math.ceil((lines.length || 0) / LINES_PAGE_SIZE);
@@ -282,7 +264,6 @@ export const useExpenseSheetDetailPageController = () => {
     currentProjectId: safeText(header?.projId),
     currentEstadoComentarios: safeText(header?.estadoComentarios),
     currentExpenseSheetStatus: header?.expenseSheetStatus,
-    currentLines: lines,
     exchangeRateBaseCurrency,
     onCreateSuccess: (createdSheetId) => {
       createdSheetIdRef.current = safeText(createdSheetId);
@@ -293,6 +274,46 @@ export const useExpenseSheetDetailPageController = () => {
     setStatus,
     setIsEditing,
   });
+
+  const handleDeleteSuccess = useCallback(() => {
+    invalidateCachedListForRefetch();
+    navigateToExpenseUrl("/Gastos/ExpenseSheets");
+  }, [invalidateCachedListForRefetch]);
+
+  const { choosingTickets, requestDeletion, preserveTickets } = useExpenseSheetDeleteChoice({
+    busy,
+    hasLinkedTickets: lines.some((line) => !!safeText(line.fileId)),
+    onDelete: handleDelete,
+    onSuccess: handleDeleteSuccess,
+    openConfirm,
+  });
+
+  const handleCancelConfirm = useCallback(() => {
+    if (busy) return;
+    if (choosingTickets) {
+      setModalError("");
+      void preserveTickets();
+      return;
+    }
+    resetStatusTransitionDialog();
+    cancelConfirm();
+  }, [busy, cancelConfirm, choosingTickets, preserveTickets, resetStatusTransitionDialog, setModalError]);
+
+  const modalLoadingText = indT("Common_Loading", "Loading");
+  const modalCancelText = modal.cancelText || indT("Confirm_No", "Cancel");
+  const modalConfirmText = busy
+    ? modalLoadingText
+    : modalError && !choosingTickets
+      ? indT("Common_OK", "OK")
+      : (modal.confirmText || indT("Confirm_Yes", "OK"));
+
+  const handleModalButtonConfirm = useCallback(() => {
+    if (!busy && modalError && !choosingTickets) {
+      handleCancelConfirm();
+      return;
+    }
+    void handleModalConfirm();
+  }, [busy, choosingTickets, handleCancelConfirm, handleModalConfirm, modalError]);
 
   React.useEffect(() => {
     if (isEditing) return;
@@ -323,10 +344,10 @@ export const useExpenseSheetDetailPageController = () => {
         return;
       }
 
-      const shouldConfirmPropagation =
-        !isCreateMode && isEditing && canEditHeaderFieldsCurrent && lines.length > 0;
+      const shouldPersistAtomically =
+        !isCreateMode && isEditing && canEditHeaderFieldsCurrent;
 
-      if (!shouldConfirmPropagation) {
+      if (!shouldPersistAtomically) {
         setDraftProjectId(nextValue);
         setConfirmedProjectId(nextValue);
         return;
@@ -338,6 +359,11 @@ export const useExpenseSheetDetailPageController = () => {
       }
 
       setDraftProjectId(nextValue);
+      if (lines.length === 0) {
+        void handleConfirmProjectPropagation(nextValue);
+        return;
+      }
+
       openConfirm({
         title: indT("ExpenseSheets_Detail_PropagateProject_Title", "Update lines"),
         message: indT(
@@ -371,6 +397,8 @@ export const useExpenseSheetDetailPageController = () => {
     (value: number) => {
       const nextValue = normalizeExpenseReimbursableExpense(value);
       const previousValue = normalizeExpenseReimbursableExpense(draftReimbursableExpense);
+      if (!isEditableExpenseReimbursableExpense(nextValue) || nextValue === null) return;
+      if (!isCreateMode && previousValue === null) return;
       if (nextValue === previousValue) return;
 
       const shouldConfirmPropagation =
@@ -430,8 +458,10 @@ export const useExpenseSheetDetailPageController = () => {
     !isCreateMode &&
     isEditing &&
     canEditHeaderFieldsCurrent &&
-    lines.length > 0 &&
     safeText(draftProjectId) !== safeText(confirmedProjectId);
+
+  const shouldConfirmPendingProjectPropagation =
+    hasPendingProjectPropagation && lines.length > 0;
 
   const handlePendingProjectPropagationCancel = useCallback(() => {
     if (!hasPendingProjectPropagation) return;
@@ -447,16 +477,18 @@ export const useExpenseSheetDetailPageController = () => {
     return handleUpdate();
   }, [draftProjectId, handleConfirmProjectPropagation, handleUpdate, hasPendingProjectPropagation]);
 
-  const projectPropagationSaveTitle = hasPendingProjectPropagation
+  const projectPropagationSaveTitle = shouldConfirmPendingProjectPropagation
     ? indT("ExpenseSheets_Detail_PropagateProject_Title", "Update lines")
     : undefined;
-  const projectPropagationSaveMessage = hasPendingProjectPropagation
+  const projectPropagationSaveMessage = shouldConfirmPendingProjectPropagation
     ? indT(
         "ExpenseSheets_Detail_PropagateProject_Body",
         "The projects on all lines will be updated. Do you want to continue?"
       )
     : undefined;
-  const projectPropagationSaveConfirmText = hasPendingProjectPropagation ? indT("Confirm_Yes", "OK") : undefined;
+  const projectPropagationSaveConfirmText = shouldConfirmPendingProjectPropagation
+    ? indT("Confirm_Yes", "OK")
+    : undefined;
 
   const handleOpenLineDetail = useCallback(
     async (lineRecId: string) => {
@@ -500,13 +532,16 @@ export const useExpenseSheetDetailPageController = () => {
         sheetId: createdSheetId,
       });
       clearExpenseActingUserOverride();
-      setIsRedirectingAfterCreate(true);
-      navigateToCreatedSheet(createdSheetId);
+      const navigationStarted = navigateToCreatedSheet(createdSheetId);
+      setIsRedirectingAfterCreate(navigationStarted);
+      if (!navigationStarted) {
+        setStatus(indFormat("ExpenseSheets_CreatedOpenPending", "Expense sheet {0} was created. Save again to open it.", createdSheetId));
+      }
       return;
     }
 
     reloadExpensePage();
-  }, [invalidateCachedListForRefetch, isCreateMode, navigateToCreatedSheet]);
+  }, [invalidateCachedListForRefetch, isCreateMode, navigateToCreatedSheet, setStatus]);
 
   const handleStatusActionClick = useCallback(
     (action: { labelKey: string; fallback: string; nextStatus: number }) => {
@@ -580,12 +615,9 @@ export const useExpenseSheetDetailPageController = () => {
     handleEnableEdit,
     handleCancelEdit,
     handleUpdate: handleUpdateWithProjectPropagation,
-    handleDelete,
+    handleDelete: requestDeletion,
     onSaveSuccess: handleSaveSuccess,
-    onDeleteSuccess: () => {
-      invalidateCachedListForRefetch();
-      navigateToExpenseUrl("/Gastos/ExpenseSheets");
-    },
+    onDeleteSuccess: handleDeleteSuccess,
     saveConfirmTitle: projectPropagationSaveTitle,
     saveConfirmMessage: projectPropagationSaveMessage,
     saveConfirmText: projectPropagationSaveConfirmText,
@@ -637,6 +669,9 @@ export const useExpenseSheetDetailPageController = () => {
         mode: "edit",
         origin: "sheet-create",
       });
+      if (result?.processedByAI === true) {
+        query.set(EXPENSE_AI_DETECTION_QUERY_PARAM, "1");
+      }
       if (currentSheetId) {
         saveExpenseTicketReturnContext({
           fileId: createdFileId,

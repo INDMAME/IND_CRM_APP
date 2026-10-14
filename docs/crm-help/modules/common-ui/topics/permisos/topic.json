@@ -1,0 +1,51 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "common-ui.permisos",
+    "moduleId":  "common-ui",
+    "sectionNumber":  "6.3",
+    "title":  "Permisos",
+    "summary":  "Distinga acceso, consulta y acciones permitidas para cada empresa y registro.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Permisos",
+                                  "acceso al módulo",
+                                  "permiso de consulta",
+                                  "acciones autorizadas",
+                                  "permisos por empresa"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Poder consultar una hoja significa que puedo editarla?",
+                                          "¿Los permisos son iguales en todas las empresas?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "D22564218EF6A68FB499C9C09852CC4EE7CBEF6987E39970505C40FACD229E91",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "6.3",
+                   "pageFromTableOfContents":  11
+               }
+}

@@ -1,0 +1,21 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expense-approval",
+    "title":  "Aprobación de gastos",
+    "description":  "Estados, responsables y acciones de aprobación.",
+    "order":  6,
+    "aliases":  {
+                    "es-ES":  [
+                                  "aprobación de gastos",
+                                  "estados de hoja"
+                              ]
+                },
+    "topicIds":  [
+                     "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos",
+                     "expense-approval.flujo-general-de-estados",
+                     "expense-approval.estados-de-la-hoja-de-gastos",
+                     "expense-approval.acciones-del-propietario",
+                     "expense-approval.acciones-del-responsable",
+                     "expense-approval.enlaces-recibidos-por-correo"
+                 ]
+}

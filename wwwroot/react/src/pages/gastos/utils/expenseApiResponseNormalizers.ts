@@ -94,6 +94,10 @@ export const normalizeDetailPagedResponse = (
         item?.ReimbursableExpense ?? item?.reimbursableExpense
       ),
       ProjId: safeText(item?.ProjId ?? item?.projId),
+      DefaultLineProjId:
+        item?.DefaultLineProjId == null && item?.defaultLineProjId == null
+          ? null
+          : safeText(item?.DefaultLineProjId ?? item?.defaultLineProjId),
       Lines: rawLines.map((line) => ({
         ...line,
         RecId: safeText(line?.RecId ?? line?.recId),

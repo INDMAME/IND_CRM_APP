@@ -127,6 +127,9 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
         // Allows Auth/Login even when it is reached via the default "/" route.
         private static bool IsBypassAction(ActionExecutingContext context)
         {
+            if (context.ActionDescriptor.EndpointMetadata.OfType<IndErrorEndpointAttribute>().Any())
+                return true;
+
             if (context?.ActionDescriptor?.RouteValues == null)
                 return false;
 
@@ -153,6 +156,9 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
         // Resolves module candidates only from explicit route mapping or fixed safe fallbacks.
         private static string[] ResolveModuleCandidates(string path, IndWebCompany company)
         {
+            if (IsHelpPath(path))
+                return GetAccessibleModuleCandidates(company);
+
             if (INDModuleRegistry.TryResolveSharedRouteCandidates(path, out var sharedCandidates))
                 return sharedCandidates;
 
@@ -163,6 +169,13 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                 return GetAccessibleModuleCandidates(company);
 
             return Array.Empty<string>();
+        }
+
+        // Gives CRM help the same dynamic module candidates as Home.
+        private static bool IsHelpPath(string path)
+        {
+            return string.Equals(path, "/api/help", StringComparison.OrdinalIgnoreCase) ||
+                   path.StartsWith("/api/help/", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsHomePath(string path)
@@ -237,8 +250,20 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
             if (path.StartsWith("/api/crm/expensesheets", StringComparison.OrdinalIgnoreCase))
             {
                 if (path.Equals("/api/crm/expensesheets/list", StringComparison.OrdinalIgnoreCase) ||
-                    path.Equals("/api/crm/expensesheets/tickets/list", StringComparison.OrdinalIgnoreCase))
+                    path.Equals("/api/crm/expensesheets/tickets/list", StringComparison.OrdinalIgnoreCase) ||
+                    path.Equals("/api/crm/expensesheets/tickets/link/list", StringComparison.OrdinalIgnoreCase))
                     return IndAccessRights.View;
+
+                // Both dedicated line-ticket verbs update an existing expense line.
+                if ((HttpMethods.IsPut(method) || HttpMethods.IsDelete(method)) &&
+                    IsExpenseSheetLineTicketAssociationPath(path))
+                    return IndAccessRights.Edit;
+
+                // Header-to-line propagation mutates an existing sheet even though the routes use POST.
+                if (HttpMethods.IsPost(method) &&
+                    (path.TrimEnd('/').EndsWith("/reimbursable-expense/propagate", StringComparison.OrdinalIgnoreCase) ||
+                     path.TrimEnd('/').EndsWith("/project-default/propagate", StringComparison.OrdinalIgnoreCase)))
+                    return IndAccessRights.Edit;
 
                 if (HttpMethods.IsPost(method))
                     return IndAccessRights.Add;
@@ -274,6 +299,15 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                 return IndAccessRights.FullAccess;
 
             return IndAccessRights.View;
+        }
+
+        // Matches only the dedicated expense-line ticket association route.
+        private static bool IsExpenseSheetLineTicketAssociationPath(string path)
+        {
+            var normalizedPath = (path ?? string.Empty).TrimEnd('/');
+            return normalizedPath.StartsWith("/api/crm/expensesheets/", StringComparison.OrdinalIgnoreCase) &&
+                   normalizedPath.IndexOf("/lines/", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                   normalizedPath.EndsWith("/ticket", StringComparison.OrdinalIgnoreCase);
         }
 
         // Allows status management updates for self-management companies on expense sheet headers.
@@ -465,8 +499,11 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
             _logger.LogError("Context initialization failed for {Path}. ErrorCode: {ErrorCode}. Reason: {Reason}", path, errorCode ?? string.Empty, safeReason);
 
             // Clear session cache and auth cookie to prevent stale context loops.
-            http.Session.Clear();
-            await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            if (IND_CRM_APP.Infrastructure.Session.AuthenticationSessionRequest.TryClose(http))
+            {
+                http.Session.Clear();
+                await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            }
 
             var tempData = _tempDataFactory.GetTempData(http);
             tempData.INDSetActionMarkError();

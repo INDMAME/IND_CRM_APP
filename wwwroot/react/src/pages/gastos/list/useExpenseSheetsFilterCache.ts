@@ -111,7 +111,14 @@ export const useExpenseSheetsFilterCache = () => {
     if (!normalized) return;
 
     const keys = getScopedKeys();
-    setSessionJsonWithExpiry(keys.filterKey, normalized, EXPENSE_SHEETS_CACHE_TTL_MS);
+    removeSessionValueWithExpiry(keys.returnFlagKey);
+    const saved = setSessionJsonWithExpiry(keys.filterKey, normalized, EXPENSE_SHEETS_CACHE_TTL_MS) ||
+      setSessionJsonWithExpiry(keys.filterKey, { ...normalized, items: [], total: 0 }, EXPENSE_SHEETS_CACHE_TTL_MS);
+    if (!saved) {
+      removeSessionValueWithExpiry(keys.filterKey);
+      removeSessionValueWithExpiry(keys.returnFlagKey);
+      return;
+    }
     setSessionValueWithExpiry(keys.returnFlagKey, "1", EXPENSE_SHEETS_CACHE_TTL_MS);
   }, []);
 

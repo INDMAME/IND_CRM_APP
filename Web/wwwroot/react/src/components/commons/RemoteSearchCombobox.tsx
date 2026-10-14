@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FloatingList from "./FloatingList.tsx";
 import Spinner from "./Spinner.tsx";
-import { ChevronDownSvg, ChevronUpSvg } from "./chevrons.tsx";
+import {
+  SELECT_FIELD_ACTION_BUTTON_CLASS_NAME,
+  SELECT_FIELD_ACTIONS_CLASS_NAME,
+  SelectChevron,
+} from "./chevrons.tsx";
 import { handleComboboxKeyDown } from "../../hooks/useComboboxKeyboard.ts";
 import { useOutsideClick } from "../../hooks/useOutsideClick.ts";
 import { classNames } from "../../utils/classNames.ts";
@@ -33,6 +37,8 @@ type RemoteSearchComboboxProps = {
     signal: AbortSignal
   ) => Promise<{ items: RemoteSearchOption[]; total?: number }>;
   idBase: string;
+  // Identifies external filters and identity independently of the editable search term.
+  queryScope?: string;
   minSearchLength?: number;
   pageSize?: number;
   allowEmptySearch?: boolean;
@@ -62,10 +68,8 @@ const uniqueByValue = (items: RemoteSearchOption[]): RemoteSearchOption[] => {
   return Array.from(map.values());
 };
 
-const compactActionButtonClassName = "flex h-8 w-6 items-center justify-center p-0";
-
 // Generic remote-search combobox that supports manual search and optional paged loading on open.
-const RemoteSearchCombobox = ({
+const RemoteSearchComboboxContent = ({
   label,
   placeholder,
   value,
@@ -122,6 +126,14 @@ const RemoteSearchCombobox = ({
     loadingRef.current = loading;
   }, [loading]);
 
+  // Editing or selecting a value invalidates every pending result for the previous input.
+  const cancelPendingSearch = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    loadingRef.current = false;
+    setLoading(false);
+  }, []);
+
   const query = value || "";
   const loadedSearchTermKey = loadedSearchTermRef.current.trim().toLowerCase();
   const hasLoadedOpenSearchOptions =
@@ -156,6 +168,7 @@ const RemoteSearchCombobox = ({
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
+      loadingRef.current = true;
       setLoading(true);
       if (!append) {
         setActiveIndex(0);
@@ -167,6 +180,7 @@ const RemoteSearchCombobox = ({
       try {
         if (onSearchPage) {
           const response = await onSearchPage(normalizedTerm, page, pageSize, controller.signal);
+          if (controller.signal.aborted || abortRef.current !== controller) return;
           const pageItems = uniqueByValue(Array.isArray(response?.items) ? response.items : []);
           if (!append && pageItems.length === 0) {
             setOptions([]);
@@ -194,6 +208,7 @@ const RemoteSearchCombobox = ({
           }
         } else {
           const response = await onSearch(normalizedTerm, controller.signal);
+          if (controller.signal.aborted || abortRef.current !== controller) return;
           const next = uniqueByValue(response || []);
           if (!append && next.length === 0) {
             setOptions([]);
@@ -219,6 +234,7 @@ const RemoteSearchCombobox = ({
         loadedSearchTermRef.current = normalizedTerm;
         setOpen(true);
       } catch {
+        if (controller.signal.aborted || abortRef.current !== controller) return;
         if (!append) {
           setOptions([]);
           currentPageRef.current = 0;
@@ -231,15 +247,16 @@ const RemoteSearchCombobox = ({
       } finally {
         if (abortRef.current === controller) {
           abortRef.current = null;
+          loadingRef.current = false;
+          setLoading(false);
         }
-        setLoading(false);
       }
     },
     [onChange, onSearch, onSearchPage, pageSize]
   );
 
   const runSearch = useCallback(async () => {
-    if (readOnlyMode || loading) return;
+    if (readOnlyMode || loadingRef.current) return;
     const term = query.trim();
     const termKey = term.toLowerCase();
 
@@ -260,10 +277,10 @@ const RemoteSearchCombobox = ({
     }
 
     await executeSearch(term, 1, false);
-  }, [canSearchTerm, executeSearch, lastSearchedTerm, loading, onSearchPage, options.length, query, readOnlyMode]);
+  }, [canSearchTerm, executeSearch, lastSearchedTerm, onSearchPage, options.length, query, readOnlyMode]);
 
   const runOpenSearch = useCallback(async () => {
-    if (readOnlyMode || loading || !loadOnOpen) return;
+    if (readOnlyMode || loadingRef.current || !loadOnOpen) return;
 
     const term = openSearchMode === "empty-query" ? "" : query.trim();
     if (!canSearchTerm(term)) {
@@ -273,10 +290,10 @@ const RemoteSearchCombobox = ({
     await executeSearch(term, 1, false, {
       clearValueOnNoResults: openSearchMode !== "empty-query",
     });
-  }, [canSearchTerm, executeSearch, loadOnOpen, loading, openSearchMode, query, readOnlyMode]);
+  }, [canSearchTerm, executeSearch, loadOnOpen, openSearchMode, query, readOnlyMode]);
 
   const runLoadMore = useCallback(async () => {
-    if (readOnlyMode || loading || !onSearchPage || !infiniteScroll || !hasMoreRef.current) {
+    if (readOnlyMode || loadingRef.current || !onSearchPage || !infiniteScroll || !hasMoreRef.current) {
       return;
     }
 
@@ -301,7 +318,6 @@ const RemoteSearchCombobox = ({
     executeSearch,
     infiniteScroll,
     lastSearchedTerm,
-    loading,
     onSearchPage,
     openSearchMode,
     query,
@@ -334,6 +350,7 @@ const RemoteSearchCombobox = ({
 
   const selectOption = (option: RemoteSearchOption) => {
     const nextValue = String(option.value || "").trim();
+    cancelPendingSearch();
     setShowNotFoundState(false);
     onChange(nextValue);
     onCommit?.(nextValue);
@@ -352,7 +369,7 @@ const RemoteSearchCombobox = ({
   const activeId =
     open && filtered[resolvedActiveIndex] ? `${idBase}-opt-${filtered[resolvedActiveIndex].value}` : undefined;
   const showLoadingOnlyState = loading && filtered.length === 0;
-  const inputActionPaddingClassName = showSearchIcon || loading ? "pr-14" : "pr-9";
+  const inputActionPaddingClassName = showSearchIcon || loading ? "pr-20" : "pr-10";
 
   return (
     <div className={containerClassName} ref={containerRef}>
@@ -380,6 +397,7 @@ const RemoteSearchCombobox = ({
             value={query}
             onChange={(event) => {
               const nextValue = event.target.value;
+              cancelPendingSearch();
               setActiveIndex(0);
               setShowNotFoundState(false);
               onChange(nextValue);
@@ -420,9 +438,9 @@ const RemoteSearchCombobox = ({
             aria-activedescendant={activeId}
           />
 
-          <div className="absolute inset-y-0 right-1 flex items-center gap-0">
+          <div className={SELECT_FIELD_ACTIONS_CLASS_NAME}>
             {loading ? (
-              <span className="flex h-8 w-6 items-center justify-center" aria-hidden="true">
+              <span className={SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} aria-hidden="true">
                 <Spinner size="h-4 w-4" />
               </span>
             ) : null}
@@ -430,7 +448,7 @@ const RemoteSearchCombobox = ({
             {showSearchIcon ? (
               <button
                 type="button"
-                className={`${compactActionButtonClassName} text-slate-400 hover:text-slate-500`}
+                className={`${SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} text-slate-400 hover:text-slate-500`}
                 onClick={() => {
                   void runSearch();
                 }}
@@ -445,7 +463,7 @@ const RemoteSearchCombobox = ({
 
             <button
               type="button"
-              className={`${compactActionButtonClassName} text-slate-500 hover:text-slate-600`}
+              className={`${SELECT_FIELD_ACTION_BUTTON_CLASS_NAME} text-slate-500 hover:text-slate-600`}
               onClick={() => {
                 if (readOnlyMode) return;
                 if (open) {
@@ -475,7 +493,7 @@ const RemoteSearchCombobox = ({
               aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
               disabled={readOnlyMode}
             >
-              {open ? <ChevronUpSvg className="size-4" /> : <ChevronDownSvg className="size-4" />}
+              <SelectChevron open={open} />
             </button>
           </div>
         </div>
@@ -534,5 +552,10 @@ const RemoteSearchCombobox = ({
     </div>
   );
 };
+
+// Remounts lookup-owned state when the business query changes, preserving the controlled value.
+const RemoteSearchCombobox = (props: RemoteSearchComboboxProps) => (
+  <RemoteSearchComboboxContent key={props.queryScope ?? ""} {...props} />
+);
 
 export default RemoteSearchCombobox;

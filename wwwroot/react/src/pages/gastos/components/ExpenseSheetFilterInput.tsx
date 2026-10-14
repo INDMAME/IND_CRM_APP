@@ -5,6 +5,7 @@ import type { ExpenseSheetListItemDto } from "../expenseTypes.ts";
 import { buildExpenseSheetSuggestPayload } from "../utils/expensePayloadBuilders.ts";
 import { fetchExpenseSheetList } from "../utils/expenseApi.ts";
 import { resolveExpenseListAxUserIdOverride } from "../utils/expenseManagedUserScope.ts";
+import { captureSensitiveBrowserState } from "../../../utils/browserStorageScope.ts";
 
 type ExpenseSheetFilterInputProps = {
   label: string;
@@ -59,6 +60,7 @@ const ExpenseSheetFilterInput = ({
     selectedManagedUserId: managedUserId,
     includeSubordinates,
   });
+  const queryScope = JSON.stringify([captureSensitiveBrowserState(), listAxUserIdOverride, includeSubordinates]);
 
   const loadOptions = useCallback(async (term: string, signal: AbortSignal): Promise<RemoteSearchOption[]> => {
     const payload = buildExpenseSheetSuggestPayload(term, SEARCH_PAGE_SIZE, 1, includeSubordinates);
@@ -119,6 +121,7 @@ const ExpenseSheetFilterInput = ({
 
   return (
     <RemoteSearchCombobox
+      queryScope={queryScope}
       label={label}
       placeholder={placeholder}
       value={value}

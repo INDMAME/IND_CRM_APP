@@ -1,0 +1,477 @@
+[
+    {
+        "id": "answer-common-ui.cambiar-el-idioma",
+        "question": "¿Cómo cambio el idioma del CRM?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "answered",
+        "expectedTopicId": "common-ui.cambiar-el-idioma",
+        "expectedTopicIds": [
+            "common-ui.cambiar-el-idioma"
+        ],
+        "sourceChunkIds": [
+            "common-ui.cambiar-el-idioma--01"
+        ],
+        "requiredSourceChunkIds": [
+            "common-ui.cambiar-el-idioma--01"
+        ],
+        "requiredFacts": [
+            "Debe abrirse el menú lateral y pulsarse el nombre de usuario.",
+            "Debe elegirse el idioma desde Idiomas.",
+            "Debe esperarse a que la pantalla vuelva a cargarse."
+        ],
+        "forbiddenClaims": [
+            "El asistente ya ha cambiado el idioma por el usuario.",
+            "No es necesario esperar a que la pantalla se recargue."
+        ]
+    },
+    {
+        "id": "answer-tickets.estado-del-ticket",
+        "question": "¿Qué significan los estados Pendiente y Asignado de un ticket?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "answered",
+        "expectedTopicId": "tickets.estado-del-ticket",
+        "expectedTopicIds": [
+            "tickets.estado-del-ticket"
+        ],
+        "sourceChunkIds": [
+            "tickets.estado-del-ticket--01"
+        ],
+        "requiredSourceChunkIds": [
+            "tickets.estado-del-ticket--01"
+        ],
+        "requiredFacts": [
+            "Pendiente significa que el ticket todavía no está asignado a una hoja.",
+            "Asignado significa que el ticket ya está relacionado con una hoja de gastos.",
+            "Desvincular ticket solo debe utilizarse desde la línea cuando la acción esté disponible para su tipo, estado y permisos.",
+            "Desvincular conserva la línea, el ticket y la foto; después debe comprobarse que el ticket está Pendiente antes de vincularlo expresamente al destino correcto.",
+            "Eliminar puede borrar el archivo, el ticket y la línea vinculada; no debe utilizarse como sustituto de desvincular.",
+            "Si la acción no está disponible o falla, debe consultarse a soporte con los identificadores."
+        ],
+        "forbiddenClaims": [
+            "Es obligatorio eliminar el ticket y volver a cargar el justificante para corregir cualquier asignación.",
+            "Desvincular ticket está disponible para cualquier línea, estado o usuario.",
+            "El ticket cambia automáticamente a otra hoja al desvincularlo.",
+            "El asistente ya ha cambiado la relación del ticket."
+        ]
+    },
+    {
+        "id": "answer-troubleshooting.no-aparece-un-menu-boton-o-usuario",
+        "question": "¿Por qué no aparece un menú, botón o usuario?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "answered",
+        "expectedTopicId": "troubleshooting.no-aparece-un-menu-boton-o-usuario",
+        "expectedTopicIds": [
+            "troubleshooting.no-aparece-un-menu-boton-o-usuario"
+        ],
+        "sourceChunkIds": [
+            "troubleshooting.no-aparece-un-menu-boton-o-usuario--01"
+        ],
+        "requiredSourceChunkIds": [
+            "troubleshooting.no-aparece-un-menu-boton-o-usuario--01"
+        ],
+        "requiredFacts": [
+            "Debe comprobarse la empresa activa y actualizarse la pantalla.",
+            "La ausencia puede deberse a permisos o a la jerarquía de gestión.",
+            "No debe utilizarse la sesión de otra persona."
+        ],
+        "forbiddenClaims": [
+            "Debe usarse la sesión de otra persona para continuar.",
+            "La ausencia del control confirma siempre un error de la aplicación."
+        ]
+    },
+    {
+        "id": "answer-troubleshooting.no-se-puede-guardar",
+        "question": "¿Qué debo revisar si no puedo guardar?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "answered",
+        "expectedTopicId": "troubleshooting.no-se-puede-guardar",
+        "expectedTopicIds": [
+            "troubleshooting.no-se-puede-guardar"
+        ],
+        "sourceChunkIds": [
+            "troubleshooting.no-se-puede-guardar--01"
+        ],
+        "requiredSourceChunkIds": [
+            "troubleshooting.no-se-puede-guardar--01"
+        ],
+        "requiredFacts": [
+            "Deben revisarse los campos obligatorios y los mensajes en rojo.",
+            "En visitas deben comprobarse Cuenta, Tipo de visita, Descripción y Comentarios; en líneas o tickets, Fecha, Categoría, importes y divisa.",
+            "Un botón bloqueado puede deberse al estado, al pago o a los permisos."
+        ],
+        "forbiddenClaims": [
+            "Debe omitirse la validación de los campos obligatorios.",
+            "El asistente ya ha guardado el registro."
+        ]
+    },
+    {
+        "id": "answer-troubleshooting.la-imagen-del-ticket-no-se-procesa",
+        "question": "¿Qué hago si la imagen del ticket no se procesa?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "answered",
+        "expectedTopicId": "troubleshooting.la-imagen-del-ticket-no-se-procesa",
+        "expectedTopicIds": [
+            "troubleshooting.la-imagen-del-ticket-no-se-procesa"
+        ],
+        "sourceChunkIds": [
+            "troubleshooting.la-imagen-del-ticket-no-se-procesa--01"
+        ],
+        "requiredSourceChunkIds": [
+            "troubleshooting.la-imagen-del-ticket-no-se-procesa--01"
+        ],
+        "requiredFacts": [
+            "Debe comprobarse el formato y el límite indicado por la aplicación.",
+            "La nueva foto debe tener luz uniforme, no recortar datos y evitar reflejos.",
+            "Si aparece Reintentar carga, debe utilizarse una sola vez; si queda un ticket parcial, debe anotarse su identificador."
+        ],
+        "forbiddenClaims": [
+            "Debe reintentarse la carga indefinidamente.",
+            "El asistente ha procesado la imagen."
+        ]
+    },
+    {
+        "id": "answer-troubleshooting.que-informacion-enviar-a-soporte",
+        "question": "¿Qué información debo enviar a soporte?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "answered",
+        "expectedTopicId": "troubleshooting.que-informacion-enviar-a-soporte",
+        "expectedTopicIds": [
+            "troubleshooting.que-informacion-enviar-a-soporte"
+        ],
+        "sourceChunkIds": [
+            "troubleshooting.que-informacion-enviar-a-soporte--01"
+        ],
+        "requiredSourceChunkIds": [
+            "troubleshooting.que-informacion-enviar-a-soporte--01"
+        ],
+        "requiredFacts": [
+            "Deben indicarse usuario corporativo sin contraseña, empresa activa, módulo y acción.",
+            "Deben añadirse identificador disponible, fecha y hora aproximadas y el mensaje completo.",
+            "La captura no debe mostrar contraseñas, códigos de acceso ni datos innecesarios."
+        ],
+        "forbiddenClaims": [
+            "Debe enviarse la contraseña a soporte.",
+            "La captura debe incluir códigos de acceso."
+        ]
+    },
+    {
+        "id": "answer-expenses-add-manual-line-colloquial",
+        "question": "¿Cómo debo meter un gasto?",
+        "responseLocale": "es-ES",
+        "selectedModuleId": "expenses",
+        "expectedResolution": "answered",
+        "expectedTopicId": "expenses.anadir-una-linea-manual",
+        "expectedTopicIds": [
+            "expenses.anadir-una-linea-manual"
+        ],
+        "sourceChunkIds": [
+            "expenses.anadir-una-linea-manual--01"
+        ],
+        "requiredSourceChunkIds": [
+            "expenses.anadir-una-linea-manual--01"
+        ],
+        "requiredFacts": [
+            "Debe abrirse una hoja editable y pulsarse Nueva línea desde Acciones rápidas.",
+            "Deben completarse la fecha, categoría, descripción, precio, cantidad y los demás campos aplicables.",
+            "Debe pulsarse Guardar y confirmar; descripción y categoría son obligatorias, y precio y cantidad deben ser mayores que cero."
+        ],
+        "forbiddenClaims": [
+            "El asistente ya ha creado el gasto por el usuario.",
+            "Es obligatorio crear primero un ticket para añadir cualquier gasto."
+        ]
+    },
+    {
+        "id": "answer-expenses-ambiguous-hour-or-sheet",
+        "question": "¿Cómo imputo una hora de gasto?",
+        "responseLocale": "es-ES",
+        "selectedModuleId": "expenses",
+        "expectedResolution": "answered",
+        "expectedTopicId": "expenses.anadir-una-linea-manual",
+        "expectedTopicIds": [
+            "expenses.anadir-una-linea-manual"
+        ],
+        "sourceChunkIds": [
+            "expenses.anadir-una-linea-manual--01"
+        ],
+        "requiredSourceChunkIds": [
+            "expenses.anadir-una-linea-manual--01"
+        ],
+        "requiredFacts": [
+            "Debe distinguirse prudentemente entre imputar horas y añadir un gasto a una hoja.",
+            "Si el usuario se refiere a añadir un gasto, debe proponerse Nueva línea desde Acciones rápidas en una hoja editable.",
+            "La base de ayuda no documenta un procedimiento específico para imputar horas."
+        ],
+        "forbiddenClaims": [
+            "El manual documenta pasos específicos para imputar horas.",
+            "Debe darse por seguro que hora significa hoja sin explicárselo al usuario."
+        ]
+    },
+    {
+        "id": "answer-expense-approval.undo-approval-destination",
+        "question": "¿A qué estado vuelve una hoja al deshacer una aprobación?",
+        "responseLocale": "es-ES",
+        "selectedModuleId": "expense-approval",
+        "expectedResolution": "answered",
+        "expectedTopicId": "expense-approval.flujo-general-de-estados",
+        "expectedTopicIds": [
+            "expense-approval.flujo-general-de-estados",
+            "expense-approval.acciones-del-propietario",
+            "expense-approval.acciones-del-responsable"
+        ],
+        "sourceChunkIds": [
+            "expense-approval.flujo-general-de-estados--01",
+            "expense-approval.acciones-del-propietario--01",
+            "expense-approval.acciones-del-responsable--01"
+        ],
+        "requiredSourceChunkIds": [
+            "expense-approval.flujo-general-de-estados--01"
+        ],
+        "requiredFacts": [
+            "Un responsable que deshace la aprobación de la hoja de un subordinado la devuelve a Aprobación solicitada.",
+            "El propietario con autogestión que deshace la aprobación de su propia hoja la devuelve a Borrador.",
+            "El destino depende del perfil y de quién sea el propietario."
+        ],
+        "forbiddenClaims": [
+            "Deshacer aprobación siempre devuelve la hoja a Aprobación solicitada.",
+            "Deshacer aprobación siempre devuelve la hoja a Borrador."
+        ]
+    },
+    {
+        "id": "answer-expenses-module-not-documented-password",
+        "question": "¿Cómo restablezco mi contraseña corporativa?",
+        "responseLocale": "es-ES",
+        "selectedModuleId": "expenses",
+        "expectedResolution": "notDocumented",
+        "expectedTopicId": null,
+        "expectedTopicIds": [],
+        "sourceChunkIds": [],
+        "requiredSourceChunkIds": [],
+        "requiredFacts": [
+            "Debe indicarse que el procedimiento de restablecimiento de contraseña no está documentado en el módulo de ayuda seleccionado."
+        ],
+        "forbiddenClaims": [
+            "Debe proporcionarse un procedimiento de restablecimiento no presente en la documentación.",
+            "Debe citarse una sección de gastos como si documentara contraseñas."
+        ]
+    },
+    {
+        "id": "answer-not-documented-sign-in",
+        "question": "¿Cómo entro o inicio sesión en el CRM?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "notDocumented",
+        "expectedTopicId": null,
+        "expectedTopicIds": [],
+        "sourceChunkIds": [],
+        "requiredSourceChunkIds": [],
+        "requiredFacts": [
+            "Debe indicarse que el acceso y el inicio de sesión no están documentados en esta base de ayuda."
+        ],
+        "forbiddenClaims": [
+            "Debe proporcionarse un procedimiento para abrir o iniciar sesión en el CRM.",
+            "El asistente ha iniciado la sesión por el usuario."
+        ]
+    },
+    {
+        "id": "answer-not-documented-password-reset",
+        "question": "¿Cómo restablezco mi contraseña corporativa?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "notDocumented",
+        "expectedTopicId": null,
+        "expectedTopicIds": [],
+        "sourceChunkIds": [],
+        "requiredSourceChunkIds": [],
+        "requiredFacts": [
+            "Debe indicarse que el procedimiento de restablecimiento de contraseña no está documentado en esta base de ayuda."
+        ],
+        "forbiddenClaims": [
+            "Debe proporcionarse un procedimiento de restablecimiento no presente en la documentación.",
+            "El asistente ha restablecido o conoce la contraseña del usuario."
+        ]
+    },
+    {
+        "id": "answer-visits-editor-save",
+        "question": "¿Guardar el texto del editor guarda también la visita?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "answered",
+        "expectedTopicId": "visits.editor-de-texto-y-dictado",
+        "expectedTopicIds": [
+            "visits.editor-de-texto-y-dictado"
+        ],
+        "sourceChunkIds": [
+            "visits.editor-de-texto-y-dictado--01"
+        ],
+        "requiredSourceChunkIds": [
+            "visits.editor-de-texto-y-dictado--01"
+        ],
+        "requiredFacts": [
+            "Guardar en el editor devuelve el texto al formulario.",
+            "Después hay que guardar o crear la visita desde el formulario y confirmar."
+        ],
+        "forbiddenClaims": [
+            "Guardar en el editor completa por sí solo la creación de la visita."
+        ]
+    },
+    {
+        "id": "answer-visits-required-narratives",
+        "question": "¿Qué campos narrativos de una visita son obligatorios?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "answered",
+        "expectedTopicId": "visits.crear-una-visita-paso-2-datos-de-la-visita",
+        "expectedTopicIds": [
+            "visits.crear-una-visita-paso-2-datos-de-la-visita"
+        ],
+        "sourceChunkIds": [
+            "visits.crear-una-visita-paso-2-datos-de-la-visita--01"
+        ],
+        "requiredSourceChunkIds": [
+            "visits.crear-una-visita-paso-2-datos-de-la-visita--01"
+        ],
+        "requiredFacts": [
+            "Descripción y Comentarios son obligatorios.",
+            "La Descripción admite como máximo 200 caracteres.",
+            "Antecedentes y Conclusiones son opcionales."
+        ],
+        "forbiddenClaims": [
+            "Todos los campos narrativos son opcionales."
+        ]
+    },
+    {
+        "id": "answer-expense-ticket-reference",
+        "question": "¿Qué hace Ticket Id. en una línea de gasto?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "answered",
+        "expectedTopicId": "expenses.anadir-una-linea-manual",
+        "expectedTopicIds": [
+            "expenses.anadir-una-linea-manual"
+        ],
+        "sourceChunkIds": [
+            "expenses.anadir-una-linea-manual--01"
+        ],
+        "requiredSourceChunkIds": [
+            "expenses.anadir-una-linea-manual--01"
+        ],
+        "requiredFacts": [
+            "Ticket Id. permite abrir el ticket vinculado cuando aparece.",
+            "Es un dato de consulta de la relación existente."
+        ],
+        "forbiddenClaims": [
+            "Escribir otro identificador en Ticket Id. reasigna el ticket."
+        ]
+    },
+    {
+        "id": "answer-v04-international-guidance",
+        "question": "¿Cuándo debo marcar Internacional?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "answered",
+        "expectedTopicId": "expenses.anadir-una-linea-manual",
+        "expectedTopicIds": [
+            "expenses.anadir-una-linea-manual"
+        ],
+        "sourceChunkIds": [
+            "expenses.anadir-una-linea-manual--01"
+        ],
+        "requiredSourceChunkIds": [
+            "expenses.anadir-una-linea-manual--01"
+        ],
+        "requiredFacts": [
+            "Como orientación, Internacional suele referirse a gastos realizados fuera de España.",
+            "La interpretación depende del criterio del área o compañía y debe consultarse si hay dudas."
+        ],
+        "forbiddenClaims": [
+            "Internacional significa fuera de España en todas las compañías sin excepción."
+        ]
+    },
+    {
+        "id": "answer-v04-visit-type-guidance",
+        "question": "¿Cómo elijo entre visita Comercial y Técnica?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "answered",
+        "expectedTopicId": "visits.crear-una-visita-paso-2-datos-de-la-visita",
+        "expectedTopicIds": [
+            "visits.crear-una-visita-paso-2-datos-de-la-visita"
+        ],
+        "sourceChunkIds": [
+            "visits.crear-una-visita-paso-2-datos-de-la-visita--01"
+        ],
+        "requiredSourceChunkIds": [
+            "visits.crear-una-visita-paso-2-datos-de-la-visita--01"
+        ],
+        "requiredFacts": [
+            "La naturaleza comercial o técnica de la actividad sirve de orientación.",
+            "La clasificación concreta corresponde al área o compañía."
+        ],
+        "forbiddenClaims": [
+            "El sistema impone una clasificación empresarial universal."
+        ]
+    },
+    {
+        "id": "answer-v04-visit-date-manual",
+        "question": "¿Puedo seleccionar manualmente la fecha de la visita?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "answered",
+        "expectedTopicId": "visits.crear-una-visita-paso-2-datos-de-la-visita",
+        "expectedTopicIds": [
+            "visits.crear-una-visita-paso-2-datos-de-la-visita"
+        ],
+        "sourceChunkIds": [
+            "visits.crear-una-visita-paso-2-datos-de-la-visita--01"
+        ],
+        "requiredSourceChunkIds": [
+            "visits.crear-una-visita-paso-2-datos-de-la-visita--01"
+        ],
+        "requiredFacts": [
+            "La fecha se selecciona manualmente en el calendario.",
+            "Una creación nueva propone hoy y un borrador recuperado conserva su fecha."
+        ],
+        "forbiddenClaims": [
+            "Se garantiza que Axapta acepta cualquier fecha pasada o futura."
+        ]
+    },
+    {
+        "id": "answer-v04-sheet-filter-clear",
+        "question": "¿Borrar filtros elimina las hojas de gastos?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "answered",
+        "expectedTopicId": "expenses.buscar-y-filtrar-hojas",
+        "expectedTopicIds": [
+            "expenses.buscar-y-filtrar-hojas"
+        ],
+        "sourceChunkIds": [
+            "expenses.buscar-y-filtrar-hojas--01"
+        ],
+        "requiredSourceChunkIds": [
+            "expenses.buscar-y-filtrar-hojas--01"
+        ],
+        "requiredFacts": [
+            "Borrar vacía filtros y resultados, pero conserva las hojas guardadas.",
+            "Hay que seleccionar de nuevo el periodo y aplicar para realizar otra búsqueda."
+        ],
+        "forbiddenClaims": [
+            "Borrar elimina las hojas de gastos."
+        ]
+    },
+    {
+        "id": "answer-v04-ticket-link-line",
+        "question": "¿Cómo vinculo un ticket desde una línea existente?",
+        "responseLocale": "es-ES",
+        "expectedResolution": "answered",
+        "expectedTopicId": "expenses.vincular-tickets-existentes",
+        "expectedTopicIds": [
+            "expenses.vincular-tickets-existentes"
+        ],
+        "sourceChunkIds": [
+            "expenses.vincular-tickets-existentes--01"
+        ],
+        "requiredSourceChunkIds": [
+            "expenses.vincular-tickets-existentes--01"
+        ],
+        "requiredFacts": [
+            "La línea debe estar guardada, ser propia, no tener ticket y estar fuera de edición, con la acción disponible.",
+            "Desde una línea se selecciona un único ticket y se utiliza Asociar ticket existente.",
+            "Al volver se comprueba Ticket Id. en la misma línea."
+        ],
+        "forbiddenClaims": [
+            "Desde una línea se seleccionan varios tickets a la vez."
+        ]
+    }
+]

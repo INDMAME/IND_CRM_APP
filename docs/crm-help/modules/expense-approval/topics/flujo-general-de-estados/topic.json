@@ -1,0 +1,49 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expense-approval.flujo-general-de-estados",
+    "moduleId":  "expense-approval",
+    "sectionNumber":  "10.1",
+    "title":  "Flujo general de estados",
+    "summary":  "Consulta las transiciones posibles entre estados.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Flujo general de estados",
+                                  "aprobación de gastos",
+                                  "estados de hoja"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre flujo general de estados?",
+                                          "¿A qué estado vuelve una hoja al deshacer una aprobación?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.8.0",
+    "contentHash":  "56113D52289190C7741D15FED05893B3720FBABD92AC9C2DD6D385CB201A76D2",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "10.1",
+                   "pageFromTableOfContents":  27
+               }
+}

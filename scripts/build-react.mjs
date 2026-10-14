@@ -30,7 +30,13 @@ const entryPoints = {
   "expense-line-detail": "Web/wwwroot/react/src/pages/gastos/line/ExpenseSheetLineDetailPage.tsx",
   "ind-text-editor": "Web/wwwroot/react/src/pages/system/TextEditor.tsx",
   "audio-recorder": "Web/wwwroot/react/src/pages/system/AudioRecorder.tsx",
+  "home-help": "Web/wwwroot/react/src/pages/system/homeHelp/HomeHelpAssistantPage.tsx",
+  "manual-help": "Web/wwwroot/react/src/pages/system/homeHelp/ManualHelpPage.tsx",
   "ind-audio-worklet": "Web/wwwroot/react/audio-recorder/ind-audio-worklet.ts",
+};
+
+const browserStateEntryPoint = {
+  "ind-browser-state": "Web/wwwroot/react/src/legacy/ind-browser-state.ts",
 };
 
 // Keep the chunk folder clean so old hashed files do not accumulate between builds.
@@ -49,4 +55,18 @@ await build({
   minify: isProd,
   jsx: "automatic",
   loader: { ".ts": "ts", ".tsx": "tsx" },
+});
+
+// Build the early browser-state guard as a classic script so it runs synchronously in Razor layouts.
+await build({
+  entryPoints: browserStateEntryPoint,
+  bundle: true,
+  splitting: false,
+  format: "iife",
+  platform: "browser",
+  outdir: "Web/wwwroot/js",
+  entryNames: "[name]",
+  sourcemap: isProd ? true : "inline",
+  minify: isProd,
+  loader: { ".ts": "ts" },
 });

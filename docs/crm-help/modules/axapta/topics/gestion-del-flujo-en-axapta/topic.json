@@ -1,0 +1,51 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "axapta.gestion-del-flujo-en-axapta",
+    "moduleId":  "axapta",
+    "sectionNumber":  "11.2",
+    "title":  "Gestión del flujo en Axapta",
+    "summary":  "Conoce las dos vías disponibles para gestionar el flujo en Axapta.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Gestión del flujo en Axapta",
+                                  "Axapta",
+                                  "gastos en Axapta"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre gestión del flujo en axapta?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "axapta.hoja-de-gastos-crm-usuarios-hoja-de-gastos",
+                            "axapta.gestion-de-hojas-de-gastos",
+                            "axapta.estados-visibles-en-axapta",
+                            "axapta.acciones-disponibles-en-axapta"
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "17AF2101E90C6FB8A501E5FE6ED9E9A0052DE6541995A14926791F76B59FBFDC",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "11.2",
+                   "pageFromTableOfContents":  29
+               }
+}

@@ -1,0 +1,52 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos",
+    "moduleId":  "expense-approval",
+    "sectionNumber":  "10",
+    "title":  "Estados y aprobación de una hoja de gastos",
+    "summary":  "Entiende cómo el estado condiciona las acciones de aprobación.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Estados y aprobación de una hoja de gastos",
+                                  "aprobación de gastos",
+                                  "estados de hoja"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre estados y aprobación de una hoja de gastos?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expense-approval.flujo-general-de-estados",
+                            "expense-approval.estados-de-la-hoja-de-gastos",
+                            "expense-approval.acciones-del-propietario",
+                            "expense-approval.acciones-del-responsable",
+                            "expense-approval.enlaces-recibidos-por-correo"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "19141E13465D6992B12CD37E6E82D4D77A5E19F1815C10E487C0B2AF0F28115D",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "10",
+                   "pageFromTableOfContents":  26
+               }
+}

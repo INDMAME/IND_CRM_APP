@@ -1,0 +1,29 @@
+@model int
+@using IND_CRM_APP.Infrastructure.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+@{
+    Layout = null;
+    var title = Model == 404 ? SR["NotFound_Title"].Value : SR["Error_Heading"].Value;
+    var message = Model == 404 ? SR["NotFound_Subtitle"].Value : SR["Error_Body"].Value;
+}
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@Model - @title - IND CRM</title>
+    <link rel="icon" href="~/favicon.ico" asp-append-version="true" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+    <link href="~/css/tailwind.css" rel="stylesheet" asp-append-version="true" />
+</head>
+<body class="min-h-screen bg-white text-slate-900 font-sans">
+    <main class="min-h-screen flex flex-col items-center justify-center text-center px-4 py-10">
+        <div class="text-primary text-5xl sm:text-7xl font-extrabold">@Model</div>
+        <h1 class="mt-4 text-xl font-semibold">@title</h1>
+        <p class="mt-2 max-w-xl text-sm text-slate-600">@message</p>
+        <a href="/" class="mt-6 inline-flex items-center rounded-xl bg-primary px-5 py-2.5 text-white font-semibold shadow-sm hover:bg-primary/90 transition">@SR["Error_BackHome"]</a>
+    </main>
+</body>
+</html>

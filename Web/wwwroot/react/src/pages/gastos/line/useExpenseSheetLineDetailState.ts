@@ -7,6 +7,7 @@ import type {
   ExpenseSheetLineReimbursableExpense,
 } from "../expenseTypes.ts";
 import {
+  fetchExistingExpenseProjectId,
   fetchExpenseSheetDetail,
   getExpenseSheetDefaultCurrencyCode,
   getFuelPriceKm,
@@ -22,11 +23,15 @@ import { hasAssignedVoucher, parseExpenseDate, safeText, toIsoDate } from "../ut
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 import { resolveExpenseSheetDetailPolicy } from "../detail/expenseSheetDetailPolicy.ts";
-import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
+import { isCurrentExpenseOwner, isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
 import {
   DEFAULT_LINE_REIMBURSABLE_EXPENSE,
   normalizeExpenseLineReimbursableExpense,
 } from "../constants/expenseReimbursableExpenseCatalog.ts";
+import {
+  hasServerExpenseLineProjectDefault,
+  resolveNewExpenseLineProjectCandidate,
+} from "../utils/expenseProjectRules.ts";
 
 const KM_GASTO_TYPE_CODE = "3";
 const FUEL_PRICE_DEBOUNCE_MS = 300;
@@ -118,6 +123,7 @@ const formatEditableExchangeRate = (value: number | null | undefined): string =>
   return formatExpenseInputNumber(value, {
     minimumFractionDigits: 7,
     maximumFractionDigits: 7,
+    preferDecimalSeparator: true,
     useGrouping: true,
     fallback: "",
   });
@@ -181,6 +187,7 @@ type UseExpenseSheetLineDetailStateArgs = {
   currentAxUserId: string;
   currentCrmUserId: string;
   selectedManagedUserId: string;
+  managementBootstrapReady: boolean;
   sheetId: string;
   lineId: string;
   isCreateMode: boolean;
@@ -196,6 +203,7 @@ export const useExpenseSheetLineDetailState = ({
   currentAxUserId,
   currentCrmUserId,
   selectedManagedUserId,
+  managementBootstrapReady,
   sheetId,
   lineId,
   isCreateMode,
@@ -215,9 +223,10 @@ export const useExpenseSheetLineDetailState = ({
   const [draftTypeValueCode, setDraftTypeValueCode] = useState("");
   const [draftPrice, setDraftPrice] = useState("");
   const [draftQty, setDraftQty] = useState("");
-  const [draftProjectId, setDraftProjectId] = useState("");
+  const [draftProjectId, setDraftProjectIdValue] = useState("");
+  const [draftProjectIdProvided, setDraftProjectIdProvided] = useState(false);
   const [draftInternational, setDraftInternational] = useState("");
-  const [draftReimbursableExpense, setDraftReimbursableExpense] = useState<number | null>(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
+  const [draftReimbursableExpense, setDraftReimbursableExpense] = useState<number | null>(null);
   const [draftCurrencyCode, setDraftCurrencyCode] = useState("");
   const [draftAmountMST, setDraftAmountMST] = useState("");
   const [draftExchangeRate, setDraftExchangeRate] = useState("");
@@ -232,14 +241,14 @@ export const useExpenseSheetLineDetailState = ({
     nextHeader: ExpenseSheetHeader | null,
     resolvedCompanyCurrencyCode: string
   ) => {
-    const isExistingLine = !!safeText(nextLine?.lineRecId);
     const normalizedLineProjectId = safeText(nextLine?.projId);
     setDraftDescription(safeText(nextLine?.description));
     setDraftTransDate(toInputDate(nextLine?.transDate || nextHeader?.createdDate));
     setDraftTypeValueCode(safeText(nextLine?.typeValueCode));
     setDraftPrice(formatEditableNumber(nextLine?.price));
     setDraftQty(formatEditableQuantity(nextLine?.qty));
-    setDraftProjectId(isExistingLine ? normalizedLineProjectId : (normalizedLineProjectId || safeText(nextHeader?.projId)));
+    setDraftProjectIdValue(normalizedLineProjectId);
+    setDraftProjectIdProvided(false);
     setDraftInternational(nextLine?.internacional === true ? "true" : nextLine?.internacional === false ? "false" : "");
     setDraftReimbursableExpense(normalizeExpenseLineReimbursableExpense(nextLine?.reimbursableExpense));
     const localCurrencyCode = safeText(resolvedCompanyCurrencyCode).toUpperCase();
@@ -253,12 +262,24 @@ export const useExpenseSheetLineDetailState = ({
     setDraftExchangeRate(formatEditableExchangeRate(lineExchangeRate));
   }, []);
 
+  // Records explicit user intent separately from a server-provided project suggestion.
+  const setDraftProjectId = useCallback((value: string) => {
+    setDraftProjectIdProvided(true);
+    setDraftProjectIdValue(value);
+  }, []);
+
   useEffect(() => {
     let isCancelled = false;
 
     const loadDetail = async () => {
       if (!hasAccess) {
         onForbidden();
+        return;
+      }
+
+      // Wait for the selected-company identity before checking sheet ownership.
+      if (!managementBootstrapReady) {
+        setIsLoading(true);
         return;
       }
 
@@ -302,7 +323,7 @@ export const useExpenseSheetLineDetailState = ({
 
           const sheets = Array.isArray(response?.Items) ? response.Items : [];
           const selectedSheet =
-            sheets.find((entry) => safeText(entry?.HojaGastosId).toUpperCase() === sheetId.trim().toUpperCase()) || sheets[0];
+            sheets.find((entry) => safeText(entry?.HojaGastosId ?? entry?.hojaGastosId).toUpperCase() === sheetId.trim().toUpperCase());
 
           if (!selectedSheet) {
             setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet line was not found."));
@@ -316,11 +337,10 @@ export const useExpenseSheetLineDetailState = ({
           const loadedStatusCode = typeof loadedHeader.expenseSheetStatus === "number" ? loadedHeader.expenseSheetStatus : null;
           const isCreateLockedStatus = loadedStatusCode === EXPENSE_STATUS_APPROVED || loadedStatusCode === EXPENSE_STATUS_PAID;
           const isManagingOtherUser = isManagingOtherExpenseRecord({
-            canManageOtherUsers,
             currentAxUserId,
             currentCrmUserId,
-            selectedManagedUserId,
-            recordOwnerUserId: loadedHeader.userId,
+            recordOwnerCrmUserId: loadedHeader.userId,
+            recordOwnerAxUserId: loadedHeader.ownerAxUserId,
             isCreateMode: false,
           });
           const loadedPolicy = resolveExpenseSheetDetailPolicy({
@@ -342,9 +362,20 @@ export const useExpenseSheetLineDetailState = ({
             return;
           }
 
+          const serverDefaultProvided = hasServerExpenseLineProjectDefault(selectedSheet);
+          const projectCandidate = resolveNewExpenseLineProjectCandidate({
+            defaultLineProjectId: loadedHeader.defaultLineProjId,
+            headerProjectId: loadedHeader.projId,
+            serverDefaultProvided,
+          });
+          const inheritedProjectId = serverDefaultProvided
+            ? projectCandidate
+            : await fetchExistingExpenseProjectId(projectCandidate, { suppressPermissionModal: true });
+          if (isCancelled) return;
+
           const draftLine = buildCreateLineDraft(
             toIsoDate(new Date()),
-            safeText(loadedHeader.projId),
+            inheritedProjectId,
             loadedCompanyCurrencyCode || safeText(loadedHeader.currencyCode).toUpperCase()
           );
           setHeader(loadedHeader);
@@ -379,7 +410,7 @@ export const useExpenseSheetLineDetailState = ({
 
         const sheets = Array.isArray(response?.Items) ? response.Items : [];
         const selectedSheet =
-          sheets.find((entry) => safeText(entry?.HojaGastosId).toUpperCase() === sheetId.trim().toUpperCase()) || sheets[0];
+          sheets.find((entry) => safeText(entry?.HojaGastosId ?? entry?.hojaGastosId).toUpperCase() === sheetId.trim().toUpperCase());
 
         if (!selectedSheet) {
           setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet line was not found."));
@@ -413,11 +444,10 @@ export const useExpenseSheetLineDetailState = ({
         const loadedIsSheetPaid = loadedIsSheetPaidByStatus || hasAssignedVoucher(mappedHeader.voucher);
         const loadedHasLinkedTicket = !!safeText(selectedLine.fileId);
         const loadedIsManagingOtherUser = isManagingOtherExpenseRecord({
-          canManageOtherUsers,
           currentAxUserId,
           currentCrmUserId,
-          selectedManagedUserId,
-          recordOwnerUserId: mappedHeader.userId,
+          recordOwnerCrmUserId: mappedHeader.userId,
+          recordOwnerAxUserId: mappedHeader.ownerAxUserId,
           isCreateMode,
         });
         const loadedPolicy = resolveExpenseSheetDetailPolicy({
@@ -471,6 +501,7 @@ export const useExpenseSheetLineDetailState = ({
     isCreateMode,
     startInEditMode,
     lineId,
+    managementBootstrapReady,
     onForbidden,
     selectedManagedUserId,
     sheetId,
@@ -582,12 +613,17 @@ export const useExpenseSheetLineDetailState = ({
   const isSheetPaidByStatus = statusCode === EXPENSE_STATUS_PAID;
   const isSheetPaidByVoucher = hasAssignedVoucher(header?.voucher);
   const isSheetPaid = isSheetPaidByStatus || isSheetPaidByVoucher;
-  const isManagingOtherUser = isManagingOtherExpenseRecord({
-    canManageOtherUsers,
+  const isCurrentUserExpenseOwner = isCurrentExpenseOwner({
     currentAxUserId,
     currentCrmUserId,
-    selectedManagedUserId,
-    recordOwnerUserId: header?.userId,
+    recordOwnerCrmUserId: header?.userId,
+    recordOwnerAxUserId: header?.ownerAxUserId,
+  });
+  const isManagingOtherUser = isManagingOtherExpenseRecord({
+    currentAxUserId,
+    currentCrmUserId,
+    recordOwnerCrmUserId: header?.userId,
+    recordOwnerAxUserId: header?.ownerAxUserId,
     isCreateMode,
   });
   const detailPolicy = useMemo(() => {
@@ -607,7 +643,7 @@ export const useExpenseSheetLineDetailState = ({
       isPaid: isSheetPaid,
     });
   }, [allowSelfManagement, header, isManagingOtherUser, isSheetPaid, statusCode]);
-  const canUseFullEditFeatures = detailPolicy.interactionMode === "full_edit";
+  const canUseFullEditFeatures = managementBootstrapReady && detailPolicy.interactionMode === "full_edit";
   const canCreateExpenseCurrent = canUseFullEditFeatures;
   const canEditExpenseCurrent = canUseFullEditFeatures;
   const canDeleteExpenseCurrent = canUseFullEditFeatures;
@@ -696,7 +732,7 @@ export const useExpenseSheetLineDetailState = ({
     line,
     lineNavigation,
     companyCurrencyCode,
-    isLoading,
+    isLoading: isLoading || !managementBootstrapReady,
     errorMessage,
     busy,
     status,
@@ -708,6 +744,7 @@ export const useExpenseSheetLineDetailState = ({
     draftPrice,
     draftQty,
     draftProjectId,
+    draftProjectIdProvided,
     draftInternational,
     draftReimbursableExpense,
     draftCurrencyCode,
@@ -718,6 +755,8 @@ export const useExpenseSheetLineDetailState = ({
     fuelPriceMessage,
     fuelPriceMessageIsError,
     isSheetPaid,
+    isManagingOtherUser,
+    isCurrentUserExpenseOwner,
     isSheetLocked,
     isLineEditLocked,
     isLineDeleteLocked,

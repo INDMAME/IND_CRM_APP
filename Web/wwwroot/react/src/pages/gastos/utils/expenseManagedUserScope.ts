@@ -20,23 +20,22 @@ export const resolveExpenseListAxUserIdOverride = ({
   return normalizeUserId(selectedManagedUserId);
 };
 
-// Matches one expense owner id against the current user ids exposed by auth context.
-const matchesCurrentExpenseIdentity = ({
+// CRM identities decide ownership when both sides provide them; AX is the typed fallback.
+export const isCurrentExpenseOwner = ({
   currentAxUserId,
   currentCrmUserId,
-  recordOwnerUserId,
+  recordOwnerAxUserId,
+  recordOwnerCrmUserId,
 }: {
   currentAxUserId: unknown;
   currentCrmUserId?: unknown;
-  recordOwnerUserId: unknown;
+  recordOwnerAxUserId?: unknown;
+  recordOwnerCrmUserId?: unknown;
 }): boolean => {
-  const normalizedOwnerUserId = normalizeUserId(recordOwnerUserId);
-  if (!normalizedOwnerUserId) return false;
-
-  return (
-    isSameExpenseUser(normalizedOwnerUserId, currentAxUserId) ||
-    isSameExpenseUser(normalizedOwnerUserId, currentCrmUserId)
-  );
+  const currentCrm = normalizeUserId(currentCrmUserId);
+  const ownerCrm = normalizeUserId(recordOwnerCrmUserId);
+  if (currentCrm && ownerCrm) return isSameExpenseUser(currentCrm, ownerCrm);
+  return isSameExpenseUser(currentAxUserId, recordOwnerAxUserId);
 };
 
 // Resolves whether the current expense context is acting on another user's data.
@@ -62,37 +61,23 @@ export const isManagingOtherExpenseUser = ({
 
 // Resolves the effective owner context for one expense record once detail data is available.
 export const isManagingOtherExpenseRecord = ({
-  canManageOtherUsers,
   currentAxUserId,
   currentCrmUserId,
-  selectedManagedUserId,
-  recordOwnerUserId,
+  recordOwnerAxUserId,
+  recordOwnerCrmUserId,
   isCreateMode = false,
 }: {
-  canManageOtherUsers: boolean;
   currentAxUserId: unknown;
   currentCrmUserId?: unknown;
-  selectedManagedUserId: unknown;
-  recordOwnerUserId: unknown;
+  recordOwnerAxUserId?: unknown;
+  recordOwnerCrmUserId?: unknown;
   isCreateMode?: boolean;
 }): boolean => {
   if (isCreateMode) return false;
-
-  const normalizedCurrentAxUserId = normalizeUserId(currentAxUserId);
-  const normalizedCurrentCrmUserId = normalizeUserId(currentCrmUserId);
-  const normalizedRecordOwnerUserId = normalizeUserId(recordOwnerUserId);
-  if (normalizedRecordOwnerUserId && (normalizedCurrentAxUserId || normalizedCurrentCrmUserId)) {
-    return !matchesCurrentExpenseIdentity({
-      currentAxUserId: normalizedCurrentAxUserId,
-      currentCrmUserId: normalizedCurrentCrmUserId,
-      recordOwnerUserId: normalizedRecordOwnerUserId,
-    });
-  }
-
-  return isManagingOtherExpenseUser({
-    canManageOtherUsers,
-    currentAxUserId: normalizedCurrentAxUserId,
-    selectedManagedUserId,
-    isCreateMode,
+  return !isCurrentExpenseOwner({
+    currentAxUserId,
+    currentCrmUserId,
+    recordOwnerAxUserId,
+    recordOwnerCrmUserId,
   });
 };

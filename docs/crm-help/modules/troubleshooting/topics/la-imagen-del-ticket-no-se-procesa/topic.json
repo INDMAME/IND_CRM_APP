@@ -1,0 +1,58 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "troubleshooting.la-imagen-del-ticket-no-se-procesa",
+    "moduleId":  "troubleshooting",
+    "sectionNumber":  "12.5",
+    "title":  "La imagen del ticket no se procesa",
+    "summary":  "Revise una carga fallida y conserve el identificador si el ticket se creó parcialmente.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "La imagen del ticket no se procesa",
+                                  "error al cargar imagen",
+                                  "ticket parcial",
+                                  "Reintentar carga",
+                                  "foto ilegible"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Qué hago si la imagen del ticket no se procesa?",
+                                          "¿Debo volver a cargar la foto si ya se ha creado un ticket parcial?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "C6786CDFE6A86CB6B35EE5521DA4F20C401D2AC1CC9762087B788DD42B916C86",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+                         {
+                             "id":  "troubleshooting.la-imagen-del-ticket-no-se-procesa.quick-01",
+                             "question":  "¿Qué hago si la imagen del ticket no se procesa?",
+                             "answer":  "Lea el mensaje y compruebe el formato y el límite indicado por la aplicación. Si necesita otra foto, use luz uniforme, evite reflejos y no recorte datos. Conceda permiso de cámara cuando lo solicite el navegador para el CRM. Si aparece Reintentar carga, utilícelo una sola vez y espere. Si ya existe un ticket parcial, anote su identificador y revise ese registro antes de cargar otra imagen; si no puede continuar, envíe el mensaje y el identificador a soporte.",
+                             "sourceChunkIds":  [
+                                                    "troubleshooting.la-imagen-del-ticket-no-se-procesa--01"
+                                                ]
+                         }
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "12.5",
+                   "pageFromTableOfContents":  32
+               }
+}

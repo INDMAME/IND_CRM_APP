@@ -1,0 +1,58 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "troubleshooting.que-informacion-enviar-a-soporte",
+    "moduleId":  "troubleshooting",
+    "sectionNumber":  "12.6",
+    "title":  "Qué información enviar a soporte",
+    "summary":  "Prepare una incidencia con empresa, registro, acción, mensaje y resultado esperado.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Qué información enviar a soporte",
+                                  "comunicar incidencia",
+                                  "datos para soporte",
+                                  "mensaje de error",
+                                  "canal interno de soporte"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Qué información debo enviar a soporte?",
+                                          "¿Cómo describo una incidencia de un ticket creado parcialmente?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+
+                        ],
+    "routeKey":  null,
+    "status":  "published",
+    "contentVersion":  "2.0.0",
+    "contentHash":  "A7C905908F24A08F9DC4A58742B786335064EF27928EDB96B6A9BFC72DED5FE8",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+                         {
+                             "id":  "troubleshooting.que-informacion-enviar-a-soporte.quick-01",
+                             "question":  "¿Qué información debo enviar a soporte?",
+                             "answer":  "Envíe por el canal interno de soporte su usuario corporativo sin contraseña, empresa activa, pantalla y acción, identificador del registro, fecha y hora y texto completo del error. Explique qué esperaba obtener y qué ocurrió. Añada una captura pertinente sin contraseñas, códigos de acceso ni datos innecesarios. Si el ticket se creó parcialmente, indique esa circunstancia y conserve su identificador.",
+                             "sourceChunkIds":  [
+                                                    "troubleshooting.que-informacion-enviar-a-soporte--01"
+                                                ]
+                         }
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "12.6",
+                   "pageFromTableOfContents":  32
+               }
+}

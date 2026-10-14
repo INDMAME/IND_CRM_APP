@@ -3,13 +3,12 @@ import { showGlobalSpinner, hideGlobalSpinner } from "../utils/globalSpinner.ts"
 import {
   CREATE_FRESH_PARAM,
   VISIT_DRAFT_KEY,
-  CONTACTS_STORAGE_KEY,
-  CONTACTS_SELECTION_KEY,
   clearCreateSelectionCache,
+  hasCreateSelectionCache,
   stripFreshParam,
 } from "../utils/visitasStorage.ts";
 import { indT } from "../utils/indI18n.ts";
-import { getSessionJsonWithExpiry, getSessionValueWithExpiry, setSessionJsonWithExpiry } from "../utils/sessionExpiry.ts";
+import { getSessionJsonWithExpiry, setSessionJsonWithExpiry } from "../utils/sessionExpiry.ts";
 
 const CREATE_DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -143,16 +142,7 @@ export const useCreateDraft = ({
       return;
     }
 
-    let shouldShow = false;
-    try {
-      shouldShow = !!(
-        getSessionValueWithExpiry(VISIT_DRAFT_KEY) ||
-        sessionStorage.getItem(CONTACTS_STORAGE_KEY) ||
-        sessionStorage.getItem(CONTACTS_SELECTION_KEY)
-      );
-    } catch {
-      // Ignore storage access errors.
-    }
+    const shouldShow = hasCreateSelectionCache();
     if (shouldShow) {
       showGlobalSpinner(indT("Common_Loading", "Loading"));
     }

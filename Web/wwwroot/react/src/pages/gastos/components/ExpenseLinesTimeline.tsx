@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useRef } from "react";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import type { ExpenseSheetLine } from "../expenseTypes.ts";
 import { formatExpenseDateParts, normalizeCardTitleText, safeText } from "../utils/expenseUiUtils.ts";
 import ExpenseSectionDivider from "./ExpenseSectionDivider.tsx";
 import ExpenseTimelineCard from "./ExpenseTimelineCard.tsx";
+import ExpenseTypeIcon from "./ExpenseTypeIcon.tsx";
 
 type PaginationLabels = {
   first: string;
@@ -39,14 +40,16 @@ const ExpenseLinesTimeline = ({
   onLinePageChange,
   onOpenLine,
 }: ExpenseLinesTimelineProps) => {
+  const linesSectionRef = useRef<HTMLElement>(null);
+
   return (
-    <section className="space-y-0">
+    <section ref={linesSectionRef} tabIndex={-1} aria-label={linesLabel} className="space-y-0 scroll-mt-20">
       <ExpenseSectionDivider label={linesLabel} className="expense-section-divider--spaced" />
 
       {visibleLines.length === 0 ? (
         <div className="timeline-box timeline-empty" data-empty-text={emptyText} />
       ) : (
-        <div ref={containerRef} className="timeline-box">
+        <div ref={containerRef} className="timeline-box expense-card-lines">
           {visibleLines.map((line) => {
             const lineId = safeText(line.lineRecId);
             const description = normalizeCardTitleText(line.description, "");
@@ -75,8 +78,12 @@ const ExpenseLinesTimeline = ({
             return (
               <div key={lineId || `${safeText(line.transDate)}-${description}-${String(line.amountMST ?? "")}-${projectId}`} className="timeline-item">
                 <ExpenseTimelineCard
+                  layout="line"
+                  leadingIcon={<ExpenseTypeIcon typeCode={safeText(line.typeValueCode) ? Number(line.typeValueCode) : null} />}
                   dateParts={dateParts}
                   title={description || lineId || "-"}
+                  subtitle={safeText(line.typeValue)}
+                  subtitleClassName="expense-sheet-card__subtitle sr-only"
                   amountText={grossAmountText}
                   onOpen={() => onOpenLine(lineId)}
                   titleClassName="timeline-name expense-line-card__title"
@@ -95,6 +102,7 @@ const ExpenseLinesTimeline = ({
         currentPage={linePage}
         onPageChange={onLinePageChange}
         labels={paginationLabels}
+        scrollTargetRef={linesSectionRef}
       />
     </section>
   );

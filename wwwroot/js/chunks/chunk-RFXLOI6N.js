@@ -1,2 +1,0 @@
-import{a as s,b as l,c as u}from"./chunk-ID627RBX.js";var d="ind_texteditor_",c=720*60*1e3,g=7200*1e3,e=t=>`${d}${t}`,x=t=>`${d}${t}_returnUrl`,o=t=>String(t||"").trim();var a=(t,r)=>{let n=o(t);if(!n)return;let i=e(n);s(i)===null&&l(i,String(r||""),c)},p=t=>{let r=o(t);r&&u(e(r))},_=(t,r)=>{let n=o(t),i=String(r||"").trim();!n||!i||l(x(n),i,g)};var f=t=>{let r=o(t);if(!r)return null;let n=s(e(r));return n===null?null:(u(e(r)),n)};export{d as a,a as b,p as c,_ as d,f as e};
-//# sourceMappingURL=chunk-RFXLOI6N.js.map

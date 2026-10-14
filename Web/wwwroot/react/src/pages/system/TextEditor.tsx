@@ -47,7 +47,7 @@ function safeGetSessionValue(key) {
 }
 
 function safeSetSessionValue(key, value) {
-  setSessionValueWithExpiry(key, value, TEXT_EDITOR_STORAGE_TTL_MS);
+  return setSessionValueWithExpiry(key, value, TEXT_EDITOR_STORAGE_TTL_MS);
 }
 
 // Remove a session value without throwing for blocked storage.
@@ -105,6 +105,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
   const [recorderHeightPx, setRecorderHeightPx] = useState(0);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcribeError, setTranscribeError] = useState("");
+  const [saveError, setSaveError] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const recorderBoxRef = useRef(null);
   const typingTimerRef = useRef(null);
@@ -336,14 +337,14 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
     });
   };
 
-  const allowHistoryNav = () => {
+  const allowHistoryNav = useCallback(() => {
     if (typeof window === "undefined") return false;
     if (typeof window.__indAllowHistoryOnce === "function") {
       window.__indAllowHistoryOnce();
       return true;
     }
     return false;
-  };
+  }, []);
 
   const enableEdit = useCallback(() => {
     if (!canEdit || !isReadOnly) return;
@@ -351,13 +352,22 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
     if (normalizedEditModeKey) safeSetSessionValue(normalizedEditModeKey, "true");
   }, [canEdit, isReadOnly, normalizedEditModeKey]);
 
-  const persistDraft = () => {
-    // Persist the draft so the previous page can restore it.
-    safeSetSessionValue(storageKey, text);
-  };
+  // Keeps the editor open until the destination can restore every required value.
+  const persistForReturn = useCallback((value, restoreEditMode = false) => {
+    const saved = safeSetSessionValue(storageKey, value);
+    const editModeSaved = !restoreEditMode || !normalizedEditModeKey ||
+      (safeSetSessionValue(normalizedEditModeKey, "true") &&
+        safeSetSessionValue(`${normalizedEditModeKey}_return`, "1"));
+    if (!saved || !editModeSaved) {
+      setSaveError(indT("TextEditor_SaveFailed", "Could not save the text in this browser. Copy the text or try again before leaving."));
+      return false;
+    }
+    setSaveError("");
+    return true;
+  }, [storageKey, normalizedEditModeKey]);
 
   const goBack = () => {
-    persistDraft();
+    if (!isReadOnly && !persistForReturn(text)) return;
     if (resolvedReturnUrl) {
       window.location.href = resolvedReturnUrl;
       return;
@@ -366,7 +376,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
     window.history.back();
   };
 
-  const goBackAfterSave = () => {
+  const goBackAfterSave = useCallback(() => {
     // Prefer returnUrl for deterministic navigation across browsers.
     if (resolvedReturnUrl) {
       window.location.href = resolvedReturnUrl;
@@ -374,15 +384,11 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
     }
     if (window.history.length > 1 && allowHistoryNav()) return;
     window.history.back();
-  };
+  }, [resolvedReturnUrl, allowHistoryNav]);
 
   const onSave = () => {
     if (isReadOnly || isTranscribing || isTyping) return;
-    safeSetSessionValue(storageKey, text);
-    if (normalizedEditModeKey) {
-      safeSetSessionValue(normalizedEditModeKey, "true");
-      safeSetSessionValue(`${normalizedEditModeKey}_return`, "1");
-    }
+    if (!persistForReturn(text, true)) return;
     window.__indBypassNavigationGuardOnce?.();
     goBackAfterSave();
   };
@@ -393,15 +399,15 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
     stopTyping();
     setTranscribeError("");
     const initialText = initialTextRef.current ?? "";
+    if (!persistForReturn(initialText)) return;
     setText(initialText);
-    safeSetSessionValue(storageKey, initialText);
     if (normalizedEditModeKey) {
       safeRemoveSessionValue(`${normalizedEditModeKey}_return`);
       safeRemoveSessionValue(normalizedEditModeKey);
     }
     window.__indBypassNavigationGuardOnce?.();
     goBackAfterSave();
-  }, [isReadOnly, isTranscribing, isTyping, stopTyping, storageKey, goBackAfterSave, normalizedEditModeKey]);
+  }, [isReadOnly, isTranscribing, isTyping, stopTyping, persistForReturn, goBackAfterSave, normalizedEditModeKey]);
 
   const editorBoxClass = isReadOnly
     ? "relative rounded-[var(--radius-xl)] border border-slate-200 bg-slate-100 shadow-lg overflow-hidden focus-within:ring-4 focus-within:ring-primary/40 focus-within:border-primary"
@@ -496,6 +502,10 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
               />
             </div>
           )}
+
+          {saveError ? (
+            <div role="alert" className="mb-3 text-sm text-rose-700 text-center">{saveError}</div>
+          ) : null}
 
           {transcribeError ? (
             <div className="mb-3 text-xs text-rose-700 text-center">{transcribeError}</div>

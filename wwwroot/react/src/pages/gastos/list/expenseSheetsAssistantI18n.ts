@@ -357,12 +357,12 @@ const ASSISTANT_TEXT = {
   },
   errorRateLimit: {
     resourceKey: "ExpenseSheets_Assistant_Error_RateLimit",
-    en: "Too many assistant requests.",
-    es: "Demasiadas solicitudes al asistente.",
-    eu: "Laguntzaileari eskaera gehiegi bidali zaizkio.",
-    pt: "Demasiados pedidos ao assistente.",
-    it: "Troppe richieste all'assistente.",
-    zhHans: "\u5bf9\u52a9\u624b\u7684\u8bf7\u6c42\u8fc7\u591a\u3002",
+    en: "The query limit has been exceeded. Please try again in 15 minutes.",
+    es: "Se ha superado el l\u00edmite de consultas. Por favor, vuelva a intentarlo dentro de 15 minutos.",
+    eu: "Kontsulta-muga gainditu da. Mesedez, saiatu berriro 15 minutu barru.",
+    pt: "O limite de consultas foi excedido. Por favor, tente novamente dentro de 15 minutos.",
+    it: "\u00c8 stato superato il limite di richieste. Riprova tra 15 minuti.",
+    zhHans: "\u5df2\u8d85\u8fc7\u67e5\u8be2\u6b21\u6570\u9650\u5236\u3002\u8bf7\u5728 15 \u5206\u949f\u540e\u91cd\u8bd5\u3002",
   },
   errorRetryAfter: {
     resourceKey: "ExpenseSheets_Assistant_Error_RetryAfter",

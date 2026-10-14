@@ -1,0 +1,155 @@
+using IND_CRM_APP.Infrastructure.Session;
+using System.Collections.Concurrent;
+
+var clock = new RegistryClock();
+var timeout = TimeSpan.FromMinutes(15);
+var registry = new AuthenticationSessionRegistry(3, clock);
+var checks = 0;
+
+// Only one completion may consume the same protected login attempt, even in parallel.
+var firstAttempt = registry.Begin("family", null, timeout)!;
+var winners = new ConcurrentBag<AuthenticationSessionIdentity>();
+Parallel.For(0, 64, _ =>
+{
+    var identity = registry.Activate(firstAttempt, "oid-a", clock.GetUtcNow().AddDays(1), timeout);
+    if (identity != null) winners.Add(identity);
+});
+Check(winners.Count == 1, "one concurrent activation wins");
+var first = winners.Single();
+Check(registry.IsCurrent(first), "duplicate completion cannot displace the accepted generation");
+
+// Logout cancels pending callbacks while preserving the lifetime of every previously accepted cookie.
+var pending = registry.Begin(first.Family, first, timeout)!;
+var closure = registry.Close(first);
+Check(closure.HasValue && registry.IsRevision(first.Family, closure.Value), "logout closure is current");
+Check(registry.Activate(pending, "oid-a", clock.GetUtcNow().AddDays(1), timeout) == null, "logout cancels pending callback");
+Check(!registry.Validate(first, first.ExpiresUtc), "closed cookie cannot bootstrap over its tombstone");
+var signedAgain = registry.Begin(first.Family, null, timeout)!;
+var second = registry.Activate(signedAgain, "oid-a", clock.GetUtcNow().AddHours(4), timeout)!;
+Check(second.Generation != first.Generation && registry.IsCurrent(second), "same-user login gets a new generation");
+Check(registry.Close(first) == null && registry.IsCurrent(second), "stale close cannot end a new login");
+Check(!registry.Validate(first, first.ExpiresUtc), "same-user old cookie remains rejected after regrant");
+
+// A newer accepted login attempt supersedes earlier asynchronous completions.
+var olderAttempt = registry.Begin(second.Family, second, timeout)!;
+var latestAttempt = registry.Begin(second.Family, second, timeout)!;
+Check(registry.Activate(olderAttempt, "oid-b", clock.GetUtcNow().AddDays(1), timeout) == null, "old attempt cannot activate");
+var third = registry.Activate(latestAttempt, "oid-b", clock.GetUtcNow().AddHours(1), timeout)!;
+Check(third.EntraOid == "oid-b" && !registry.IsCurrent(second), "new identity owns an isolated generation");
+registry.Close(third);
+
+// Capacity must reject new families without changing existing active sessions or closure markers.
+var active = Cookie("active", "active-generation", clock.GetUtcNow().AddDays(1));
+Check(registry.Validate(active, active.ExpiresUtc), "active cookie is admitted");
+registry.Begin("expiring-attempt", null, timeout);
+ExpectCapacity(() => registry.Begin("overflow-attempt", null, timeout));
+ExpectCapacity(() => registry.Validate(Cookie("overflow-cookie", "g", clock.GetUtcNow().AddDays(1)), clock.GetUtcNow().AddDays(1)));
+ExpectCapacity(() => registry.Activate(new("overflow-callback", 42, clock.GetUtcNow()), "oid", clock.GetUtcNow().AddDays(1), timeout));
+Check(registry.Validate(active, active.ExpiresUtc) && registry.IsCurrent(active), "existing active family still works at capacity");
+Check(!registry.Validate(first, first.ExpiresUtc) && !registry.Validate(second, second.ExpiresUtc), "capacity did not remove a live closure");
+clock.Advance(timeout);
+Check(registry.Begin("replacement", null, timeout) != null, "an expired pending attempt frees capacity");
+Check(!registry.Validate(first, first.ExpiresUtc), "expiry sweep preserves longer-lived closure markers");
+Check(registry.Activate(new("expired-callback", 1, clock.GetUtcNow() - timeout), "oid", clock.GetUtcNow().AddDays(1), timeout) == null,
+    "an attempt at its exact expiry cannot reactivate after cleanup");
+
+// Closing a short replacement cookie cannot shorten the tombstone for an older longer-lived cookie.
+clock.Advance(TimeSpan.FromHours(5));
+Check(!registry.Validate(first, first.ExpiresUtc), "short regrant and closure retain the original longer cookie boundary");
+Check(registry.Validate(active, active.ExpiresUtc), "metadata survives more than the two-hour session data idle period");
+clock.Advance(TimeSpan.FromDays(1));
+Check(registry.Begin("after-all-expiry", null, timeout) != null, "expired metadata can be reclaimed");
+Check(!registry.Validate(active, active.ExpiresUtc), "an expired protected cookie cannot recover");
+
+// A fresh process-local registry still accepts a valid protected cookie or pending protected OIDC state.
+var restart = new AuthenticationSessionRegistry(2, clock);
+var recoverable = Cookie("recoverable", "stable-generation", clock.GetUtcNow().AddDays(1));
+Check(restart.Validate(recoverable, recoverable.ExpiresUtc) && restart.IsCurrent(recoverable), "valid cookie recovers after process restart");
+var recoveredCallback = new AuthenticationSessionAttempt("callback-after-restart", 81, clock.GetUtcNow());
+Check(restart.Activate(recoveredCallback, "oid", clock.GetUtcNow().AddDays(1), timeout) != null,
+    "protected callback can recover when process-local metadata is missing");
+Check(restart.Activate(recoveredCallback, "oid", clock.GetUtcNow().AddDays(1), timeout) == null,
+    "recovered callback is consumed only once");
+
+// A short cookie must not release the consumption marker while its recovered callback is still valid.
+var shortCookieRegistry = new AuthenticationSessionRegistry(1, clock);
+var shortCookieAttempt = new AuthenticationSessionAttempt("short-cookie", 91, clock.GetUtcNow());
+Check(shortCookieRegistry.Activate(shortCookieAttempt, "oid", clock.GetUtcNow().AddSeconds(1), timeout) != null,
+    "short-cookie callback is initially valid");
+clock.Advance(TimeSpan.FromSeconds(2));
+Check(shortCookieRegistry.Activate(shortCookieAttempt, "oid", clock.GetUtcNow().AddDays(1), timeout) == null,
+    "short-cookie expiry does not allow callback replay");
+ExpectCapacity(() => shortCookieRegistry.Begin("still-consumed", null, timeout));
+
+// After restart, a valid old cookie can arrive before the newer callback already pending at the provider.
+var cookieFirst = new AuthenticationSessionRegistry(1, clock);
+var oldCookie = new AuthenticationSessionIdentity("cookie-first", "old", "oid-a", 100, clock.GetUtcNow().AddDays(1));
+Check(cookieFirst.Validate(oldCookie, oldCookie.ExpiresUtc), "old valid cookie bootstraps after restart");
+Check(cookieFirst.Activate(new(oldCookie.Family, 99, clock.GetUtcNow()), "oid-b", oldCookie.ExpiresUtc, timeout) == null &&
+    cookieFirst.Activate(new(oldCookie.Family, 100, clock.GetUtcNow()), "oid-b", oldCookie.ExpiresUtc, timeout) == null,
+    "cookie recovery does not accept older or already consumed callback revisions");
+var laterCallback = new AuthenticationSessionAttempt(oldCookie.Family, 101, clock.GetUtcNow());
+var resumed = cookieFirst.Activate(laterCallback, "oid-b", oldCookie.ExpiresUtc, timeout);
+Check(resumed?.EntraOid == "oid-b" && !cookieFirst.IsCurrent(oldCookie), "newer protected callback can finish after old-cookie bootstrap");
+Check(cookieFirst.Activate(laterCallback, "oid-b", oldCookie.ExpiresUtc, timeout) == null &&
+    cookieFirst.Activate(new(oldCookie.Family, 102, clock.GetUtcNow()), "oid-c", oldCookie.ExpiresUtc, timeout) == null,
+    "successful recovery consumes the exceptional callback admission");
+var closedRecovery = new AuthenticationSessionRegistry(1, clock);
+Check(closedRecovery.Validate(oldCookie, oldCookie.ExpiresUtc), "separate process recovery is admitted");
+closedRecovery.Close(oldCookie);
+Check(closedRecovery.Activate(laterCallback, "oid-b", oldCookie.ExpiresUtc, timeout) == null,
+    "logout after cookie bootstrap cancels the pre-restart pending callback");
+var freshIntent = new AuthenticationSessionRegistry(1, clock);
+freshIntent.Validate(oldCookie, oldCookie.ExpiresUtc);
+var freshAttempt = freshIntent.Begin(oldCookie.Family, oldCookie, timeout)!;
+Check(freshIntent.Activate(laterCallback, "oid-b", oldCookie.ExpiresUtc, timeout) == null &&
+    freshIntent.Activate(freshAttempt, "oid-a", oldCookie.ExpiresUtc, timeout) != null,
+    "a fresh login intent replaces the callback recovery allowance");
+
+// Admission and expiry are atomic across families; no insertion can exceed the configured bound.
+var parallel = new AuthenticationSessionRegistry(16, clock);
+var admitted = new ConcurrentBag<AuthenticationSessionIdentity>();
+var rejected = 0;
+Parallel.For(0, 256, index =>
+{
+    var candidate = Cookie("parallel-" + index, "generation-" + index, clock.GetUtcNow().AddDays(1));
+    try { if (parallel.Validate(candidate, candidate.ExpiresUtc)) admitted.Add(candidate); }
+    catch (AuthenticationSessionCapacityException) { Interlocked.Increment(ref rejected); }
+});
+Check(admitted.Count == 16 && rejected == 240, "parallel admission obeys the strict capacity");
+foreach (var identity in admitted)
+{
+    Check(parallel.Close(identity).HasValue, "all accepted identities can close at capacity");
+    Check(!parallel.Validate(identity, identity.ExpiresUtc), "parallel saturation cannot bootstrap a revoked cookie");
+}
+ExpectCapacity(() => parallel.Begin("still-full-of-closures", null, timeout));
+clock.Advance(TimeSpan.FromDays(1));
+Check(parallel.Begin("after-closure-expiry", null, timeout) != null, "expired closures release capacity");
+
+Console.WriteLine($"Verified bounded authentication admission, single-use activation, closure retention and recovery ({checks} checks)");
+
+// Synthetic identities model already verified protected cookies; no user data or live authentication is used.
+AuthenticationSessionIdentity Cookie(string family, string generation, DateTimeOffset expires)
+    => new(family, generation, "oid", 1, expires);
+
+void Check(bool condition, string name)
+{
+    if (!condition) throw new InvalidOperationException("FAILED: " + name);
+    checks++;
+}
+
+// Capacity differs from denied authentication so HTTP adapters can return a recoverable 503.
+void ExpectCapacity(Action action)
+{
+    try { action(); }
+    catch (AuthenticationSessionCapacityException) { checks++; return; }
+    throw new InvalidOperationException("FAILED: new admission should report temporary capacity exhaustion");
+}
+
+// Advances the production registry clock without waits or changing system time.
+internal sealed class RegistryClock : TimeProvider
+{
+    private DateTimeOffset _now = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    public override DateTimeOffset GetUtcNow() => _now;
+    internal void Advance(TimeSpan duration) => _now += duration;
+}

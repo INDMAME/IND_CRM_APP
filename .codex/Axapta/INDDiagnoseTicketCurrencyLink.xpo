@@ -1,0 +1,103 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: INDDiagnoseTicketCurrencyLink
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+
+  SOURCE #INDDiagnoseTicketCurrencyLink
+    #// Reads ticket linkage and validates an in-memory line without saving changes.
+    #static void INDDiagnoseTicketCurrencyLink(Args _args)
+    #{
+    #    Dialog              dialog;
+    #    DialogField         companyField;
+    #    DialogField         ticketField;
+    #    DialogField         currencyField;
+    #    DataAreaId          companyId;
+    #    DataAreaId          sessionCompany = curExt();
+    #    INDFileId           fileId;
+    #    CurrencyCode        requestedCurrency;
+    #    CRMHojaGastosLine   line;
+    #    int                 lineCount;
+    #
+    #    // Compares direct reads and table lookups before invoking the API validator.
+    #    void inspectLine(CRMHojaGastosLine _line)
+    #    {
+    #        CRMHojaGastosTable directHeader;
+    #        CRMHojaGastosTable lookupHeader;
+    #        Currency          directCurrency;
+    #        CurrencyCode      resolvedCurrency;
+    #        str               validationMessage;
+    #        ;
+    #
+    #        select firstOnly directHeader
+    #            where directHeader.HojaGastosId == _line.HojaGastosId;
+    #
+    #        lookupHeader = _line.HojaGastosTable();
+    #
+    #        info(strFmt("DIAG context sessionCompany=%1 currentCompany=%2 user=%3 lineCompany=%4",
+    #                    sessionCompany, curExt(), curUserId(), _line.dataAreaId));
+    #        info(strFmt("DIAG line recId=%1 sheetId=%2 userId=%3 fileId=%4 currency=%5 date=%6",
+    #                    _line.RecId, _line.HojaGastosId, _line.UserId, _line.FileId, _line.Currency, _line.TransDate));
+    #        info(strFmt("DIAG directHeader recId=%1 company=%2 sheetId=%3 currency=%4 year=%5",
+    #                    directHeader.RecId, directHeader.dataAreaId, directHeader.HojaGastosId, directHeader.CurrencyCode, directHeader.Year));
+    #        info(strFmt("DIAG lookupHeader recId=%1 company=%2 sheetId=%3 currency=%4 year=%5",
+    #                    lookupHeader.RecId, lookupHeader.dataAreaId, lookupHeader.HojaGastosId, lookupHeader.CurrencyCode, lookupHeader.Year));
+    #
+    #        select firstOnly directCurrency
+    #            where directCurrency.CurrencyCode == directHeader.CurrencyCode;
+    #        info(strFmt("DIAG headerCurrency directRecId=%1 iso=%2 findIso=%3 localCurrency=%4",
+    #                    directCurrency.RecId, directCurrency.CurrencyCodeISO,
+    #                    Currency::find(directHeader.CurrencyCode).CurrencyCodeISO, CompanyInfo::standardCurrency()));
+    #
+    #        if (requestedCurrency)
+    #        {
+    #            resolvedCurrency = INDCRMUtilityService::resolveCurrencyCode(requestedCurrency);
+    #            info(strFmt("DIAG requestedCurrency input=%1 resolved=%2", requestedCurrency, resolvedCurrency));
+    #            // Simulates only the currency assignment in the detached buffer.
+    #            _line.Currency = resolvedCurrency;
+    #        }
+    #
+    #        validationMessage = INDCRMExpenseSheetService::validateExpenseSheetLineForApi(_line);
+    #        info(strFmt("DIAG apiValidation currentCompany=%1 lineCurrency=%2 message=%3",
+    #                    curExt(), _line.Currency, validationMessage ? validationMessage : "OK"));
+    #    }
+    #    ;
+    #
+    #    dialog = new Dialog("Diagnostico de divisa de ticket (solo lectura)");
+    #    companyField = dialog.addField(typeId(DataAreaId), "Empresa");
+    #    companyField.value(sessionCompany);
+    #    ticketField = dialog.addField(typeId(INDFileId), "Ticket");
+    #    currencyField = dialog.addField(typeId(CurrencyCode), "Divisa a simular (opcional)");
+    #
+    #    if (!dialog.run())
+    #        return;
+    #
+    #    companyId = companyField.value();
+    #    fileId = ticketField.value();
+    #    requestedCurrency = strUpr(strLRTrim(currencyField.value()));
+    #
+    #    if (!companyId || !fileId)
+    #    {
+    #        warning("Empresa y ticket son obligatorios.");
+    #        return;
+    #    }
+    #
+    #    changecompany(companyId)
+    #    {
+    #        while select line
+    #            where line.FileId == fileId
+    #        {
+    #            lineCount++;
+    #            inspectLine(line);
+    #        }
+    #    }
+    #
+    #    info(strFmt("DIAG completed linkedLines=%1; no changes saved.", lineCount));
+    #}
+    #
+  ENDSOURCE
+
+***Element: END

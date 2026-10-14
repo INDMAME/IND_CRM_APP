@@ -1,0 +1,48 @@
+{
+    "schemaVersion":  "1.0",
+    "id":  "expense-approval.estados-de-la-hoja-de-gastos",
+    "moduleId":  "expense-approval",
+    "sectionNumber":  "10.2",
+    "title":  "Estados de la hoja de gastos",
+    "summary":  "Conoce el significado y las acciones de cada estado de la hoja.",
+    "aliases":  {
+                    "es-ES":  [
+                                  "Estados de la hoja de gastos",
+                                  "aprobación de gastos",
+                                  "estados de hoja"
+                              ]
+                },
+    "sampleQuestions":  {
+                            "es-ES":  [
+                                          "¿Dónde encuentro información sobre estados de la hoja de gastos?"
+                                      ]
+                        },
+    "audiences":  [
+                      "authenticated-crm-user"
+                  ],
+    "prerequisiteTopicIds":  [
+
+                             ],
+    "relatedTopicIds":  [
+                            "expense-approval.estados-y-aprobacion-de-una-hoja-de-gastos"
+                        ],
+    "routeKey":  "expenses.sheets",
+    "status":  "published",
+    "contentVersion":  "1.7.0",
+    "contentHash":  "4286B36042B1A87FEB62C6270C0C6DCAB2183A98A9D773AF7745267017BC7AFE",
+    "assets":  [
+
+               ],
+    "quickAnswers":  [
+
+                     ],
+    "translationCoverage":  {
+                                "es-ES":  "source"
+                            },
+    "source":  {
+                   "path":  "docs/exports/Manual App CRM 1.5.docx",
+                   "sha256":  "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+                   "sectionNumber":  "10.2",
+                   "pageFromTableOfContents":  27
+               }
+}

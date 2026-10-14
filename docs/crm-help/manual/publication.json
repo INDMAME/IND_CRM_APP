@@ -1,0 +1,216 @@
+{
+  "version": "2.0",
+  "baselineSha256": "8B0E4300A94F7B3BD43E423EF4EF4FD6753FE8C2BE2643E9A148061CE7906A05",
+  "subtitles": {
+    "structure": "Modelo editorial, plantillas y control de revisión",
+    "pilots": "Visitas y referencia de campos de hojas de gastos",
+    "complete": "Procedimientos, campos y resolución de problemas"
+  },
+  "chapters": [
+    {
+      "id": "common-ui",
+      "title": "Operaciones comunes",
+      "purpose": "Aprenda a reconocer los controles, trabajar en la compañía adecuada y distinguir consulta, edición y permisos.",
+      "topics": [
+        "elementos-comunes-de-la-pantalla",
+        "editar-guardar-y-cancelar",
+        "que-significa-empresa-activa",
+        "cambiar-el-idioma",
+        "permisos",
+        "perfiles-del-flujo-de-gastos"
+      ]
+    },
+    {
+      "id": "visits",
+      "title": "Visitas",
+      "purpose": "Registre actividades con una cuenta, consulte el historial y documente lo tratado, el contexto y el resultado.",
+      "topics": [
+        "modulo-visitas",
+        "abrir-el-historial-de-visitas",
+        "filtrar-el-historial",
+        "crear-una-visita-paso-1-cuenta-y-contactos",
+        "crear-una-visita-paso-2-datos-de-la-visita",
+        "editor-de-texto-y-dictado",
+        "consultar-editar-o-eliminar-una-visita"
+      ]
+    },
+    {
+      "id": "expenses",
+      "title": "Hojas de gastos",
+      "purpose": "Prepare la cabecera, consulte sus campos, añada líneas y gestione los justificantes. El apartado de divisas conserva el texto de la edición de partida.",
+      "topics": [
+        "modulo-hojas-de-gastos",
+        "flujo-general-de-una-hoja-de-gastos",
+        "abrir-la-lista-de-hojas",
+        "buscar-y-filtrar-hojas",
+        "utilizar-el-asistente-de-gastos",
+        "crear-la-cabecera-de-una-hoja",
+        "comprender-el-detalle-de-la-hoja",
+        "anadir-una-linea-manual",
+        "divisas-e-importes-de-una-linea",
+        "crear-un-ticket-desde-una-hoja",
+        "vincular-tickets-existentes",
+        "editar-la-cabecera-y-las-lineas"
+      ]
+    },
+    {
+      "id": "tickets",
+      "title": "Tickets",
+      "purpose": "Capture y revise justificantes, consulte su estado y compruebe su relación con las hojas.",
+      "topics": [
+        "modulo-tickets",
+        "abrir-y-filtrar-tickets",
+        "crear-un-ticket-desde-el-modulo-tickets",
+        "estado-del-ticket"
+      ]
+    },
+    {
+      "id": "expense-approval",
+      "title": "Estados y aprobación",
+      "purpose": "Consulte el significado de los estados y las acciones documentadas para el propietario y el responsable.",
+      "topics": [
+        "estados-y-aprobacion-de-una-hoja-de-gastos",
+        "flujo-general-de-estados",
+        "estados-de-la-hoja-de-gastos",
+        "acciones-del-propietario",
+        "acciones-del-responsable",
+        "enlaces-recibidos-por-correo"
+      ]
+    },
+    {
+      "id": "axapta",
+      "title": "Continuidad en Axapta",
+      "purpose": "Identifique dónde continúa el proceso para los perfiles que trabajan también en Axapta.",
+      "topics": [
+        "relacion-entre-crm-y-axapta",
+        "gestion-del-flujo-en-axapta",
+        "hoja-de-gastos-crm-usuarios-hoja-de-gastos",
+        "gestion-de-hojas-de-gastos",
+        "estados-visibles-en-axapta",
+        "acciones-disponibles-en-axapta"
+      ]
+    },
+    {
+      "id": "troubleshooting",
+      "title": "Problemas frecuentes y soporte",
+      "purpose": "Localice el síntoma y reúna la información necesaria para resolverlo o solicitar ayuda.",
+      "topics": [
+        "no-aparece-un-menu-boton-o-usuario",
+        "no-se-puede-guardar",
+        "la-imagen-del-ticket-no-se-procesa",
+        "que-informacion-enviar-a-soporte"
+      ]
+    },
+    {
+      "id": "glossary",
+      "title": "Glosario",
+      "purpose": "Consulte los términos utilizados en las pantallas y en los procedimientos.",
+      "topics": [
+        "glosario-basico"
+      ]
+    }
+  ],
+  "pilotExpenseTopics": [
+    "crear-la-cabecera-de-una-hoja",
+    "comprender-el-detalle-de-la-hoja",
+    "anadir-una-linea-manual",
+    "editar-la-cabecera-y-las-lineas"
+  ],
+  "screenshots": {
+    "common-ui.elementos-comunes-de-la-pantalla": [
+      {
+        "part": "word/media/image5.png",
+        "caption": "Menú, barra superior y área de contenido. Captura de referencia de la edición 1.5.",
+        "alt": "Pantalla de inicio con las zonas principales señaladas.",
+        "widthCm": 8
+      }
+    ],
+    "visits.crear-una-visita-paso-2-datos-de-la-visita": [
+      {
+        "part": "word/media/image16.png",
+        "caption": "Datos de la visita y campos narrativos. Captura de referencia de la edición 1.5.",
+        "alt": "Formulario móvil con Fecha, Tipo de visita, Medio de contacto, Descripción, Comentarios, Antecedentes y Conclusiones.",
+        "widthCm": 8
+      }
+    ],
+    "visits.editor-de-texto-y-dictado": [
+      {
+        "part": "word/media/image17.png",
+        "caption": "Editor de texto de Antecedentes. Captura de referencia de la edición 1.5.",
+        "alt": "Editor vacío con controles para volver, guardar texto y cerrar, y micrófono de dictado.",
+        "widthCm": 7.5
+      }
+    ],
+    "expenses.crear-la-cabecera-de-una-hoja": [
+      {
+        "part": "word/media/image29.png",
+        "caption": "Datos generales de la cabecera en edición. Captura de referencia de la edición 1.5.",
+        "alt": "Formulario con Descripción, Proyecto, Reembolsable y Divisa Reembolso.",
+        "widthCm": 7.5
+      }
+    ],
+    "expenses.comprender-el-detalle-de-la-hoja": [
+      {
+        "part": "word/media/image30.png",
+        "caption": "Detalle guardado y menú de acciones rápidas. Captura de referencia de la edición 1.5.",
+        "alt": "Hoja en Borrador con menú Nuevo ticket, Vincular ticket y Nueva línea.",
+        "widthCm": 7.5
+      }
+    ],
+    "expenses.anadir-una-linea-manual": [
+      {
+        "part": "word/media/image34.png",
+        "caption": "Formulario de línea. Consulte los campos descriptivos en la tabla del apartado. Captura de referencia de la edición 1.5.",
+        "alt": "Detalle de línea con Fecha, Categoría, Internacional, Reembolsable y Proyecto; los valores monetarios de la imagen no son un ejemplo de cálculo.",
+        "widthCm": 8
+      }
+    ],
+    "expenses.divisas-e-importes-de-una-linea": [
+      {
+        "part": "word/media/image35.png",
+        "caption": "Referencia original de divisas conservada sin revisar los cálculos. Captura de referencia de la edición 1.5.",
+        "alt": "Imagen original de la sección 8.7 con campos monetarios y divisa USD; conservada sin alteración.",
+        "widthCm": 7.5
+      },
+      {
+        "part": "word/media/image36.png",
+        "caption": "Segunda referencia original de divisas conservada sin revisar los cálculos. Captura de referencia de la edición 1.5.",
+        "alt": "Imagen original de la sección 8.7 con campos monetarios y divisa EUR; conservada sin alteración.",
+        "widthCm": 7.5
+      }
+    ],
+    "expenses.crear-un-ticket-desde-una-hoja": [
+      {
+        "part": "word/media/image39.png",
+        "caption": "Elección de cámara o imagen guardada. Captura de referencia de la edición 1.5.",
+        "alt": "Cuadro Nuevo ticket con Usar cámara, Elegir imagen y Cancelar.",
+        "widthCm": 7.5
+      }
+    ],
+    "expense-approval.flujo-general-de-estados": [
+      {
+        "part": "word/media/image49.png",
+        "caption": "Esquema de estados de la edición de partida; lea las condiciones del texto. Captura de referencia de la edición 1.5.",
+        "alt": "Diagrama original de estados de la hoja de gastos con decisiones de aprobación y pago.",
+        "widthCm": 16
+      }
+    ],
+    "axapta.hoja-de-gastos-crm-usuarios-hoja-de-gastos": [
+      {
+        "part": "word/media/image51.png",
+        "caption": "Menú Funciones del formulario tradicional. Captura de referencia de la edición 1.5.",
+        "alt": "Formulario de Axapta con el menú Funciones abierto y acciones de estado.",
+        "widthCm": 15
+      }
+    ],
+    "axapta.gestion-de-hojas-de-gastos": [
+      {
+        "part": "word/media/image52.png",
+        "caption": "Ruta a Gestión de Hojas de Gastos. Captura de referencia de la edición 1.5.",
+        "alt": "Menú CRM de Axapta con Gestión de Hojas de Gastos señalado.",
+        "widthCm": 10
+      }
+    ]
+  },
+  "publicationDate": "2026-09-10"
+}

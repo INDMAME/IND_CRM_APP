@@ -48,6 +48,8 @@ namespace IND_CRM_APP.Services
         private readonly ILogger<IndAuthContextService> _logger;
         private readonly ContextSessionSettings _contextSettings;
         private readonly CookieSecurePolicy _companyPreferenceSecurePolicy;
+        private string? _parsedContextJson;
+        private IndWebContext? _parsedContext;
 
         public IndAuthContextService(
             IHttpContextAccessor httpContextAccessor,
@@ -455,7 +457,12 @@ namespace IND_CRM_APP.Services
         // Updates the last activity timestamp for context refresh decisions.
         private static void TouchContextActivity(HttpContext ctx)
         {
-            ctx.Session.SetString(ContextLastActivityUtcKey, DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
+            var now = DateTime.UtcNow;
+            var previous = TryReadSessionUtc(ctx, ContextLastActivityUtcKey);
+            // A short interval reduces session writes and can only refresh idle context earlier.
+            if (previous.HasValue && now >= previous.Value && now - previous.Value < TimeSpan.FromSeconds(30))
+                return;
+            ctx.Session.SetString(ContextLastActivityUtcKey, now.ToString("o", CultureInfo.InvariantCulture));
         }
 
         // Determines if the current cached context should be refreshed before serving the request.
@@ -1325,11 +1332,21 @@ namespace IND_CRM_APP.Services
         {
             var raw = ctx.Session.GetString(ContextKey);
             if (string.IsNullOrWhiteSpace(raw))
+            {
+                _parsedContextJson = null;
+                _parsedContext = null;
                 return null;
+            }
 
             try
             {
-                var cachedContext = JsonSerializer.Deserialize<IndWebContext>(raw);
+                // This service is scoped to one request; refreshed or cleared JSON invalidates the parsed value.
+                if (!string.Equals(raw, _parsedContextJson, StringComparison.Ordinal))
+                {
+                    _parsedContext = JsonSerializer.Deserialize<IndWebContext>(raw);
+                    _parsedContextJson = raw;
+                }
+                var cachedContext = _parsedContext;
                 if (cachedContext != null && logDiagnostics)
                 {
                     var selection = ResolveSelectedCompany(ctx, cachedContext);

@@ -1,0 +1,52 @@
+{
+    "schemaVersion": "1.0",
+    "id": "expenses.anadir-una-linea-manual",
+    "moduleId": "expenses",
+    "sectionNumber": "8.6",
+    "title": "Añadir una línea manual",
+    "summary": "Añade y completa una línea de gasto manual.",
+    "aliases": {
+        "es-ES": [
+            "Añadir una línea manual",
+            "meter un gasto",
+            "imputar un gasto",
+            "registrar un gasto",
+            "introducir un gasto",
+            "hojas de gastos",
+            "gastos",
+            "¿Qué significa Ticket Id. en una línea?",
+            "¿Qué campos descriptivos tiene una línea de gasto?",
+            "Cómo imputar un gasto en una línea manual",
+            "¿Cuándo debo marcar Internacional?"
+        ]
+    },
+    "sampleQuestions": {
+        "es-ES": [
+            "¿Qué significa Ticket Id. en una línea?",
+            "¿Qué campos descriptivos tiene una línea de gasto?",
+            "¿Cuándo debo marcar Internacional?"
+        ]
+    },
+    "audiences": [
+        "authenticated-crm-user"
+    ],
+    "prerequisiteTopicIds": [],
+    "relatedTopicIds": [
+        "expenses.modulo-hojas-de-gastos"
+    ],
+    "routeKey": "expenses.sheets",
+    "status": "published",
+    "contentVersion": "2.0.1",
+    "contentHash": "E0B4A66223E57FB885BFA9E9A2B3ED155B094E0519FB80678E9014988A7E7549",
+    "assets": [],
+    "quickAnswers": [],
+    "translationCoverage": {
+        "es-ES": "source"
+    },
+    "source": {
+        "path": "docs/exports/Manual App CRM 1.5.docx",
+        "sha256": "60B4E58876173D8A1173FDF04670E500F1A77BB4D66BCFD58768F4D750976AB9",
+        "sectionNumber": "8.6",
+        "pageFromTableOfContents": 20
+    }
+}

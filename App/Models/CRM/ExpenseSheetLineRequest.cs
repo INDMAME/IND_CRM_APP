@@ -31,7 +31,13 @@ namespace IND_CRM_APP.Models.CRM
         public decimal Price { get; set; }
 
         [JsonPropertyName("projId")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? ProjId { get; set; }
+
+        // Distinguishes an omitted project from an explicit empty project.
+        [JsonPropertyName("projIdProvided")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public bool? ProjIdProvided { get; set; }
 
         [JsonPropertyName("reimbursableExpense")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

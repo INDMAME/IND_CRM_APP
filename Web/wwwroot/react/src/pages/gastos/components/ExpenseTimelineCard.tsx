@@ -1,6 +1,7 @@
 import React from "react";
 import type { ExpenseDateParts } from "../utils/expenseUiUtils.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
+import { ExpenseCardIndicators, ExpenseCardMetadata, ExpenseHeaderCardBody, ExpenseLineCardBody } from "./ExpenseCardBodies.tsx";
 
 type ExpenseTimelineCardInteractionProps = Pick<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -18,7 +19,8 @@ type ExpenseTimelineCardInteractionProps = Pick<
 >;
 
 type ExpenseTimelineCardProps = {
-  dateParts: ExpenseDateParts;
+  layout?: "header" | "line";
+  dateParts?: ExpenseDateParts;
   title: string;
   amountText: string;
   amountContent?: React.ReactNode;
@@ -32,12 +34,13 @@ type ExpenseTimelineCardProps = {
   subtitleClassName?: string;
   statusIcon?: React.ReactNode;
   statusIconClassName?: string;
-  datePanelContent?: React.ReactNode;
+  leadingIcon?: React.ReactNode;
   interactionProps?: ExpenseTimelineCardInteractionProps;
 };
 
 // Reusable clickable timeline card for expense sheets and expense lines.
 const ExpenseTimelineCard = ({
+  layout = "header",
   dateParts,
   title,
   amountText,
@@ -52,7 +55,7 @@ const ExpenseTimelineCard = ({
   subtitleClassName = "expense-sheet-card__subtitle",
   statusIcon,
   statusIconClassName = "expense-sheet-card__status-icon",
-  datePanelContent,
+  leadingIcon,
   interactionProps,
 }: ExpenseTimelineCardProps) => {
   const safeTitle = safeText(title) || "-";
@@ -66,46 +69,44 @@ const ExpenseTimelineCard = ({
     ...restInteractionProps
   } = interactionProps || {};
 
+  const bodyProps = {
+    title: <p className={titleClassName} data-fulltext={safeTitle}>{safeTitle}</p>,
+    metadata: (
+      <ExpenseCardMetadata
+        dateParts={dateParts}
+        subtitle={safeSubtitle}
+        subtitleContent={subtitleContent}
+        subtitleClassName={subtitleClassName}
+      />
+    ),
+    amount: (
+      <span className={amountClassName} data-fulltext={safeAmount}>{amountContent ?? safeAmount}</span>
+    ),
+    indicators: (
+      <ExpenseCardIndicators
+        statusClassName={statusClassName}
+        statusLabel={statusLabel}
+        statusIcon={statusIcon}
+        statusIconClassName={statusIconClassName}
+      />
+    ),
+  };
+
   return (
     <button
       type="button"
-      className="timeline-card timeline-card--clickable expense-timeline-card text-left"
+      className={`timeline-card timeline-card--clickable expense-timeline-card expense-timeline-card--${layout} text-left`}
       role={customRole}
       tabIndex={typeof customTabIndex === "number" ? customTabIndex : 0}
       onClick={customOnClick ?? onOpen}
       onKeyDown={customOnKeyDown}
       {...restInteractionProps}
     >
-      <div className="timeline-date-panel expense-timeline-card__date-panel flex flex-col items-center justify-center gap-1 border-r border-[#e2e8f0] bg-[#f8fafc] text-[#00296be0]">
-        {datePanelContent ? (
-          datePanelContent
-        ) : (
-          <>
-            <div className="text-xs font-semibold tracking-[0.2em] text-[#00296bb8]">{dateParts.year}</div>
-            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#00296bb8]">{dateParts.month}</div>
-            <div className="text-2xl font-semibold text-primary">{dateParts.day}</div>
-          </>
-        )}
-      </div>
-      <div className="timeline-card__content expense-timeline-card__content flex-1">
-        {statusClassName ? <span className={statusClassName} title={statusLabel} aria-label={statusLabel} /> : null}
-        {statusIcon ? (
-          <span className={statusIconClassName} role="group" aria-label={statusLabel || undefined}>
-            {statusIcon}
-          </span>
-        ) : null}
-        <p className={titleClassName} data-fulltext={safeTitle}>
-          {safeTitle}
-        </p>
-        {subtitleContent || safeSubtitle ? (
-          <p className={subtitleClassName} data-fulltext={safeSubtitle}>
-            {subtitleContent || safeSubtitle}
-          </p>
-        ) : null}
-        <span className={amountClassName} data-fulltext={safeAmount}>
-          {amountContent ?? safeAmount}
-        </span>
-      </div>
+      {layout === "line" ? (
+        <ExpenseLineCardBody {...bodyProps} icon={leadingIcon} />
+      ) : (
+        <ExpenseHeaderCardBody {...bodyProps} />
+      )}
     </button>
   );
 };

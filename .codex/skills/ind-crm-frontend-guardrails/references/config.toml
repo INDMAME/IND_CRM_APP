@@ -25,7 +25,7 @@ Before delivering code, confirm:
 4) No regression risk in any module.
 5) React Doctor check is clean for changed frontend files, or any remaining unrelated legacy findings are called out explicitly.
 
-Before delivering any task in this repo, run `npm run check:react-doctor`. If it reports diagnostics in frontend files touched by the current task, fix them and re-run before closing the task.
+Before delivering a change that touches React or frontend source files, run the proportional React Doctor check defined in `.codex/QUALITY_CHECKLIST.md`. Do not require it for documentation-only, backend-only, or configuration-only tasks.
 
 When working on the project IND_CRM_APP (ASP.NET Core MVC web app), follow these architecture and UI rules:
 
@@ -42,9 +42,8 @@ UI rules for IND_CRM_APP:
 - Primary color: #00296b for headers, primary buttons, main links, active elements; reflect it in Tailwind palette.
 
 Treat jQuery, jquery-validation and similar static libs as legacy:
-- Do not add new code depending on them.
-- Do not add new jQuery/jq-validation uses.
-- Touch legacy only to migrate safely to Tailwind + Tailwind CSS + Heroicons + Montserrat + #00296b without breaking existing functionality.
+- Do not add new dependencies or new uses on top of them.
+- When a requested change must touch existing legacy code, make the smallest compatible change. Migrate it only when that migration is in scope and can preserve current behavior.
 
 I18N rules (UI only):
 - Supported UI cultures: es-ES (default), Basque, en, pt, it, zh-Hans.

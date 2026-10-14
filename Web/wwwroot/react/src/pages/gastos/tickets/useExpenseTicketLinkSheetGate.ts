@@ -3,11 +3,15 @@ import { indT } from "../../../utils/indI18n.ts";
 import { isExpenseAbortLikeError } from "../utils/expenseRequestRetry.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { resolveExpenseSheetEditAccess } from "../utils/expenseSheetEditAccess.ts";
+import type { ExpenseSheetLine } from "../expenseTypes.ts";
 
 type LinkSheetGateState = {
   linkSheetLocked: boolean;
   linkSheetBlockedMessage: string;
   linkSheetCheckBusy: boolean;
+  linkSheetCheckComplete: boolean;
+  linkSheetLines: ExpenseSheetLine[];
+  validatedOwnerAxUserId: string;
 };
 
 type LinkSheetGateAction =
@@ -22,8 +26,10 @@ type LinkSheetGateAction =
 
 type UseExpenseTicketLinkSheetGateArgs = {
   isLinkMode: boolean;
+  isLineLinkMode?: boolean;
   linkSheetId: string;
   canProcessLinkMode: boolean;
+  managementBootstrapReady?: boolean;
   allowSelfManagement: boolean;
   canManageOtherUsers: boolean;
   currentAxUserId: string;
@@ -36,6 +42,9 @@ const INITIAL_LINK_SHEET_GATE_STATE: LinkSheetGateState = {
   linkSheetLocked: false,
   linkSheetBlockedMessage: "",
   linkSheetCheckBusy: false,
+  linkSheetCheckComplete: false,
+  linkSheetLines: [],
+  validatedOwnerAxUserId: "",
 };
 
 const linkSheetGateReducer = (state: LinkSheetGateState, action: LinkSheetGateAction): LinkSheetGateState => {
@@ -55,8 +64,10 @@ const linkSheetGateReducer = (state: LinkSheetGateState, action: LinkSheetGateAc
 // Validates the target sheet state before link-mode actions can run.
 export const useExpenseTicketLinkSheetGate = ({
   isLinkMode,
+  isLineLinkMode = false,
   linkSheetId,
   canProcessLinkMode,
+  managementBootstrapReady = true,
   allowSelfManagement,
   canManageOtherUsers,
   currentAxUserId,
@@ -82,6 +93,39 @@ export const useExpenseTicketLinkSheetGate = ({
           linkSheetLocked: true,
           linkSheetBlockedMessage: indT("Auth_PermissionDenied_Body", "No permission."),
           linkSheetCheckBusy: false,
+          linkSheetCheckComplete: true,
+          linkSheetLines: [],
+          validatedOwnerAxUserId: "",
+        },
+      });
+      return;
+    }
+
+    if (isLineLinkMode && !managementBootstrapReady) {
+      dispatch({
+        type: "replace",
+        nextState: {
+          linkSheetLocked: true,
+          linkSheetBlockedMessage: "",
+          linkSheetCheckBusy: true,
+          linkSheetCheckComplete: false,
+          linkSheetLines: [],
+          validatedOwnerAxUserId: "",
+        },
+      });
+      return;
+    }
+
+    if (isLineLinkMode && !safeText(currentAxUserId)) {
+      dispatch({
+        type: "replace",
+        nextState: {
+          linkSheetLocked: true,
+          linkSheetBlockedMessage: indT("Auth_PermissionDenied_Body", "No permission."),
+          linkSheetCheckBusy: false,
+          linkSheetCheckComplete: true,
+          linkSheetLines: [],
+          validatedOwnerAxUserId: "",
         },
       });
       return;
@@ -91,7 +135,12 @@ export const useExpenseTicketLinkSheetGate = ({
     dispatch({
       type: "patch",
       patch: {
+        linkSheetLocked: true,
+        linkSheetBlockedMessage: "",
         linkSheetCheckBusy: true,
+        linkSheetCheckComplete: false,
+        linkSheetLines: [],
+        validatedOwnerAxUserId: "",
       },
     });
 
@@ -103,21 +152,27 @@ export const useExpenseTicketLinkSheetGate = ({
           canManageOtherUsers,
           currentAxUserId,
           currentCrmUserId,
-          selectedManagedUserId,
+          selectedManagedUserId: isLineLinkMode ? currentAxUserId : selectedManagedUserId,
         });
         if (cancelled) return;
 
-        const isLocked = accessResult.isLocked;
+        const isOwnerViolation = isLineLinkMode && !accessResult.isCurrentUserExpenseOwner;
+        const isLocked = accessResult.isLocked || isOwnerViolation;
 
         dispatch({
           type: "replace",
           nextState: {
             linkSheetLocked: isLocked,
             linkSheetBlockedMessage:
-              isLocked && !safeText(accessResult.blockedMessage)
+              isOwnerViolation
+                ? indT("Auth_PermissionDenied_Body", "No permission.")
+                : isLocked && !safeText(accessResult.blockedMessage)
                 ? resolveBlockedMessage(accessResult.isPaid)
                 : safeText(accessResult.blockedMessage),
             linkSheetCheckBusy: false,
+            linkSheetCheckComplete: true,
+            linkSheetLines: isOwnerViolation ? [] : accessResult.lines,
+            validatedOwnerAxUserId: isLocked ? "" : safeText(currentAxUserId),
           },
         });
       } catch (error) {
@@ -125,9 +180,14 @@ export const useExpenseTicketLinkSheetGate = ({
 
         if (isExpenseAbortLikeError(error)) {
           dispatch({
-            type: "patch",
-            patch: {
+            type: "replace",
+            nextState: {
+              linkSheetLocked: true,
+              linkSheetBlockedMessage: indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."),
               linkSheetCheckBusy: false,
+              linkSheetCheckComplete: true,
+              linkSheetLines: [],
+              validatedOwnerAxUserId: "",
             },
           });
           return;
@@ -140,6 +200,9 @@ export const useExpenseTicketLinkSheetGate = ({
             linkSheetBlockedMessage:
               error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."),
             linkSheetCheckBusy: false,
+            linkSheetCheckComplete: true,
+            linkSheetLines: [],
+            validatedOwnerAxUserId: "",
           },
         });
       }
@@ -155,7 +218,9 @@ export const useExpenseTicketLinkSheetGate = ({
     currentAxUserId,
     currentCrmUserId,
     isLinkMode,
+    isLineLinkMode,
     linkSheetId,
+    managementBootstrapReady,
     resolveBlockedMessage,
     selectedManagedUserId,
   ]);

@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: JOB
 
-; Navision Axapta Job: INDRecalAmountMSTExchange_HojasGastosV2 descargados en Miércoles 29/07/2026
+; Navision Axapta Job: INDRecalAmountMSTExchange_HojasGastosV2 descargados en Jueves 06/08/2026
 ; --------------------------------------------------------------------------------
   JOBVERSION 1
   
@@ -83,7 +83,9 @@ Formatversion: 1
     #            hojaGastosLineUpdate.ExchRate   = targetExchRate;
     #            newAmountMST                    = hojaGastosLineUpdate.LineAmountMST();
     #
-    #            if (newAmountMST == 0)
+    #            //MMS - Ajustes CRM - 2026.08.03
+    #            // El cero es valido si el importe de origen tambien es cero; solo se omite una conversion no resuelta.
+    #            if (newAmountMST == 0 && hojaGastosLineUpdate.Amount != 0)
     #            {
     #                skippedNoCalculation++;
     #                ttscommit;
@@ -147,12 +149,13 @@ Formatversion: 1
     #                continue;
     #            }
     #
-    #            //MMS - Migra la elegibilidad historica de Visa antes de aplicar la semantica del nuevo indicador - 2026.07.29
+    #            //MMS - Ajustes CRM - 2026.08.03
+    #            // Migracion controlada: primero captura Visa legacy y despues deja ReimbursableExpense como criterio canonico.
     #            origReimbursableAmount  = hojaGastosLineUpdate.ReimbursableAmount;
     #            origReimbursableExpense = hojaGastosLineUpdate.ReimbursableExpense;
     #            origVisaEmpresa         = hojaGastosLineUpdate.VisaEmpresa;
     #
-    #            //MMS - La carga historica de una sola ejecucion invierte el valor historico de Visa en el nuevo indicador de reembolso - 2026.07.29
+    #            // Una Visa legacy activa excluia el pago; por eso se transforma en ReimbursableExpense No, y Visa No en Yes.
     #            hojaGastosLineUpdate.ReimbursableExpense = hojaGastosLineUpdate.VisaEmpresa == NoYes::Yes
     #                                                      ? INDReimbursableExpenseLines::No
     #                                                      : INDReimbursableExpenseLines::Yes;
@@ -268,7 +271,9 @@ Formatversion: 1
     #            time2str(timenow(), 1, 1)));
     #    }
     #
-    #    setCia.add("LAN");
+    #    //MMS - Ajustes CRM - 2026.08.03
+    #    // Conserva el conjunto multiempresa heredado y evita limitar la migracion a la compania actual.
+    #    /*setCia.add("LAN");
     #    setCia.add("IHI");
     #    setCia.add("RSI");
     #    setCia.add("SET");
@@ -279,12 +284,15 @@ Formatversion: 1
     #    setCia.add("AZM");
     #    setCia.add("CUM");
     #    setCia.add("IST");
-    #    setCia.add("RIS");
+    #    setCia.add("RIS");   */
     #
-    #    /*setCia.add("TAZ");
+    #    /* Companias excluidas del recorrido heredado.
+    #    setCia.add("TAZ");
     #    setCia.add("ITA");
     #    setCia.add("ISE");
-    #      */
+    #    */
+    #    setCia.add("ISE");
+    #
     #    si = new SetIterator(setCia);
     #
     #    while (si.more())
@@ -293,13 +301,14 @@ Formatversion: 1
     #
     #        changeCompany(id)
     #        {
+    #            // Los RecId son propios de cada compania; la cola no debe compartirse entre iteraciones.
     #            accountingRefreshRecIds = new Set(Types::Integer);
     #
-    #            //MMS - Finaliza los indicadores, los importes y el estado de cabecera antes de actualizar la contabilidad - 2026.07.29
+    #            // Finaliza indicadores, importes y cabecera antes de actualizar una sola vez la contabilidad.
     #            updateReimbursableAmounts();
     #            updateLines();
     #            updateHeaderReimbursableExpenseStates();
-    #            refreshAccountingLines();
+    #            //refreshAccountingLines();
     #        }
     #
     #        si.next();

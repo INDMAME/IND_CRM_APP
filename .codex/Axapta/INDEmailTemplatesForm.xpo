@@ -765,6 +765,21 @@ FORM #INDEmailTemplates
                         #            defaultToStatus   = INDExpenseSheetStatus::InReview;
                         #            break;
                         #
+                        #        case INDEmailTemplateTargetModule::CRMApprovalRequestCancelled:
+                        #            defaultFromStatus = INDExpenseSheetStatus::InReview;
+                        #            defaultToStatus   = INDExpenseSheetStatus::Draft;
+                        #            break;
+                        #
+                        #        case INDEmailTemplateTargetModule::CRMApprovalUndone:
+                        #            defaultFromStatus = INDExpenseSheetStatus::Approved;
+                        #            defaultToStatus   = INDExpenseSheetStatus::InReview;
+                        #            break;
+                        #
+                        #        case INDEmailTemplateTargetModule::CRMRejectionUndone:
+                        #            defaultFromStatus = INDExpenseSheetStatus::Rejected;
+                        #            defaultToStatus   = INDExpenseSheetStatus::InReview;
+                        #            break;
+                        #
                         #        case INDEmailTemplateTargetModule::CRMApproved:
                         #            defaultFromStatus = INDExpenseSheetStatus::InReview;
                         #            defaultToStatus   = INDExpenseSheetStatus::Approved;
@@ -838,7 +853,11 @@ FORM #INDEmailTemplates
                         #    }
                         #    else
                         #    {
-                        #        eventType = INDCRMExpenseSheetService::resolveExpenseSheetNotificationEvent(fromStatus, toStatus);
+                        #        if (emailTemplate.TargetModule == INDEmailTemplateTargetModule::CRMApprovalUndone ||
+                        #            emailTemplate.TargetModule == INDEmailTemplateTargetModule::CRMRejectionUndone)
+                        #            eventType = INDCRMExpenseSheetService::resolveExpenseSheetDecisionUndoEvent(fromStatus, toStatus);
+                        #        else
+                        #            eventType = INDCRMExpenseSheetService::resolveExpenseSheetNotificationEvent(fromStatus, toStatus);
                         #        if (!eventType)
                         #        {
                         #            warning("La transicion indicada no tiene evento de email configurado.");
@@ -854,7 +873,9 @@ FORM #INDEmailTemplates
                         #        }
                         #    }
                         #
-                        #    if (eventType == "ExpenseSheetApprovalRequested")
+                        #    // The owner sends approval requests and cancellations to a direct manager.
+                        #    if (eventType == "ExpenseSheetApprovalRequested" ||
+                        #        eventType == "ExpenseSheetApprovalRequestCancelled")
                         #    {
                         #        senderUserId     = expenseSheet.UserId;
                         #        managerCrmUserId = INDCRMExpenseSheetService::resolveExpenseSheetManagerCrmUserId(expenseSheet.UserId);
