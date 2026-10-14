@@ -5926,6 +5926,7 @@ Formatversion: 1
         #
         #    try
         #    {
+        #        // Keep validation and writes in the same company as the selected line.
         #        changecompany(companyId)
         #        {
         #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
@@ -5989,7 +5990,6 @@ Formatversion: 1
         #
         #                if (existingFileLine.RecId)
         #                    return INDCRMUtilityService::buildHeader(false, strFmt('FileId ya esta asignado a otra linea: %1', fileId), conNull());
-        #                }
         #            }
         #
         #            //MMS - Ajustes CRM - 2026.08.24
@@ -6070,6 +6070,7 @@ Formatversion: 1
         #            ttscommit;
         #
         #            return INDCRMUtilityService::buildHeader(true, 'Linea actualizada correctamente.', conNull());
+        #        }
         #
         #    }
         #    catch (Exception::Deadlock)
