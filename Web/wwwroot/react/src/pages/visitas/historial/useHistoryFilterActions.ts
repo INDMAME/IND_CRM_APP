@@ -5,6 +5,7 @@ type ApplyOptions = {
   closePanel?: boolean;
   force?: boolean;
   page?: number;
+  skipLoad?: boolean;
 };
 
 type StringRef = {
@@ -53,14 +54,14 @@ export const useHistoryFilterActions = ({
 }: Args) => {
   const applyFilters = useCallback(
     (options?: ApplyOptions) => {
-      if (!validateManualRange()) return;
-      if (!startDate || !endDate) return;
+      if (!validateManualRange()) return false;
+      if (!startDate || !endDate) return false;
 
       const normalized = normalizeRange(fromDateValue, toDateValue);
       const page = options?.page ?? 1;
       const signature = `${normalized.from}|${normalized.to}|${accountNumValue}|${ownerAxUserIdValue}|${page}`;
 
-      if (options?.force || lastSignatureRef.current !== signature) {
+      if (!options?.skipLoad && (options?.force || lastSignatureRef.current !== signature)) {
         loadActivities(page, {
           fromDate: normalized.from,
           toDate: normalized.to,
@@ -74,6 +75,7 @@ export const useHistoryFilterActions = ({
         setIsOpen(false);
         setShowFilters(false);
       }
+      return true;
     },
     [
       accountNumValue,

@@ -1,6 +1,5 @@
 import type { ActionError } from "../../../utils/actionError.ts";
 import React from "react";
-import ActionButton from "../../../components/commons/ActionButton.tsx";
 import FilterButton from "../../../components/commons/FilterButton.tsx";
 import ClientSearchCombobox, { type ClientOption } from "../../../components/visitas/ClientSearchCombobox.tsx";
 import HistoryManualDatePicker, { type HistoryManualDayCell } from "./HistoryManualDatePicker.tsx";
@@ -61,9 +60,6 @@ type Props = {
   ownerAllOption?: VisitOwnerSelectOption | null;
   ownerNoUsersLabel: string;
   ownerLoadingLabel: string;
-  showFilterActions: boolean;
-  clearLabel: string;
-  applyLabel: string;
   onQuickFilter: (filterId: QuickFilterId) => void;
   onOpenPopover: (section: "start" | "end") => void;
   onActivatorKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => void;
@@ -76,8 +72,6 @@ type Props = {
   onDayHover: (day: HistoryManualDayCell) => void;
   onClientSelected: (client: ClientOption | null) => void;
   onOwnerChange: (ownerAxUserId: string) => void;
-  onResetFilters: () => void;
-  onApplyFilters: () => void;
 };
 
 // Renders history filter controls while the page container owns state and data loading.
@@ -123,9 +117,6 @@ const HistoryFilterPanel = ({
   ownerAllOption,
   ownerNoUsersLabel,
   ownerLoadingLabel,
-  showFilterActions,
-  clearLabel,
-  applyLabel,
   onQuickFilter,
   onOpenPopover,
   onActivatorKeyDown,
@@ -138,8 +129,6 @@ const HistoryFilterPanel = ({
   onDayHover,
   onClientSelected,
   onOwnerChange,
-  onResetFilters,
-  onApplyFilters,
 }: Props) => {
   return (
     <div className="filter-card filter-card--expanded p-2 sm:p-2.5 relative">
@@ -231,12 +220,6 @@ const HistoryFilterPanel = ({
           portalClassName="visitas-typography"
         />
 
-        {showFilterActions && (
-          <div className="mt-1 grid grid-cols-2 gap-2 history-filter-actions lg:mx-auto lg:w-full lg:max-w-lg">
-            <ActionButton label={clearLabel} className="w-full" onClick={onResetFilters} />
-            <ActionButton label={applyLabel} className="w-full" onClick={onApplyFilters} />
-          </div>
-        )}
       </div>
     </div>
   );

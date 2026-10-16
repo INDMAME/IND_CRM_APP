@@ -1,0 +1,2 @@
+import{e as s,f as h}from"./chunk-LVU3KOWA.js";import{a as i,b as o}from"./chunk-FZ45QYUJ.js";import{a as p,d as e}from"./chunk-ORJLERH4.js";var a,n,t,u,l=p(()=>{h();a=e(i()),n=e(o()),t=class extends a.default.Component{constructor(r){super(r),this.state={hasError:!1}}static getDerivedStateFromError(){return{hasError:!0}}componentDidCatch(r,c){console.error("[AppErrorBoundary] render error",r,c)}render(){return this.state.hasError?(0,n.jsx)(s,{error:this.props.fallbackMessage}):this.props.children}},u=t});export{u as a,l as b};
+//# sourceMappingURL=chunk-KS34U6A6.js.map

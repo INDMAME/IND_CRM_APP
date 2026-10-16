@@ -2,6 +2,7 @@
 import { classNames } from "../../../utils/classNames.ts";
 import { createPortal } from "react-dom";
 import { useFloatingPosition } from "../../../hooks/useFloatingPosition.ts";
+import { useFloatingLayerHost } from "../../../components/commons/FloatingLayerContext.ts";
 
 export type HistoryManualDayCell = {
   key: string;
@@ -48,6 +49,14 @@ type HistoryManualDatePickerProps = {
 const MIN_POPOVER_WIDTH_PX = 360;
 const DESKTOP_MAX_POPOVER_WIDTH_PX = 640;
 
+// Expands the calendar inside a modal so it cannot cover the dialog actions.
+const getCalendarStyle = (inline: boolean, floating: React.CSSProperties): React.CSSProperties => {
+  const placement: React.CSSProperties = inline
+    ? { position: "relative", top: "auto", left: "auto", width: "100%", maxWidth: 420, marginTop: 8, marginInline: "auto" }
+    : { position: "fixed", top: floating.top, left: floating.left, width: floating.width, maxHeight: floating.maxHeight, overflowY: "auto" };
+  return { ...placement, overscrollBehavior: "contain", zIndex: 360000 };
+};
+
 // Presentational date range picker used by the history quick filter.
 const HistoryManualDatePicker = ({
   activatorRef,
@@ -80,7 +89,8 @@ const HistoryManualDatePicker = ({
   onDayClick,
   onDayHover,
 }: HistoryManualDatePickerProps) => {
-  const floatingStyle = useFloatingPosition(activatorRef, isOpen, {
+  const floatingHost = useFloatingLayerHost();
+  const floatingStyle = useFloatingPosition(activatorRef, isOpen && !floatingHost, {
     overlayRef: popoverRef,
     autoFitViewport: true,
     minWidth: MIN_POPOVER_WIDTH_PX,
@@ -88,7 +98,7 @@ const HistoryManualDatePicker = ({
   });
   const popover =
     isOpen && typeof document !== "undefined"
-      ? createPortal(
+      ? (
           <div
             id="drpPopover"
             ref={popoverRef}
@@ -96,16 +106,7 @@ const HistoryManualDatePicker = ({
             role="group"
             aria-label={filterTitle}
             data-floating-placement={floatingStyle.placement}
-            style={{
-              position: "fixed",
-              top: floatingStyle.top,
-              left: floatingStyle.left,
-              width: floatingStyle.width,
-              maxHeight: floatingStyle.maxHeight,
-              overflowY: "auto",
-              overscrollBehavior: "contain",
-              zIndex: 360000,
-            }}
+            style={getCalendarStyle(!!floatingHost, floatingStyle)}
           >
             <div className="drp-head">
               <button
@@ -164,8 +165,7 @@ const HistoryManualDatePicker = ({
             <div id="drpStatus" className="drp-status">
               {statusText}
             </div>
-          </div>,
-          document.body
+          </div>
         )
       : null;
 
@@ -246,7 +246,7 @@ const HistoryManualDatePicker = ({
         </button>
       </div>
 
-      {popover}
+      {floatingHost ? popover : popover && createPortal(popover, document.body)}
     </div>
   );
 };

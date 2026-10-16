@@ -627,6 +627,15 @@
   <data name="History_Filter_Clear" xml:space="preserve">
     <value>Limpar</value>
   </data>
+  <data name="History_Filter_Title" xml:space="preserve">
+    <value>Filtros de visitas</value>
+  </data>
+  <data name="History_Filter_ClearDraft" xml:space="preserve">
+    <value>Limpar</value>
+  </data>
+  <data name="History_Filter_ViewResults" xml:space="preserve">
+    <value>Ver resultados</value>
+  </data>
   <data name="History_Filter_Apply" xml:space="preserve">
     <value>Aplicar</value>
   </data>

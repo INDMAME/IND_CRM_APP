@@ -552,6 +552,15 @@
   <data name="History_Filter_Clear" xml:space="preserve">
     <value>清除</value>
   </data>
+  <data name="History_Filter_Title" xml:space="preserve">
+    <value>拜访筛选</value>
+  </data>
+  <data name="History_Filter_ClearDraft" xml:space="preserve">
+    <value>清空</value>
+  </data>
+  <data name="History_Filter_ViewResults" xml:space="preserve">
+    <value>查看结果</value>
+  </data>
   <data name="History_Filter_Apply" xml:space="preserve">
     <value>应用</value>
   </data>

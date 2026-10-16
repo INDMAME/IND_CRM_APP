@@ -639,6 +639,15 @@
   <data name="History_Filter_Clear" xml:space="preserve">
     <value>Garbitu</value>
   </data>
+  <data name="History_Filter_Title" xml:space="preserve">
+    <value>Bisiten iragazkiak</value>
+  </data>
+  <data name="History_Filter_ClearDraft" xml:space="preserve">
+    <value>Garbitu</value>
+  </data>
+  <data name="History_Filter_ViewResults" xml:space="preserve">
+    <value>Ikusi emaitzak</value>
+  </data>
   <data name="History_Filter_Apply" xml:space="preserve">
     <value>Aplikatu</value>
   </data>

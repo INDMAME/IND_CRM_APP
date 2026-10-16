@@ -88,7 +88,7 @@ export const useHistoryFiltersState = ({
   const [selectedClient, setSelectedClient] = useState<ClientOption | null>(null);
   const [selectedOwnerAxUserId, setSelectedOwnerAxUserId] = useState("");
   const [clientResetKey, setClientResetKey] = useState(0);
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const [showManualError, setShowManualError] = useState(false);
 
   const hasRestoredFilterRef = useRef(false);
@@ -99,7 +99,8 @@ export const useHistoryFiltersState = ({
   const accountNumValue = useMemo(() => (selectedClient ? selectedClient.value : ""), [selectedClient]);
 
   const validateManualRange = useCallback(() => {
-    if (activeQuickFilter === "custom" && (!startDate || !endDate)) {
+    if (!startDate || !endDate) {
+      setActiveQuickFilter("custom");
       setShowManualError(true);
       setSelectingStep(!startDate ? "start" : "end");
       setShowManualPickerPanel(true);
@@ -108,7 +109,7 @@ export const useHistoryFiltersState = ({
       return false;
     }
     return true;
-  }, [activeQuickFilter, endDate, startDate]);
+  }, [endDate, startDate]);
 
   // Applies a default date range and returns the load payload needed by the page.
   const applyDefaultRangeFromProps = useCallback((): FilterLoadRequest | null => {

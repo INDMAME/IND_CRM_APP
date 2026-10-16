@@ -91,7 +91,7 @@ test("reset and clear allow the same range to load again", async () => {
 test("an unsuccessful query can be retried with Apply", async () => {
   const history = createHistory();
   history.applyQuickRange(); history.requests[0].reject(new Error("Connection failed")); await immediate();
-  assert.match(history.render().data.errorMessage, /Connection failed/);
+  assert.match(history.render().data.errorMessage.message, /Connection failed/);
   history.render().actions.applyFilters();
   assert.equal(history.requests.length, 2);
   history.requests[1].complete(); await immediate();

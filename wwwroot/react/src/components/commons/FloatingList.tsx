@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import { createPortal } from "react-dom";
+import { useFloatingLayerHost } from "./FloatingLayerContext.ts";
 import {
   useFloatingPosition,
   type FloatingWidthStrategy,
@@ -51,6 +52,7 @@ const FloatingList = ({
   viewportPadding,
   children,
 }: Props) => {
+  const floatingHost = useFloatingLayerHost();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const resolvedWidthStrategy =
     widthStrategy ??
@@ -96,7 +98,7 @@ const FloatingList = ({
         {children}
       </div>
     </div>,
-    document.body
+    floatingHost || document.body
   );
 };
 

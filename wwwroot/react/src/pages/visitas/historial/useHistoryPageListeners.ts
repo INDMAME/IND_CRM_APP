@@ -11,6 +11,9 @@ type UseHistoryPageListenersArgs = {
   hasRestoredFilterRef: React.MutableRefObject<boolean>;
   retryOnNetworkErrorRef: React.MutableRefObject<boolean>;
   currentPage: number;
+  showFilters: boolean;
+  isLoading: boolean;
+  onOpenFilters: () => void;
   logHistory: (message: string, data?: Record<string, unknown>) => void;
   consumeReturnFlag: () => boolean;
   readCachedFilter: () => HistoryCachedFilter | null;
@@ -32,6 +35,9 @@ export const useHistoryPageListeners = ({
   hasRestoredFilterRef,
   retryOnNetworkErrorRef,
   currentPage,
+  showFilters,
+  isLoading,
+  onOpenFilters,
   logHistory,
   consumeReturnFlag,
   readCachedFilter,
@@ -54,6 +60,8 @@ export const useHistoryPageListeners = ({
     const handleOutside = (event: MouseEvent) => {
       const target = event.target as Node | null;
       if (!target) return;
+      // Inline modal calendars stay in the scroll flow until their own actions finish.
+      if (popoverRef.current?.closest("dialog[open]")) return;
       if (popoverRef.current?.contains(target)) return;
       if (activatorRef.current?.contains(target)) return;
       logHistory("closePopover:outside");
@@ -105,22 +113,15 @@ export const useHistoryPageListeners = ({
     setShowFilters,
   ]);
 
-  // Wire topbar actions that toggle filters or force refresh of current page.
+  // Opens one editing session and keeps topbar refresh away from draft criteria.
   useEffect(() => {
     const onToggleFilters = () => {
-      setShowFilters((prev) => {
-        const next = !prev;
-        if (!next) {
-          setIsOpen(false);
-        } else {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-        return next;
-      });
+      if (!readyToLoad || showFilters || isLoading) return;
+      onOpenFilters();
     };
 
     const onRefresh = () => {
-      if (!readyToLoad) return;
+      if (!readyToLoad || showFilters || isLoading) return;
       applyFilters({ page: currentPage, force: true, closePanel: true });
     };
 
@@ -131,5 +132,5 @@ export const useHistoryPageListeners = ({
       window.removeEventListener("history-toggle-filter", onToggleFilters);
       window.removeEventListener("history-refresh", onRefresh);
     };
-  }, [applyFilters, currentPage, readyToLoad, setIsOpen, setShowFilters]);
+  }, [applyFilters, currentPage, isLoading, onOpenFilters, readyToLoad, showFilters]);
 };

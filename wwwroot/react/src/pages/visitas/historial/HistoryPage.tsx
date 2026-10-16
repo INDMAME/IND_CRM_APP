@@ -6,6 +6,7 @@ import HistoryFilterPanel from "./HistoryFilterPanel.tsx";
 import HistoryResultsSection from "./HistoryResultsSection.tsx";
 import { useHistoryCalendarPicker } from "./useHistoryCalendarPicker.ts";
 import { useHistoryFilterActions } from "./useHistoryFilterActions.ts";
+import { useHistoryFilterDraft } from "./useHistoryFilterDraft.ts";
 import { useHistoryInitialLoad } from "./useHistoryInitialLoad.ts";
 import { useHistoryLabels } from "./useHistoryLabels.ts";
 import { useHistoryNavigation } from "./useHistoryNavigation.ts";
@@ -15,6 +16,7 @@ import { useHistoryTimelineItems } from "./useHistoryTimelineItems.ts";
 import { useHistoryVisibleOwner } from "./useHistoryVisibleOwner.ts";
 import { HISTORY_VISIBLE_OWNER_ALL_VALUE } from "./historyVisibleOwnerSelection.ts";
 import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
+import FilterDialog from "../../../components/commons/FilterDialog.tsx";
 import { useHistoryActivities } from "../../../hooks/useHistoryActivities.ts";
 import { useHistoryFilterCache } from "../../../hooks/useHistoryFilterCache.ts";
 import { useHistoryFiltersState } from "./useHistoryFiltersState.ts";
@@ -212,15 +214,7 @@ export const HistoryPage = ({
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
   const { readCachedFilter, clearFilterCache, consumeReturnFlag, saveCachedFilter } = useHistoryFilterCache();
-  const {
-    startDate, endDate, hoverDate, selectingStep, currentMonth, currentYear, isOpen, showManualPickerPanel,
-    activeQuickFilter, selectedClient, selectedOwnerAxUserId, clientResetKey, showFilters, showManualError,
-    fromDateValue, toDateValue, accountNumValue, hasRestoredFilterRef, didInitFilterRef,
-    setHoverDate, setSelectingStep, setCurrentMonth, setCurrentYear, setIsOpen, setShowFilters, setShowManualError,
-    setSelectedOwnerAxUserId, validateManualRange, applyDefaultRangeFromProps, resetHistoryFilters, applyCachedFilter,
-    handleSelect, handleClearState, openPopover, handleActivatorKeyDown, handleSectionKeyDown, handleQuickFilter,
-    handleClientSelected,
-  } = useHistoryFiltersState({
+  const filters = useHistoryFiltersState({
     defaultFromDate,
     defaultToDate,
     logHistory,
@@ -230,6 +224,15 @@ export const HistoryPage = ({
     startOfDay,
     isBefore,
   });
+  const {
+    startDate, endDate, hoverDate, selectingStep, currentMonth, currentYear, isOpen, showManualPickerPanel,
+    activeQuickFilter, selectedClient, selectedOwnerAxUserId, clientResetKey, showFilters, showManualError,
+    fromDateValue, toDateValue, accountNumValue, hasRestoredFilterRef, didInitFilterRef,
+    setHoverDate, setSelectingStep, setCurrentMonth, setCurrentYear, setIsOpen, setShowFilters, setShowManualError,
+    setSelectedOwnerAxUserId, validateManualRange, applyDefaultRangeFromProps, resetHistoryFilters, applyCachedFilter,
+    handleSelect, handleClearState, openPopover, handleActivatorKeyDown, handleSectionKeyDown, handleQuickFilter,
+    handleClientSelected,
+  } = filters;
 
   const {
     visibleVisitUsers,
@@ -275,7 +278,8 @@ export const HistoryPage = ({
       onDebug: logHistory,
     });
 
-  const { applyFilters, handleClear, handleResetFilters } = useHistoryFilterActions({
+  const filterDraft = useHistoryFilterDraft(filters, resolveEffectiveOwnerAxUserId);
+  const { applyFilters } = useHistoryFilterActions({
     startDate,
     endDate,
     fromDateValue,
@@ -305,6 +309,9 @@ export const HistoryPage = ({
     hasRestoredFilterRef,
     retryOnNetworkErrorRef,
     currentPage,
+    showFilters,
+    isLoading,
+    onOpenFilters: filterDraft.openFilters,
     logHistory,
     consumeReturnFlag,
     readCachedFilter,
@@ -389,12 +396,12 @@ export const HistoryPage = ({
   const {
     labelFrom, labelTo, summaryFrom, summaryTo, filterTitle, addDateLabel, clearRangeLabel,
     prevMonthLabel, nextMonthLabel, statusSelectStartLabel, statusSelectEndLabel, weekDayLabels,
-    clearLabel, applyLabel, clientLabel, ownerLabel, ownerAllLabel, ownerNoUsersLabel, ownerLoadingLabel,
+    dialogTitle, clearDraftLabel, cancelLabel, viewResultsLabel,
+    clientLabel, ownerLabel, ownerAllLabel, ownerNoUsersLabel, ownerLoadingLabel,
     loadingLabel, noVisitsInRangeLabel, createLabel, quickFilters, paginationLabels,
   } = useHistoryLabels(locale);
-  const showFilterActions = showFilters;
   const showSummary = !showFilters && !!startDate && !!endDate;
-  const showResults = !showFilters;
+  const showResults = visibleUsersReady;
   const showManualPicker = activeQuickFilter === "custom" && showManualPickerPanel;
   const showInlineSummary = !!startDate && !!endDate && !showManualPicker;
 
@@ -417,6 +424,24 @@ export const HistoryPage = ({
         </div>
       )}
       {showFilters && (
+        <FilterDialog
+          title={dialogTitle}
+          clearLabel={clearDraftLabel}
+          cancelLabel={cancelLabel}
+          applyLabel={viewResultsLabel}
+          busy={isLoading || !visibleUsersReady}
+          onClear={filterDraft.clearFilters}
+          onCancel={filterDraft.cancelFilters}
+          onApply={() => {
+            if (isLoading || !visibleUsersReady) return;
+            const applied = applyFilters({
+              closePanel: true,
+              page: 1,
+              skipLoad: !filterDraft.hasChanges && !errorMessage && !!lastSignatureRef.current,
+            });
+            if (applied) filterDraft.finishFilters();
+          }}
+        >
         <HistoryFilterPanel
           activatorRef={activatorRef}
           popoverRef={popoverRef}
@@ -459,14 +484,14 @@ export const HistoryPage = ({
           ownerAllOption={canManageVisibleOwners ? { value: HISTORY_VISIBLE_OWNER_ALL_VALUE, text: ownerAllLabel } : null}
           ownerNoUsersLabel={ownerNoUsersLabel}
           ownerLoadingLabel={ownerLoadingLabel}
-          showFilterActions={showFilterActions}
-          clearLabel={clearLabel}
-          applyLabel={applyLabel}
           onQuickFilter={handleQuickFilter}
           onOpenPopover={openPopover}
           onActivatorKeyDown={handleActivatorKeyDown}
           onSectionKeyDown={handleSectionKeyDown}
-          onClearDate={handleClear}
+          onClearDate={(event) => {
+            event.stopPropagation();
+            filterDraft.clearFilters();
+          }}
           onPrevMonth={handlePrevMonth}
           onNextMonth={handleNextMonth}
           onGridMouseLeave={handleGridMouseLeave}
@@ -474,11 +499,8 @@ export const HistoryPage = ({
           onDayHover={handleManualDayHover}
           onClientSelected={handleClientSelected}
           onOwnerChange={setSelectedOwnerAxUserId}
-          onResetFilters={handleResetFilters}
-          onApplyFilters={() => {
-            applyFilters({ closePanel: true, page: 1 });
-          }}
         />
+        </FilterDialog>
       )}
 
       <input type="hidden" id="fromDate" value={fromDateValue} readOnly />

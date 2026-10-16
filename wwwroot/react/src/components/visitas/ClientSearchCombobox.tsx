@@ -1,4 +1,6 @@
-import { resolveActionError } from "../../utils/actionError.ts";
+import { resolveActionError, type ActionError } from "../../utils/actionError.ts";
+import ActionErrorNotice from "../commons/ActionErrorNotice.tsx";
+import { useFloatingLayerActive } from "../commons/FloatingLayerContext.ts";
 import { showActionError } from "../../services/actionFeedback.ts";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FloatingList from "../commons/FloatingList.tsx";
@@ -52,6 +54,8 @@ const ClientSearchCombobox = ({
   portalClassName,
   panelClassName,
 }: ClientSearchComboboxProps) => {
+  const withinDialog = useFloatingLayerActive();
+  const [lookupError, setLookupError] = useState<ActionError>("");
   const isCompact = variant === "compact";
   const resolvedLabel = label || indT("History_Filter_Client", "Account");
   const resolvedPlaceholder = placeholder || resolvedLabel;
@@ -76,6 +80,14 @@ const ClientSearchCombobox = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Shows lookup failures where the user can act on them inside an active modal.
+  const reportLookupError = useCallback((error: unknown, message: string) => {
+    const details = { ...resolveActionError(error), message, severity: "error" as const };
+    if (withinDialog) setLookupError(details);
+    else showActionError(details);
+    setStatus("");
+  }, [withinDialog]);
 
   useOutsideClick([containerRef, listRef], () => {
     setShowNotFoundState(false);
@@ -159,6 +171,7 @@ const ClientSearchCombobox = ({
       return;
     }
     setLoading(true);
+    setLookupError("");
     setBlocking(true);
     setStatus(indT("Visits_Create_Searching", "Searching..."));
     const controller = new AbortController();
@@ -193,11 +206,9 @@ const ClientSearchCombobox = ({
       if (err?.name === "AbortError") {
         setStatus(indT("Visits_Create_SearchCanceled", "Search canceled."));
       } else if (String(err?.message || "").toLowerCase().includes("timeout")) {
-        showActionError({ ...resolveActionError(err), message: indT("Visits_Create_SearchTimeout", "The search took too long. Type more characters to narrow down."), severity: "error" });
-        setStatus("");
+        reportLookupError(err, indT("Visits_Create_SearchTimeout", "The search took too long. Type more characters to narrow down."));
       } else {
-        showActionError({ ...resolveActionError(err), message: indT("Visits_Create_LoadClientsError", "Failed to load clients."), severity: "error" });
-        setStatus("");
+        reportLookupError(err, indT("Visits_Create_LoadClientsError", "Failed to load clients."));
       }
     } finally {
       if (abortRef.current === controller) {
@@ -212,6 +223,7 @@ const ClientSearchCombobox = ({
   const loadMore = useCallback(async () => {
     if (abortRef.current || loadingMore || loading || !hasMore || fetchedQuery.length < minChars) return;
     setLoadingMore(true);
+    setLookupError("");
     setBlocking(true);
     const controller = new AbortController();
     abortRef.current = controller;
@@ -230,8 +242,7 @@ const ClientSearchCombobox = ({
       setHasMore(items.length === 10);
     } catch (error) {
       if (!controller.signal.aborted && abortRef.current === controller) {
-        showActionError({ ...resolveActionError(error), message: indT("Visits_Create_LoadClientsError", "Failed to load clients."), severity: "error" });
-        setStatus("");
+        reportLookupError(error, indT("Visits_Create_LoadClientsError", "Failed to load clients."));
       }
     } finally {
       if (abortRef.current === controller) {
@@ -240,7 +251,7 @@ const ClientSearchCombobox = ({
         setBlocking(false);
       }
     }
-  }, [loadingMore, loading, hasMore, fetchedQuery, page, minChars]);
+  }, [loadingMore, loading, hasMore, fetchedQuery, page, minChars, reportLookupError]);
 
   useEffect(() => {
     if (!open || !listRef.current) return;
@@ -344,6 +355,7 @@ const ClientSearchCombobox = ({
             value={query}
             onChange={(event) => {
               const val = event.target.value;
+              setLookupError("");
               setActiveIndex(0);
               setQuery(val);
               setShowNotFoundState(false);
@@ -478,6 +490,7 @@ const ClientSearchCombobox = ({
           </div>
         </FloatingList>
       </div>
+      {lookupError && <ActionErrorNotice error={lookupError} />}
       <div className="w-full flex justify-end">
         <span className={statusClass}>{status}</span>
       </div>
