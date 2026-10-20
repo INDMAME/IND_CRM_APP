@@ -58,7 +58,7 @@ const scrollToPaginationStart = (target?: HTMLElement | null) => {
   window.requestAnimationFrame(applyScroll);
 };
 
-// Compact pagination with a 6-page window and four persistent edge controls.
+// Compact pagination with overlapping page windows and four persistent edge controls.
 const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
   ({ totalPages, currentPage, pageWindow = DEFAULT_WINDOW, onPageChange, labels, className, loading, scrollTargetRef }, ref) => {
     const safeTotal = Math.max(0, totalPages || 0);
@@ -75,7 +75,10 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
 
     const pageNumbers = useMemo(() => {
       if (!safeTotal) return [];
-      const windowStart = Math.max(1, Math.floor((safeCurrent - 1) / windowSize) * windowSize + 1);
+      // Reveal the next window at its shared boundary, keeping the last page in its final window.
+      const windowStep = Math.max(1, windowSize - 1);
+      const windowAnchor = windowSize > 1 ? Math.min(safeCurrent, Math.max(1, safeTotal - 1)) : safeCurrent;
+      const windowStart = Math.floor((windowAnchor - 1) / windowStep) * windowStep + 1;
       const windowEnd = Math.min(safeTotal, windowStart + windowSize - 1);
       return Array.from({ length: windowEnd - windowStart + 1 }, (_val, idx) => windowStart + idx);
     }, [safeCurrent, safeTotal, windowSize]);
@@ -189,6 +192,7 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
                 <button
                   key={`page-${page}`}
                   type="button"
+                  aria-current={isActive ? "page" : undefined}
                   disabled={isLoading}
                   className={classNames(
                     "min-w-[26px] px-2 py-0.5 rounded-[var(--radius-xl)] border text-[10px] font-semibold transition",
