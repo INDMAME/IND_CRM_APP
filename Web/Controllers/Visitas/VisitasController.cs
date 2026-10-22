@@ -323,6 +323,7 @@ namespace IND_CRM_APP.Controllers
                     message,
                     data = hasTranscript ? transcript : string.Empty,
                     errorCode = response.ErrorCode,
+                    traceId = response.TraceId,
                     errors = response.Errors
                 });
             }

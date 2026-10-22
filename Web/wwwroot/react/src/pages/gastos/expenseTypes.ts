@@ -337,6 +337,7 @@ export type ExpenseSheetTicketQuickCreateResponseData = {
   HojaGastosId?: string | null;
   CompletedStage: ExpenseSheetTicketQuickCreateCompletedStage | string;
   StepTraceIds?: ExpenseSheetTicketQuickCreateStepTraceIds | null;
+  RollbackSucceeded?: boolean | null;
 };
 
 export type ExpenseSheetTicketQuickCreateResult = IndApiResponse<ExpenseSheetTicketQuickCreateResponseData> & {

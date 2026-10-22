@@ -1674,4 +1674,7 @@
   <data name="ExpenseSheetLink_CompanySwitched" xml:space="preserve">
     <value>Enpresaren testuingurua aldatu da gastu-orria mezu elektronikotik irekitzeko.</value>
   </data>
+  <data name="Api_ErrorTitle" xml:space="preserve"><value>Errorea</value></data>
+  <data name="Api_ErrorCode" xml:space="preserve"><value>Errore-kodea</value></data>
+  <data name="Api_ErrorTrace" xml:space="preserve"><value>Erreferentzia</value></data>
 </root>

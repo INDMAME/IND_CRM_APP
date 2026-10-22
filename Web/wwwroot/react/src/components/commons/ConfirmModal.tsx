@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId } from "react";
 import { createPortal } from "react-dom";
 import Spinner from "./Spinner.tsx";
 
@@ -15,6 +15,8 @@ type ConfirmModalProps = {
   error?: string;
   status?: string;
   children?: React.ReactNode;
+  footer?: React.ReactNode;
+  feedbackLayer?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -33,18 +35,21 @@ export default function ConfirmModal({
   error = "",
   status = "",
   children,
+  footer,
+  feedbackLayer = false,
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
+  const titleId = useId();
   if (!open) return null;
 
   const showInfo = busy || !!error;
   const infoText = busy ? (status || loadingText) : error;
 
   return createPortal(
-    <div className="fixed inset-0 z-600000 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-sm rounded-[var(--radius-xl)] bg-white shadow-xl border border-slate-200 p-5 space-y-4">
-        <div className="text-lg font-semibold text-slate-900">{title}</div>
+    <div className={`fixed inset-0 ${feedbackLayer ? "z-2147483647" : "z-600000"} flex items-center justify-center bg-black/40 px-4`}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-sm max-h-[85dvh] overflow-y-auto rounded-[var(--radius-xl)] bg-white shadow-xl border border-slate-200 p-5 space-y-4">
+        <div id={titleId} className="text-lg font-semibold text-slate-900">{title}</div>
         <div className="text-sm text-slate-700 whitespace-pre-line">{message}</div>
         {children}
         {showInfo && (
@@ -75,6 +80,7 @@ export default function ConfirmModal({
             </button>
           )}
         </div>
+        {footer}
       </div>
     </div>,
     document.body

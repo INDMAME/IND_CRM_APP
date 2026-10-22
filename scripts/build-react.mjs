@@ -19,6 +19,7 @@ if (typecheckResult.status !== 0) {
 }
 
 const entryPoints = {
+  "api-error-host": "Web/wwwroot/react/src/pages/system/ApiErrorHost.tsx",
   create: "Web/wwwroot/react/src/pages/visitas/creacion/CreatePage.tsx",
   detail: "Web/wwwroot/react/src/pages/visitas/detail/DetailPage.tsx",
   history: "Web/wwwroot/react/src/pages/visitas/historial/HistoryPage.tsx",

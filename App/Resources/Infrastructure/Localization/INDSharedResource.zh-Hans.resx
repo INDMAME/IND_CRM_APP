@@ -1674,4 +1674,7 @@
   <data name="ExpenseSheetLink_CompanySwitched" xml:space="preserve">
     <value>已切换公司上下文，以便从邮件打开费用单。</value>
   </data>
+  <data name="Api_ErrorTitle" xml:space="preserve"><value>错误</value></data>
+  <data name="Api_ErrorCode" xml:space="preserve"><value>错误代码</value></data>
+  <data name="Api_ErrorTrace" xml:space="preserve"><value>参考编号</value></data>
 </root>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
+import { showApiError } from "../../../services/apiErrorFeedback.ts";
 import { indFormat, indT } from "../../../utils/indI18n.ts";
 import { flashActionMark } from "../../../utils/visitasHistory.ts";
 import type { ExpenseSheetTicketQuickCreateResult } from "../expenseTypes.ts";
@@ -168,6 +169,7 @@ export const useExpenseSheetQuickTicketFlow = ({
   const [displayProgressKey, setDisplayProgressKey] = useState<QuickFlowProgressKey | null>(null);
   const [progressElapsedMs, setProgressElapsedMs] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
+  const [errorCode, setErrorCode] = useState("");
   const [attemptId, setAttemptId] = useState("");
   const [traceList, setTraceList] = useState<TicketTraceEntry[]>([]);
   const [partialTicketFailure, setPartialTicketFailure] = useState<QuickCreatePartialTicketState | null>(null);
@@ -345,6 +347,7 @@ export const useExpenseSheetQuickTicketFlow = ({
 
   const clearFlowState = useCallback(() => {
     setErrorMessage("");
+    setErrorCode("");
     setPartialTicketFailure(null);
     setTraceList([]);
     persistTraceList([]);
@@ -446,7 +449,7 @@ export const useExpenseSheetQuickTicketFlow = ({
       messageParts.push(indT("Api_RequestFailed", "Request failed."));
     }
 
-    if (fileId && completedStage) {
+    if (fileId && completedStage && response.Data?.RollbackSucceeded !== true) {
       messageParts.push(indFormat("ExpenseSheets_NewTicket_Error_Stage", "Completed stage: {0}.", completedStage));
     }
 
@@ -508,7 +511,7 @@ export const useExpenseSheetQuickTicketFlow = ({
         const fileId = safeText(response.Data?.FileId);
         const linkedToSheet = response.Data?.LinkedToSheet === true;
         const partialState =
-          fileId
+          fileId && response.Data?.RollbackSucceeded !== true
             ? {
                 fileId,
                 linkedToSheet,
@@ -553,7 +556,6 @@ export const useExpenseSheetQuickTicketFlow = ({
           });
         }
 
-        flashActionMark("errorProcess", 1500);
         setBusy(false);
         setProgressKey(null);
         setDisplayProgressKey(null);
@@ -576,6 +578,7 @@ export const useExpenseSheetQuickTicketFlow = ({
           errors: Array.isArray(response.Errors) ? response.Errors : [],
           stepTraceIds: response.Data?.StepTraceIds ?? null,
         });
+        setErrorCode(safeText(response.ErrorCode));
         setErrorMessage(resolvedMessage);
       } catch (error) {
         if (error instanceof ApiFetchError) {
@@ -592,12 +595,12 @@ export const useExpenseSheetQuickTicketFlow = ({
           message: error instanceof Error ? safeText(error.message) : "",
           validationErrors: error instanceof ApiFetchError ? error.validationErrors : [],
         });
-        flashActionMark("errorProcess", 1500);
         setBusy(false);
         setProgressKey(null);
         setDisplayProgressKey(null);
         progressStartedAtRef.current = null;
         setProgressElapsedMs(0);
+        setErrorCode(error instanceof ApiFetchError ? error.errorCode || "" : "");
         setErrorMessage(resolveUiErrorMessage(error));
       }
     },
@@ -781,11 +784,28 @@ export const useExpenseSheetQuickTicketFlow = ({
     clearCachedCurrentImage();
     setAttemptId("");
     setErrorMessage("");
+    setErrorCode("");
     setPartialTicketFailure(null);
     setDisplayProgressKey(null);
     progressStartedAtRef.current = null;
     setProgressElapsedMs(0);
   }, [clearCachedCurrentImage]);
+
+  // Present all quick-ticket failures once the progress overlay has closed.
+  useEffect(() => {
+    if (!errorMessage || busy) return;
+    const requestTrace = traceList.find((entry) => entry.step === "ticket-quick-create" || entry.step === "ticket-quick-create-error");
+    showApiError({
+      message: errorMessage,
+      errorCode,
+      traceId: requestTrace?.traceId,
+      details: [
+        ...(attemptId ? [{ label: "attemptId", value: attemptId }] : []),
+        ...traceList.filter((entry) => entry !== requestTrace).map((entry) => ({ label: entry.step, value: entry.traceId })),
+      ],
+      onClose: clearError,
+    });
+  }, [errorMessage, errorCode, busy, traceList, attemptId, clearError]);
 
   return {
     sourcePickerOpen,

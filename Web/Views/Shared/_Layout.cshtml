@@ -124,6 +124,9 @@
         @await Html.PartialAsync("_Sidebar")
     }
 
+    <div id="ind-api-error-root" data-title="@SR["Api_ErrorTitle"]" data-close="@SR["Common_Close"]" data-code="@SR["Api_ErrorCode"]" data-trace="@SR["Api_ErrorTrace"]"></div>
+    <script type="module" src="~/js/api-error-host.js" asp-append-version="true"></script>
+
     <div id="content" class="@contentClass">
         @RenderBody()
     </div>

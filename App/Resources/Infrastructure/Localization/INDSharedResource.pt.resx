@@ -1674,4 +1674,7 @@
   <data name="ExpenseSheetLink_CompanySwitched" xml:space="preserve">
     <value>O contexto da empresa foi alterado para abrir a folha de despesas a partir do email.</value>
   </data>
+  <data name="Api_ErrorTitle" xml:space="preserve"><value>Erro</value></data>
+  <data name="Api_ErrorCode" xml:space="preserve"><value>Código do erro</value></data>
+  <data name="Api_ErrorTrace" xml:space="preserve"><value>Referência</value></data>
 </root>

@@ -1,0 +1,2 @@
+import{a as d}from"./chunk-ORJLERH4.js";var o,t,c,p,a,l,u,s=d(()=>{o=null,t=new Set,c=r=>{o=r,t.forEach(e=>e())},p=()=>{let r=o?.onClose;o=null,t.forEach(e=>e()),r?.()},a=r=>(t.add(r),()=>{t.delete(r)}),l=()=>o,u=r=>{if(!r||typeof r!="object")return{};let e=r,n=e.ErrorCode??e.errorCode,i=e.TraceId??e.traceId;return{errorCode:typeof n=="string"?n.trim():void 0,traceId:typeof i=="string"?i.trim():void 0}}});export{c as a,p as b,a as c,l as d,u as e,s as f};
+//# sourceMappingURL=chunk-NBSYE5LY.js.map

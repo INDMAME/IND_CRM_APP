@@ -1674,4 +1674,7 @@
   <data name="ExpenseSheetLink_CompanySwitched" xml:space="preserve">
     <value>Il contesto aziendale è stato modificato per aprire la nota spese dall'email.</value>
   </data>
+  <data name="Api_ErrorTitle" xml:space="preserve"><value>Errore</value></data>
+  <data name="Api_ErrorCode" xml:space="preserve"><value>Codice errore</value></data>
+  <data name="Api_ErrorTrace" xml:space="preserve"><value>Riferimento</value></data>
 </root>

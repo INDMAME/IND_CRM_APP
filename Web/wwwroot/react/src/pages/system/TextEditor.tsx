@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeftIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import AudioRecorderMinimal from "./AudioRecorderMinimal.tsx";
+import { readApiErrorIdentifiers, showApiError } from "../../services/apiErrorFeedback.ts";
 import PulseRingsMultipleIcon from "../../components/commons/PulseRingsMultipleIcon.tsx";
 import { TEXT_EDITOR_PREFIX } from "../../utils/textEditor.ts";
 import { getSessionValueWithExpiry, removeSessionValueWithExpiry, setSessionValueWithExpiry } from "../../utils/sessionExpiry.ts";
@@ -224,6 +225,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
         if (!ok) {
           const msg = payload && payload.message ? String(payload.message) : indT("TextEditor_TranscribeFailed", "Transcribe failed.");
           setTranscribeError(msg);
+          showApiError({ message: msg, ...readApiErrorIdentifiers(payload) });
           return;
         }
 
@@ -241,6 +243,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
       } catch (err) {
         const msg = err && err.message ? String(err.message) : indT("TextEditor_TranscribeFailed", "Transcribe failed.");
         setTranscribeError(msg);
+        showApiError({ message: msg });
       } finally {
         // Re-enable the editor after completion.
         setIsTranscribing(false);

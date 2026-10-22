@@ -1674,4 +1674,7 @@
   <data name="ExpenseSheetLink_CompanySwitched" xml:space="preserve">
     <value>The company context was changed to open the expense sheet from the email.</value>
   </data>
+  <data name="Api_ErrorTitle" xml:space="preserve"><value>Error</value></data>
+  <data name="Api_ErrorCode" xml:space="preserve"><value>Error code</value></data>
+  <data name="Api_ErrorTrace" xml:space="preserve"><value>Reference</value></data>
 </root>
