@@ -103,7 +103,7 @@
     <value>Elaborato da IA</value>
   </data>
   <data name="Tickets_Filter_ProcessedByIA_Yes" xml:space="preserve">
-    <value>Si</value>
+    <value>Sì</value>
   </data>
   <data name="Tickets_Filter_ProcessedByIA_No" xml:space="preserve">
     <value>No</value>
@@ -439,7 +439,7 @@
     <value>Internazionale</value>
   </data>
   <data name="ExpenseSheets_International_Yes" xml:space="preserve">
-    <value>E</value>
+    <value>Sì</value>
   </data>
   <data name="ExpenseSheets_International_No" xml:space="preserve">
     <value>NO</value>
@@ -1153,7 +1153,7 @@
     <value>Vuoi eliminare questo elemento?</value>
   </data>
   <data name="Confirm_Yes" xml:space="preserve">
-    <value>Si</value>
+    <value>Sì</value>
   </data>
   <data name="Confirm_No" xml:space="preserve">
     <value>Cancellare</value>
@@ -1621,7 +1621,7 @@
     <value>Troncato</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Truncated_Yes" xml:space="preserve">
-    <value>Si</value>
+    <value>Sì</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Truncated_No" xml:space="preserve">
     <value>No</value>
