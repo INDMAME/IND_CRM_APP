@@ -62,16 +62,20 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
 
     const showPagination = safeTotal > 1;
     const showEdgeNav = safeTotal > windowSize;
-    const canJumpToStart = safeCurrent > windowSize;
     const canGoPrev = safeCurrent > 1;
     const canGoNext = safeCurrent < safeTotal;
 
     const pageNumbers = useMemo(() => {
       if (!safeTotal) return [];
-      const windowStart = Math.max(1, Math.floor((safeCurrent - 1) / windowSize) * windowSize + 1);
+      // Share the boundary page so selecting it reveals the next available pages.
+      const windowStep = Math.max(1, windowSize - 1);
+      // Keep the final page in its existing window instead of creating a singleton.
+      const anchorPage = windowSize > 1 && safeCurrent === safeTotal ? Math.max(1, safeCurrent - 1) : safeCurrent;
+      const windowStart = Math.floor((anchorPage - 1) / windowStep) * windowStep + 1;
       const windowEnd = Math.min(safeTotal, windowStart + windowSize - 1);
       return Array.from({ length: windowEnd - windowStart + 1 }, (_val, idx) => windowStart + idx);
     }, [safeCurrent, safeTotal, windowSize]);
+    const canJumpToStart = (pageNumbers[0] || 1) > 1;
 
     useEffect(() => {
       if (!hasLoadingSignal || !isPageTransitionPending) return;
@@ -184,6 +188,7 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
                 <button
                   key={`page-${page}`}
                   type="button"
+                  aria-current={isActive ? "page" : undefined}
                   disabled={isLoading}
                   className={classNames(
                     "min-w-[26px] px-2 py-0.5 rounded-[var(--radius-xl)] border text-[10px] font-semibold transition",
