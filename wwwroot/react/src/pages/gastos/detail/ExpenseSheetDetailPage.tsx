@@ -151,11 +151,6 @@ const ExpenseSheetDetailPageContent = () => {
         quickTicketProgressMessage={controller.quickTicketFlow.progressMessage}
         quickTicketProgressStages={controller.quickTicketFlow.progressStages}
         quickTicketElapsedMs={controller.quickTicketFlow.progressElapsedMs}
-        quickTicketErrorMessage={controller.quickTicketFlow.errorMessage}
-        quickTicketAttemptId={controller.quickTicketFlow.attemptId}
-        quickTicketTraceList={controller.quickTicketFlow.traceList}
-        hasPendingUploadRetry={controller.quickTicketFlow.hasPendingUploadRetry}
-        hasPartialTicketFailure={controller.quickTicketFlow.hasPartialTicketFailure}
         onConfirm={controller.handleModalButtonConfirm}
         onCancel={controller.closeConfirm}
         onSelectedCameraFile={(file) => {
@@ -169,10 +164,6 @@ const ExpenseSheetDetailPageContent = () => {
         }}
         onSelectFromGallery={() => controller.quickTicketFlow.selectFromGallery(controller.galleryInputRef.current)}
         onCloseSourcePicker={controller.quickTicketFlow.closeSourcePicker}
-        onRetryPendingUpload={() => {
-          void controller.quickTicketFlow.retryPendingUpload();
-        }}
-        onClearQuickTicketError={controller.quickTicketFlow.clearError}
       />
 
       <div

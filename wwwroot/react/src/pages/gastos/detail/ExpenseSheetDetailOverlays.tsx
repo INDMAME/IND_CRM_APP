@@ -34,11 +34,6 @@ type ExpenseSheetDetailOverlaysProps = {
     state: "completed" | "active" | "pending";
   }>;
   quickTicketElapsedMs: number;
-  quickTicketErrorMessage: string;
-  quickTicketAttemptId: string;
-  quickTicketTraceList: Array<{ step: string; traceId: string; at: string }>;
-  hasPendingUploadRetry: boolean;
-  hasPartialTicketFailure: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   onSelectedCameraFile: (file: File | null) => void;
@@ -46,8 +41,6 @@ type ExpenseSheetDetailOverlaysProps = {
   onSelectFromCamera: () => void;
   onSelectFromGallery: () => void;
   onCloseSourcePicker: () => void;
-  onRetryPendingUpload: () => void;
-  onClearQuickTicketError: () => void;
 };
 
 // Renders modal and quick-ticket overlays for the expense sheet detail page.
@@ -68,11 +61,6 @@ const ExpenseSheetDetailOverlays = ({
   quickTicketProgressMessage,
   quickTicketProgressStages,
   quickTicketElapsedMs,
-  quickTicketErrorMessage,
-  quickTicketAttemptId,
-  quickTicketTraceList,
-  hasPendingUploadRetry,
-  hasPartialTicketFailure,
   onConfirm,
   onCancel,
   onSelectedCameraFile,
@@ -80,8 +68,6 @@ const ExpenseSheetDetailOverlays = ({
   onSelectFromCamera,
   onSelectFromGallery,
   onCloseSourcePicker,
-  onRetryPendingUpload,
-  onClearQuickTicketError,
 }: ExpenseSheetDetailOverlaysProps) => {
   return (
     <>
@@ -164,51 +150,6 @@ const ExpenseSheetDetailOverlays = ({
         stages={quickTicketProgressStages}
       />
 
-      {quickTicketErrorMessage ? (
-        <div
-          className={
-            hasPartialTicketFailure
-              ? "glass-panel shadow-card space-y-2 rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
-              : "glass-panel shadow-card space-y-2 rounded-[var(--radius-xl)] border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"
-          }
-        >
-          <p>{quickTicketErrorMessage}</p>
-          {quickTicketAttemptId ? (
-            <p
-              className={
-                hasPartialTicketFailure
-                  ? "rounded-[var(--radius-xl)] border border-amber-200 bg-white px-2 py-1 font-mono text-[11px] text-amber-900 break-all"
-                  : "rounded-[var(--radius-xl)] border border-rose-200 bg-white px-2 py-1 font-mono text-[11px] text-rose-800 break-all"
-              }
-            >
-              {`attemptId: ${quickTicketAttemptId}`}
-            </p>
-          ) : null}
-          {quickTicketTraceList.length > 0 ? (
-            <div
-              className={
-                hasPartialTicketFailure
-                  ? "rounded-[var(--radius-xl)] border border-amber-200 bg-white p-2 text-xs text-amber-800"
-                  : "rounded-[var(--radius-xl)] border border-rose-200 bg-white p-2 text-xs text-rose-700"
-              }
-            >
-              {quickTicketTraceList.map((entry) => (
-                <p key={`${entry.step}-${entry.at}`}>{`${entry.step}: ${entry.traceId}`}</p>
-              ))}
-            </div>
-          ) : null}
-          <div className="flex flex-wrap gap-2">
-            {hasPendingUploadRetry ? (
-              <button type="button" className="ind-action-btn px-3 py-1.5 text-xs" onClick={onRetryPendingUpload}>
-                {indT("ExpenseSheets_NewTicket_RetryUpload", "Reintentar upload")}
-              </button>
-            ) : null}
-            <button type="button" className="ind-action-btn px-3 py-1.5 text-xs" onClick={onClearQuickTicketError}>
-              {indT("Common_Close", "Close")}
-            </button>
-          </div>
-        </div>
-      ) : null}
     </>
   );
 };

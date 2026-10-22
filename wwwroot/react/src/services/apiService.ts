@@ -1,3 +1,5 @@
+import { readApiErrorIdentifiers, showApiError } from "./apiErrorFeedback.ts";
+
 type PermissionI18n = {
   title?: string;
   message?: string;
@@ -17,6 +19,8 @@ export class ApiFetchError extends Error {
   status?: number;
   responseBody?: string;
   validationErrors?: ValidationErrorItem[];
+  errorCode?: string;
+  traceId?: string;
 
   constructor(message: string, status?: number, responseBody?: string, validationErrors?: ValidationErrorItem[]) {
     super(message);
@@ -24,6 +28,13 @@ export class ApiFetchError extends Error {
     this.status = status;
     this.responseBody = responseBody;
     this.validationErrors = validationErrors;
+    try {
+      const identifiers = readApiErrorIdentifiers(JSON.parse(responseBody || "null"));
+      this.errorCode = identifiers.errorCode;
+      this.traceId = identifiers.traceId;
+    } catch {
+      // Transport errors may have an empty or non-JSON body.
+    }
   }
 }
 
@@ -375,6 +386,11 @@ async function fetchJsonInternal<T = unknown>(url: string, options?: InternalFet
       );
     }
 
+    showApiError({
+      message: payloadMessage || validationMessage || indT("Api_RequestFailed", "Request failed."),
+      ...readApiErrorIdentifiers(payload),
+    });
+
     if (payloadMessage || validationMessage) {
       throw new ApiFetchError(payloadMessage || validationMessage, response.status, raw, validationErrors);
     }
@@ -411,10 +427,15 @@ async function fetchJsonInternal<T = unknown>(url: string, options?: InternalFet
       return forceReloginAndWait<T>(payloadMessage || "context-error");
     }
 
+    if (getBooleanProp(payload, "Success", "success") === false) {
+      showApiError({ message: getMessageFromPayload(payload) || indT("Api_RequestFailed", "Request failed."), ...readApiErrorIdentifiers(payload) });
+    }
     return payload as T;
   }
 
-  throw new ApiFetchError(indT("Api_InvalidJson", "Invalid server response."), response.status, raw);
+  const invalidResponseMessage = indT("Api_InvalidJson", "Invalid server response.");
+  showApiError({ message: invalidResponseMessage });
+  throw new ApiFetchError(invalidResponseMessage, response.status, raw);
 }
 
 export async function fetchJson<T = unknown>(url: string, options?: ApiFetchOptions): Promise<T> {
