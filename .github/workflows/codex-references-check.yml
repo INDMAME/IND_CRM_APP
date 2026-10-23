@@ -3,6 +3,7 @@ name: Codex References Check
 on:
   pull_request:
     paths:
+      - ".github/workflows/codex-references-check.yml"
       - ".codex/**"
       - "scripts/check-codex-references.mjs"
       - "scripts/sync-codex-references.mjs"
@@ -12,7 +13,9 @@ on:
     branches:
       - DEV
       - main
+      - PROD
     paths:
+      - ".github/workflows/codex-references-check.yml"
       - ".codex/**"
       - "scripts/check-codex-references.mjs"
       - "scripts/sync-codex-references.mjs"
@@ -24,12 +27,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          # Keep build tooling on the patched Node.js 24 security release.
+          node-version: "24.22.1"
+          package-manager-cache: false
 
       - name: Verify .codex references are in sync
         run: npm run check:codex:references
