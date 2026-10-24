@@ -1,0 +1,66 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBE
+
+; Navision Axapta Enumtype : INDCrmSyncEntityType unloaded at Jueves 23/10/2026
+; --------------------------------------------------------------------------------
+  ENUMTYPEVERSION 1
+
+  ENUMTYPE #INDCrmSyncEntityType
+    PROPERTIES
+      Name                #INDCrmSyncEntityType
+      Label               #Entidad sincronizada CRM web
+      Help                #Tipo de registro web vinculado con Axapta por el worker de CRM_INSERTEC
+      DisplayLength       #Auto
+      Style               #Combo box
+      ConfigurationKey    #
+      UseEnumValue        #Yes
+    ENDPROPERTIES
+
+    TYPEELEMENTS
+      #None
+      PROPERTIES
+        Name                #None
+        Label               #
+        ConfigurationKey    #
+        EnumValue           #0
+      ENDPROPERTIES
+      
+      #Visit
+      PROPERTIES
+        Name                #Visit
+        Label               #Visita
+        ConfigurationKey    #
+        EnumValue           #1
+      ENDPROPERTIES
+      
+      #VisitAttendee
+      PROPERTIES
+        Name                #VisitAttendee
+        Label               #Asistente de visita
+        ConfigurationKey    #
+        EnumValue           #2
+      ENDPROPERTIES
+      
+      #Prospect
+      PROPERTIES
+        Name                #Prospect
+        Label               #Cliente potencial
+        ConfigurationKey    #
+        EnumValue           #3
+      ENDPROPERTIES
+      
+      #Contact
+      PROPERTIES
+        Name                #Contact
+        Label               #Contacto
+        ConfigurationKey    #
+        EnumValue           #4
+      ENDPROPERTIES
+      
+    ENDTYPEELEMENTS
+  ENDENUMTYPE
+
+
+***Element: END

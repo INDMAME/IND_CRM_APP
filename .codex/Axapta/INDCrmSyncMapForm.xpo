@@ -1,0 +1,586 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: FRM
+
+; Navision Axapta Forms unloaded at Jueves 23/10/2026
+; --------------------------------------------------------------------------------
+FRMVERSION 5
+
+FORM #INDCrmSyncMapForm
+  PROPERTIES
+    Name                #INDCrmSyncMapForm
+  ENDPROPERTIES
+
+  METHODS
+    Version: 3
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #// Read-only support view: the mapping is written only by INDCrmSyncService.
+      #public void init()
+      #{
+      #    ;
+      #    super();
+      #
+      #    INDCrmSyncMap_ds.allowCreate(false);
+      #    INDCrmSyncMap_ds.allowEdit(false);
+      #    INDCrmSyncMap_ds.allowDelete(false);
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #INDCrmSyncMap
+          Table               #INDCrmSyncMap
+          Index               #ExternalIdEntityIdx
+          Company             #
+          CounterField        #
+          AllowCheck          #Yes
+          AllowEdit           #No
+          AllowCreate         #No
+          AllowDelete         #No
+          StartPosition       #Last
+          AutoSearch          #Yes
+          AutoNotify          #Yes
+          AutoQuery           #Yes
+          OnlyFetchActive     #No
+          JoinSource          #
+          LinkType            #Delayed
+          DelayActive         #Yes
+          InsertAtEnd         #Yes
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        Version: 3
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+
+  JOINS
+  ENDJOINS
+
+  DESIGN
+    PROPERTIES
+      Left                #Auto (left)
+      Top                 #Auto
+      Width               #Auto
+      Height              #Auto
+      Visible             #Yes
+      Caption             #Correspondencia CRM web - Axapta
+      TitleDatasource     #INDCrmSyncMap
+      Frame               #Standard
+      WindowResize        #Auto
+      WindowType          #Standard
+      SaveSize            #Yes
+      AlwaysOnTop         #No
+      HideToolbar         #No
+      SetCompany          #Yes
+      ColorScheme         #Default
+      CssClass            #
+      ShowWebHelp         #Default
+      BackgroundColor     #Button face (3D)
+      ImageName           #
+      ImageResource       #0
+      Imagemode           #Normal (preserve pict. attributes)
+      Mode                #Watch
+      SubmitMethod        #Auto
+      SupportReload       #No
+      LocalWebMenu        #
+      AllowDocking        #No
+      Font                #
+      FontSize            #0
+      Italic              #No
+      Underline           #No
+      Bold                #Default
+      CharacterSet        #0
+      LabelFont           #
+      LabelFontSize       #0
+      LabelItalic         #No
+      LabelUnderline      #No
+      LabelBold           #Default
+      LabelCharacterSet   #0
+      DataSource          #INDCrmSyncMap
+      TopMargin           #Auto
+      BottomMargin        #Auto
+      LeftMargin          #Auto
+      RightMargin         #Auto
+      ArrangeWhen         #Default
+      ArrangeMethod       #Vertical
+      Columns             #1
+      Columnspace         #Auto
+      ArrangeGuide
+        ARRAY INDEX Columns
+          #0
+        ENDARRAY
+      HideIfEmpty         #Yes
+      AlignChildren       #Yes
+      AlignChild          #Yes
+      AllowUserSetup      #Yes
+      NeededAccessLevel   #NoAccess
+    ENDPROPERTIES
+
+    CONTAINER
+      CONTROL GRID
+        PROPERTIES
+          Name                #Grid
+          AutoDeclaration     #No
+          Visible             #Yes
+          AllowEdit           #No
+          Left                #Auto (left)
+          Top                 #Auto
+          Width               #Column width
+          Height              #Column height
+          VerticalSpacing     #Auto
+          Enabled             #Yes
+          Skip                #No
+          AlignControl        #No
+          HelpText            #
+          ConfigurationKey    #
+          SecurityKey         #
+          DragDrop            #None
+          ColorScheme         #Default
+          BackgroundColor     #Window background
+          TopMargin           #0
+          BottomMargin        #0
+          LeftMargin          #0
+          RightMargin         #0
+          MultiSelect         #Yes
+          VisibleCols         #Auto
+          VisibleRows         #Auto
+          ShowColLabels       #Yes
+          ShowRowLabels       #Yes
+          HighlightActive     #Yes
+          ActiveBackColor     #Highlight background
+          ActiveForeColor     #Highlight text
+          DataSource          #INDCrmSyncMap
+          DataGroup           #
+          AutoDataGroup       #No
+          GridLines           #Yes
+        ENDPROPERTIES
+
+          CONTAINER
+            CONTROL STRINGEDIT
+              PROPERTIES
+                Name                #INDCrmSyncMap_ExternalId
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #No
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDCrmSyncMap
+                DataField           #ExternalId
+                Mandatory           #No
+                ArrayIndex          #0
+              ENDPROPERTIES
+
+            ENDCONTROL
+            
+            CONTROL COMBOBOX
+              PROPERTIES
+                Name                #INDCrmSyncMap_EntityType
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #No
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDCrmSyncMap
+                DataField           #EntityType
+                Mandatory           #No
+                ArrayIndex          #0
+              ENDPROPERTIES
+
+            ENDCONTROL
+            
+            CONTROL INTEGEREDIT
+              PROPERTIES
+                Name                #INDCrmSyncMap_RefTableId
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #No
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDCrmSyncMap
+                DataField           #RefTableId
+                Mandatory           #No
+                ArrayIndex          #0
+              ENDPROPERTIES
+
+            ENDCONTROL
+            
+            CONTROL INTEGEREDIT
+              PROPERTIES
+                Name                #INDCrmSyncMap_RefRecId
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #No
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDCrmSyncMap
+                DataField           #RefRecId
+                Mandatory           #No
+                ArrayIndex          #0
+              ENDPROPERTIES
+
+            ENDCONTROL
+            
+            CONTROL INTEGEREDIT
+              PROPERTIES
+                Name                #INDCrmSyncMap_LastVersion
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #No
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDCrmSyncMap
+                DataField           #LastVersion
+                Mandatory           #No
+                ArrayIndex          #0
+              ENDPROPERTIES
+
+            ENDCONTROL
+            
+            CONTROL STRINGEDIT
+              PROPERTIES
+                Name                #INDCrmSyncMap_LastResult
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #No
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDCrmSyncMap
+                DataField           #LastResult
+                Mandatory           #No
+                ArrayIndex          #0
+              ENDPROPERTIES
+
+            ENDCONTROL
+            
+            CONTROL STRINGEDIT
+              PROPERTIES
+                Name                #INDCrmSyncMap_LastMessageId
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #No
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDCrmSyncMap
+                DataField           #LastMessageId
+                Mandatory           #No
+                ArrayIndex          #0
+              ENDPROPERTIES
+
+            ENDCONTROL
+            
+            CONTROL DATEEDIT
+              PROPERTIES
+                Name                #INDCrmSyncMap_AppliedDate
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #No
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDCrmSyncMap
+                DataField           #AppliedDate
+                Mandatory           #No
+                ArrayIndex          #0
+              ENDPROPERTIES
+
+            ENDCONTROL
+            
+            CONTROL TIMEEDIT
+              PROPERTIES
+                Name                #INDCrmSyncMap_AppliedTime
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #No
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDCrmSyncMap
+                DataField           #AppliedTime
+                Mandatory           #No
+                ArrayIndex          #0
+              ENDPROPERTIES
+
+            ENDCONTROL
+            
+            CONTROL STRINGEDIT
+              PROPERTIES
+                Name                #INDCrmSyncMap_PayloadHash
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #No
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDCrmSyncMap
+                DataField           #PayloadHash
+                Mandatory           #No
+                ArrayIndex          #0
+              ENDPROPERTIES
+
+            ENDCONTROL
+            
+          ENDCONTAINER
+
+      ENDCONTROL
+
+    ENDCONTAINER
+
+  ENDDESIGN
+
+ENDFORM
+
+
+***Element: FTM
+
+; Navision Axapta MENUITEM : INDCrmSyncMapForm unloaded at Jueves 23/10/2026
+; --------------------------------------------------------------------------------
+  VERSION 1
+
+  MENUITEM #INDCrmSyncMapForm
+    Type: 1
+    PROPERTIES
+      Name                #INDCrmSyncMapForm
+      Label               #Correspondencia CRM web
+      HelpText            #Consulta de los registros web vinculados con Axapta por el worker de CRM_INSERTEC
+      Class               #Form
+      Object              #INDCrmSyncMapForm
+      Parameters          #
+      EnumTypeParameter   #
+      EnumParameter       #
+      RunOn               #Client
+      ConfigurationKey    #
+      CountryConfigurationkey   #
+      WebConfigurationkey #
+      SecurityKey         #
+      NeededAccessLevel   #View
+      Web                 #
+      WebAccess           #All
+      WebSecureTransaction #No
+      WebPage             #
+      MultiSelect         #No
+    ENDPROPERTIES
+
+  ENDMENUITEM
+
+
+***Element: END

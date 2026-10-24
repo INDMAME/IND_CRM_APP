@@ -1,0 +1,1424 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Navision Axapta Class: INDCrmSyncService unloaded at Jueves 23/10/2026
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+
+  CLASS #INDCrmSyncService
+    PROPERTIES
+      Name                #INDCrmSyncService
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #//INDMMS_ExternalCRM - 2026.10.23
+        #// Receiver of the CRM_INSERTEC outbox (web -> Axapta): idempotent upserts and deletes of
+        #// visits, prospects and contacts called through api/crm/sync/*. Deduplication (INDCrmSyncMap)
+        #// and the business mutation run in the same transaction; a base version mismatch is
+        #// reported as divergent and never merged. Container contracts: .codex/ENDPOINTS.md.
+        #public class INDCrmSyncService
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #accountOrigin
+        #// Maps the origin name sent by the web to CRMConsultaOrigen (CRMAccountTable.Origen).
+        #static CRMConsultaOrigen accountOrigin(str _origin)
+        #{
+        #    ;
+        #    switch (_origin)
+        #    {
+        #        case "Cliente":            return CRMConsultaOrigen::Cliente;
+        #        case "ClientePotencial":   return CRMConsultaOrigen::ClientePotencial;
+        #        case "Proveedor":          return CRMConsultaOrigen::Proveedor;
+        #        case "ProveedorPotencial": return CRMConsultaOrigen::ProveedorPotencial;
+        #    }
+        #
+        #    return CRMConsultaOrigen::None;
+        #}
+      ENDSOURCE
+      SOURCE #actividadOrigen
+        #// Maps the origin name sent by the web to CRMActividadOrigen (CRMContactoTable.Origen).
+        #static CRMActividadOrigen actividadOrigen(str _origin)
+        #{
+        #    ;
+        #    switch (_origin)
+        #    {
+        #        case "Cliente":            return CRMActividadOrigen::Cliente;
+        #        case "ClientePotencial":   return CRMActividadOrigen::ClientePotencial;
+        #        case "Proveedor":          return CRMActividadOrigen::Proveedor;
+        #        case "ProveedorPotencial": return CRMActividadOrigen::ProveedorPotencial;
+        #    }
+        #
+        #    return CRMActividadOrigen::None;
+        #}
+      ENDSOURCE
+      SOURCE #applyAttendees
+        #// Applies the attendee list by difference: rows referenced by axRecId (or by the map) are
+        #// updated, new ones inserted, AX rows not referenced are deleted. Table methods keep
+        #// CRMCustListaVisitasTable in sync for Insertec attendees. Returns [[externalId, recId, hash], ...].
+        #static container applyAttendees(CRMActividadTable _activity, container _attendees, str _messageId, int _version)
+        #{
+        #    CRMCustVendVisitaAsistenteTable attendee;
+        #    INDCrmSyncMap                   map;
+        #    Set                             kept = new Set(Types::Integer);
+        #    container                       acks;
+        #    container                       item;
+        #    int                             i;
+        #    int                             n = conLen(_attendees);
+        #    str 36                          externalId;
+        #    RecId                           contactRecId;
+        #    str                             name;
+        #    str                             position;
+        #    str                             typeName;
+        #    RecId                           axRecId;
+        #    ;
+        #    for (i = 1; i <= n; i++)
+        #    {
+        #        item         = conPeek(_attendees, i);
+        #        externalId   = conPeek(item, 1);
+        #        contactRecId = conPeek(item, 2);
+        #        name         = conPeek(item, 3);
+        #        position     = conPeek(item, 4);
+        #        typeName     = conPeek(item, 5);
+        #        axRecId      = conPeek(item, 6);
+        #
+        #        if (!axRecId)
+        #        {
+        #            map     = INDCrmSyncMap::find(externalId, INDCrmSyncEntityType::VisitAttendee);
+        #            axRecId = map.RefRecId;
+        #        }
+        #
+        #        attendee.clear();
+        #        if (axRecId)
+        #        {
+        #            select forupdate attendee
+        #                where attendee.RecId    == axRecId
+        #                   && attendee.RefRecId == _activity.RecId;
+        #        }
+        #
+        #        if (attendee.RecId)
+        #        {
+        #            attendee.AsistenteId    = name;
+        #            attendee.AsistenteCargo = position;
+        #            if (contactRecId)
+        #                attendee.ContactoRecId = contactRecId;
+        #            attendee.update();
+        #        }
+        #        else
+        #        {
+        #            attendee.clear();
+        #            attendee.RefRecId           = _activity.RecId;
+        #            attendee.AsistenteTipo      = INDCrmSyncService::attendeeType(typeName);
+        #            attendee.ContactoRecId      = contactRecId;
+        #            attendee.AsistenteId        = name;
+        #            attendee.AsistenteCargo     = position;
+        #            attendee.INDCreatedByUserId = _activity.INDCreatedByUserId;
+        #            if (contactRecId && !name)
+        #                attendee.InitFromContactoTable();
+        #            attendee.insert();
+        #        }
+        #
+        #        kept.add(attendee.RecId);
+        #        INDCrmSyncService::writeMap(externalId, INDCrmSyncEntityType::VisitAttendee,
+        #                                    tableNum(CRMCustVendVisitaAsistenteTable), attendee.RecId,
+        #                                    _version, _messageId,
+        #                                    INDCrmSyncService::attendeeFingerprint(attendee), "applied");
+        #        acks += [[ externalId, attendee.RecId, INDCrmSyncService::attendeeFingerprint(attendee) ]];
+        #    }
+        #
+        #    while select forupdate attendee
+        #        where attendee.RefRecId == _activity.RecId
+        #    {
+        #        if (kept.in(attendee.RecId))
+        #            continue;
+        #
+        #        map = INDCrmSyncMap::findByRef(tableNum(CRMCustVendVisitaAsistenteTable), attendee.RecId, true);
+        #        INDCrmSyncService::markMapDeleted(map, _messageId, _version);
+        #        attendee.delete();
+        #    }
+        #
+        #    return acks;
+        #}
+      ENDSOURCE
+      SOURCE #attendeeAcks
+        #// Attendee mappings [externalId, recId, hash] of a visit, read from INDCrmSyncMap.
+        #static container attendeeAcks(RecId _activityRecId)
+        #{
+        #    CRMCustVendVisitaAsistenteTable attendee;
+        #    INDCrmSyncMap                   map;
+        #    container                       acks;
+        #    ;
+        #    while select attendee
+        #        order by RecId
+        #        where attendee.RefRecId == _activityRecId
+        #    {
+        #        map = INDCrmSyncMap::findByRef(tableNum(CRMCustVendVisitaAsistenteTable), attendee.RecId);
+        #        if (map.ExternalId)
+        #            acks += [[ map.ExternalId, attendee.RecId, INDCrmSyncService::attendeeFingerprint(attendee) ]];
+        #    }
+        #
+        #    return acks;
+        #}
+      ENDSOURCE
+      SOURCE #attendeeContactError
+        #// Checks that every attendee contact given by RecId exists in the company and belongs to
+        #// the visit account (same rule the web uses: CRMContactoTable.AccountNum). Returns the
+        #// reason of the first invalid contact or "" when all are valid.
+        #// _attendees = [[externalId, contactRecId, name, position, type, axRecId], ...]
+        #static str attendeeContactError(container _attendees, CRMAccountNum _accountNum)
+        #{
+        #    CRMContactoTable contact;
+        #    container        item;
+        #    RecId            contactRecId;
+        #    int              i;
+        #    ;
+        #    for (i = 1; i <= conLen(_attendees); i++)
+        #    {
+        #        item         = conPeek(_attendees, i);
+        #        contactRecId = conPeek(item, 2);
+        #        if (contactRecId)
+        #        {
+        #            contact = CRMContactoTable::FindRecId(contactRecId);
+        #            if (!contact.RecId)
+        #                return strFmt("El contacto con RecId %1 no existe en Axapta.", contactRecId);
+        #
+        #            if (contact.AccountNum != _accountNum)
+        #                return strFmt("El contacto con RecId %1 no pertenece a la cuenta %2.", contactRecId, _accountNum);
+        #        }
+        #    }
+        #
+        #    return "";
+        #}
+      ENDSOURCE
+      SOURCE #attendeeDivergence
+        #// Detects attendee changes made in AX after the base version: a referenced row that
+        #// disappeared, or an unknown row created after the base date. Returns the detail or "".
+        #// _attendees = [[externalId, contactRecId, name, position, type, axRecId], ...]
+        #static str attendeeDivergence(CRMActividadTable _activity, container _attendees, date _baseDate)
+        #{
+        #    CRMCustVendVisitaAsistenteTable attendee;
+        #    INDCrmSyncMap                   map;
+        #    Set                             referenced = new Set(Types::Integer);
+        #    container                       item;
+        #    int                             i;
+        #    int                             n = conLen(_attendees);
+        #    str 36                          externalId;
+        #    RecId                           axRecId;
+        #    ;
+        #    if (!_activity.RecId)
+        #        return "";
+        #
+        #    for (i = 1; i <= n; i++)
+        #    {
+        #        item       = conPeek(_attendees, i);
+        #        externalId = conPeek(item, 1);
+        #        axRecId    = conPeek(item, 6);
+        #
+        #        if (!axRecId)
+        #        {
+        #            map     = INDCrmSyncMap::find(externalId, INDCrmSyncEntityType::VisitAttendee);
+        #            axRecId = map.RefRecId;
+        #        }
+        #
+        #        if (axRecId)
+        #        {
+        #            select firstonly attendee
+        #                where attendee.RecId    == axRecId
+        #                   && attendee.RefRecId == _activity.RecId;
+        #
+        #            if (!attendee.RecId)
+        #                return strFmt("El asistente con RecId %1 ya no existe en Axapta.", axRecId);
+        #
+        #            referenced.add(axRecId);
+        #        }
+        #    }
+        #
+        #    while select attendee
+        #        where attendee.RefRecId == _activity.RecId
+        #    {
+        #        if (referenced.in(attendee.RecId))
+        #            continue;
+        #
+        #        map = INDCrmSyncMap::findByRef(tableNum(CRMCustVendVisitaAsistenteTable), attendee.RecId);
+        #        if (!map.RecId && _baseDate && attendee.createdDate > _baseDate)
+        #            return strFmt("El asistente %1 (RecId %2) se creo en Axapta despues de la version base.",
+        #                          attendee.AsistenteId, attendee.RecId);
+        #    }
+        #
+        #    return "";
+        #}
+      ENDSOURCE
+      SOURCE #attendeeFingerprint
+        #// Fingerprint of one attendee row (name, position, type and linked contact).
+        #static str attendeeFingerprint(CRMCustVendVisitaAsistenteTable _attendee)
+        #{
+        #    str text;
+        #    ;
+        #    text = _attendee.AsistenteId
+        #         + "|" + _attendee.AsistenteCargo
+        #         + "|" + int2str(_attendee.AsistenteTipo)
+        #         + "|" + int2str(_attendee.ContactoRecId);
+        #
+        #    return INDCrmSyncService::fingerprint(text);
+        #}
+      ENDSOURCE
+      SOURCE #attendeeType
+        #// Maps the attendee type name sent by the web to CRMCustVendVisitaAsistente.
+        #static CRMCustVendVisitaAsistente attendeeType(str _type)
+        #{
+        #    ;
+        #    switch (_type)
+        #    {
+        #        case "Insertec": return CRMCustVendVisitaAsistente::Insertec;
+        #        case "Externo":  return CRMCustVendVisitaAsistente::Externo;
+        #    }
+        #
+        #    return CRMCustVendVisitaAsistente::Cliente_Proveedor;
+        #}
+      ENDSOURCE
+      SOURCE #buildResult
+        #// Result container of every sync operation:
+        #// [[result, recId, code, modifiedDate, modifiedTime, hash, errorCode, errorMessage, axCompany,
+        #//   detail, currentModifiedDate, currentModifiedTime, currentHash], attendees]
+        #// result = applied | duplicate | divergent | rejected; attendees = [[externalId, recId, hash], ...]
+        #static container buildResult(str       _result,
+        #                             RecId     _recId,
+        #                             str       _code,
+        #                             date      _modifiedDate,
+        #                             int       _modifiedTime,
+        #                             str       _hash,
+        #                             str       _errorCode,
+        #                             str       _errorMessage,
+        #                             str       _detail,
+        #                             date      _currentDate,
+        #                             int       _currentTime,
+        #                             str       _currentHash,
+        #                             container _attendees)
+        #{
+        #    container header;
+        #    ;
+        #    header = [ _result,
+        #               _recId,
+        #               _code,
+        #               INDCrmSyncService::dateStr(_modifiedDate),
+        #               _modifiedTime,
+        #               _hash,
+        #               _errorCode,
+        #               _errorMessage,
+        #               strLwr(curExt()),
+        #               _detail,
+        #               INDCrmSyncService::dateStr(_currentDate),
+        #               _currentTime,
+        #               _currentHash ];
+        #
+        #    return [header, _attendees];
+        #}
+      ENDSOURCE
+      SOURCE #contactFingerprint
+        #// Fingerprint of the contact fields the web may send.
+        #static str contactFingerprint(CRMContactoTable _contact)
+        #{
+        #    str text;
+        #    ;
+        #    text = _contact.AccountNum
+        #         + "|" + _contact.Name
+        #         + "|" + _contact.Cargo
+        #         + "|" + _contact.Email
+        #         + "|" + _contact.Phone;
+        #
+        #    return INDCrmSyncService::fingerprint(text);
+        #}
+      ENDSOURCE
+      SOURCE #dateStr
+        #// Formats a date as yyyymmdd for the container contract; empty for a null date.
+        #static str dateStr(date _date)
+        #{
+        #    ;
+        #    return _date ? date2str(_date, 321, 2, 0, 2, 0, 4) : "";
+        #}
+      ENDSOURCE
+      SOURCE #deleteVisit
+        #// Deletes a visit and its attendees (message visit.delete). An already deleted visit is applied.
+        #// Input: 1 company, 2 messageId, 3 externalId, 4 version, 5 axRecId,
+        #//        6 baseModifiedDate, 7 baseModifiedTime, 8 baseHash, 9 webCode
+        #static container deleteVisit(container _data)
+        #{
+        #    DataAreaId                      company;
+        #    str 36                          messageId;
+        #    str 36                          externalId;
+        #    int                             version;
+        #    RecId                           axRecId;
+        #    str                             baseDateStr;
+        #    int                             baseTime;
+        #    date                            baseDate;
+        #    CRMActividadTable               activity;
+        #    CRMCustVendVisitaAsistenteTable attendee;
+        #    INDCrmSyncMap                   map;
+        #    INDCrmSyncMap                   attendeeMap;
+        #    RecId                           recId;
+        #    str                             outcome;
+        #    str                             errorCode;
+        #    str                             errorMessage;
+        #    str                             detail;
+        #    date                            currentDate;
+        #    int                             currentTime;
+        #    str                             currentHash;
+        #    container                       result;
+        #    ;
+        #    company = INDCRMUtilityService::getCompany(_data);
+        #    if (!company)
+        #        return INDCrmSyncService::rejected("SYNC_COMPANY_REQUIRED", "Company requerida.");
+        #
+        #    if (conLen(_data) < 8)
+        #        return INDCrmSyncService::rejected("SYNC_MESSAGE_INVALID", "Contenedor de borrado incompleto.");
+        #
+        #    messageId   = conPeek(_data, 2);
+        #    externalId  = conPeek(_data, 3);
+        #    version     = conPeek(_data, 4);
+        #    axRecId     = conPeek(_data, 5);
+        #    baseDateStr = conPeek(_data, 6);
+        #    baseTime    = conPeek(_data, 7);
+        #
+        #    if (!messageId || !externalId || version <= 0)
+        #        return INDCrmSyncService::rejected("SYNC_MESSAGE_INVALID", "messageId, externalId y version son obligatorios.");
+        #
+        #    baseDate = baseDateStr ? str2Date(baseDateStr, 321) : dateNull();
+        #
+        #    try
+        #    {
+        #        changecompany (company)
+        #        {
+        #            ttsbegin;
+        #
+        #            map   = INDCrmSyncMap::find(externalId, INDCrmSyncEntityType::Visit, true);
+        #            recId = axRecId ? axRecId : map.RefRecId;
+        #
+        #            if (map.RecId && map.LastMessageId == messageId)
+        #            {
+        #                outcome = "duplicate";
+        #            }
+        #            else if (map.RecId && map.LastVersion > version)
+        #            {
+        #                outcome      = "rejected";
+        #                errorCode    = "SYNC_VERSION_BEHIND";
+        #                errorMessage = strFmt("Axapta ya aplico la version %1 de este registro.", map.LastVersion);
+        #            }
+        #            else
+        #            {
+        #                if (recId)
+        #                    activity = CRMActividadTable::FindRecId(recId, true);
+        #
+        #                if (activity.RecId && baseDate && (activity.modifiedDate != baseDate || activity.modifiedTime != baseTime))
+        #                {
+        #                    outcome     = "divergent";
+        #                    currentDate = activity.modifiedDate;
+        #                    currentTime = activity.modifiedTime;
+        #                    currentHash = INDCrmSyncService::visitFingerprint(activity);
+        #                    detail      = strFmt("La visita %1 cambio en Axapta el %2 %3.",
+        #                                         activity.ActividadId,
+        #                                         date2str(activity.modifiedDate, 123, 2, 2, 2, 2, 4),
+        #                                         time2str(activity.modifiedTime, 1, 1));
+        #                }
+        #                else
+        #                {
+        #                    if (activity.RecId)
+        #                    {
+        #                        while select forupdate attendee
+        #                            where attendee.RefRecId == activity.RecId
+        #                        {
+        #                            attendeeMap = INDCrmSyncMap::findByRef(tableNum(CRMCustVendVisitaAsistenteTable), attendee.RecId, true);
+        #                            INDCrmSyncService::markMapDeleted(attendeeMap, messageId, version);
+        #                            attendee.delete();
+        #                        }
+        #
+        #                        activity.delete();
+        #                    }
+        #
+        #                    INDCrmSyncService::writeMap(externalId, INDCrmSyncEntityType::Visit,
+        #                                                tableNum(CRMActividadTable), 0,
+        #                                                version, messageId, "", "deleted");
+        #                    outcome = "applied";
+        #                }
+        #            }
+        #
+        #            if (outcome == "applied" || outcome == "duplicate")
+        #            {
+        #                ttscommit;
+        #                result = INDCrmSyncService::buildResult(outcome, recId, "", dateNull(), 0, "",
+        #                                                        "", "", "", dateNull(), 0, "", conNull());
+        #            }
+        #            else
+        #            {
+        #                ttsabort;
+        #                if (outcome == "divergent")
+        #                    result = INDCrmSyncService::divergent(detail, activity.RecId, currentDate, currentTime, currentHash);
+        #                else
+        #                    result = INDCrmSyncService::rejected(errorCode, errorMessage);
+        #            }
+        #        }
+        #    }
+        #    catch
+        #    {
+        #        if (appl.ttsLevel() > 0)
+        #            ttsabort;
+        #
+        #        result = INDCrmSyncService::rejected("SYNC_AX_EXCEPTION",
+        #                     strFmt("Error borrando la visita en Axapta. %1", INDCRMUtilityService::getLastInfologMessage()));
+        #    }
+        #
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #divergent
+        #// Divergence: the AX record changed after the base version known by the web. Nothing is applied;
+        #// the current stamps travel back so the web can decide (resend-web / accept-ax).
+        #static container divergent(str _detail, RecId _recId, date _currentDate, int _currentTime, str _currentHash)
+        #{
+        #    ;
+        #    return INDCrmSyncService::buildResult("divergent", _recId, "", dateNull(), 0, "",
+        #                                          "SYNC_DIVERGENT", _detail, _detail,
+        #                                          _currentDate, _currentTime, _currentHash, conNull());
+        #}
+      ENDSOURCE
+      SOURCE #fingerprint
+        #// Cheap deterministic fingerprint of a text (Adler-style, 16-bit sums). Diagnostic only:
+        #// the product computes its own SHA-256 base hash and ignores this value.
+        #static str fingerprint(str _text)
+        #{
+        #    int a = 1;
+        #    int b = 0;
+        #    int i;
+        #    int n = strLen(_text);
+        #    ;
+        #    for (i = 1; i <= n; i++)
+        #    {
+        #        a = (a + char2num(_text, i)) mod 65521;
+        #        b = (b + a) mod 65521;
+        #    }
+        #
+        #    return int2str(b) + "-" + int2str(a);
+        #}
+      ENDSOURCE
+      SOURCE #getVisit
+        #// Snapshot of a visit as AX holds it (used to accept the AX version of a divergence).
+        #// Input: [company, recId]. Output: [[found, recId, actividadId, modifiedDate, modifiedTime, hash,
+        #// transDate, visitType, contactMethod, rating, description, comments, background, conclusions,
+        #// accountNum, ownerAxUserId]].
+        #static container getVisit(container _data)
+        #{
+        #    DataAreaId        company;
+        #    RecId             recId;
+        #    CRMActividadTable activity;
+        #    container         result;
+        #    ;
+        #    company = INDCRMUtilityService::getCompany(_data);
+        #    recId   = conLen(_data) >= 2 ? conPeek(_data, 2) : 0;
+        #
+        #    if (!company || !recId)
+        #        return [[ 0 ]];
+        #
+        #    changecompany (company)
+        #    {
+        #        activity = CRMActividadTable::FindRecId(recId);
+        #        if (activity.RecId)
+        #            result = [[ 1,
+        #                        activity.RecId,
+        #                        activity.ActividadId,
+        #                        INDCrmSyncService::dateStr(activity.modifiedDate),
+        #                        activity.modifiedTime,
+        #                        INDCrmSyncService::visitFingerprint(activity),
+        #                        INDCrmSyncService::dateStr(activity.TransDate),
+        #                        activity.TipoVisita,
+        #                        activity.ContactMethod,
+        #                        activity.VisitaValoracion,
+        #                        activity.Description,
+        #                        activity.Comentarios,
+        #                        activity.VisitaAntecedentes,
+        #                        activity.VisitaConclusiones,
+        #                        activity.AccountNum,
+        #                        INDCRMVisitsService::getActivityOwnerAxUserId(activity) ]];
+        #        else
+        #            result = [[ 0 ]];
+        #    }
+        #
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #getVisitVersion
+        #// Current base version of a visit. Input: [company, recId]. Output: [[found, modifiedDate, modifiedTime, hash]].
+        #static container getVisitVersion(container _data)
+        #{
+        #    DataAreaId        company;
+        #    RecId             recId;
+        #    CRMActividadTable activity;
+        #    container         result;
+        #    ;
+        #    company = INDCRMUtilityService::getCompany(_data);
+        #    recId   = conLen(_data) >= 2 ? conPeek(_data, 2) : 0;
+        #
+        #    if (!company || !recId)
+        #        return [[ 0, "", 0, "" ]];
+        #
+        #    changecompany (company)
+        #    {
+        #        activity = CRMActividadTable::FindRecId(recId);
+        #        if (activity.RecId)
+        #            result = [[ 1,
+        #                        INDCrmSyncService::dateStr(activity.modifiedDate),
+        #                        activity.modifiedTime,
+        #                        INDCrmSyncService::visitFingerprint(activity) ]];
+        #        else
+        #            result = [[ 0, "", 0, "" ]];
+        #    }
+        #
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #initActivityFromAccount
+        #// Initializes the visit header from its account by origin (same rules as INDCRMVisitsService,
+        #// extended to vendors and potential vendors). Name falls back to the commercial name.
+        #static void initActivityFromAccount(CRMActividadTable _activity, CRMAccountTable _account)
+        #{
+        #    CRMProveedorPotencialTable proveedorPotencial;
+        #    ;
+        #    switch (_account.Origen)
+        #    {
+        #        case CRMConsultaOrigen::Cliente:
+        #            _activity.InitFromCustTable(CustTable::find(_account.AccountNum));
+        #            break;
+        #
+        #        case CRMConsultaOrigen::ClientePotencial:
+        #            _activity.InitFromClientePotencialTable(CRMClientePotencialTable::Find(_account.AccountNum));
+        #            break;
+        #
+        #        case CRMConsultaOrigen::Proveedor:
+        #            _activity.InitFromVendTable(VendTable::find(_account.AccountNum));
+        #            break;
+        #
+        #        case CRMConsultaOrigen::ProveedorPotencial:
+        #            select firstonly proveedorPotencial
+        #                where proveedorPotencial.ProveedorPotencialId == _account.AccountNum;
+        #            _activity.InitFromProveedorPotencialTable(proveedorPotencial);
+        #            break;
+        #    }
+        #
+        #    if (!_activity.Name)
+        #        _activity.Name = _account.NombreComercial;
+        #}
+      ENDSOURCE
+      SOURCE #initContactFromAccount
+        #// Initializes a new contact from its account by origin (company name and phone).
+        #static void initContactFromAccount(CRMContactoTable _contact, CRMAccountTable _account)
+        #{
+        #    ;
+        #    switch (_account.Origen)
+        #    {
+        #        case CRMConsultaOrigen::Cliente:
+        #            _contact.InitFromCustTable(CustTable::find(_account.AccountNum));
+        #            break;
+        #
+        #        case CRMConsultaOrigen::ClientePotencial:
+        #            _contact.InitFromClientePotencialTable(CRMClientePotencialTable::Find(_account.AccountNum));
+        #            break;
+        #
+        #        case CRMConsultaOrigen::Proveedor:
+        #            _contact.InitFromVendTable(VendTable::find(_account.AccountNum));
+        #            break;
+        #
+        #        default:
+        #            _contact.Empresa = _account.NombreComercial;
+        #            break;
+        #    }
+        #
+        #    if (!_contact.Empresa)
+        #        _contact.Empresa = _account.NombreComercial;
+        #}
+      ENDSOURCE
+      SOURCE #markMapDeleted
+        #// Marks the mapping of a deleted AX row; the web id stays known so a repeated message is a duplicate.
+        #static void markMapDeleted(INDCrmSyncMap _map, str _messageId, int _version)
+        #{
+        #    ;
+        #    if (!_map.RecId)
+        #        return;
+        #
+        #    _map.RefRecId      = 0;
+        #    _map.LastResult    = "deleted";
+        #    _map.LastMessageId = _messageId;
+        #    _map.LastVersion   = _version;
+        #    _map.AppliedDate   = today();
+        #    _map.AppliedTime   = timeNow();
+        #    _map.update();
+        #}
+      ENDSOURCE
+      SOURCE #ping
+        #// Proves the COM session and the company switch. Input: [company]. Output: [[company, companyName, axUser]].
+        #static container ping(container _data)
+        #{
+        #    DataAreaId  company;
+        #    CompanyInfo companyInfo;
+        #    container   result;
+        #    ;
+        #    company = INDCRMUtilityService::getCompany(_data);
+        #    if (!company)
+        #        return [[ "", "", curUserId() ]];
+        #
+        #    changecompany (company)
+        #    {
+        #        companyInfo = CompanyInfo::find();
+        #        result      = [[ strFmt("%1", companyInfo.dataAreaId),
+        #                         strFmt("%1", companyInfo.Name),
+        #                         curUserId() ]];
+        #    }
+        #
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #prospectFingerprint
+        #// Fingerprint of the prospect fields the web may send.
+        #static str prospectFingerprint(CRMClientePotencialTable _prospect)
+        #{
+        #    str text;
+        #    ;
+        #    text = _prospect.Name
+        #         + "|" + _prospect.RazonSocial
+        #         + "|" + _prospect.City
+        #         + "|" + _prospect.CountryId
+        #         + "|" + _prospect.StatisticsGroup
+        #         + "|" + int2str(_prospect.OrigenContacto)
+        #         + "|" + _prospect.VATNum
+        #         + "|" + _prospect.UserId;
+        #
+        #    return INDCrmSyncService::fingerprint(text);
+        #}
+      ENDSOURCE
+      SOURCE #rejected
+        #// Functional rejection: the worker marks the message as error without retrying.
+        #static container rejected(str _errorCode, str _errorMessage)
+        #{
+        #    ;
+        #    return INDCrmSyncService::buildResult("rejected", 0, "", dateNull(), 0, "",
+        #                                          _errorCode, _errorMessage, "",
+        #                                          dateNull(), 0, "", conNull());
+        #}
+      ENDSOURCE
+      SOURCE #upsertContact
+        #// Creates or updates a contact of an AX account (message contact.upsert), CRMContactoTable.
+        #// Input: 1 company, 2 messageId, 3 externalId, 4 version, 5 axRecId, 6 accountOrigin,
+        #//        7 accountNum, 8 name, 9 position, 10 email, 11 phone
+        #static container upsertContact(container _data)
+        #{
+        #    DataAreaId       company;
+        #    str 36           messageId;
+        #    str 36           externalId;
+        #    int              version;
+        #    RecId            axRecId;
+        #    str              originName;
+        #    CRMAccountNum    accountNum;
+        #    str              name;
+        #    str              position;
+        #    str              email;
+        #    str              phone;
+        #    CRMContactoTable contact;
+        #    CRMAccountTable  account;
+        #    INDCrmSyncMap    map;
+        #    RecId            recId;
+        #    boolean          isNew;
+        #    str              outcome;
+        #    str              errorCode;
+        #    str              errorMessage;
+        #    container        result;
+        #    ;
+        #    company = INDCRMUtilityService::getCompany(_data);
+        #    if (!company)
+        #        return INDCrmSyncService::rejected("SYNC_COMPANY_REQUIRED", "Company requerida.");
+        #
+        #    if (conLen(_data) < 11)
+        #        return INDCrmSyncService::rejected("SYNC_MESSAGE_INVALID", "Contenedor de contacto incompleto.");
+        #
+        #    messageId  = conPeek(_data, 2);
+        #    externalId = conPeek(_data, 3);
+        #    version    = conPeek(_data, 4);
+        #    axRecId    = conPeek(_data, 5);
+        #    originName = conPeek(_data, 6);
+        #    accountNum = conPeek(_data, 7);
+        #    name       = conPeek(_data, 8);
+        #    position   = conPeek(_data, 9);
+        #    email      = conPeek(_data, 10);
+        #    phone      = conPeek(_data, 11);
+        #
+        #    if (!messageId || !externalId || version <= 0)
+        #        return INDCrmSyncService::rejected("SYNC_MESSAGE_INVALID", "messageId, externalId y version son obligatorios.");
+        #
+        #    if (!name)
+        #        return INDCrmSyncService::rejected("SYNC_CONTACT_INCOMPLETE", "El nombre del contacto es obligatorio.");
+        #
+        #    try
+        #    {
+        #        changecompany (company)
+        #        {
+        #            ttsbegin;
+        #
+        #            map = INDCrmSyncMap::find(externalId, INDCrmSyncEntityType::Contact, true);
+        #
+        #            if (map.RecId && map.LastMessageId == messageId && map.RefRecId)
+        #            {
+        #                contact = CRMContactoTable::FindRecId(map.RefRecId);
+        #                if (contact.RecId)
+        #                    outcome = "duplicate";
+        #            }
+        #
+        #            if (!outcome && map.RecId && map.LastVersion > version)
+        #            {
+        #                outcome      = "rejected";
+        #                errorCode    = "SYNC_VERSION_BEHIND";
+        #                errorMessage = strFmt("Axapta ya aplico la version %1 de este registro.", map.LastVersion);
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                account = CRMAccountTable::Find(accountNum, INDCrmSyncService::accountOrigin(originName));
+        #                if (!account.RecId)
+        #                {
+        #                    outcome      = "rejected";
+        #                    errorCode    = "SYNC_ACCOUNT_NOT_FOUND";
+        #                    errorMessage = strFmt("La cuenta %1 (%2) no existe en Axapta.", accountNum, originName);
+        #                }
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                recId = axRecId ? axRecId : map.RefRecId;
+        #                if (recId)
+        #                {
+        #                    contact = CRMContactoTable::FindRecId(recId, true);
+        #                    if (!contact.RecId)
+        #                    {
+        #                        outcome      = "rejected";
+        #                        errorCode    = "SYNC_CONTACT_NOT_FOUND";
+        #                        errorMessage = strFmt("El contacto con RecId %1 no existe en Axapta.", recId);
+        #                    }
+        #                }
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                isNew = !contact.RecId;
+        #                if (isNew)
+        #                {
+        #                    contact.clear();
+        #                    contact.initValue();
+        #                    contact.AccountNum = accountNum;
+        #                    contact.Origen     = INDCrmSyncService::actividadOrigen(originName);
+        #                    INDCrmSyncService::initContactFromAccount(contact, account);
+        #                }
+        #
+        #                contact.Name  = name;
+        #                contact.Cargo = position;
+        #                contact.Email = email;
+        #                contact.Phone = phone;
+        #
+        #                infolog.clear(0);
+        #                if (email && !contact.validateField(fieldNum(CRMContactoTable, Email)))
+        #                {
+        #                    outcome      = "rejected";
+        #                    errorCode    = "SYNC_CONTACT_INVALID";
+        #                    errorMessage = INDCRMUtilityService::getLastInfologMessage();
+        #                    if (!errorMessage)
+        #                        errorMessage = "Axapta no admite el correo del contacto.";
+        #                }
+        #                else
+        #                {
+        #                    if (isNew)
+        #                        contact.insert();
+        #                    else
+        #                        contact.update();
+        #
+        #                    contact = CRMContactoTable::FindRecId(contact.RecId);
+        #                    INDCrmSyncService::writeMap(externalId, INDCrmSyncEntityType::Contact,
+        #                                                tableNum(CRMContactoTable), contact.RecId,
+        #                                                version, messageId,
+        #                                                INDCrmSyncService::contactFingerprint(contact), "applied");
+        #                    outcome = "applied";
+        #                }
+        #            }
+        #
+        #            if (outcome == "applied" || outcome == "duplicate")
+        #            {
+        #                ttscommit;
+        #                result = INDCrmSyncService::buildResult(outcome, contact.RecId, "",
+        #                                                        contact.modifiedDate, contact.modifiedTime,
+        #                                                        INDCrmSyncService::contactFingerprint(contact),
+        #                                                        "", "", "", dateNull(), 0, "", conNull());
+        #            }
+        #            else
+        #            {
+        #                ttsabort;
+        #                result = INDCrmSyncService::rejected(errorCode, errorMessage);
+        #            }
+        #        }
+        #    }
+        #    catch
+        #    {
+        #        if (appl.ttsLevel() > 0)
+        #            ttsabort;
+        #
+        #        result = INDCrmSyncService::rejected("SYNC_AX_EXCEPTION",
+        #                     strFmt("Error aplicando el contacto en Axapta. %1", INDCRMUtilityService::getLastInfologMessage()));
+        #    }
+        #
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #upsertProspect
+        #// Creates or updates a web prospect (message account.upsert): CRMClientePotencialTable with the
+        #// CP numerator and validateWrite(); insert() creates CRMAccountTable and the sector line.
+        #// The acknowledged recId is CRMAccountTable.RecId (the id the web stores for accounts).
+        #// Input: 1 company, 2 messageId, 3 externalId, 4 version, 5 axRecId (CRMAccountTable.RecId),
+        #//        6 localCode, 7 tradeName, 8 legalName, 9 city, 10 countryId, 11 statisticsGroup,
+        #//        12 contactOrigin, 13 vatNum, 14 responsibleCrmUserId
+        #static container upsertProspect(container _data)
+        #{
+        #    DataAreaId               company;
+        #    str 36                   messageId;
+        #    str 36                   externalId;
+        #    int                      version;
+        #    RecId                    axRecId;
+        #    Name                     tradeName;
+        #    Name                     legalName;
+        #    str                      city;
+        #    CountryId                countryId;
+        #    CustStatGroupId          statisticsGroup;
+        #    CRMOrigenContacto        contactOrigin;
+        #    str                      vatNum;
+        #    CRMUserId                responsibleCrmUserId;
+        #    CRMClientePotencialTable prospect;
+        #    CRMAccountTable          account;
+        #    INDCrmSyncMap            map;
+        #    NumberSeq                numberSeq;
+        #    boolean                  isNew;
+        #    str                      outcome;
+        #    str                      errorCode;
+        #    str                      errorMessage;
+        #    container                result;
+        #    ;
+        #    company = INDCRMUtilityService::getCompany(_data);
+        #    if (!company)
+        #        return INDCrmSyncService::rejected("SYNC_COMPANY_REQUIRED", "Company requerida.");
+        #
+        #    if (conLen(_data) < 14)
+        #        return INDCrmSyncService::rejected("SYNC_MESSAGE_INVALID", "Contenedor de cliente potencial incompleto.");
+        #
+        #    messageId            = conPeek(_data, 2);
+        #    externalId           = conPeek(_data, 3);
+        #    version              = conPeek(_data, 4);
+        #    axRecId              = conPeek(_data, 5);
+        #    tradeName            = conPeek(_data, 7);
+        #    legalName            = conPeek(_data, 8);
+        #    city                 = conPeek(_data, 9);
+        #    countryId            = conPeek(_data, 10);
+        #    statisticsGroup      = conPeek(_data, 11);
+        #    contactOrigin        = conPeek(_data, 12);
+        #    vatNum               = conPeek(_data, 13);
+        #    responsibleCrmUserId = conPeek(_data, 14);
+        #
+        #    if (!messageId || !externalId || version <= 0)
+        #        return INDCrmSyncService::rejected("SYNC_MESSAGE_INVALID", "messageId, externalId y version son obligatorios.");
+        #
+        #    if (!tradeName || !legalName || !statisticsGroup)
+        #        return INDCrmSyncService::rejected("SYNC_PROSPECT_INCOMPLETE", "Nombre comercial, razon social y sector son obligatorios.");
+        #
+        #    try
+        #    {
+        #        changecompany (company)
+        #        {
+        #            ttsbegin;
+        #
+        #            map = INDCrmSyncMap::find(externalId, INDCrmSyncEntityType::Prospect, true);
+        #
+        #            if (map.RecId && map.LastMessageId == messageId && map.RefRecId)
+        #            {
+        #                prospect = CRMClientePotencialTable::FindRecId(map.RefRecId);
+        #                if (prospect.RecId)
+        #                {
+        #                    account = CRMAccountTable::Find(prospect.ClientePotencialId, CRMConsultaOrigen::ClientePotencial);
+        #                    outcome = "duplicate";
+        #                }
+        #            }
+        #
+        #            if (!outcome && map.RecId && map.LastVersion > version)
+        #            {
+        #                outcome      = "rejected";
+        #                errorCode    = "SYNC_VERSION_BEHIND";
+        #                errorMessage = strFmt("Axapta ya aplico la version %1 de este registro.", map.LastVersion);
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                if (axRecId)
+        #                {
+        #                    select firstonly account
+        #                        where account.RecId == axRecId;
+        #
+        #                    if (!account.RecId || account.Origen != CRMConsultaOrigen::ClientePotencial)
+        #                    {
+        #                        outcome      = "rejected";
+        #                        errorCode    = "SYNC_ACCOUNT_NOT_FOUND";
+        #                        errorMessage = strFmt("La cuenta con RecId %1 no es un cliente potencial de Axapta.", axRecId);
+        #                    }
+        #                    else
+        #                    {
+        #                        prospect = CRMClientePotencialTable::Find(account.AccountNum, true);
+        #                    }
+        #                }
+        #                else if (map.RefRecId)
+        #                {
+        #                    prospect = CRMClientePotencialTable::FindRecId(map.RefRecId, true);
+        #                }
+        #
+        #                if (!outcome && (axRecId || map.RefRecId) && !prospect.RecId)
+        #                {
+        #                    outcome      = "rejected";
+        #                    errorCode    = "SYNC_PROSPECT_NOT_FOUND";
+        #                    errorMessage = "El cliente potencial ya no existe en Axapta.";
+        #                }
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                isNew = !prospect.RecId;
+        #                if (isNew)
+        #                {
+        #                    numberSeq = NumberSeq::newGetNum(CustParameters::numRefCRMClientePotencialId());
+        #                    prospect.clear();
+        #                    prospect.initValue();
+        #                    prospect.ClientePotencialId = numberSeq.num();
+        #                }
+        #
+        #                prospect.Name            = tradeName;
+        #                prospect.RazonSocial     = legalName;
+        #                prospect.City            = city;
+        #                prospect.CountryId       = countryId;
+        #                prospect.StatisticsGroup = statisticsGroup;
+        #                prospect.OrigenContacto  = contactOrigin;
+        #                prospect.VATNum          = vatNum;
+        #
+        #                if (responsibleCrmUserId)
+        #                    prospect.UserId = responsibleCrmUserId;
+        #                else if (isNew)
+        #                    prospect.UserId = CRMUsuarioTable::Find_AxaptaUserId(curUserId()).UserId;
+        #
+        #                infolog.clear(0);
+        #                if (!prospect.validateWrite())
+        #                {
+        #                    outcome      = "rejected";
+        #                    errorCode    = "SYNC_PROSPECT_INVALID";
+        #                    errorMessage = INDCRMUtilityService::getLastInfologMessage();
+        #                    if (!errorMessage)
+        #                        errorMessage = "Axapta no admite los datos del cliente potencial.";
+        #                }
+        #                else
+        #                {
+        #                    if (isNew)
+        #                    {
+        #                        prospect.insert();
+        #                    }
+        #                    else
+        #                    {
+        #                        prospect.update();
+        #                        prospect.ActualizaLineaEnTableCuentas();
+        #                    }
+        #
+        #                    prospect = CRMClientePotencialTable::FindRecId(prospect.RecId);
+        #                    account  = CRMAccountTable::Find(prospect.ClientePotencialId, CRMConsultaOrigen::ClientePotencial);
+        #
+        #                    INDCrmSyncService::writeMap(externalId, INDCrmSyncEntityType::Prospect,
+        #                                                tableNum(CRMClientePotencialTable), prospect.RecId,
+        #                                                version, messageId,
+        #                                                INDCrmSyncService::prospectFingerprint(prospect), "applied");
+        #                    outcome = "applied";
+        #                }
+        #            }
+        #
+        #            if (outcome == "applied" || outcome == "duplicate")
+        #            {
+        #                ttscommit;
+        #                result = INDCrmSyncService::buildResult(outcome, account.RecId, prospect.ClientePotencialId,
+        #                                                        prospect.modifiedDate, prospect.modifiedTime,
+        #                                                        INDCrmSyncService::prospectFingerprint(prospect),
+        #                                                        "", "", "", dateNull(), 0, "", conNull());
+        #            }
+        #            else
+        #            {
+        #                ttsabort;
+        #                result = INDCrmSyncService::rejected(errorCode, errorMessage);
+        #            }
+        #        }
+        #    }
+        #    catch
+        #    {
+        #        if (appl.ttsLevel() > 0)
+        #            ttsabort;
+        #
+        #        result = INDCrmSyncService::rejected("SYNC_AX_EXCEPTION",
+        #                     strFmt("Error aplicando el cliente potencial en Axapta. %1", INDCRMUtilityService::getLastInfologMessage()));
+        #    }
+        #
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #upsertVisit
+        #// Creates or updates a visit with its complete attendee list (message visit.upsert).
+        #// Input container:
+        #//   1 company, 2 messageId, 3 externalId, 4 version, 5 axRecId,
+        #//   6 baseModifiedDate (yyyymmdd or ""), 7 baseModifiedTime (seconds), 8 baseHash,
+        #//   9 accountOrigin (CRMConsultaOrigen name), 10 accountNum, 11 transDate (yyyymmdd),
+        #//   12 visitType, 13 contactMethod, 14 rating, 15 description, 16 comments, 17 background,
+        #//   18 conclusions, 19 ownerAxUserId, 20 ownerCrmUserId, 21 webCode, 22 attendeeCount,
+        #//   23.. attendeeCount x [externalId, contactRecId, name, position, type, axRecId]
+        #// Output: INDCrmSyncService::buildResult.
+        #static container upsertVisit(container _data)
+        #{
+        #    DataAreaId              company;
+        #    str 36                  messageId;
+        #    str 36                  externalId;
+        #    int                     version;
+        #    RecId                   axRecId;
+        #    str                     baseDateStr;
+        #    int                     baseTime;
+        #    str                     baseHash;
+        #    str                     originName;
+        #    CRMAccountNum           accountNum;
+        #    str                     transDateStr;
+        #    CRMTipoVisita           visitType;
+        #    INDContactMethod        contactMethod;
+        #    CRMCustVisitaValoracion rating;
+        #    Description             description;
+        #    CRMComentarios          comments;
+        #    CRMComentarios          background;
+        #    CRMComentarios          conclusions;
+        #    UserId                  ownerAxUserId;
+        #    CRMUserId               ownerCrmUserId;
+        #    str                     webCode;
+        #    int                     attendeeCount;
+        #    container               attendees;
+        #    container               result;
+        #    date                    baseDate;
+        #    date                    transDate;
+        #    CRMActividadTable       activity;
+        #    CRMAccountTable         account;
+        #    INDCrmSyncMap           map;
+        #    NumberSeq               numberSeq;
+        #    CRMUserId               legacyCrmUserId;
+        #    RecId                   recId;
+        #    boolean                 isNew;
+        #    str                     outcome;
+        #    str                     errorCode;
+        #    str                     errorMessage;
+        #    str                     detail;
+        #    int                     i;
+        #    int                     pos;
+        #    ;
+        #    company = INDCRMUtilityService::getCompany(_data);
+        #    if (!company)
+        #        return INDCrmSyncService::rejected("SYNC_COMPANY_REQUIRED", "Company requerida.");
+        #
+        #    if (conLen(_data) < 22)
+        #        return INDCrmSyncService::rejected("SYNC_MESSAGE_INVALID", "Contenedor de visita incompleto.");
+        #
+        #    messageId      = conPeek(_data, 2);
+        #    externalId     = conPeek(_data, 3);
+        #    version        = conPeek(_data, 4);
+        #    axRecId        = conPeek(_data, 5);
+        #    baseDateStr    = conPeek(_data, 6);
+        #    baseTime       = conPeek(_data, 7);
+        #    baseHash       = conPeek(_data, 8);
+        #    originName     = conPeek(_data, 9);
+        #    accountNum     = conPeek(_data, 10);
+        #    transDateStr   = conPeek(_data, 11);
+        #    visitType      = conPeek(_data, 12);
+        #    contactMethod  = conPeek(_data, 13);
+        #    rating         = conPeek(_data, 14);
+        #    description    = conPeek(_data, 15);
+        #    comments       = conPeek(_data, 16);
+        #    background     = conPeek(_data, 17);
+        #    conclusions    = conPeek(_data, 18);
+        #    ownerAxUserId  = conPeek(_data, 19);
+        #    ownerCrmUserId = conPeek(_data, 20);
+        #    webCode        = conPeek(_data, 21);
+        #    attendeeCount  = conPeek(_data, 22);
+        #
+        #    for (i = 0; i < attendeeCount; i++)
+        #    {
+        #        pos = 23 + i * 6;
+        #        if (conLen(_data) < pos + 5)
+        #            return INDCrmSyncService::rejected("SYNC_MESSAGE_INVALID", "Lista de asistentes incompleta.");
+        #
+        #        attendees += [[ conPeek(_data, pos),
+        #                        conPeek(_data, pos + 1),
+        #                        conPeek(_data, pos + 2),
+        #                        conPeek(_data, pos + 3),
+        #                        conPeek(_data, pos + 4),
+        #                        conPeek(_data, pos + 5) ]];
+        #    }
+        #
+        #    if (!messageId || !externalId || version <= 0)
+        #        return INDCrmSyncService::rejected("SYNC_MESSAGE_INVALID", "messageId, externalId y version son obligatorios.");
+        #
+        #    transDate = str2Date(transDateStr, 321);
+        #    if (!transDate)
+        #        return INDCrmSyncService::rejected("SYNC_TRANSDATE_INVALID", "Fecha de visita no valida.");
+        #
+        #    if (!ownerAxUserId)
+        #        return INDCrmSyncService::rejected("SYNC_OWNER_REQUIRED", "ownerAxUserId es obligatorio.");
+        #
+        #    baseDate = baseDateStr ? str2Date(baseDateStr, 321) : dateNull();
+        #
+        #    try
+        #    {
+        #        changecompany (company)
+        #        {
+        #            ttsbegin;
+        #
+        #            map = INDCrmSyncMap::find(externalId, INDCrmSyncEntityType::Visit, true);
+        #
+        #            // Same message again (lost HTTP response): answer the committed result.
+        #            if (map.RecId && map.LastMessageId == messageId && map.RefRecId)
+        #            {
+        #                activity = CRMActividadTable::FindRecId(map.RefRecId);
+        #                if (activity.RecId)
+        #                    outcome = "duplicate";
+        #            }
+        #
+        #            if (!outcome && map.RecId && map.LastVersion > version)
+        #            {
+        #                outcome      = "rejected";
+        #                errorCode    = "SYNC_VERSION_BEHIND";
+        #                errorMessage = strFmt("Axapta ya aplico la version %1 de este registro.", map.LastVersion);
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                recId = axRecId ? axRecId : map.RefRecId;
+        #                if (recId)
+        #                {
+        #                    activity = CRMActividadTable::FindRecId(recId, true);
+        #                    if (!activity.RecId)
+        #                    {
+        #                        outcome      = "rejected";
+        #                        errorCode    = "SYNC_VISIT_NOT_FOUND";
+        #                        errorMessage = strFmt("La visita con RecId %1 no existe en Axapta.", recId);
+        #                    }
+        #                    else if (baseDate && (activity.modifiedDate != baseDate || activity.modifiedTime != baseTime))
+        #                    {
+        #                        outcome = "divergent";
+        #                        detail  = strFmt("La visita %1 cambio en Axapta el %2 %3.",
+        #                                         activity.ActividadId,
+        #                                         date2str(activity.modifiedDate, 123, 2, 2, 2, 2, 4),
+        #                                         time2str(activity.modifiedTime, 1, 1));
+        #                    }
+        #                    else
+        #                    {
+        #                        detail = INDCrmSyncService::attendeeDivergence(activity, attendees, baseDate);
+        #                        if (detail)
+        #                            outcome = "divergent";
+        #                    }
+        #                }
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                account = CRMAccountTable::Find(accountNum, INDCrmSyncService::accountOrigin(originName));
+        #                if (!account.RecId)
+        #                {
+        #                    outcome      = "rejected";
+        #                    errorCode    = "SYNC_ACCOUNT_NOT_FOUND";
+        #                    errorMessage = strFmt("La cuenta %1 (%2) no existe en Axapta.", accountNum, originName);
+        #                }
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                // Attendees must point to contacts of this account in this company.
+        #                errorMessage = INDCrmSyncService::attendeeContactError(attendees, accountNum);
+        #                if (errorMessage)
+        #                {
+        #                    outcome   = "rejected";
+        #                    errorCode = "SYNC_ATTENDEE_CONTACT_INVALID";
+        #                }
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                isNew = !activity.RecId;
+        #                if (isNew)
+        #                {
+        #                    numberSeq = NumberSeq::newGetNum(CustParameters::numRefCustVsititaRefractariosId());
+        #                    activity.clear();
+        #                    activity.ActividadId   = numberSeq.num();
+        #                    activity.ActividadType = CRMActividadType::Visita;
+        #                    activity.Prioridad     = CRMActivityPrioridad::Normal;
+        #                }
+        #                else if (activity.TransDate != transDate)
+        #                {
+        #                    // Keeps CRMCustListaVisitasTable dates aligned, as the form does on modifiedField.
+        #                    activity.ActualizaFechaVisita(transDate);
+        #                }
+        #
+        #                INDCrmSyncService::initActivityFromAccount(activity, account);
+        #
+        #                activity.AccountNum         = accountNum;
+        #                activity.ActividadType      = CRMActividadType::Visita;
+        #                activity.TipoVisita         = visitType;
+        #                activity.ContactMethod      = contactMethod;
+        #                activity.VisitaValoracion   = rating;
+        #                activity.Description        = description;
+        #                activity.TransDate          = transDate;
+        #                activity.Comentarios        = comments;
+        #                activity.VisitaAntecedentes = background;
+        #                activity.VisitaConclusiones = conclusions;
+        #                activity.Status             = CRMActivityStatus::Finalizada;
+        #                activity.Country            = activity.InitCountryId();
+        #
+        #                // The functional owner is the web owner; legacy UserId follows the CRM user mapping.
+        #                activity.INDCreatedByUserId = ownerAxUserId;
+        #                legacyCrmUserId = INDCRMVisitsService::resolveLegacyCrmUserIdByAxUserId(ownerAxUserId);
+        #                if (!legacyCrmUserId)
+        #                    legacyCrmUserId = ownerCrmUserId;
+        #                if (legacyCrmUserId)
+        #                    activity.UserId = legacyCrmUserId;
+        #
+        #                if (isNew)
+        #                    activity.insert();
+        #                else
+        #                    activity.update();
+        #
+        #                INDCrmSyncService::applyAttendees(activity, attendees, messageId, version);
+        #
+        #                activity = CRMActividadTable::FindRecId(activity.RecId);
+        #                INDCrmSyncService::writeMap(externalId, INDCrmSyncEntityType::Visit,
+        #                                            tableNum(CRMActividadTable), activity.RecId,
+        #                                            version, messageId,
+        #                                            INDCrmSyncService::visitFingerprint(activity), "applied");
+        #                outcome = "applied";
+        #            }
+        #
+        #            if (outcome == "applied" || outcome == "duplicate")
+        #            {
+        #                ttscommit;
+        #                result = INDCrmSyncService::visitResult(outcome, activity);
+        #            }
+        #            else
+        #            {
+        #                ttsabort;
+        #                if (outcome == "divergent")
+        #                    result = INDCrmSyncService::divergent(detail, activity.RecId,
+        #                                                          activity.modifiedDate, activity.modifiedTime,
+        #                                                          INDCrmSyncService::visitFingerprint(activity));
+        #                else
+        #                    result = INDCrmSyncService::rejected(errorCode, errorMessage);
+        #            }
+        #        }
+        #    }
+        #    catch
+        #    {
+        #        if (appl.ttsLevel() > 0)
+        #            ttsabort;
+        #
+        #        result = INDCrmSyncService::rejected("SYNC_AX_EXCEPTION",
+        #                     strFmt("Error aplicando la visita en Axapta. %1", INDCRMUtilityService::getLastInfologMessage()));
+        #    }
+        #
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #visitFingerprint
+        #// Fingerprint of a visit header plus its attendees, in RecId order.
+        #static str visitFingerprint(CRMActividadTable _activity)
+        #{
+        #    CRMCustVendVisitaAsistenteTable attendee;
+        #    str                             text;
+        #    ;
+        #    if (!_activity.RecId)
+        #        return "";
+        #
+        #    text = INDCrmSyncService::dateStr(_activity.TransDate)
+        #         + "|" + int2str(_activity.TipoVisita)
+        #         + "|" + int2str(_activity.ContactMethod)
+        #         + "|" + int2str(_activity.VisitaValoracion)
+        #         + "|" + _activity.Description
+        #         + "|" + _activity.Comentarios
+        #         + "|" + _activity.VisitaAntecedentes
+        #         + "|" + _activity.VisitaConclusiones
+        #         + "|" + _activity.INDCreatedByUserId
+        #         + "|" + _activity.AccountNum;
+        #
+        #    while select attendee
+        #        order by RecId
+        #        where attendee.RefRecId == _activity.RecId
+        #    {
+        #        text += "|" + INDCrmSyncService::attendeeFingerprint(attendee);
+        #    }
+        #
+        #    return INDCrmSyncService::fingerprint(text);
+        #}
+      ENDSOURCE
+      SOURCE #visitResult
+        #// Applied/duplicate result of a visit: current stamps, fingerprint and attendee mappings.
+        #static container visitResult(str _result, CRMActividadTable _activity)
+        #{
+        #    ;
+        #    return INDCrmSyncService::buildResult(_result, _activity.RecId, _activity.ActividadId,
+        #                                          _activity.modifiedDate, _activity.modifiedTime,
+        #                                          INDCrmSyncService::visitFingerprint(_activity),
+        #                                          "", "", "", dateNull(), 0, "",
+        #                                          INDCrmSyncService::attendeeAcks(_activity.RecId));
+        #}
+      ENDSOURCE
+      SOURCE #writeMap
+        #// Upserts the durable correspondence web id -> AX record (same transaction as the mutation).
+        #static void writeMap(str                  _externalId,
+        #                     INDCrmSyncEntityType _entityType,
+        #                     TableId              _tableId,
+        #                     RecId                _recId,
+        #                     int                  _version,
+        #                     str                  _messageId,
+        #                     str                  _hash,
+        #                     str                  _result)
+        #{
+        #    INDCrmSyncMap map;
+        #    ;
+        #    map = INDCrmSyncMap::find(_externalId, _entityType, true);
+        #    if (!map.RecId)
+        #    {
+        #        map.clear();
+        #        map.ExternalId = _externalId;
+        #        map.EntityType = _entityType;
+        #    }
+        #
+        #    map.RefTableId    = _tableId;
+        #    map.RefRecId      = _recId;
+        #    map.LastVersion   = _version;
+        #    map.LastMessageId = _messageId;
+        #    map.PayloadHash   = _hash;
+        #    map.LastResult    = _result;
+        #    map.AppliedDate   = today();
+        #    map.AppliedTime   = timeNow();
+        #
+        #    if (map.RecId)
+        #        map.update();
+        #    else
+        #        map.insert();
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+
+***Element: END
