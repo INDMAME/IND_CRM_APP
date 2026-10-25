@@ -526,10 +526,12 @@ Formatversion: 1
         #    changecompany (company)
         #    {
         #        activity = CRMActividadTable::FindRecId(recId);
+        #        // Right-adjusted EDTs (CRMActividadId, CRMAccountNum) reach COM as 0 when
+        #        // placed in a container as they are; strFmt passes them as plain text.
         #        if (activity.RecId)
         #            result = [[ 1,
         #                        activity.RecId,
-        #                        activity.ActividadId,
+        #                        strFmt("%1", activity.ActividadId),
         #                        INDCrmSyncService::dateStr(activity.modifiedDate),
         #                        activity.modifiedTime,
         #                        INDCrmSyncService::visitFingerprint(activity),
@@ -541,7 +543,7 @@ Formatversion: 1
         #                        activity.Comentarios,
         #                        activity.VisitaAntecedentes,
         #                        activity.VisitaConclusiones,
-        #                        activity.AccountNum,
+        #                        strFmt("%1", activity.AccountNum),
         #                        INDCRMVisitsService::getActivityOwnerAxUserId(activity) ]];
         #        else
         #            result = [[ 0 ]];
