@@ -1310,8 +1310,10 @@ Formatversion: 1
         #                    activity.UserId = legacyCrmUserId;
         #
         #                if (isNew)
+        #                {
         #                    INDCrmWebRecordGuard::markCreatedByWeb(activity);
         #                    activity.insert();
+        #                }
         #                else
         #                    activity.update();
         #
