@@ -1,0 +1,767 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : CRMCustVendVisitaAsistenteTable unloaded at Lunes 19/10/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #CRMCustVendVisitaAsistenteTable
+    PROPERTIES
+      Name                #CRMCustVendVisitaAsistenteTable
+      Label               #
+      FormRef             #
+      TitleField1         #
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #Yes
+      ModifiedTime        #No
+      ModifiedBy          #Yes
+      ModifiedTransactionId #No
+      CreatedDate         #Yes
+      CreatedTime         #No
+      CreatedBy           #Yes
+      CreatedTransactionId #No
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #RefRecId
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #RefRecId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMCustVendVisitaAsistenteTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #RefRecId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #AsistenteTipo
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #AsistenteTipo
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMCustVendVisitaAsistenteTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMCustVendVisitaAsistente
+        ENDPROPERTIES
+        
+      FIELD #AsistenteId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #AsistenteId
+          Label               #@IST436
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMCustVendVisitaAsistenteTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Name
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #ContactoRecId
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #ContactoRecId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMCustVendVisitaAsistenteTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #RefRecId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #AsistenteCargo
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #AsistenteCargo
+          Label               #Cargo
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMCustVendVisitaAsistenteTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Name
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #AsistenteTipoExterior
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #AsistenteTipoExterior
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMCustVendVisitaAsistenteTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMCustVendVisitaExterior
+        ENDPROPERTIES
+        
+      FIELD #AsistenteTipoExteriorAccountNum
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #AsistenteTipoExteriorAccountNum
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMCustVendVisitaAsistenteTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMAccountNum
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #Phone
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Phone
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMCustVendVisitaAsistenteTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Phone
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Email
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Email
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMCustVendVisitaAsistenteTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Email
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #INDRecIdMex
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #INDRecIdMex
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMCustVendVisitaAsistenteTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #INDCreatedByUserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDCreatedByUserId
+          Label               #Usuario WEB
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMCustVendVisitaAsistenteTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDCreatedByUserId
+              #
+            ENDARRAY
+          StringSize          #5
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #INDCreatedByWeb
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #INDCreatedByWeb
+          Label               #Creado desde la web
+          HelpText            #Registro creado desde la web CRM: solo se modifica desde la web
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMCustVendVisitaAsistenteTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #RefRecIdIdx
+      PROPERTIES
+        Name                #RefRecIdIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #RefRecId
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+      REFERENCE #CRMActividadTable
+        PROPERTIES
+          Name                #CRMActividadTable
+          Table               #CRMActividadTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMCustVendVisitaAsistenteTable
+            Field               #RefRecId
+            Table               #CRMActividadTable
+            RelatedField        #RecId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMExteriorClientePotencial
+        PROPERTIES
+          Name                #CRMExteriorClientePotencial
+          Table               #CRMClientePotencialTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMCustVendVisitaAsistenteTable
+            Field               #AsistenteTipoExteriorAccountNum
+            Table               #CRMClientePotencialTable
+            RelatedField        #ClientePotencialId
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMCustVendVisitaAsistenteTable
+            Field               #AsistenteTipoExterior
+            Value               #2
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMExteriorCustTable
+        PROPERTIES
+          Name                #CRMExteriorCustTable
+          Table               #CustTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMCustVendVisitaAsistenteTable
+            Field               #AsistenteTipoExteriorAccountNum
+            Table               #CustTable
+            RelatedField        #AccountNum
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMCustVendVisitaAsistenteTable
+            Field               #AsistenteTipoExterior
+            Value               #1
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMExteriorVendTable
+        PROPERTIES
+          Name                #CRMExteriorVendTable
+          Table               #VendTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMCustVendVisitaAsistenteTable
+            Field               #AsistenteTipoExteriorAccountNum
+            Table               #VendTable
+            RelatedField        #AccountNum
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMCustVendVisitaAsistenteTable
+            Field               #AsistenteTipoExterior
+            Value               #3
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMUsuarioTable
+        PROPERTIES
+          Name                #CRMUsuarioTable
+          Table               #CRMUsuarioTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMCustVendVisitaAsistenteTable
+            Field               #AsistenteTipo
+            Value               #2
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMCustVendVisitaAsistenteTable
+            Field               #AsistenteId
+            Table               #CRMUsuarioTable
+            RelatedField        #UserId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #AccountExternoName
+        #display Name AccountExternoName()
+        #{
+        #
+        #    ;
+        #    if (this.AsistenteTipo == CRMCustVendVisitaAsistente::Externo){
+        #
+        #        switch (this.AsistenteTipoExterior){
+        #
+        #            case CRMCustVendVisitaExterior::Cliente:
+        #                return CustTable::find(this.AsistenteTipoExteriorAccountNum).INDNombreComercial;
+        #
+        #            case CRMCustVendVisitaExterior::ClientePotencial:
+        #                return CRMClientePotencialTable::Find(this.AsistenteTipoExteriorAccountNum).Name;
+        #
+        #            case CRMCustVendVisitaExterior::Proveedor:
+        #                return VendTable::find(this.AsistenteTipoExteriorAccountNum).Name;
+        #
+        #            case CRMCustVendVisitaExterior::Exterior:
+        #                return "";
+        #        }
+        #    }
+        #
+        #    return "";
+        #}
+      ENDSOURCE
+      SOURCE #actividadTable
+        #CRMActividadTable actividadTable()
+        #{
+        #    return CRMActividadTable::FindRecId(this.RefRecId);
+        #}
+      ENDSOURCE
+      SOURCE #CreaActualizainformacionListaVisitas
+        #void CreaActualizainformacionListaVisitas()
+        #{
+        #    CRMCustListaVisitasTable    CRMCustListaVisitasTable;
+        #    CRMActividadTable           actividadTable;
+        #    ;
+        #    //Creo las líneas en la tabla de visitas de la gente de IST que indico en la lista
+        #    if (this.AsistenteTipo == CRMCustVendVisitaAsistente::Insertec &&
+        #        this.AsistenteId){
+        #
+        #        actividadTable  = this.actividadTable();
+        #
+        #        ttsbegin;
+        #        CRMCustListaVisitasTable    = CRMCustListaVisitasTable::FindUserIdRefRecId(this.AsistenteId,
+        #                                                                                   actividadTable.RecId,
+        #                                                                                   true);
+        #
+        #        if (! CRMCustListaVisitasTable){
+        #            CRMCustListaVisitasTable    = CRMCustListaVisitasTable::Find(this.AsistenteId,
+        #                                                                         actividadTable.TransDate,
+        #                                                                         actividadTable.ConsultaOrigen(),
+        #                                                                         actividadTable.AccountNum,
+        #                                                                         true);
+        #        }
+        #
+        #        if (!CRMCustListaVisitasTable){
+        #            CRMCustListaVisitasTable.clear();
+        #            CRMCustListaVisitasTable.UserId             = this.AsistenteId;
+        #            CRMCustListaVisitasTable.TransDate          = actividadTable.TransDate;
+        #            CRMCustListaVisitasTable.Origen             = actividadTable.ConsultaOrigen();
+        #            CRMCustListaVisitasTable.CustAccount        = actividadTable.AccountNum;
+        #            CRMCustListaVisitasTable.Motivo             = actividadTable.Description;
+        #            CRMCustListaVisitasTable.RefRecIdInforme    = actividadTable.RecId;
+        #            CRMCustListaVisitasTable.doInsert();
+        #        }
+        #        else {
+        #            CRMCustListaVisitasTable.Motivo             = actividadTable.Description;
+        #            CRMCustListaVisitasTable.TransDate          = actividadTable.TransDate;
+        #            CRMCustListaVisitasTable.RefRecIdInforme    = actividadTable.RecId;
+        #            CRMCustListaVisitasTable.doUpdate();
+        #        }
+        #        ttscommit;
+        #
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #delete
+        #public void delete()
+        #{
+        #    ;
+        #    this.EliminainformacionListaVisitas();
+        #
+        #    super();
+        #}
+      ENDSOURCE
+      SOURCE #EliminainformacionListaVisitas
+        #void EliminainformacionListaVisitas()
+        #{
+        #    CRMCustListaVisitasTable    CRMCustListaVisitasTable;
+        #    CRMActividadTable           actividadTable;
+        #    ;
+        #    //Creo las líneas en la tabla de visitas de la gente de IST que indico en la lista
+        #    if (this.AsistenteTipo == CRMCustVendVisitaAsistente::Insertec &&
+        #        this.AsistenteId){
+        #
+        #        actividadTable  = this.actividadTable();
+        #
+        #        ttsbegin;
+        #        CRMCustListaVisitasTable    = CRMCustListaVisitasTable::FindUserIdRefRecId(this.AsistenteId,
+        #                                                                                   actividadTable.RecId,
+        #                                                                                   true);
+        #
+        #        if (! CRMCustListaVisitasTable){
+        #            CRMCustListaVisitasTable    = CRMCustListaVisitasTable::Find(this.AsistenteId,
+        #                                                                         actividadTable.TransDate,
+        #                                                                         actividadTable.ConsultaOrigen(),
+        #                                                                         actividadTable.AccountNum,
+        #                                                                         true);
+        #        }
+        #
+        #        if (CRMCustListaVisitasTable){
+        #            CRMCustListaVisitasTable.delete();
+        #        }
+        #        ttscommit;
+        #
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #InitFromContactoTable
+        #void InitFromContactoTable()
+        #{
+        #    CRMContactoTable    contactoTable;
+        #    ;
+        #    contactoTable   = CRMContactoTable::FindRecId(this.ContactoRecId);
+        #
+        #    this.AsistenteId    = contactoTable.Name;
+        #    this.AsistenteCargo = contactoTable.Cargo;
+        #}
+      ENDSOURCE
+      SOURCE #insert
+        #public void insert()
+        #{
+        #    ;
+        #
+        #    super();
+        #
+        #    //INDMMS_ExternalCRM - 2026.03.25
+        #    if(!this.INDCreatedByUserId)
+        #    {
+        #        this.selectForUpdate(true);
+        #        this.INDCreatedByUserId = this.createdBy;
+        #        this.doUpdate();
+        #    }
+        #
+        #    this.CreaActualizainformacionListaVisitas();
+        #}
+      ENDSOURCE
+      SOURCE #modifiedField
+        #public void modifiedField(fieldId _fieldId)
+        #{
+        #    super(_fieldId);
+        #
+        #    switch (_fieldId){
+        #
+        #        case FieldNum(CRMCustVendVisitaAsistenteTable, ContactoRecId):
+        #            this.InitFromContactoTable();
+        #            break;
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #update
+        #public void update()
+        #{
+        #    ;
+        #    super();
+        #
+        #    this.CreaActualizainformacionListaVisitas();
+        #}
+      ENDSOURCE
+      SOURCE #validateWrite
+        #public boolean validateWrite()
+        #{
+        #    boolean ret;
+        #    ;
+        #
+        #    ret = super();
+        #
+        #    //INDMMS_ExternalCRM - 2026.10.26
+        #    ret = ret && INDCrmWebRecordGuard::checkChange(this);
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #validateDelete
+        #public boolean validateDelete()
+        #{
+        #    boolean ret;
+        #    ;
+        #
+        #    ret = super();
+        #
+        #    //INDMMS_ExternalCRM - 2026.10.26
+        #    ret = ret && INDCrmWebRecordGuard::checkChange(this);
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #LookUpAsistente
+        #static void LookUpAsistente(FormStringControl _ctrl, CRMCustVendVisitaAsistenteTable _asistenteTable)
+        #{
+        #    CRMActividadTable   actividadTable;
+        #
+        #    SysTableLookup          sysTableLookup = SysTableLookup::newParameters(tableNum(CRMContactoTable),_ctrl);
+        #    Query                   query = new Query();
+        #    QueryBuildDataSource    queryBuildDataSource = query.addDataSource(tableNum(CRMContactoTable));
+        #    QueryBuildRange         queryBuildRangeAccount  = queryBuildDataSource.addRange(fieldNum(CRMContactoTable, AccountNum));
+        #    QueryBuildRange         queryBuildRangeOrigen   = queryBuildDataSource.addRange(fieldNum(CRMContactoTable, Origen));
+        #
+        #    ;
+        #
+        #    actividadTable  = CRMActividadTable::FindRecId(_asistenteTable.RefRecId);
+        #
+        #    if (! actividadTable)
+        #        throw error("No hay línea creada.");
+        #
+        #    switch (_asistenteTable.AsistenteTipo){
+        #        case CRMCustVendVisitaAsistente::Cliente_Proveedor:
+        #            sysTableLookup.addLookupfield(fieldNum(CRMContactoTable, Name));
+        #            sysTableLookup.addLookupfield(fieldNum(CRMContactoTable, Cargo));
+        #            sysTableLookup.addLookupfield(fieldNum(CRMContactoTable, RecId), true);
+        #
+        #            queryBuildRangeAccount.value(QueryValue(actividadTable.AccountNum));
+        #            queryBuildRangeOrigen.value(QueryValue(actividadTable.Origen));
+        #
+        #            sysTableLookup.parmQuery(query);
+        #            sysTableLookup.performFormLookup();
+        #            break;
+        #
+        #        case CRMCustVendVisitaAsistente::Insertec:
+        #            //BUscar en la lista de usuarios de CRM
+        #//            super();
+        #            break;
+        #
+        #        case CRMCustVendVisitaAsistente::Externo:
+        #            //Mostrar los contactos de la cuenta seleccionada en cuenta Exterior
+        #            sysTableLookup.addLookupfield(fieldNum(CRMContactoTable, Name));
+        #            sysTableLookup.addLookupfield(fieldNum(CRMContactoTable, Cargo));
+        #            sysTableLookup.addLookupfield(fieldNum(CRMContactoTable, RecId), true);
+        #
+        #            queryBuildRangeAccount.value(QueryValue(_asistenteTable.AsistenteTipoExteriorAccountNum));
+        #            switch (_asistenteTable.AsistenteTipoExterior){
+        #                case CRMCustVendVisitaExterior::Cliente:
+        #                    queryBuildRangeOrigen.value(QueryValue(CRMActividadOrigen::Cliente));
+        #                    break;
+        #                case CRMCustVendVisitaExterior::ClientePotencial:
+        #                    queryBuildRangeOrigen.value(QueryValue(CRMActividadOrigen::ClientePotencial));
+        #                    break;
+        #                case CRMCustVendVisitaExterior::Proveedor:
+        #                    queryBuildRangeOrigen.value(QueryValue(CRMActividadOrigen::Proveedor));
+        #                    break;
+        #                case CRMCustVendVisitaExterior::Exterior:
+        #                    queryBuildRangeOrigen.value(QueryValue(CRMActividadorigen::None));
+        #                    break;
+        #            }
+        #            sysTableLookup.parmQuery(query);
+        #            sysTableLookup.performFormLookup();
+        #
+        #            break;
+        #    }
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

@@ -17,9 +17,11 @@ Formatversion: 1
     METHODS
       Version: 3
       SOURCE #classDeclaration
-        #//INDMMS_ExternalCRM - 2026.10.23
+        #//INDMMS_ExternalCRM - 2026.10.25
         #// Receiver of the CRM_INSERTEC outbox (web -> Axapta): idempotent upserts and deletes of
-        #// visits, prospects and contacts called through api/crm/sync/*. Deduplication (INDCrmSyncMap)
+        #// visits, prospects (customer or vendor), contacts and updates of existing accounts called
+        #// through api/crm/sync/*. Records created here are marked INDCreatedByWeb when the field
+        #// exists (INDCrmWebRecordGuard). Deduplication (INDCrmSyncMap)
         #// and the business mutation run in the same transaction; a base version mismatch is
         #// reported as divergent and never merged. Container contracts: .codex/ENDPOINTS.md.
         #public class INDCrmSyncService
@@ -40,6 +42,20 @@ Formatversion: 1
         #    }
         #
         #    return CRMConsultaOrigen::None;
+        #}
+      ENDSOURCE
+      SOURCE #accountFingerprint
+        #// Fingerprint of the CRM fields of an account the web may update (CRMAccountTable view).
+        #static str accountFingerprint(CRMAccountTable _account)
+        #{
+        #    str text;
+        #    ;
+        #    text = _account.NombreComercial
+        #         + "|" + _account.RazonSocial
+        #         + "|" + _account.City
+        #         + "|" + _account.CountryId;
+        #
+        #    return INDCrmSyncService::fingerprint(text);
         #}
       ENDSOURCE
       SOURCE #actividadOrigen
@@ -121,6 +137,7 @@ Formatversion: 1
         #            attendee.INDCreatedByUserId = _activity.INDCreatedByUserId;
         #            if (contactRecId && !name)
         #                attendee.InitFromContactoTable();
+        #            INDCrmWebRecordGuard::markCreatedByWeb(attendee);
         #            attendee.insert();
         #        }
         #
@@ -390,6 +407,7 @@ Formatversion: 1
         #
         #    baseDate = baseDateStr ? str2Date(baseDateStr, 321) : dateNull();
         #
+        #    INDCrmWebRecordGuard::serviceStart();
         #    try
         #    {
         #        changecompany (company)
@@ -472,6 +490,7 @@ Formatversion: 1
         #                     strFmt("Error borrando la visita en Axapta. %1", INDCRMUtilityService::getLastInfologMessage()));
         #    }
         #
+        #    INDCrmWebRecordGuard::serviceEnd();
         #    return result;
         #}
       ENDSOURCE
@@ -710,6 +729,253 @@ Formatversion: 1
         #                                          dateNull(), 0, "", conNull());
         #}
       ENDSOURCE
+      SOURCE #supplierProspectFingerprint
+        #// Fingerprint of the vendor prospect fields the web may send.
+        #static str supplierProspectFingerprint(CRMProveedorPotencialTable _prospect)
+        #{
+        #    str text;
+        #    ;
+        #    text = _prospect.Name
+        #         + "|" + _prospect.RazonSocial
+        #         + "|" + _prospect.City
+        #         + "|" + _prospect.CountryId
+        #         + "|" + _prospect.StatisticsGroup
+        #         + "|" + int2str(_prospect.OrigenContacto)
+        #         + "|" + _prospect.VATNum
+        #         + "|" + _prospect.UserId
+        #         + "|" + int2str(_prospect.VendDistribuidorFabricante);
+        #
+        #    return INDCrmSyncService::fingerprint(text);
+        #}
+      ENDSOURCE
+      SOURCE #updateAccount
+        #// Updates the CRM fields of an account that already exists in AX (message account.update):
+        #// the source table of its origin (CustTable, VendTable, CRMClientePotencialTable or
+        #// CRMProveedorPotencialTable); ActualizaLineaEnTableCuentas() refreshes CRMAccountTable.
+        #// Only trade name, legal name, city and country: never financial or tax data. Vendors keep a
+        #// single name in AX (VendTable.Name), taken from the legal name.
+        #// Input: 1 company, 2 messageId, 3 externalId, 4 version, 5 axRecId (CRMAccountTable.RecId),
+        #//        6 origin, 7 accountNum, 8 tradeName, 9 legalName, 10 city, 11 countryId
+        #static container updateAccount(container _data)
+        #{
+        #    DataAreaId                 company;
+        #    str 36                     messageId;
+        #    str 36                     externalId;
+        #    int                        version;
+        #    RecId                      axRecId;
+        #    str                        originName;
+        #    CRMAccountNum              accountNum;
+        #    Name                       tradeName;
+        #    Name                       legalName;
+        #    str                        city;
+        #    CountryId                  countryId;
+        #    CRMAccountTable            account;
+        #    CustTable                  custTable;
+        #    VendTable                  vendTable;
+        #    CRMClientePotencialTable   clientProspect;
+        #    CRMProveedorPotencialTable supplierProspect;
+        #    INDCrmSyncMap              map;
+        #    boolean                    found;
+        #    boolean                    valid;
+        #    str                        outcome;
+        #    str                        errorCode;
+        #    str                        errorMessage;
+        #    container                  result;
+        #    ;
+        #    company = INDCRMUtilityService::getCompany(_data);
+        #    if (!company)
+        #        return INDCrmSyncService::rejected("SYNC_COMPANY_REQUIRED", "Company requerida.");
+        #
+        #    if (conLen(_data) < 11)
+        #        return INDCrmSyncService::rejected("SYNC_MESSAGE_INVALID", "Contenedor de cuenta incompleto.");
+        #
+        #    messageId  = conPeek(_data, 2);
+        #    externalId = conPeek(_data, 3);
+        #    version    = conPeek(_data, 4);
+        #    axRecId    = conPeek(_data, 5);
+        #    originName = conPeek(_data, 6);
+        #    accountNum = conPeek(_data, 7);
+        #    tradeName  = conPeek(_data, 8);
+        #    legalName  = conPeek(_data, 9);
+        #    city       = conPeek(_data, 10);
+        #    countryId  = conPeek(_data, 11);
+        #
+        #    if (!messageId || !externalId || version <= 0 || !axRecId)
+        #        return INDCrmSyncService::rejected("SYNC_MESSAGE_INVALID", "messageId, externalId, version y axRecId son obligatorios.");
+        #
+        #    if (!tradeName && !legalName)
+        #        return INDCrmSyncService::rejected("SYNC_ACCOUNT_INCOMPLETE", "El nombre de la cuenta es obligatorio.");
+        #
+        #    if (!tradeName)
+        #        tradeName = legalName;
+        #    if (!legalName)
+        #        legalName = tradeName;
+        #
+        #    INDCrmWebRecordGuard::serviceStart();
+        #    try
+        #    {
+        #        changecompany (company)
+        #        {
+        #            ttsbegin;
+        #
+        #            map = INDCrmSyncMap::find(externalId, INDCrmSyncEntityType::Account, true);
+        #
+        #            if (map.RecId && map.LastMessageId == messageId && map.RefRecId)
+        #            {
+        #                select firstonly account
+        #                    where account.RecId == map.RefRecId;
+        #                if (account.RecId)
+        #                    outcome = "duplicate";
+        #            }
+        #
+        #            if (!outcome && map.RecId && map.LastVersion > version)
+        #            {
+        #                outcome      = "rejected";
+        #                errorCode    = "SYNC_VERSION_BEHIND";
+        #                errorMessage = strFmt("Axapta ya aplico la version %1 de este registro.", map.LastVersion);
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                select firstonly account
+        #                    where account.RecId == axRecId;
+        #
+        #                if (!account.RecId
+        #                    || account.AccountNum != accountNum
+        #                    || account.Origen != INDCrmSyncService::accountOrigin(originName))
+        #                {
+        #                    outcome      = "rejected";
+        #                    errorCode    = "SYNC_ACCOUNT_NOT_FOUND";
+        #                    errorMessage = strFmt("La cuenta %1 (%2) con RecId %3 no existe en Axapta.", accountNum, originName, axRecId);
+        #                }
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                infolog.clear(0);
+        #                switch (account.Origen)
+        #                {
+        #                    case CRMConsultaOrigen::Cliente:
+        #                        custTable = CustTable::find(account.AccountNum, true);
+        #                        found     = custTable.RecId != 0;
+        #                        if (found)
+        #                        {
+        #                            custTable.INDNombreComercial = tradeName;
+        #                            custTable.Name               = legalName;
+        #                            custTable.City               = city;
+        #                            custTable.Country            = countryId;
+        #                            valid = custTable.validateWrite();
+        #                            if (valid)
+        #                            {
+        #                                custTable.update();
+        #                                custTable.ActualizaLineaEnTableCuentas();
+        #                            }
+        #                        }
+        #                        break;
+        #
+        #                    case CRMConsultaOrigen::Proveedor:
+        #                        vendTable = VendTable::find(account.AccountNum, true);
+        #                        found     = vendTable.RecId != 0;
+        #                        if (found)
+        #                        {
+        #                            vendTable.Name    = legalName;
+        #                            vendTable.City    = city;
+        #                            vendTable.Country = countryId;
+        #                            valid = vendTable.validateWrite();
+        #                            if (valid)
+        #                            {
+        #                                vendTable.update();
+        #                                vendTable.ActualizaLineaEnTableCuentas();
+        #                            }
+        #                        }
+        #                        break;
+        #
+        #                    case CRMConsultaOrigen::ClientePotencial:
+        #                        clientProspect = CRMClientePotencialTable::Find(account.AccountNum, true);
+        #                        found          = clientProspect.RecId != 0;
+        #                        if (found)
+        #                        {
+        #                            clientProspect.Name        = tradeName;
+        #                            clientProspect.RazonSocial = legalName;
+        #                            clientProspect.City        = city;
+        #                            clientProspect.CountryId   = countryId;
+        #                            valid = clientProspect.validateWrite();
+        #                            if (valid)
+        #                                clientProspect.update();
+        #                        }
+        #                        break;
+        #
+        #                    case CRMConsultaOrigen::ProveedorPotencial:
+        #                        supplierProspect = CRMProveedorPotencialTable::Find(account.AccountNum, true);
+        #                        found            = supplierProspect.RecId != 0;
+        #                        if (found)
+        #                        {
+        #                            supplierProspect.Name        = tradeName;
+        #                            supplierProspect.RazonSocial = legalName;
+        #                            supplierProspect.City        = city;
+        #                            supplierProspect.CountryId   = countryId;
+        #                            valid = supplierProspect.validateWrite();
+        #                            if (valid)
+        #                                supplierProspect.update();
+        #                        }
+        #                        break;
+        #                }
+        #
+        #                if (!found)
+        #                {
+        #                    outcome      = "rejected";
+        #                    errorCode    = "SYNC_ACCOUNT_NOT_FOUND";
+        #                    errorMessage = strFmt("La cuenta %1 no existe en su tabla de origen.", account.AccountNum);
+        #                }
+        #                else if (!valid)
+        #                {
+        #                    outcome      = "rejected";
+        #                    errorCode    = "SYNC_ACCOUNT_INVALID";
+        #                    errorMessage = INDCRMUtilityService::getLastInfologMessage();
+        #                    if (!errorMessage)
+        #                        errorMessage = "Axapta no admite los datos de la cuenta.";
+        #                }
+        #                else
+        #                {
+        #                    select firstonly account
+        #                        where account.RecId == axRecId;
+        #
+        #                    INDCrmSyncService::writeMap(externalId, INDCrmSyncEntityType::Account,
+        #                                                tableNum(CRMAccountTable), account.RecId,
+        #                                                version, messageId,
+        #                                                INDCrmSyncService::accountFingerprint(account), "applied");
+        #                    outcome = "applied";
+        #                }
+        #            }
+        #
+        #            if (outcome == "applied" || outcome == "duplicate")
+        #            {
+        #                ttscommit;
+        #                result = INDCrmSyncService::buildResult(outcome, account.RecId, account.AccountNum,
+        #                                                        dateNull(), 0,
+        #                                                        INDCrmSyncService::accountFingerprint(account),
+        #                                                        "", "", "", dateNull(), 0, "", conNull());
+        #            }
+        #            else
+        #            {
+        #                ttsabort;
+        #                result = INDCrmSyncService::rejected(errorCode, errorMessage);
+        #            }
+        #        }
+        #    }
+        #    catch
+        #    {
+        #        if (appl.ttsLevel() > 0)
+        #            ttsabort;
+        #
+        #        result = INDCrmSyncService::rejected("SYNC_AX_EXCEPTION",
+        #                     strFmt("Error actualizando la cuenta en Axapta. %1", INDCRMUtilityService::getLastInfologMessage()));
+        #    }
+        #
+        #    INDCrmWebRecordGuard::serviceEnd();
+        #    return result;
+        #}
+      ENDSOURCE
       SOURCE #upsertContact
         #// Creates or updates a contact of an AX account (message contact.upsert), CRMContactoTable.
         #// Input: 1 company, 2 messageId, 3 externalId, 4 version, 5 axRecId, 6 accountOrigin,
@@ -761,6 +1027,7 @@ Formatversion: 1
         #    if (!name)
         #        return INDCrmSyncService::rejected("SYNC_CONTACT_INCOMPLETE", "El nombre del contacto es obligatorio.");
         #
+        #    INDCrmWebRecordGuard::serviceStart();
         #    try
         #    {
         #        changecompany (company)
@@ -838,7 +1105,10 @@ Formatversion: 1
         #                else
         #                {
         #                    if (isNew)
+        #                    {
+        #                        INDCrmWebRecordGuard::markCreatedByWeb(contact);
         #                        contact.insert();
+        #                    }
         #                    else
         #                        contact.update();
         #
@@ -875,6 +1145,7 @@ Formatversion: 1
         #                     strFmt("Error aplicando el contacto en Axapta. %1", INDCRMUtilityService::getLastInfologMessage()));
         #    }
         #
+        #    INDCrmWebRecordGuard::serviceEnd();
         #    return result;
         #}
       ENDSOURCE
@@ -884,7 +1155,9 @@ Formatversion: 1
         #// The acknowledged recId is CRMAccountTable.RecId (the id the web stores for accounts).
         #// Input: 1 company, 2 messageId, 3 externalId, 4 version, 5 axRecId (CRMAccountTable.RecId),
         #//        6 localCode, 7 tradeName, 8 legalName, 9 city, 10 countryId, 11 statisticsGroup,
-        #//        12 contactOrigin, 13 vatNum, 14 responsibleCrmUserId
+        #//        12 contactOrigin, 13 vatNum, 14 responsibleCrmUserId; optional 15 origin
+        #//        ("ClientePotencial" by default, "ProveedorPotencial" -> upsertSupplierProspect),
+        #//        16 supplier type (CRMVendDistribuidorFabricante, vendor prospects only)
         #static container upsertProspect(container _data)
         #{
         #    DataAreaId               company;
@@ -917,6 +1190,10 @@ Formatversion: 1
         #    if (conLen(_data) < 14)
         #        return INDCrmSyncService::rejected("SYNC_MESSAGE_INVALID", "Contenedor de cliente potencial incompleto.");
         #
+        #    // Optional 15 origin and 16 supplier type: vendor prospects have their own table.
+        #    if (conLen(_data) >= 15 && conPeek(_data, 15) == "ProveedorPotencial")
+        #        return INDCrmSyncService::upsertSupplierProspect(_data);
+        #
         #    messageId            = conPeek(_data, 2);
         #    externalId           = conPeek(_data, 3);
         #    version              = conPeek(_data, 4);
@@ -936,6 +1213,7 @@ Formatversion: 1
         #    if (!tradeName || !legalName || !statisticsGroup)
         #        return INDCrmSyncService::rejected("SYNC_PROSPECT_INCOMPLETE", "Nombre comercial, razon social y sector son obligatorios.");
         #
+        #    INDCrmWebRecordGuard::serviceStart();
         #    try
         #    {
         #        changecompany (company)
@@ -1029,6 +1307,7 @@ Formatversion: 1
         #                {
         #                    if (isNew)
         #                    {
+        #                        INDCrmWebRecordGuard::markCreatedByWeb(prospect);
         #                        prospect.insert();
         #                    }
         #                    else
@@ -1072,6 +1351,211 @@ Formatversion: 1
         #                     strFmt("Error aplicando el cliente potencial en Axapta. %1", INDCRMUtilityService::getLastInfologMessage()));
         #    }
         #
+        #    INDCrmWebRecordGuard::serviceEnd();
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #upsertSupplierProspect
+        #// Creates or updates a web vendor prospect (message account.upsert with origin
+        #// ProveedorPotencial): CRMProveedorPotencialTable with its numerator and validateWrite();
+        #// insert() creates CRMAccountTable. The acknowledged recId is CRMAccountTable.RecId.
+        #// Input: the upsertProspect container; 16 supplier type (1 Distribuidor, 2 Fabricante).
+        #static container upsertSupplierProspect(container _data)
+        #{
+        #    DataAreaId                    company;
+        #    str 36                        messageId;
+        #    str 36                        externalId;
+        #    int                           version;
+        #    RecId                         axRecId;
+        #    Name                          tradeName;
+        #    Name                          legalName;
+        #    str                           city;
+        #    CountryId                     countryId;
+        #    CustStatGroupId               statisticsGroup;
+        #    CRMOrigenContacto             contactOrigin;
+        #    str                           vatNum;
+        #    CRMUserId                     responsibleCrmUserId;
+        #    CRMVendDistribuidorFabricante supplierType;
+        #    CRMProveedorPotencialTable    prospect;
+        #    CRMAccountTable               account;
+        #    INDCrmSyncMap                 map;
+        #    NumberSeq                     numberSeq;
+        #    boolean                       isNew;
+        #    str                           outcome;
+        #    str                           errorCode;
+        #    str                           errorMessage;
+        #    container                     result;
+        #    ;
+        #    company = INDCRMUtilityService::getCompany(_data);
+        #    if (!company)
+        #        return INDCrmSyncService::rejected("SYNC_COMPANY_REQUIRED", "Company requerida.");
+        #
+        #    if (conLen(_data) < 16)
+        #        return INDCrmSyncService::rejected("SYNC_MESSAGE_INVALID", "Contenedor de proveedor potencial incompleto.");
+        #
+        #    messageId            = conPeek(_data, 2);
+        #    externalId           = conPeek(_data, 3);
+        #    version              = conPeek(_data, 4);
+        #    axRecId              = conPeek(_data, 5);
+        #    tradeName            = conPeek(_data, 7);
+        #    legalName            = conPeek(_data, 8);
+        #    city                 = conPeek(_data, 9);
+        #    countryId            = conPeek(_data, 10);
+        #    statisticsGroup      = conPeek(_data, 11);
+        #    contactOrigin        = conPeek(_data, 12);
+        #    vatNum               = conPeek(_data, 13);
+        #    responsibleCrmUserId = conPeek(_data, 14);
+        #    supplierType         = conPeek(_data, 16);
+        #
+        #    if (!messageId || !externalId || version <= 0)
+        #        return INDCrmSyncService::rejected("SYNC_MESSAGE_INVALID", "messageId, externalId y version son obligatorios.");
+        #
+        #    if (!tradeName || !legalName)
+        #        return INDCrmSyncService::rejected("SYNC_PROSPECT_INCOMPLETE", "Nombre comercial y razon social son obligatorios.");
+        #
+        #    if (supplierType != CRMVendDistribuidorFabricante::Distribuidor
+        #        && supplierType != CRMVendDistribuidorFabricante::Fabricante)
+        #        return INDCrmSyncService::rejected("SYNC_PROSPECT_INCOMPLETE", "El tipo de proveedor (distribuidor o fabricante) es obligatorio.");
+        #
+        #    INDCrmWebRecordGuard::serviceStart();
+        #    try
+        #    {
+        #        changecompany (company)
+        #        {
+        #            ttsbegin;
+        #
+        #            map = INDCrmSyncMap::find(externalId, INDCrmSyncEntityType::Prospect, true);
+        #
+        #            if (map.RecId && map.LastMessageId == messageId && map.RefRecId)
+        #            {
+        #                prospect = CRMProveedorPotencialTable::FindRecId(map.RefRecId);
+        #                if (prospect.RecId)
+        #                {
+        #                    account = CRMAccountTable::Find(prospect.ProveedorPotencialId, CRMConsultaOrigen::ProveedorPotencial);
+        #                    outcome = "duplicate";
+        #                }
+        #            }
+        #
+        #            if (!outcome && map.RecId && map.LastVersion > version)
+        #            {
+        #                outcome      = "rejected";
+        #                errorCode    = "SYNC_VERSION_BEHIND";
+        #                errorMessage = strFmt("Axapta ya aplico la version %1 de este registro.", map.LastVersion);
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                if (axRecId)
+        #                {
+        #                    select firstonly account
+        #                        where account.RecId == axRecId;
+        #
+        #                    if (!account.RecId || account.Origen != CRMConsultaOrigen::ProveedorPotencial)
+        #                    {
+        #                        outcome      = "rejected";
+        #                        errorCode    = "SYNC_ACCOUNT_NOT_FOUND";
+        #                        errorMessage = strFmt("La cuenta con RecId %1 no es un proveedor potencial de Axapta.", axRecId);
+        #                    }
+        #                    else
+        #                    {
+        #                        prospect = CRMProveedorPotencialTable::Find(account.AccountNum, true);
+        #                    }
+        #                }
+        #                else if (map.RefRecId)
+        #                {
+        #                    prospect = CRMProveedorPotencialTable::FindRecId(map.RefRecId, true);
+        #                }
+        #
+        #                if (!outcome && (axRecId || map.RefRecId) && !prospect.RecId)
+        #                {
+        #                    outcome      = "rejected";
+        #                    errorCode    = "SYNC_PROSPECT_NOT_FOUND";
+        #                    errorMessage = "El proveedor potencial ya no existe en Axapta.";
+        #                }
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                isNew = !prospect.RecId;
+        #                if (isNew)
+        #                {
+        #                    numberSeq = NumberSeq::newGetNum(VendParameters::numRefCRMProveedorPotencialId());
+        #                    prospect.clear();
+        #                    prospect.initValue();
+        #                    prospect.ProveedorPotencialId = numberSeq.num();
+        #                }
+        #
+        #                prospect.Name                       = tradeName;
+        #                prospect.RazonSocial                = legalName;
+        #                prospect.City                       = city;
+        #                prospect.CountryId                  = countryId;
+        #                prospect.StatisticsGroup            = statisticsGroup;
+        #                prospect.OrigenContacto             = contactOrigin;
+        #                prospect.VATNum                     = vatNum;
+        #                prospect.VendDistribuidorFabricante = supplierType;
+        #
+        #                if (responsibleCrmUserId)
+        #                    prospect.UserId = responsibleCrmUserId;
+        #                else if (isNew)
+        #                    prospect.UserId = CRMUsuarioTable::Find_AxaptaUserId(curUserId()).UserId;
+        #
+        #                infolog.clear(0);
+        #                if (!prospect.validateWrite())
+        #                {
+        #                    outcome      = "rejected";
+        #                    errorCode    = "SYNC_PROSPECT_INVALID";
+        #                    errorMessage = INDCRMUtilityService::getLastInfologMessage();
+        #                    if (!errorMessage)
+        #                        errorMessage = "Axapta no admite los datos del proveedor potencial.";
+        #                }
+        #                else
+        #                {
+        #                    if (isNew)
+        #                    {
+        #                        INDCrmWebRecordGuard::markCreatedByWeb(prospect);
+        #                        prospect.insert();
+        #                    }
+        #                    else
+        #                    {
+        #                        prospect.update();
+        #                    }
+        #
+        #                    prospect = CRMProveedorPotencialTable::FindRecId(prospect.RecId);
+        #                    account  = CRMAccountTable::Find(prospect.ProveedorPotencialId, CRMConsultaOrigen::ProveedorPotencial);
+        #
+        #                    INDCrmSyncService::writeMap(externalId, INDCrmSyncEntityType::Prospect,
+        #                                                tableNum(CRMProveedorPotencialTable), prospect.RecId,
+        #                                                version, messageId,
+        #                                                INDCrmSyncService::supplierProspectFingerprint(prospect), "applied");
+        #                    outcome = "applied";
+        #                }
+        #            }
+        #
+        #            if (outcome == "applied" || outcome == "duplicate")
+        #            {
+        #                ttscommit;
+        #                result = INDCrmSyncService::buildResult(outcome, account.RecId, prospect.ProveedorPotencialId,
+        #                                                        prospect.modifiedDate, prospect.modifiedTime,
+        #                                                        INDCrmSyncService::supplierProspectFingerprint(prospect),
+        #                                                        "", "", "", dateNull(), 0, "", conNull());
+        #            }
+        #            else
+        #            {
+        #                ttsabort;
+        #                result = INDCrmSyncService::rejected(errorCode, errorMessage);
+        #            }
+        #        }
+        #    }
+        #    catch
+        #    {
+        #        if (appl.ttsLevel() > 0)
+        #            ttsabort;
+        #
+        #        result = INDCrmSyncService::rejected("SYNC_AX_EXCEPTION",
+        #                     strFmt("Error aplicando el proveedor potencial en Axapta. %1", INDCRMUtilityService::getLastInfologMessage()));
+        #    }
+        #
+        #    INDCrmWebRecordGuard::serviceEnd();
         #    return result;
         #}
       ENDSOURCE
@@ -1182,6 +1666,7 @@ Formatversion: 1
         #
         #    baseDate = baseDateStr ? str2Date(baseDateStr, 321) : dateNull();
         #
+        #    INDCrmWebRecordGuard::serviceStart();
         #    try
         #    {
         #        changecompany (company)
@@ -1297,6 +1782,7 @@ Formatversion: 1
         #                    activity.UserId = legacyCrmUserId;
         #
         #                if (isNew)
+        #                    INDCrmWebRecordGuard::markCreatedByWeb(activity);
         #                    activity.insert();
         #                else
         #                    activity.update();
@@ -1337,6 +1823,7 @@ Formatversion: 1
         #                     strFmt("Error aplicando la visita en Axapta. %1", INDCRMUtilityService::getLastInfologMessage()));
         #    }
         #
+        #    INDCrmWebRecordGuard::serviceEnd();
         #    return result;
         #}
       ENDSOURCE

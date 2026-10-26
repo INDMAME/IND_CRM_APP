@@ -1,0 +1,96 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Navision Axapta Class: INDCrmWebRecordGuard unloaded at Sabado 25/10/2026
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+
+  CLASS #INDCrmWebRecordGuard
+    PROPERTIES
+      Name                #INDCrmWebRecordGuard
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #//INDMMS_ExternalCRM - 2026.10.25
+        #// Lock of the records created by the CRM_INSERTEC web (field INDCreatedByWeb = Yes): only the
+        #// sync receiver (INDCrmSyncService) may change or delete them. The field is read by name, so
+        #// this class compiles and does nothing until the field exists in a table. Activation steps:
+        #// CRM_INSERTEC docs/CUENTAS_CONTACTOS_AX.md, section 5.
+        #public class INDCrmWebRecordGuard
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #checkChange
+        #// Call from validateWrite() and validateDelete() of a locked table:
+        #//     ret = ret && INDCrmWebRecordGuard::checkChange(this);
+        #static boolean checkChange(Common _record)
+        #{
+        #    ;
+        #    if (INDCrmWebRecordGuard::isCreatedByWeb(_record) && !INDCrmWebRecordGuard::serviceActive())
+        #        return checkFailed("Registro creado desde la web CRM: solo se puede modificar desde la web.");
+        #
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #lockFieldId
+        #// Id of the lock field in the table of the record, 0 while the field does not exist.
+        #static int lockFieldId(Common _record)
+        #{
+        #    ;
+        #    return fieldName2Id(_record.TableId, "INDCreatedByWeb");
+        #}
+      ENDSOURCE
+      SOURCE #isCreatedByWeb
+        #// True when the record carries INDCreatedByWeb = Yes.
+        #static boolean isCreatedByWeb(Common _record)
+        #{
+        #    int id = INDCrmWebRecordGuard::lockFieldId(_record);
+        #    ;
+        #    return id && _record.(id) == NoYes::Yes;
+        #}
+      ENDSOURCE
+      SOURCE #markCreatedByWeb
+        #// Marks a new record as created by the web before insert(); no effect without the field.
+        #static void markCreatedByWeb(Common _record)
+        #{
+        #    int id = INDCrmWebRecordGuard::lockFieldId(_record);
+        #    ;
+        #    if (id)
+        #        _record.(id) = NoYes::Yes;
+        #}
+      ENDSOURCE
+      SOURCE #serviceActive
+        #// True while INDCrmSyncService is applying a web message in this session.
+        #static boolean serviceActive()
+        #{
+        #    ;
+        #    return appl.globalCache().get(classStr(INDCrmWebRecordGuard), "service", false);
+        #}
+      ENDSOURCE
+      SOURCE #serviceEnd
+        #// Ends the web message window opened by serviceStart().
+        #static void serviceEnd()
+        #{
+        #    ;
+        #    appl.globalCache().remove(classStr(INDCrmWebRecordGuard), "service");
+        #}
+      ENDSOURCE
+      SOURCE #serviceStart
+        #// Opens the window in which INDCrmSyncService may change locked records (one session).
+        #static void serviceStart()
+        #{
+        #    ;
+        #    appl.globalCache().set(classStr(INDCrmWebRecordGuard), "service", true);
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+
+***Element: END

@@ -1,0 +1,1307 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : CRMContactoTable unloaded at Lunes 19/10/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #CRMContactoTable
+    PROPERTIES
+      Name                #CRMContactoTable
+      Label               #Contactos CRM
+      FormRef             #
+      TitleField1         #
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #IND_CRM_Resto
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #Yes
+      ModifiedTime        #Yes
+      ModifiedBy          #Yes
+      ModifiedTransactionId #Yes
+      CreatedDate         #Yes
+      CreatedTime         #Yes
+      CreatedBy           #Yes
+      CreatedTransactionId #Yes
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #AccountNum
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #AccountNum
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMAccountNum
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #Name
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Name
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #ContactPersonName
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Email
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Email
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Email
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Phone
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Phone
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Phone
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #PhoneMobile
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #PhoneMobile
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #PhoneMobile
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Cargo
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Cargo
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Description
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Comentarios
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Comentarios
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMComentarios
+              #
+            ENDARRAY
+          StringSize          #(Memo)
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Empresa
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Empresa
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Description
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Skype
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Skype
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Description
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Origen
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Origen
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMActividadOrigen
+        ENDPROPERTIES
+        
+      FIELD #PhoneEmpresa
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #PhoneEmpresa
+          Label               #@IST165
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Phone
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Email3
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Email3
+          Label               #Email 3
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Email
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Email2
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Email2
+          Label               #Email 2
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Email
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #ContactoCargoId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ContactoCargoId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMContactoCargoId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Fax
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Fax
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #TeleFax
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #TransDateNacimiento
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #TransDateNacimiento
+          Label               #Fecha de Cumpleaños
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #TransDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #Mailing
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Mailing
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #MailingPeriodicidad
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #MailingPeriodicidad
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMMailingPeriodicidad
+        ENDPROPERTIES
+        
+      FIELD #NamePlanta
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #NamePlanta
+          Label               #Planta
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Name
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #PlantaRecId
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #PlantaRecId
+          Label               #Planta
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #RefRecId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #TransDateBaja
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #TransDateBaja
+          Label               #Fecha de Baja
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #TransDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #INDRecIdMex
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #INDRecIdMex
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #INDSearchKey
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDSearchKey
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDSearchKey
+              #
+            ENDARRAY
+          StringSize          #130
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #INDCreatedByWeb
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #INDCreatedByWeb
+          Label               #Creado desde la web
+          HelpText            #Registro creado desde la web CRM: solo se modifica desde la web
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMContactoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Comentarios
+        PROPERTIES
+          Name                #Comentarios
+          OldName             #
+          Label               #@IST131
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #Comentarios
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Contacto
+        PROPERTIES
+          Name                #Contacto
+          OldName             #
+          Label               #@GLS31129
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #Email
+          #Email2
+          #Email3
+          #PhoneEmpresa
+          #Phone
+          #PhoneMobile
+          #Skype
+          #Fax
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Identificacion
+        PROPERTIES
+          Name                #Identificacion
+          OldName             #
+          Label               #@SYS53631
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #Name
+          #Cargo
+          #Empresa
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Personal
+        PROPERTIES
+          Name                #Personal
+          OldName             #
+          Label               #Personal
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #TransDateNacimiento
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Planta
+        PROPERTIES
+          Name                #Planta
+          OldName             #
+          Label               #Planta
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #PlantaRecId
+          #PlantaName
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #Index1
+      PROPERTIES
+        Name                #Index1
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #AccountNum
+      ENDINDEXFIELDS
+      
+      #Index2
+      PROPERTIES
+        Name                #Index2
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #RecId
+      ENDINDEXFIELDS
+      
+      #INDSearchKeyIdx
+      PROPERTIES
+        Name                #INDSearchKeyIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #INDSearchKey
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+      REFERENCE #CRMCampanaMarketingTable
+        PROPERTIES
+          Name                #CRMCampanaMarketingTable
+          Table               #CRMCampanaMarketingTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMContactoTable
+            Field               #Origen
+            Value               #5
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMContactoTable
+            Field               #AccountNum
+            Table               #CRMCampanaMarketingTable
+            RelatedField        #CampanaMarketingId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMClientePotencialTable
+        PROPERTIES
+          Name                #CRMClientePotencialTable
+          Table               #CRMClientePotencialTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMContactoTable
+            Field               #Origen
+            Value               #6
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMContactoTable
+            Field               #AccountNum
+            Table               #CRMClientePotencialTable
+            RelatedField        #ClientePotencialId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMEventoTable
+        PROPERTIES
+          Name                #CRMEventoTable
+          Table               #CRMEventoTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMContactoTable
+            Field               #Origen
+            Value               #3
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMContactoTable
+            Field               #AccountNum
+            Table               #CRMEventoTable
+            RelatedField        #EventoId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMProveedorPotencialTable
+        PROPERTIES
+          Name                #CRMProveedorPotencialTable
+          Table               #CRMProveedorPotencialTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMContactoTable
+            Field               #Origen
+            Value               #11
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMContactoTable
+            Field               #AccountNum
+            Table               #CRMProveedorPotencialTable
+            RelatedField        #ProveedorPotencialId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CustTable
+        PROPERTIES
+          Name                #CustTable
+          Table               #CustTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMContactoTable
+            Field               #Origen
+            Value               #8
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMContactoTable
+            Field               #AccountNum
+            Table               #CustTable
+            RelatedField        #AccountNum
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #SalesTable
+        PROPERTIES
+          Name                #SalesTable
+          Table               #SalesTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMContactoTable
+            Field               #AccountNum
+            Table               #SalesTable
+            RelatedField        #CustAccount
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMContactoTable
+            Field               #Origen
+            Value               #8
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #VendTable
+        PROPERTIES
+          Name                #VendTable
+          Table               #VendTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMContactoTable
+            Field               #AccountNum
+            Table               #VendTable
+            RelatedField        #AccountNum
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMContactoTable
+            Field               #Origen
+            Value               #9
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #AccountNumCountryId
+        #display CountryId AccountNumCountryId()
+        #{
+        #    CustTable                   custTable;
+        #    CRMClientePotencialTable    clientePotencialTable;
+        #    ;
+        #
+        #    switch (this.Origen){
+        #        case CRMActividadOrigen::Cliente:           return CustTable::find(this.AccountNum).Country;
+        #
+        #        case CRMActividadOrigen::ClientePotencial:  return CRMClientePotencialTable::Find(this.AccountNum).CountryId;
+        #
+        #        case CRMActividadOrigen::Proveedor:         return VendTable::Find(this.AccountNum).Country;
+        #
+        #        default:    return "";
+        #    }
+        #
+        #    return "";
+        #}
+      ENDSOURCE
+      SOURCE #AccountNumName
+        #display Name AccountNumName()
+        #{
+        #    CustTable                   custTable;
+        #    CRMClientePotencialTable    clientePotencialTable;
+        #    ;
+        #
+        #    switch (this.Origen){
+        #        case CRMActividadOrigen::Cliente:           return CustTable::find(this.AccountNum).Name;
+        #
+        #        case CRMActividadOrigen::ClientePotencial:  return CRMClientePotencialTable::Find(this.AccountNum).Name;
+        #
+        #        case CRMActividadOrigen::Proveedor:         return VendTable::find(this.AccountNum).Name;
+        #
+        #        default:    return "";
+        #    }
+        #
+        #    return "";
+        #}
+      ENDSOURCE
+      SOURCE #AccountNumRecId
+        #RecId AccountNumRecId()
+        #{
+        #    CustTable                   custTable;
+        #    CRMClientePotencialTable    clientePotencialTable;
+        #    ;
+        #
+        #    switch (this.Origen){
+        #        case CRMActividadOrigen::Cliente:           return CustTable::find(this.AccountNum).RecId;
+        #
+        #        case CRMActividadOrigen::ClientePotencial:  return CRMClientePotencialTable::Find(this.AccountNum).RecId;
+        #
+        #        case CRMActividadOrigen::Proveedor:         return VendTable::find(this.AccountNum).RecId;
+        #
+        #        default:    return 0;
+        #    }
+        #
+        #    return 0;
+        #}
+      ENDSOURCE
+      SOURCE #AccountNumSectorName
+        #display Name AccountNumSectorName()
+        #{
+        #    CustTable                   custTable;
+        #    CRMClientePotencialTable    clientePotencialTable;
+        #    ;
+        #
+        #    switch (this.Origen){
+        #        case CRMActividadOrigen::Cliente:           return CustTable::find(this.AccountNum).StatisticsGroupName();
+        #
+        #        case CRMActividadOrigen::ClientePotencial:  return CRMClientePotencialTable::Find(this.AccountNum).StatisticsGroupName();
+        #
+        #        default:    return "";
+        #    }
+        #
+        #    return "";
+        #}
+      ENDSOURCE
+      SOURCE #AsignarANuevaCuenta
+        #void AsignarANuevaCuenta(CRMAccountNum _accountNum, CRMActividadOrigen _origen)
+        #{
+        #    INDUserPredeterminadoTipoDocumentoTable INDUserPredeterminadoTipoDocumentoTable;
+        #    ;
+        #    this.AccountNum = _accountNum;
+        #    this.Origen     = _origen;
+        #
+        #    //IJL.10/10/24
+        #    ttsbegin;
+        #    while select forupdate INDUserPredeterminadoTipoDocumentoTable
+        #    where INDUserPredeterminadoTipoDocumentoTable.RefRecIdContacto == this.RecId {
+        #
+        #        INDUserPredeterminadoTipoDocumentoTable.RefRecIdAccountNum  = this.AccountNumRecId();
+        #        INDUserPredeterminadoTipoDocumentoTable.doUpdate();
+        #    }
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #FechaUltimoMailing
+        #TransDate FechaUltimoMailing()
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #InitFromClientePotencialTable
+        #void InitFromClientePotencialTable(CRMClientePotencialTable _clientePotencialTable)
+        #{
+        #    ;
+        #
+        #    this.PhoneEmpresa   = _clientePotencialTable.Phone;
+        #    this.Empresa        = _clientePotencialTable.Name;
+        #}
+      ENDSOURCE
+      SOURCE #InitFromContactoCargoTable
+        #void InitFromContactoCargoTable(boolean _forupdate = false)
+        #{
+        #    CRMContactoCargoTable   cargoTable = CRMContactoCargoTable::Find(this.ContactoCargoId, _forupdate);
+        #    ;
+        #
+        #    this.Cargo  = cargoTable.Description;
+        #}
+      ENDSOURCE
+      SOURCE #InitFromContactoEventoTable
+        #void InitFromContactoEventoTable(CRMContactosEventoTable    _contactosEventoTable,
+        #                                 CRMClientePotencialId      _clientePotencialId,
+        #                                 CRMActividadOrigen         _origen)
+        #{
+        #    ;
+        #    this.AccountNum     = _clientePotencialId;
+        #    this.Name           = _contactosEventoTable.Name;
+        #    this.Email          = _contactosEventoTable.Email;
+        #    this.Phone          = _contactosEventoTable.Phone;
+        #    this.PhoneMobile    = _contactosEventoTable.PhoneMobile;
+        #    this.Cargo          = _contactosEventoTable.Cargo;
+        #    this.Comentarios    = _contactosEventoTable.Comentarios;
+        #    this.Empresa        = _contactosEventoTable.Empresa;
+        #    this.Skype          = _contactosEventoTable.Skype;
+        #    this.Origen         = _origen;
+        #
+        #    this.PhoneEmpresa   = _contactosEventoTable.PhoneEmpresa;
+        #}
+      ENDSOURCE
+      SOURCE #InitFromCustTable
+        #void InitFromCustTable(CustTable _custTable)
+        #{
+        #    ;
+        #
+        #    this.PhoneEmpresa   = _custTable.Phone;
+        #    this.Empresa        = _custTable.Name;
+        #}
+      ENDSOURCE
+      SOURCE #InitFromVendTable
+        #void InitFromVendTable(VendTable _vendTable)
+        #{
+        #    ;
+        #
+        #    this.PhoneEmpresa   = _vendTable.Phone;
+        #    this.Empresa        = _vendTable.Name;
+        #}
+      ENDSOURCE
+      SOURCE #insert
+        #public void insert()
+        #{
+        #    //INDMMS_ExternalCRM - 2025.11.12
+        #    this.updateSearchKey();
+        #
+        #    super();
+        #}
+      ENDSOURCE
+      SOURCE #modifiedField
+        #public void modifiedField(fieldId _fieldId)
+        #{
+        #    super(_fieldId);
+        #
+        #    switch (_fieldId){
+        #
+        #        case FieldNum(CRMContactoTable, ContactoCargoId):
+        #            this.InitFromContactoCargoTable();
+        #            break;
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #PlantaName
+        #display Name PlantaName()
+        #{
+        #    return CRMCuentaAddressTable::FindRecId(this.PlantaRecId).Name;
+        #}
+      ENDSOURCE
+      SOURCE #TransDateUltimoMailing
+        #display TransDate TransDateUltimoMailing()
+        #{
+        #    CRMMailingTrans mailingTrans;
+        #    ;
+        #
+        #    select firstonly mailingTrans
+        #    order by transDate desc
+        #    where mailingTrans.RefRecIdContacto == this.RecId;
+        #
+        #    return mailingTrans.TransDate;
+        #}
+      ENDSOURCE
+      SOURCE #update
+        #public void update()
+        #{
+        #    //INDMMS_ExternalCRM - 2025.11.12
+        #    this.updateSearchKey();
+        #
+        #    super();
+        #}
+      ENDSOURCE
+      SOURCE #updateSearchKey
+        #//INDMMS_ExternalCRM - 2025.11.12
+        #public void updateSearchKey()
+        #{
+        #    this.INDSearchKey = strLwr(this.AccountNum + '|' + this.Name + ';');
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateField
+        #public boolean validateField(fieldId _fieldIdToCheck)
+        #{
+        #    boolean                 ret;
+        #    CRMCuentaAddressTable   cuentaAddressTable;
+        #    ;
+        #
+        #    ret = super(_fieldIdToCheck);
+        #
+        #    switch (_fieldIdToCheck){
+        #        case FieldNum(CRMContactoTable, PlantaRecId):
+        #            cuentaAddressTable  = CRMCuentaAddressTable::FindRecId(this.PlantaRecId);
+        #            //Si el número indicado no corresponde a ninguna dirección o la dirección a la que hace referencia no pertenece a
+        #            //la cuenta de la consulta mostramos el error
+        #            if (! cuentaAddressTable || cuentaAddressTable.RefRecId != this.AccountNumRecId()){
+        #                ret = checkFailed("@IST290");
+        #            }
+        #            break;
+        #
+        #        //IJL.12/06/25
+        #        case FieldNum(CRMContactoTable, Email):
+        #            if (this.Email)
+        #                ret = Global::EmailCorrecto(this.Email);
+        #            break;
+        #        case FieldNum(CRMContactoTable, Email2):
+        #            if (this.Email2)
+        #                ret = Global::EmailCorrecto(this.Email2);
+        #            break;
+        #        case FieldNum(CRMContactoTable, Email3):
+        #            if (this.Email3)
+        #                ret = Global::EmailCorrecto(this.Email3);
+        #            break;
+        #
+        #    }
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #validateWrite
+        #public boolean validateWrite()
+        #{
+        #    boolean ret;
+        #    ;
+        #
+        #    ret = super();
+        #
+        #    //INDMMS_ExternalCRM - 2026.10.26
+        #    ret = ret && INDCrmWebRecordGuard::checkChange(this);
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #validateDelete
+        #public boolean validateDelete()
+        #{
+        #    boolean ret;
+        #    ;
+        #
+        #    ret = super();
+        #
+        #    //INDMMS_ExternalCRM - 2026.10.26
+        #    ret = ret && INDCrmWebRecordGuard::checkChange(this);
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #FindAccountNum_Name
+        #static CRMContactoTable FindAccountNum_Name(AccountNum  _accountNum,
+        #                                            Name        _name,
+        #                                            boolean     _forupdate = false)
+        #{
+        #    CRMContactoTable    CRMContactoTable;
+        #    ;
+        #
+        #    CRMContactoTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly CRMContactoTable
+        #    where CRMContactoTable.AccountNum   == _accountNum &&
+        #          CRMContactoTable.Name         == _name;
+        #
+        #    return CRMContactoTable;
+        #}
+      ENDSOURCE
+      SOURCE #FindRecId
+        #static CRMContactoTable FindRecId(RecId _recId, boolean _forupdate = false)
+        #{
+        #    CRMContactoTable    CRMContactoTable;
+        #    ;
+        #
+        #    CRMContactoTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly CRMContactoTable
+        #    index hint index2
+        #    where CRMContactoTable.RecId == _recId;
+        #
+        #    return CRMContactoTable;
+        #}
+      ENDSOURCE
+      SOURCE #lookupCRMContactoTable
+        #static client void lookupCRMContactoTable(FormStringControl     _ctrl,
+        #                                          CRMAccountNum         _account,
+        #                                          CRMActividadOrigen    _origen     = CRMActividadOrigen::Cliente,
+        #                                          CompanyId             _companyId = CurExt())
+        #{
+        #    SysTableLookup          sysTableLookup = SysTableLookup::newParameters(tableNum(CRMContactoTable),_ctrl);
+        #    Query                   query = new Query();
+        #    QueryBuildDataSource    queryBuildDataSource = query.addDataSource(tableNum(CRMContactoTable));
+        #    QueryBuildRange         queryBuildRange      = queryBuildDataSource.addRange(fieldNum(CRMContactoTable, AccountNum));
+        #    QueryBuildRange         queryBuildRangeOrigen      = queryBuildDataSource.addRange(fieldNum(CRMContactoTable, Origen));
+        #    ;
+        #
+        #    sysTableLookup.addLookupfield(fieldNum(CRMContactoTable, Name), true);
+        #    sysTableLookup.addLookupfield(fieldNum(CRMContactoTable, Cargo));
+        #    sysTableLookup.addLookupfield(fieldNum(CRMContactoTable, Phone));
+        #    sysTableLookup.addLookupfield(fieldNum(CRMContactoTable, PhoneMobile));
+        #
+        #
+        #    changeCompany(_companyId){
+        #        queryBuildRange.value(QueryValue(_account));
+        #        queryBuildRangeOrigen.value(QueryValue(_origen));
+        #
+        #        sysTableLookup.parmQuery(query);
+        #        sysTableLookup.performFormLookup();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #SetContactos
+        #static Set SetContactos(AccountNum          _accountNum1,
+        #                        CRMActividadOrigen  _origen1,
+        #                        AccountNum          _accountNum2,
+        #                        CRMActividadOrigen  _origen2)
+        #{
+        #    CRMContactoTable        contactoTable;
+        #    Set                     setRecId = new Set(Types::Integer);
+        #
+        #    ;
+        #
+        #    while select contactoTable
+        #    where    (contactoTable.AccountNum == _accountNum1 && contactoTable.Origen == _origen1)
+        #          || (contactoTable.AccountNum == _accountNum2 && contactoTable.Origen == _origen2) {
+        #
+        #        setRecId.add(contactoTable.RecId);
+        #    }
+        #
+        #    return setRecId;
+        #
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

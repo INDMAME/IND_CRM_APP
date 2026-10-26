@@ -1,0 +1,1972 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : CRMActividadTable unloaded at Lunes 19/10/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #CRMActividadTable
+    PROPERTIES
+      Name                #CRMActividadTable
+      Label               #Actividades de CRM
+      FormRef             #
+      TitleField1         #
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #IND_CRM_Resto
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #Yes
+      ModifiedTime        #Yes
+      ModifiedBy          #Yes
+      ModifiedTransactionId #Yes
+      CreatedDate         #Yes
+      CreatedTime         #Yes
+      CreatedBy           #Yes
+      CreatedTransactionId #Yes
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #ActividadId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ActividadId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMActividadId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #AccountNum
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #AccountNum
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMAccountNum
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #ActividadType
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #ActividadType
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMActividadType
+        ENDPROPERTIES
+        
+      FIELD #UserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #UserId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMUserId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #Description
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Description
+          Label               #@IST169
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Description
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Origen
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Origen
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMActividadOrigen
+        ENDPROPERTIES
+        
+      FIELD #TransDate
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #TransDate
+          Label               #@IST170
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #TransDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #DateRealRealizacion
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #DateRealRealizacion
+          Label               #@IST197
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #TransDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #Comentarios
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Comentarios
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMComentarios
+              #
+            ENDARRAY
+          StringSize          #(Memo)
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Name
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Name
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Name
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Status
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Status
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMActivityStatus
+        ENDPROPERTIES
+        
+      FIELD #Prioridad
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Prioridad
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMActivityPrioridad
+        ENDPROPERTIES
+        
+      FIELD #Country
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Country
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CountryId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #RevisionNum
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #RevisionNum
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMRevisionNum
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #CustAccount
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CustAccount
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #AccountNum
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #RefRecId
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #RefRecId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #RefRecId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #OrigenCustAccount
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #OrigenCustAccount
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMCliente_ClientePotencial_Proveedor
+        ENDPROPERTIES
+        
+      FIELD #Asistentes
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Asistentes
+          Label               #Asistentes IST
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #FreeText
+              #
+            ENDARRAY
+          StringSize          #255
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #GrupoTecnicoHornos
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #GrupoTecnicoHornos
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMOfertaGrupoTecnicoHornos
+        ENDPROPERTIES
+        
+      FIELD #AsistentesCliente
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #AsistentesCliente
+          Label               #Asistentes Cliente/Proveedor
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #FreeText
+              #
+            ENDARRAY
+          StringSize          #255
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Division
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Division
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMDivision
+        ENDPROPERTIES
+        
+      FIELD #VisitaAntecedentes
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #VisitaAntecedentes
+          Label               #@SYS27236
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMComentarios
+              #
+            ENDARRAY
+          StringSize          #(Memo)
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #VisitaConclusiones
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #VisitaConclusiones
+          Label               #@IST433
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMComentarios
+              #
+            ENDARRAY
+          StringSize          #(Memo)
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #VisitaTipoExpediente
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #VisitaTipoExpediente
+          Label               #@IST434
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMCustVisitaTipoExpediente
+        ENDPROPERTIES
+        
+      FIELD #VisitaExpedienteId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #VisitaExpedienteId
+          Label               #@IST435
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMAccountNum
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #VisitaValoracion
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #VisitaValoracion
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMCustVisitaValoracion
+        ENDPROPERTIES
+        
+      FIELD #TipoVisita
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #TipoVisita
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMTipoVisita
+        ENDPROPERTIES
+        
+      FIELD #INDRecIdMex
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #INDRecIdMex
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #INDCreatedByUserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDCreatedByUserId
+          Label               #Usuario WEB
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDCreatedByUserId
+              #
+            ENDARRAY
+          StringSize          #5
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #INDFileSearchId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDFileSearchId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #ItemFreeTxt
+              #
+            ENDARRAY
+          StringSize          #1000
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #INDAttachFiles
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDAttachFiles
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #ItemFreeTxt
+              #
+            ENDARRAY
+          StringSize          #1000
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #ContactMethod
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #ContactMethod
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #INDContactMethod
+        ENDPROPERTIES
+        
+      FIELD #INDCreatedByWeb
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #INDCreatedByWeb
+          Label               #Creado desde la web
+          HelpText            #Registro creado desde la web CRM: solo se modifica desde la web
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMActividadTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Comentarios
+        PROPERTIES
+          Name                #Comentarios
+          OldName             #
+          Label               #@SYS54618
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #Description
+          #Comentarios
+          #Asistentes
+          #AsistentesCliente
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #DatosCuentaAsociada
+        PROPERTIES
+          Name                #DatosCuentaAsociada
+          OldName             #
+          Label               #Cuenta Asociada
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #OrigenCustAccount
+          #CustAccount
+          #CustAccountName
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Fechas
+        PROPERTIES
+          Name                #Fechas
+          OldName             #
+          Label               #@GLS30081
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #TransDate
+          #DateRealRealizacion
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Identificacion
+        PROPERTIES
+          Name                #Identificacion
+          OldName             #
+          Label               #@SYS53631
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #ActividadType
+          #UserId
+          #Prioridad
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #ModifiedDateIdx
+      PROPERTIES
+        Name                #ModifiedDateIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #modifiedDate
+      ENDINDEXFIELDS
+      
+      #CreatedDateIdx
+      PROPERTIES
+        Name                #CreatedDateIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #createdDate
+      ENDINDEXFIELDS
+      
+      #UserIdx
+      PROPERTIES
+        Name                #UserIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #UserId
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+      REFERENCE #CRMCampanaMarketingTable
+        PROPERTIES
+          Name                #CRMCampanaMarketingTable
+          Table               #CRMCampanaMarketingTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #Origen
+            Value               #5
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #AccountNum
+            Table               #CRMCampanaMarketingTable
+            RelatedField        #CampanaMarketingId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMClientePotencialTable
+        PROPERTIES
+          Name                #CRMClientePotencialTable
+          Table               #CRMClientePotencialTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #OrigenCustAccount
+            Value               #2
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #CustAccount
+            Table               #CRMClientePotencialTable
+            RelatedField        #ClientePotencialId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMConsultaTable
+        PROPERTIES
+          Name                #CRMConsultaTable
+          Table               #CRMConsultaTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #Origen
+            Value               #1
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #AccountNum
+            Table               #CRMConsultaTable
+            RelatedField        #ConsultaId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMContactosEventoTable
+        PROPERTIES
+          Name                #CRMContactosEventoTable
+          Table               #CRMContactosEventoTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #AccountNum
+            Table               #CRMContactosEventoTable
+            RelatedField        #EventoId
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #Origen
+            Value               #7
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #RefRecId
+            Table               #CRMContactosEventoTable
+            RelatedField        #RecId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMFeriaTable
+        PROPERTIES
+          Name                #CRMFeriaTable
+          Table               #CRMEventoTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #Origen
+            Value               #3
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #AccountNum
+            Table               #CRMEventoTable
+            RelatedField        #EventoId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMOfertaRevisionTable
+        PROPERTIES
+          Name                #CRMOfertaRevisionTable
+          Table               #CRMOfertaRevisionTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #RevisionNum
+            Table               #CRMOfertaRevisionTable
+            RelatedField        #RevisionNum
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #Origen
+            Value               #2
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #AccountNum
+            Table               #CRMOfertaRevisionTable
+            RelatedField        #OfertaId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMOfertaTable
+        PROPERTIES
+          Name                #CRMOfertaTable
+          Table               #CRMOfertaTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #Origen
+            Value               #2
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #AccountNum
+            Table               #CRMOfertaTable
+            RelatedField        #OfertaId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMProveedorPotencialTable
+        PROPERTIES
+          Name                #CRMProveedorPotencialTable
+          Table               #CRMProveedorPotencialTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #OrigenCustAccount
+            Value               #4
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #CustAccount
+            Table               #CRMProveedorPotencialTable
+            RelatedField        #ProveedorPotencialId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMUsuarioTable
+        PROPERTIES
+          Name                #CRMUsuarioTable
+          Table               #CRMUsuarioTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #Origen
+            Value               #4
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #AccountNum
+            Table               #CRMUsuarioTable
+            RelatedField        #UserId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CustTable
+        PROPERTIES
+          Name                #CustTable
+          Table               #CustTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #OrigenCustAccount
+            Value               #1
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #CustAccount
+            Table               #CustTable
+            RelatedField        #AccountNum
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #ProjTable
+        PROPERTIES
+          Name                #ProjTable
+          Table               #ProjTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #AccountNum
+            Table               #ProjTable
+            RelatedField        #ProjId
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #Origen
+            Value               #10
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #VendTable
+        PROPERTIES
+          Name                #VendTable
+          Table               #VendTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #RefRecId
+            Table               #VendTable
+            RelatedField        #RecId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #VisitaConsulta
+        PROPERTIES
+          Name                #VisitaConsulta
+          Table               #CRMConsultaTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #VisitaExpedienteId
+            Table               #CRMConsultaTable
+            RelatedField        #ConsultaId
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #VisitaTipoExpediente
+            Value               #1
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #VisitaOferta
+        PROPERTIES
+          Name                #VisitaOferta
+          Table               #CRMOfertaTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #VisitaExpedienteId
+            Table               #CRMOfertaTable
+            RelatedField        #OfertaId
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #VisitaTipoExpediente
+            Value               #2
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #VisitaProyecto
+        PROPERTIES
+          Name                #VisitaProyecto
+          Table               #ProjTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #VisitaExpedienteId
+            Table               #ProjTable
+            RelatedField        #ProjId
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMActividadTable
+            Field               #VisitaTipoExpediente
+            Value               #3
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #AccountDescription
+        #display Description AccountDescription()
+        #{
+        #    Description description;
+        #    ;
+        #    switch (this.Origen){
+        #        case CRMActividadOrigen::CampanaMarketing:  return "";//CRMCampanaMarketingTable::Find(this.AccountNum).Description;
+        #        case CRMActividadOrigen::ClientePotencial:  return "";//CRMClientePotencialTable::Find(this.AccountNum).Name;
+        #        case CRMActividadOrigen::Consulta: return CRMConsultaTable::Find(this.AccountNum).Description;
+        #        case CRMActividadOrigen::Evento:   return "";//CRMEventoTable::Find(this.AccountNum).Name;
+        #        case CRMActividadOrigen::Oferta:
+        #            description = CRMOfertaRevisionTable::Find(this.AccountNum, this.RevisionNum).Description;
+        #
+        #//            description = CRMOfertaTable::Find(this.AccountNum).LastRevisioonDescription();
+        #            if (! description)
+        #                description = CRMOfertaTable::Find(this.AccountNum).Description;
+        #            return description;
+        #        case CRMActividadOrigen::Usuario:  return "";//CRMUsuarioTable::Find(this.AccountNum).Name;
+        #
+        #        case CRMActividadOrigen::Proyecto: return ProjTable::findRecId(this.RefRecId).Name;
+        #    }
+        #
+        #    return "";
+        #}
+      ENDSOURCE
+      SOURCE #AccountName
+        #display Name AccountName()
+        #{
+        #    ;
+        #    switch (this.Origen){
+        #        case CRMActividadOrigen::CampanaMarketing:  return CRMCampanaMarketingTable::Find(this.AccountNum).Description;
+        #        case CRMActividadOrigen::ClientePotencial:  return CRMClientePotencialTable::Find(this.AccountNum).Name;
+        #        case CRMActividadOrigen::Consulta: return CRMConsultaTable::Find(this.AccountNum).AccountName();
+        #        case CRMActividadOrigen::Evento:   return CRMEventoTable::Find(this.AccountNum).Name;
+        #        case CRMActividadOrigen::Oferta:   return CRMOfertaTable::Find(this.AccountNum).AccountName();
+        #        case CRMActividadOrigen::Usuario:  return CRMUsuarioTable::Find(this.AccountNum).Name;
+        #        case CRMActividadOrigen::Cliente:  return CustTable::findRecId(this.RefRecId).Name;
+        #        case CRMActividadOrigen::Proveedor: return VendTable::findRecId(this.RefRecId).Name;
+        #        case CRMActividadOrigen::Proyecto: return ProjTable::findRecId(this.RefRecId).CustNameSanken();
+        #    }
+        #
+        #    return "";
+        #}
+      ENDSOURCE
+      SOURCE #ActualizaFechaVisita
+        #void ActualizaFechaVisita(TransDate _newTransDate)
+        #{
+        #    CRMCustListaVisitasTable    CRMCustListaVisitasTable;
+        #    ;
+        #
+        #    /*
+        #    ¿Tendría que actualizar también las imputaciones de los gastos de la CRMHojaGastosLinsCust?
+        #        De momento no.
+        #    */
+        #    if (! this.RecId)
+        #        return;
+        #
+        #    ttsbegin;
+        #    while select forupdate CRMCustListaVisitasTable
+        #    where CRMCustListaVisitasTable.RefRecIdInforme    == this.RecId {
+        #
+        #        CRMCustListaVisitasTable.TransDate  = _newTransDate;
+        #        CRMCustListaVisitasTable.doUpdate();
+        #    }
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #Comentarios
+        #display CRMComentarios Comentarios()
+        #{
+        #    CRMComentarios  comentarios;
+        #    ;
+        #
+        #    comentarios = this.Comentarios;
+        #
+        #    if (this.ActividadType == CRMActividadType::Visita && (this.Asistentes || this.AsistentesCliente)){
+        #
+        #        comentarios = strfmt("Asistentes IST: %1\nAsistentes Cliente: %2\n", this.Asistentes, this.AsistentesCliente);
+        #
+        #        comentarios = strfmt("%1---------------------------------------------\n%2", comentarios, this.Comentarios);
+        #
+        #    }
+        #
+        #    return comentarios;
+        #}
+      ENDSOURCE
+      SOURCE #ConsultaOrigen
+        #CRMConsultaOrigen ConsultaOrigen()
+        #{
+        #    ;
+        #    switch (this.Origen){
+        #        case CRMActividadOrigen::Cliente:           return CRMConsultaOrigen::Cliente;
+        #        case CRMActividadOrigen::ClientePotencial:  return CRMConsultaOrigen::ClientePotencial;
+        #        case CRMActividadOrigen::Proveedor:         return CRMConsultaOrigen::Proveedor;
+        #        case CRMActividadOrigen::Proyecto:          return CRMConsultaOrigen::Proyecto;
+        #    }
+        #
+        #    return CRMConsultaOrigen::None;
+        #}
+      ENDSOURCE
+      SOURCE #CustAccountName
+        #display CustName CustAccountName()
+        #{
+        #    Name    name;
+        #    ;
+        #
+        #    if (! this.CustAccount)
+        #        return "";
+        #
+        #    name    = CustTable::find(this.CustAccount).Name;
+        #
+        #    if (name)
+        #        return name;
+        #
+        #    name    = CRMClientePotencialTable::Find(this.CustAccount).Name;
+        #
+        #    return name;
+        #}
+      ENDSOURCE
+      SOURCE #ImporteRevisionOferta
+        #display Amount ImporteRevisionOferta()
+        #{
+        #    CRMOfertaRevisionTable  CRMOfertaRevisionTable;
+        #    ;
+        #
+        #    select firstonly CRMOfertaRevisionTable
+        #    where CRMOfertaRevisionTable.OfertaId       == this.AccountNum    &&
+        #          CRMOfertaRevisionTable.RevisionNum    == this.RevisionNum;
+        #
+        #    return CRMOfertaRevisionTable.AmountMST();
+        #
+        #    //return CRMOfertaRevisionTable::Find(this.AccountNum, this.Revision).Price;
+        #}
+      ENDSOURCE
+      SOURCE #ImporteRevisionOfertaUSD
+        #display Amount ImporteRevisionOfertaUSD()
+        #{
+        #    CRMOfertaRevisionTable  CRMOfertaRevisionTable;
+        #    Amount                  amountUSD;
+        #    ;
+        #
+        #    select firstonly CRMOfertaRevisionTable
+        #    where CRMOfertaRevisionTable.OfertaId       == this.AccountNum    &&
+        #          CRMOfertaRevisionTable.RevisionNum    == this.RevisionNum;
+        #
+        #    return CRMOfertaRevisionTable.AmountUSD();
+        #
+        #/*
+        #    if (CRMOfertaRevisionTable.CurrencyCode == "USD")
+        #        return CRMOfertaRevisionTable.Price;
+        #
+        #    if (CRMOfertaRevisionTable.ExchRateUSD)
+        #        amountUSD = Currency::amount(CRMOfertaRevisionTable.Price / CRMOfertaRevisionTable.ExchRateUSD * 100);
+        #
+        #    return amountUSD;
+        #*/
+        #    //return CRMOfertaRevisionTable::Find(this.AccountNum, this.Revision).Price;
+        #}
+      ENDSOURCE
+      SOURCE #InitCountryId
+        #CountryId InitCountryId()
+        #{
+        #    CountryId   countryId;
+        #    ;
+        #
+        #    switch (this.Origen){
+        #        case CRMActividadOrigen::CampanaMarketing:
+        #            return "";
+        #        case CRMActividadOrigen::ClientePotencial:
+        #            return CRMClientePotencialTable::Find(this.AccountNum).CountryId;
+        #        case CRMActividadOrigen::Consulta:
+        #            return CRMConsultaTable::Find(this.AccountNum).CountryId;
+        #        case CRMActividadOrigen::Evento:
+        #            return "";//CRMEventoTable::Find(this.AccountNum).;
+        #        case CRMActividadOrigen::Oferta:
+        #            return CRMOfertaTable::Find(this.AccountNum).CountryId;
+        #        case CRMActividadOrigen::Usuario:
+        #            return "";//CRMUsuarioTable::Find(this.AccountNum).Name;
+        #        case CRMActividadOrigen::Cliente:
+        #            return CustTable::findRecId(this.RefRecId).Country;
+        #        case CRMActividadOrigen::Proyecto:
+        #            return ProjTable::findRecId(this.RefRecId).CountryId();
+        #    }
+        #
+        #    return "";
+        #
+        #}
+      ENDSOURCE
+      SOURCE #initFromAgendaTable
+        #void initFromAgendaTable(CRMUsuarioAgendaTable _agendaTable)
+        #{
+        #
+        #    ;
+        #    switch(_agendaTable.CustAccountType){
+        #        case CRMCliente_ClientePotencial_Proveedor::Cliente:
+        #            this.InitFromCustTable(CustTable::find(_agendaTable.CustAccount));
+        #            break;
+        #
+        #        case CRMCliente_ClientePotencial_Proveedor::ClientePotencial:
+        #            this.InitFromClientePotencialTable(CRMClientePotencialTable::find(_agendaTable.CustAccount));
+        #            break;
+        #
+        #        case CRMCliente_ClientePotencial_Proveedor::Proveedor:
+        #            this.InitFromVendTable(VendTable::find(_agendaTable.CustAccount));
+        #            break;
+        #
+        #    }
+        #
+        #    this.UserId         = _agendaTable.UserId;
+        #    this.Description    = _agendaTable.MotivoDescription();
+        #    this.TransDate      = _agendaTable.TransDate;
+        #}
+      ENDSOURCE
+      SOURCE #InitFromClientePotencialTable
+        #void InitFromClientePotencialTable(CRMClientepotencialTable _clientePotencialTable)
+        #{
+        #    ;
+        #    this.Name               = _clientePotencialTable.Name;
+        #    this.AccountNum         = _clientePotencialTable.ClientePotencialId;
+        #    this.CustAccount        = _clientePotencialTable.ClientePotencialId;
+        #    this.Origen             = CRMActividadOrigen::ClientePotencial;
+        #    this.RefRecId           = _clientePotencialTable.RecId;
+        #    this.OrigenCustAccount  = CRMCliente_ClientePotencial_Proveedor::ClientePotencial;
+        #}
+      ENDSOURCE
+      SOURCE #InitFromConsultaTable
+        #void InitFromConsultaTable(CRMConsultaTable _consultaTable)
+        #{
+        #    CustTable                   custTable;
+        #    CRMClientePotencialTable    clientePotencialTable;
+        #    ;
+        #    this.Name   = _consultaTable.AccountName();
+        #
+        #    [custTable, clientePotencialTable] = _consultaTable.AccountTable();
+        #
+        #    this.CustAccount    = custTable ? custTable.AccountNum : clientePotencialTable.ClientePotencialId;
+        #
+        #    this.RefRecId       = _consultaTable.RecId;
+        #}
+      ENDSOURCE
+      SOURCE #initFromCustListaVisitasTable
+        #void initFromCustListaVisitasTable(CRMCustListaVisitasTable _CRMCustListaVisitasTable)
+        #{
+        #    ;
+        #    switch(_CRMCustListaVisitasTable.Origen){
+        #
+        #        case CRMConsultaOrigen::Cliente:
+        #            this.InitFromCustTable(CustTable::find(_CRMCustListaVisitasTable.CustAccount));
+        #            break;
+        #        case CRMConsultaOrigen::ClientePotencial:
+        #            this.InitFromClientePotencialTable(CRMClientePotencialTable::find(_CRMCustListaVisitasTable.CustAccount));
+        #            break;
+        #
+        #        case CRMConsultaOrigen::Proveedor:
+        #            this.InitFromVendTable(VendTable::find(_CRMCustListaVisitasTable.CustAccount));
+        #            break;
+        #
+        #        case CRMConsultaOrigen::Proyecto:
+        #            this.initFromProjTable(ProjTable::find(_CRMCustListaVisitasTable.CustAccount));
+        #            break;
+        #    }
+        #
+        #    this.UserId         = _CRMCustListaVisitasTable.UserId;
+        #    this.TransDate      = _CRMCustListaVisitasTable.TransDate;
+        #    this.Description    = _CRMCustListaVisitasTable.Motivo;
+        #}
+      ENDSOURCE
+      SOURCE #InitFromCustTable
+        #void InitFromCustTable(CustTable _custTAble)
+        #{
+        #    ;
+        #    this.Name               = _custTable.INDNombreComercial ? _custTable.INDNombreComercial : _custTable.Name;
+        #    this.CustAccount        = _custTable.AccountNum;
+        #    this.AccountNum         = _custTable.AccountNum;
+        #    this.RefRecId           = _custTable.RecId;
+        #    this.Origen             = CRMActividadOrigen::Cliente;
+        #    this.OrigenCustAccount  = CRMCliente_ClientePotencial_Proveedor::Cliente;
+        #}
+      ENDSOURCE
+      SOURCE #InitFromOfertaTable
+        #void InitFromOfertaTable(CRMOfertaTable _ofertaTable)
+        #{
+        #    CustTable                   custTable;
+        #    CRMClientePotencialTable    clientePotencialTable;
+        #    ;
+        #    this.Name   = _ofertaTable.Name;//_ofertaTable.AccountName();
+        #
+        #    this.RevisionNum    = _ofertaTable.LastRevisionNum();
+        #
+        #    [custTable, clientePotencialTable] = _ofertaTable.AccountTable();
+        #
+        #    this.CustAccount    = custTable ? custTable.AccountNum : clientePotencialTable.ClientePotencialId;
+        #
+        #    this.RefRecId       = _ofertaTable.RecId;
+        #
+        #    this.GrupoTecnicoHornos = _ofertaTable.GrupoTecnicoHornos;
+        #}
+      ENDSOURCE
+      SOURCE #initFromProjTable
+        #void initFromProjTable(ProjTable _projTable)
+        #{
+        #    ;
+        #    this.Name           = _projTable.CustNameSanken();
+        #    this.CustAccount    = _projTable.INDCustAccountSanken;
+        #    this.AccountNum     = _projTable.ProjId;
+        #    this.RefRecId       = _projTable.RecId;
+        #    this.Origen         = CRMActividadOrigen::Proyecto;
+        #}
+      ENDSOURCE
+      SOURCE #InitFromProveedorPotencialTable
+        #void InitFromProveedorPotencialTable(CRMProveedorPotencialTable _proveedorPotencialTable)
+        #{
+        #    ;
+        #    this.Name               = _proveedorPotencialTable.Name;
+        #    this.AccountNum         = _proveedorPotencialTable.ProveedorPotencialId;
+        #    this.CustAccount        = _proveedorPotencialTable.ProveedorPotencialId;
+        #    this.Origen             = CRMActividadOrigen::ProveedorPotencial;
+        #    this.RefRecId           = _proveedorPotencialTable.RecId;
+        #    this.OrigenCustAccount  = CRMCliente_ClientePotencial_Proveedor::ProveedorPotencial;
+        #}
+      ENDSOURCE
+      SOURCE #InitFromRevisionOfertaTable
+        #void InitFromRevisionOfertaTable(CRMOfertaRevisionTable _ofertaRevisionTable)
+        #{
+        #    CustTable                   custTable;
+        #    CRMClientePotencialTable    clientePotencialTable;
+        #
+        #    ;
+        #    this.Name           = _ofertaRevisionTable.AccountName();
+        #    this.RevisionNum    = _ofertaRevisionTable.RevisionNum;
+        #
+        #    [custTable, clientePotencialTable] = _ofertaRevisionTable.CRMOfertaTable().AccountTable();
+        #
+        #    this.CustAccount    = custTable ? custTable.AccountNum : clientePotencialTable.ClientePotencialId;
+        #
+        #    this.RefRecId       = _ofertaRevisionTable.CRMOfertaTable().RecId;//_ofertaRevisionTable.RecId;
+        #}
+      ENDSOURCE
+      SOURCE #InitFromUsuarioTable
+        #void InitFromUsuarioTable()
+        #{
+        #    CRMUsuarioTable     usuarioTable    = CRMUsuarioTable::Find(this.UserId);
+        #    ;
+        #
+        #    this.Division   = usuarioTable.Division;
+        #}
+      ENDSOURCE
+      SOURCE #InitFromVendTable
+        #void InitFromVendTable(VendTable _vendTable)
+        #{
+        #    ;
+        #    this.Name               = _vendTable.Name;
+        #    this.CustAccount        = _vendTable.AccountNum;
+        #    this.AccountNum         = _vendTable.AccountNum;
+        #    this.RefRecId           = _vendTable.RecId;
+        #    this.Origen             = CRMActividadOrigen::Proveedor;
+        #    this.OrigenCustAccount  = CRMCliente_ClientePotencial_Proveedor::Proveedor;
+        #}
+      ENDSOURCE
+      SOURCE #initValue
+        #public void initValue()
+        #{
+        #    ;
+        #    this.Status = CRMActivityStatus::EnCurso;
+        #}
+      ENDSOURCE
+      SOURCE #insert
+        #public void insert()
+        #{
+        #    ;
+        #    this.Name   = this.AccountName();
+        #
+        #    super();
+        #
+        #    //INDMMS_ExternalCRM - 2026.03.25
+        #    if(!this.INDCreatedByUserId)
+        #    {
+        #        this.selectForUpdate(true);
+        #        this.INDCreatedByUserId = this.createdBy;
+        #        this.doUpdate();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #ListaAsistentes
+        #str ListaAsistentes(CRMCustVendVisitaAsistente _tipo, boolean _variasLineas = false)
+        #{
+        #    CRMCustVendVisitaAsistenteTable asistenteTable;
+        #    str                             lista;
+        #    CRMContactoTable                contactoTable;
+        #    Name                            nombreCuentaExterno;
+        #    ;
+        #
+        #
+        #    if (this.Asistentes || this.AsistentesCliente){
+        #        if (_tipo == CRMCustVendVisitaAsistente::Cliente_Proveedor)
+        #            return this.AsistentesCliente;
+        #
+        #        if (_tipo == CRMCustVendVisitaAsistente::Insertec)
+        #            return this.Asistentes;
+        #    }
+        #
+        #    while select asistenteTable
+        #    where asistenteTable.RefRecId       == this.RecId   &&
+        #          asistenteTable.AsistenteTipo  == _tipo {
+        #
+        #        contactoTable       = CRMContactoTable::FindRecId(asistenteTable.ContactoRecId);
+        #        nombreCuentaExterno = asistenteTable.AccountExternoName();
+        #
+        #        if (! lista){
+        #            if (asistenteTable.AsistenteCargo)
+        #                lista   = strfmt(".- %1 (%2) %3",asistenteTable.AsistenteId, asistenteTable.AsistenteCargo, nombreCuentaExterno);
+        #            else
+        #                lista   = strfmt(".- %1 %2",asistenteTable.AsistenteId, nombreCuentaExterno);
+        #
+        #            if (contactoTable.Email)
+        #                lista   = strfmt("%1\n    Email: %2", lista, contactoTable.Email);
+        #        }
+        #        else {
+        #            if (_variasLineas){
+        #                if (asistenteTable.AsistenteCargo)
+        #                    lista   = strfmt("%1\n.- %2 (%3) %4",lista, asistenteTable.AsistenteId, asistenteTable.AsistenteCargo, nombreCuentaExterno);
+        #                else
+        #                    lista   = strfmt("%1\n.- %2 %3",lista, asistenteTable.AsistenteId, nombreCuentaExterno);
+        #            }
+        #            else {
+        #                if (asistenteTable.AsistenteCargo)
+        #                    lista   = strfmt("%1, %2 (%3) %4",lista, asistenteTable.AsistenteId, asistenteTable.AsistenteCargo, nombreCuentaExterno);
+        #                else
+        #                    lista   = strfmt("%1, %2 %3",lista, asistenteTable.AsistenteId, nombreCuentaExterno);
+        #            }
+        #            if (contactoTable.Email)
+        #                lista   = strfmt("%1\n    Email: %2", lista, contactoTable.Email);
+        #
+        #        }
+        #    }
+        #
+        #    return lista;
+        #}
+      ENDSOURCE
+      SOURCE #ListaHojaGastos
+        #str ListaHojaGastos()
+        #{
+        #    CRMHojaGastosTable  hojaGastosTable;
+        #    str                 lista;
+        #    ;
+        #
+        #    while select hojaGastosTable
+        #    where hojaGastosTable.InformeVisitaId == this.ActividadId {
+        #
+        #        if (! lista){
+        #            lista   = hojaGastosTable.HojaGastosId;
+        #        }
+        #        else {
+        #            lista   = strfmt("%1, %2", lista, hojaGastosTable.HojaGastosId);
+        #        }
+        #    }
+        #
+        #    return lista;
+        #}
+      ENDSOURCE
+      SOURCE #modifiedField
+        #public void modifiedField(fieldId _fieldId)
+        #{
+        #    TransDate   transDateOld    = this.TransDate;
+        #    ;
+        #    super(_fieldId);
+        #
+        #    switch (_fieldId){
+        #
+        #        case FieldNum(CRMActividadTable, UserId):
+        #            this.InitFromUsuarioTable();
+        #            break;
+        #
+        #        case FieldNum(CRMActividadTable, TransDate):
+        #            this.ActualizaFechaVisita(this.TransDate);
+        #            break;
+        #
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #validateDelete
+        #public boolean validateDelete()
+        #{
+        #    boolean ret;
+        #    //No permito borrar líneas pasadas dos meses de su fecha de realización
+        #    TransDate       transDateLimite = this.TransDate + 60;
+        #    ;
+        #
+        #    if (this.ActividadType == CRMActividadType::Visita && today() > transDateLimite)
+        #        return checkfailed("La línea no puede ser borrada.");
+        #
+        #    ret = super();
+        #
+        #    //INDMMS_ExternalCRM - 2026.10.26
+        #    ret = ret && INDCrmWebRecordGuard::checkChange(this);
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #validateWrite
+        #public boolean validateWrite()
+        #{
+        #    boolean ret;
+        #    ;
+        #
+        #    ret = super();
+        #
+        #    if (curExt() == "REF" && this.TipoVisita == CRMTipoVisita::None)
+        #        ret = checkFailed("Debes rellenar el campo 'Tipo de Visita'");
+        #
+        #    //INDMMS_ExternalCRM - 2026.10.26
+        #    ret = ret && INDCrmWebRecordGuard::checkChange(this);
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #FindRecId
+        #static CRMActividadTable FindRecId(RecId _recId, boolean _forupdate = false)
+        #{
+        #    CRMActividadTable   CRMActividadTable;
+        #    ;
+        #
+        #    CRMActividadTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly CRMActividadTable
+        #    //index hint index1
+        #    where CRMActividadTable.RecId == _recId;
+        #
+        #    return CRMActividadTable;
+        #}
+      ENDSOURCE
+      SOURCE #LookupExpediente
+        #static void LookupExpediente(FormStringControl _ctrl, CRMActividadTable _actividadTable)
+        #{
+        #    ;
+        #
+        #    switch (_actividadTable.VisitaTipoExpediente){
+        #
+        #        case CRMCustVisitaTipoExpediente::Consulta:
+        #            CRMConsultaTable::lookupCRMConsultaTable(_ctrl, _actividadTable.AccountNum, CRMConsultaStatus::EnCurso);
+        #            break;
+        #
+        #        case CRMCustVisitaTipoExpediente::Oferta:
+        #            CRMOfertaTable::lookupCRMOfertaTable(_ctrl, _actividadTable.AccountNum, CRMOFertaStatus::EnCurso);
+        #            break;
+        #
+        #        case CRMCustVisitaTipoExpediente::Proyecto:
+        #            ProjTable::lookupProjCliente(_ctrl, _actividadTable.AccountNum);
+        #            break;
+        #
+        #        case CRMCustVisitaTipoExpediente::NoConformidad:
+        #            INDNoConformidadTable::lookupNoConformidad(_ctrl);//ProjTable::lookupProjCliente(_ctrl, _actividadTable.AccountNum);
+        #            break;
+        #
+        #        default:
+        #
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #LookUpVisitas
+        #static void LookUpVisitas(FormControl _formControl, CRMUserId _userId)
+        #{
+        #    SysTableLookup          sysTableLookup;// = SysTableLookup::newParameters(tableNum(CRMUsuarioTable),_formControl);
+        #    Query                   query;
+        #    QueryBuildDataSource    queryBuildDataSource;
+        #    ;
+        #
+        #    sysTableLookup = SysTableLookup::newParameters(tableNum(CRMActividadTable),_formControl);
+        #    sysTableLookup.addLookupfield(fieldNum(CRMActividadTable, ActividadId));
+        #    sysTableLookup.addLookupfield(fieldNum(CRMActividadTable, TransDate));
+        #    sysTableLookup.addLookupfield(fieldNum(CRMActividadTable, AccountNum));
+        #    sysTableLookup.addLookupfield(fieldNum(CRMActividadTable, Name));
+        #
+        #    query = new Query();
+        #    queryBuildDataSource = query.addDataSource(TableNum(CRMActividadTable));
+        #    queryBuildDataSource.addRange(fieldNum(CRMActividadTable, ActividadType)).value(Enum2str(CRMActividadType::Visita));
+        #    queryBuildDataSource.addRange(fieldNum(CRMActividadTable, UserID)).value(_userId);
+        #
+        #    queryBuildDataSource.addSortField(fieldNum(CRMActividadTable, TransDate), SortOrder::Descending);
+        #
+        #    sysTableLookup.parmQuery(query);
+        #    sysTableLookup.performFormLookup();
+        #
+        #}
+      ENDSOURCE
+      SOURCE #TraspasarActividadesAbiertas
+        #static void TraspasarActividadesAbiertas(RecId              _recIdFrom,
+        #                                         RefRecId           _recIdTo,
+        #                                         CRMActividadOrigen _origenTo,
+        #                                         AccountNum         _newAccountNum = "")
+        #{
+        #    /*
+        #    En OrigenTo debemos indicar el valor del campo ORIGEN para las nuevas actividades traspasadas.
+        #    Lo normal es que se traspasen actividades de una entidad a otra (Consulta a Oferta, Consulta a Otra Consulta ...) y puede que
+        #    el tipo de la nueva entidad sea distinto de ahí que haya que pasar este valor como parámetro.
+        #    */
+        #    CRMActividadTable   fromActividad, toActividad;
+        #    ;
+        #
+        #    ttsbegin;
+        #    while select forupdate fromActividad
+        #    where fromActividad.RefRecId == _recIdFrom  &&
+        #          fromActividad.Status   == CRMActivityStatus::EnCurso {
+        #
+        #        toActividad             = fromActividad.data();
+        #        toActividad.RefRecId    = _recIdTo;
+        #        toActividad.Origen      = _origenTo;
+        #        toActividad.AccountNum  = _newAccountNum;
+        #        toActividad.insert();
+        #
+        #        fromActividad.Status    = CRMActivityStatus::Finalizada;
+        #        fromActividad.doUpdate();
+        #    }
+        #    ttscommit;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

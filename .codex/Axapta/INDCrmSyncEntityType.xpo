@@ -59,6 +59,14 @@ Formatversion: 1
         EnumValue           #4
       ENDPROPERTIES
       
+      #Account
+      PROPERTIES
+        Name                #Account
+        Label               #Cuenta existente
+        ConfigurationKey    #
+        EnumValue           #5
+      ENDPROPERTIES
+      
     ENDTYPEELEMENTS
   ENDENUMTYPE
 

@@ -1,0 +1,1487 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : CRMProveedorPotencialTable unloaded at Lunes 19/10/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #CRMProveedorPotencialTable
+    PROPERTIES
+      Name                #CRMProveedorPotencialTable
+      Label               #Proveedores Potenciales
+      FormRef             #
+      TitleField1         #ProveedorPotencialId
+      TitleField2         #Name
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #IND_CRM_Resto
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #Yes
+      ModifiedTime        #Yes
+      ModifiedBy          #Yes
+      ModifiedTransactionId #Yes
+      CreatedDate         #Yes
+      CreatedTime         #Yes
+      CreatedBy           #Yes
+      CreatedTransactionId #Yes
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #ProveedorPotencialId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ProveedorPotencialId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMProveedorPotencialId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #Name
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Name
+          Label               #Nombre
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CustName
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #StatisticsGroup
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #StatisticsGroup
+          Label               #Sector
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CustStatGroupId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Address
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Address
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Addressing
+              #
+            ENDARRAY
+          StringSize          #250
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #CountryId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CountryId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CountryId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Comentarios
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Comentarios
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMComentarios
+              #
+            ENDARRAY
+          StringSize          #(Memo)
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #RazonSocial
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #RazonSocial
+          Label               #Razón Social
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Name
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #ZipCode
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ZipCode
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Fax
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Fax
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #TeleFax
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Phone
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Phone
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Phone
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #WebPage
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #WebPage
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #URL
+              #
+            ENDARRAY
+          StringSize          #255
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #UserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #UserId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMUserId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #OrigenContacto
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #OrigenContacto
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMOrigenContacto
+        ENDPROPERTIES
+        
+      FIELD #EventoId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #EventoId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMAccountNum
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #TipoInstalacionId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #TipoInstalacionId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #No
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMTipoInstalacionId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #VendAccount
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #VendAccount
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #VendAccount
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #VATNum
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #VATNum
+          Label               #N.I.F
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Name
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #LanguageId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #LanguageId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #LanguageId
+              #
+            ENDARRAY
+          StringSize          #5
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #CurrencyCode
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CurrencyCode
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CurrencyCode
+              #
+            ENDARRAY
+          StringSize          #3
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Email
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Email
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Email
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #PhoneAlternativo
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #PhoneAlternativo
+          Label               #Teléfono Alternativo
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Phone
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #GrupoMatrizId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #GrupoMatrizId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMGrupoMatrizId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #City
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #City
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          StringSize          #50
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #CountyId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CountyId
+          Label               #Provincia
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Name
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #StateId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #StateId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #NameAlias
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #NameAlias
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NameAlias
+              #
+            ENDARRAY
+          StringSize          #85
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #VendSectorId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #VendSectorId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDVendSectorId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #VendDistribuidorFabricante
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #VendDistribuidorFabricante
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMVendDistribuidorFabricante
+        ENDPROPERTIES
+        
+      FIELD #INDCreatedByWeb
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #INDCreatedByWeb
+          Label               #Creado desde la web
+          HelpText            #Registro creado desde la web CRM: solo se modifica desde la web
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMProveedorPotencialTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Address
+        PROPERTIES
+          Name                #Address
+          OldName             #
+          Label               #Dirección
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #Address
+          #City
+          #CountyId
+          #ZipCode
+          #StateId
+          #CountryId
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Comentarios
+        PROPERTIES
+          Name                #Comentarios
+          OldName             #
+          Label               #Comentarios
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #Comentarios
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Contacto
+        PROPERTIES
+          Name                #Contacto
+          OldName             #
+          Label               #Contacto
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #OrigenContacto
+          #EventoId
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Identificacion
+        PROPERTIES
+          Name                #Identificacion
+          OldName             #
+          Label               #Identificación
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #ProveedorPotencialId
+          #Name
+          #NameAlias
+          #RazonSocial
+          #GrupoMatrizId
+          #UserId
+          #VATNum
+          #LanguageId
+          #CurrencyCode
+          #StatisticsGroup
+          #VendSectorId
+          #VendSectorName
+          #VendDistribuidorFabricante
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #InformacionContacto
+        PROPERTIES
+          Name                #InformacionContacto
+          OldName             #
+          Label               #Información Contacto
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #Phone
+          #PhoneAlternativo
+          #Fax
+          #WebPage
+          #Email
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #Index1
+      PROPERTIES
+        Name                #Index1
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #ProveedorPotencialId
+      ENDINDEXFIELDS
+      
+      #Index2
+      PROPERTIES
+        Name                #Index2
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #Name
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+      REFERENCE #CRMColaboradorTable
+        PROPERTIES
+          Name                #CRMColaboradorTable
+          Table               #CRMColaboradorTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMProveedorPotencialTable
+            Field               #EventoId
+            Table               #CRMColaboradorTable
+            RelatedField        #ColaboradorId
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMProveedorPotencialTable
+            Field               #OrigenContacto
+            Value               #7
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMDistribuidorTable
+        PROPERTIES
+          Name                #CRMDistribuidorTable
+          Table               #CRMDistribuidorTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMProveedorPotencialTable
+            Field               #EventoId
+            Table               #CRMDistribuidorTable
+            RelatedField        #DistribuidorId
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMProveedorPotencialTable
+            Field               #OrigenContacto
+            Value               #6
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMEventoTable_Feria
+        PROPERTIES
+          Name                #CRMEventoTable_Feria
+          Table               #CRMEventoTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE EXTERNFIXED
+          PROPERTIES
+            Value               #2
+            Table               #CRMEventoTable
+            RelatedField        #Type
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMProveedorPotencialTable
+            Field               #OrigenContacto
+            Value               #3
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMProveedorPotencialTable
+            Field               #EventoId
+            Table               #CRMEventoTable
+            RelatedField        #EventoId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMEventoTable_Mision
+        PROPERTIES
+          Name                #CRMEventoTable_Mision
+          Table               #CRMEventoTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE EXTERNFIXED
+          PROPERTIES
+            Value               #1
+            Table               #CRMEventoTable
+            RelatedField        #Type
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMProveedorPotencialTable
+            Field               #OrigenContacto
+            Value               #2
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMProveedorPotencialTable
+            Field               #EventoId
+            Table               #CRMEventoTable
+            RelatedField        #EventoId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #State
+        PROPERTIES
+          Name                #State
+          Table               #
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMProveedorPotencialTable
+            Field               #CountryId
+            Table               #
+            RelatedField        #
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMProveedorPotencialTable
+            Field               #StateId
+            Table               #
+            RelatedField        #
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+      #CRMConsultaTable
+      PROPERTIES
+        Table               #CRMConsultaTable
+        DeleteAction        #Restricted
+      ENDPROPERTIES
+      
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #ActualizaLineaEnTableCuentas
+        #void ActualizaLineaEnTableCuentas()
+        #{
+        #    CRMAccountTable CRMAccountTable;
+        #    ;
+        #
+        #    ttsbegin;
+        #    CRMAccountTable                     = CRMAccountTable::Find(this.ProveedorPotencialId,
+        #                                                                CRMConsultaOrigen::ProveedorPotencial,
+        #                                                                true);
+        #    if (CRMAccountTable){
+        #        CRMAccountTable.AccountNum      = this.ProveedorPotencialId;
+        #        CRMAccountTable.Origen          = CRMConsultaOrigen::ProveedorPotencial;
+        #        CRMAccountTable.NombreComercial = this.Name;
+        #        CRMAccountTable.RazonSocial     = this.RazonSocial;
+        #        CRMAccountTable.CountryId       = this.CountryId;
+        #        CRMAccountTable.CustAccount     = this.VendAccount;
+        #        CRMAccountTable.City            = this.City;
+        #        CRMAccountTable.StateId         = this.StateId;
+        #        CRMAccountTable.Responsable     = this.UserId;
+        #        CRMAccountTable.RefRecId        = this.RecId;
+        #        CRMAccountTable.update();
+        #    }
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #ConvertirEnCliente
+        #VendTable ConvertirEnCliente(AccountNum          _accountNum,
+        #                             CustGroupId         _custGroup,
+        #                             CommissSalesGroup   _salesGroup,
+        #                             TaxGroup            _taxGroup)
+        #{
+        #    VendTable                   vendTable;
+        #    CRMProveedorPotencialTable    proveedorPotencialTable;
+        #    TaxVatNumTable              vatNumTable;
+        #    ;
+        #
+        #    //Este cliente potencial ya se ha convertido en el cliente %1
+        #    if (this.VendAccount)
+        #        throw error(strfmt("@IST201", this.VendAccount));
+        #
+        #
+        #    if (!_accountNum || !_custGroup ||
+        #        !_salesGroup || !_taxGroup ||
+        #        !this.LanguageId || !this.CurrencyCode ||
+        #        !this.VATNum) {
+        #
+        #        throw error("@IST202"); //Faltan datos para poder crear el cliente.
+        #    }
+        #
+        #
+        #    ttsbegin;
+        #
+        #    proveedorPotencialTable               = CRMProveedorPotencialTable::Find(this.ProveedorPotencialId, true);
+        #    proveedorPotencialTable.VendAccount   = _accountNum;
+        #    proveedorPotencialTable.update();
+        #
+        #    //vatNumTable = TaxVatNumTable::find(this.VATNum, this.CountryId);
+        #    //if (vatNumTable && vatNumTable.VATNum != "SINNIF")
+        #    //    throw error("@IST203");//El NIF ya existe.
+        #
+        #    vendTable.clear();
+        #    vendTable.AccountNum    = _accountNum;
+        #    vendTable.Name          = this.Name;
+        #    vendTable.NameAlias     = this.NameAlias;
+        #//    vendTable.StatisticsGroup   = this.StatisticsGroup;
+        #    vendTable.Street        = this.Address;
+        #    vendTable.ZipCode       = this.ZipCode;
+        #    vendTable.Country       = this.CountryId;
+        #    vendTable.AddressMap::FormatAddress();
+        #    vendTable.Phone         = this.Phone;
+        #    vendTable.TeleFax       = this.Fax;
+        #    vendTable.URL           = this.WebPage;
+        #
+        #    vendTable.LanguageId    = this.LanguageId;
+        #    vendTable.Currency      = this.CurrencyCode;
+        #    vendTable.VATNum        = this.VATNum;
+        #
+        #    vendTable.VendGroup     = _custGroup;
+        #//    vendTable.    = _salesGroup;
+        #    vendTable.TaxGroup      = _taxGroup;
+        #
+        #    vendTable.CRMProveedorPotencialId = this.ProveedorPotencialId;
+        #    vendTable.insert();
+        #    ttscommit;
+        #
+        #    return vendTable;
+        #}
+      ENDSOURCE
+      SOURCE #CountryName
+        #display Name CountryName()
+        #{
+        #    return Country::name(this.CountryId);
+        #}
+      ENDSOURCE
+      SOURCE #CreaLineaEnSectorAlCrear
+        #void CreaLineaEnSectorAlCrear()
+        #{
+        #    CRMCuentaSectorTable    sectorTable;
+        #    ;
+        #
+        #    sectorTable = CRMCuentaSectorTable::Find(this.RecId, this.StatisticsGroup);
+        #
+        #    if (! sectorTable){
+        #        sectorTable.clear();
+        #        sectorTable.RecIdRef    = this.RecId;
+        #        sectorTable.SectorId    = this.StatisticsGroup;
+        #        sectorTable.Description = sectorTable.SectorName();
+        #        sectorTable.Origen      = CRMOrigenTipoInstalacion::ClientePotencial;
+        #        sectorTable.insert();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #CreaLineaEnTableCuentas
+        #void CreaLineaEnTableCuentas()
+        #{
+        #    CRMAccountTable CRMAccountTable;
+        #    ;
+        #
+        #    CRMAccountTable.clear();
+        #    CRMAccountTable.AccountNum      = this.ProveedorPotencialId;
+        #    CRMAccountTable.Origen          = CRMConsultaOrigen::ProveedorPotencial;
+        #    CRMAccountTable.NombreComercial = this.Name;
+        #    CRMAccountTable.RazonSocial     = this.RazonSocial;
+        #    CRMAccountTable.CountryId       = this.CountryId;
+        #    CRMAccountTable.City            = this.City;
+        #    CRMAccountTable.StateId         = this.StateId;
+        #    CRMAccountTable.Responsable     = this.UserId;
+        #    CRMAccountTable.RefRecId        = this.RecId;
+        #    CRMAccountTable.insert();
+        #}
+      ENDSOURCE
+      SOURCE #InitFromContactoEventoTable
+        #void InitFromContactoEventoTable(CRMContactosEventoTable    _contactosEventoTable,
+        #                                 CRMProveedorPotencialId    _proveedorPotencialId)
+        #{
+        #    ;
+        #    this.ProveedorPotencialId   = _proveedorPotencialId;
+        #    this.Name               = _contactosEventoTable.Empresa;
+        #    this.StatisticsGroup    = _contactosEventoTable.StatGroupId;
+        #    this.Address            = _contactosEventoTable.Address;
+        #    this.CountryId          = _contactosEventoTable.Country;
+        #    this.Comentarios        = _contactosEventoTable.Comentarios;
+        #    this.RazonSocial        = _contactosEventoTable.RazonSocial;
+        #    this.ZipCode            = _contactosEventoTable.ZipCode;
+        #    this.Fax                = _contactosEventoTable.Fax;
+        #    this.Phone              = _contactosEventoTable.Phone;
+        #    this.WebPage            = _contactosEventoTable.URL;
+        #    this.UserId             = _contactosEventoTable.UserId;
+        #    this.OrigenContacto     = CRMOrigenCOntacto::Feria;
+        #    this.EventoId           = _contactosEventoTable.EventoId;
+        #    this.TipoInstalacionId  = _contactosEventoTable.TipoInstalacionId;
+        #
+        #    this.Email              = _contactosEventoTable.EmailEmpresa;
+        #    this.GrupoMatrizId      = _contactosEventoTable.GrupoMatrizId;
+        #
+        #    this.VATNum             = "";
+        #    this.LanguageId         = "";
+        #    this.CurrencyCode       = "";
+        #}
+      ENDSOURCE
+      SOURCE #InitFromZipCode
+        #void InitFromZipCode()
+        #{
+        #    ZipCode zipCode = ZipCode::find(this.ZipCode);
+        #    ;
+        #
+        #    if (zipCode){
+        #        this.City       = zipCode.City;
+        #        this.CountryId  = zipCode.Country;
+        #        this.City       = zipCode.City;
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #insert
+        #public void insert()
+        #{
+        #    ;
+        #    super();
+        #
+        #    this.CreaLineaEnTableCuentas();
+        #    this.CreaLineaEnSectorAlCrear();
+        #}
+      ENDSOURCE
+      SOURCE #modifiedField
+        #public void modifiedField(fieldId _fieldId)
+        #{
+        #    super(_fieldId);
+        #
+        #    switch (_fieldId){
+        #        case FieldNum(CRMProveedorPotencialTable, ZipCode):
+        #            this.InitFromZipCode();
+        #            break;
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #NumeroPlantas
+        #display int NumeroPlantas()
+        #{
+        #    CRMCuentaAddressTable   CRMCuentaAddressTable;
+        #    ;
+        #
+        #    select count(RecId) from CRMCuentaAddressTable
+        #    where CRMCuentaAddressTable.RefRecId == this.RecId;
+        #
+        #    return CRMCuentaAddressTable.RecId;
+        #}
+      ENDSOURCE
+      SOURCE #StatisticsGroupName
+        #display Name StatisticsGroupName()
+        #{
+        #    return CustStatisticsGroup::find(this.StatisticsGroup).StatGroupName;
+        #}
+      ENDSOURCE
+      SOURCE #TraspasarConsultasOfertasACliente
+        #void TraspasarConsultasOfertasACliente(VendTable _vendTable)
+        #{
+        #    CRMConsultaTable        consultaTable;
+        #    CRMOfertaTable          ofertaTable;
+        #    //CRMOfertaRevisionTable  ofertaRevisionTable;
+        #    CRMActividadTable       actividadTable;
+        #    ;
+        #
+        #    ttsbegin;
+        #    while select forupdate consultaTable
+        #    where consultaTable.AccountNum  == this.ProveedorPotencialId   &&
+        #          consultaTable.Origen      == CRMCOnsultaOrigen::ProveedorPotencial {
+        #
+        #        consultaTable.AccountNum    = _vendTable.AccountNum;
+        #        consultaTable.Origen        = CRMConsultaOrigen::Proveedor;
+        #        consultaTable.doUpdate();
+        #    }
+        #
+        #    while select forupdate ofertaTable
+        #    where ofertaTable.AccountNum    == this.ProveedorPotencialId  &&
+        #          ofertaTable.Origen        == CRMOfertaOrigen::ProveedorPotencial {
+        #
+        #        ofertaTable.AccountNum  = _vendTable.AccountNum;
+        #        ofertaTable.Origen      = CRMOfertaOrigen::ProveedorPotencial;
+        #        ofertaTable.doUpdate();
+        #    }
+        #
+        #    while select forupdate actividadTable
+        #    where actividadTable.CustAccount == this.ProveedorPotencialId {
+        #
+        #        actividadTAble.CustAccount  = _vendTable.AccountNum;
+        #        actividadTable.doUpdate();
+        #    }
+        #
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #TraspasarContactos
+        #void TraspasarContactos(VendTable _vendTable)
+        #{
+        #    CRMContactoTable    fromContactoTable, toContactoTable;
+        #    ;
+        #
+        #    while select fromContactoTable
+        #    where fromContactoTable.AccountNum  == this.ProveedorPotencialId {
+        #
+        #        toContactoTable             = fromContactoTable.data();
+        #        toContactoTable.AccountNum  = _vendTable.AccountNum;
+        #        toContactoTable.Origen      = CRMActividadOrigen::Proveedor;
+        #        toContactoTable.insert();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #TraspasarDirecciones
+        #void TraspasarDirecciones(VendTable _vendable)
+        #{
+        #    CRMCuentaAddressTable   CRMCuentaAddressTableFrom, CRMCuentaAddressTableNew;
+        #    ;
+        #
+        #/*
+        #    while select CRMCuentaAddressTableFrom
+        #    where CRMCuentaAddressTableFrom.RefRecId == this.RecId { //   &&
+        #          //CRMCuentaSectorTableFrom.Origen   == CRMOrigenTipoInstalacion::ClientePotencial {
+        #
+        #        CRMCuentaAddressTableNew.clear();
+        #        CRMCuentaAddressTableNew             = CRMCuentaAddressTableFrom.data();
+        #        CRMCuentaAddressTableNew.RefRecId   = _vendTable.RecId;
+        #        CRMCuentaAddressTableNew.Origen     = CRMOrigenTipoInstalacion::;
+        #        CRMCuentaAddressTableNew.insert();
+        #    }
+        #*/
+        #}
+      ENDSOURCE
+      SOURCE #TraspasarInstalaciones
+        #void TraspasarInstalaciones(CustTable _custTable)
+        #{
+        #    CRMCuentaTipoInstalacionTable   tipoInstalacionTableFrom, tipoInstalacionTableNew;
+        #    ;
+        #/*
+        #    while select tipoinstalacionTableFrom
+        #    where tipoInstalacionTableFrom.RecIdRef == this.RecId   &&
+        #          tipoInstalacionTableFrom.Origen   == CRMOrigenTipoInstalacion::ClientePotencial {
+        #
+        #        tipoInstalacionTableNew.clear();
+        #        tipoInstalacionTableNew            = tipoInstalacionTableFrom.data();
+        #        tipoInstalacionTableNew.RecIdRef   = _custTable.RecId;
+        #        tipoInstalacionTableNew.Origen     = CRMOrigenTipoInstalacion::Cliente;
+        #        tipoInstalacionTableNew.insert();
+        #    }
+        #*/
+        #}
+      ENDSOURCE
+      SOURCE #TraspasarSectores
+        #void TraspasarSectores(CustTable _custTable)
+        #{
+        #    CRMCuentaSectorTable   CRMCuentaSectorTableFrom, CRMCuentaSectorTableNew;
+        #    ;
+        #
+        #/*
+        #    while select CRMCuentaSectorTableFrom
+        #    where CRMCuentaSectorTableFrom.RecIdRef == this.RecId { //   &&
+        #          //CRMCuentaSectorTableFrom.Origen   == CRMOrigenTipoInstalacion::ClientePotencial {
+        #
+        #        CRMCuentaSectorTableNew.clear();
+        #        CRMCuentaSectorTableNew             = CRMCuentaSectorTableFrom.data();
+        #        CRMCuentaSectorTableNew.RecIdRef   = _custTable.RecId;
+        #        CRMCuentaSectorTableNew.Origen     = CRMOrigenTipoInstalacion::Cliente;
+        #        CRMCuentaSectorTableNew.insert();
+        #    }
+        #*/
+        #}
+      ENDSOURCE
+      SOURCE #update
+        #public void update()
+        #{
+        #    ;
+        #    super();
+        #
+        #    this.ActualizaLineaEnTableCuentas();
+        #    this.CreaLineaEnSectorAlCrear();
+        #}
+      ENDSOURCE
+      SOURCE #validateWrite
+        #public boolean validateWrite()
+        #{
+        #    boolean ret;
+        #    CRMUsuarioTable usuarioTable    = CRMUsuarioTable::Find_AxaptaUserId(curUSerId());
+        #    ;
+        #    ret = super();
+        #
+        #    if (usuarioTable.Division == CRMDivision::Hornos){
+        #
+        #        if (! this.Name || ! this.CountryId)
+        #            ret = checkFailed("Los campos Nombre y País son obligatorios.");
+        #    }
+        #
+        #    //INDMMS_ExternalCRM - 2026.10.26
+        #    ret = ret && INDCrmWebRecordGuard::checkChange(this);
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #VendSectorName
+        #display Name VendSectorName()
+        #{
+        #    return INDVendSectorTable::Find(this.VendSectorId).Name;
+        #}
+      ENDSOURCE
+      SOURCE #validateDelete
+        #public boolean validateDelete()
+        #{
+        #    boolean ret;
+        #    ;
+        #
+        #    ret = super();
+        #
+        #    //INDMMS_ExternalCRM - 2026.10.26
+        #    ret = ret && INDCrmWebRecordGuard::checkChange(this);
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #Find
+        #static CRMProveedorPotencialTable Find(CRMProveedorPotencialId  _id,
+        #                                     boolean                _forupdate = false)
+        #{
+        #    CRMProveedorPotencialTable    CRMProveedorPotencialTable;
+        #    ;
+        #    CRMProveedorPotencialTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly CRMProveedorPotencialTable
+        #    index hint index1
+        #    where CRMProveedorPotencialTable.ProveedorPotencialId == _id;
+        #
+        #    return CRMProveedorPotencialTable;
+        #}
+      ENDSOURCE
+      SOURCE #FindName
+        #static CRMProveedorPotencialTable FindName(CustName   _name,
+        #                                         boolean    _forupdate = false)
+        #{
+        #    CRMProveedorPotencialTable    CRMProveedorPotencialTable;
+        #    ;
+        #    CRMProveedorPotencialTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly CRMProveedorPotencialTable
+        #    index hint index1
+        #    where CRMProveedorPotencialTable.Name == _name;
+        #
+        #    return CRMProveedorPotencialTable;
+        #}
+      ENDSOURCE
+      SOURCE #FindRecId
+        #static CRMProveedorPotencialTable FindRecId(RecId      _id,
+        #                                          boolean    _forupdate = false)
+        #{
+        #    CRMProveedorPotencialTable    CRMProveedorPotencialTable;
+        #    ;
+        #    CRMProveedorPotencialTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly CRMProveedorPotencialTable
+        #    index hint index1
+        #    where CRMProveedorPotencialTable.RecId == _id;
+        #
+        #    return CRMProveedorPotencialTable;
+        #}
+      ENDSOURCE
+      SOURCE #lookupCRMClientePotencialTable
+        #static client void lookupCRMClientePotencialTable(FormStringControl _ctrl)
+        #{
+        #    SysTableLookup          sysTableLookup = SysTableLookup::newParameters(tableNum(CRMProveedorPotencialTable),_ctrl);
+        #    Query                   query = new Query();
+        #    QueryBuildDataSource    queryBuildDataSource = query.addDataSource(tableNum(CRMProveedorPotencialTable));
+        #//    QueryBuildRange         queryBuildRange      = queryBuildDataSource.addRange(fieldNum(CRMContactoTable, AccountNum));
+        #    ;
+        #
+        #    sysTableLookup.addLookupfield(fieldNum(CRMProveedorPotencialTable, ProveedorPotencialId), true);
+        #    sysTableLookup.addLookupfield(fieldNum(CRMProveedorPotencialTable, Name));
+        #
+        #    //queryBuildRange.value(QueryValue(_account));
+        #
+        #    sysTableLookup.parmQuery(query);
+        #    sysTableLookup.performFormLookup();
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END
