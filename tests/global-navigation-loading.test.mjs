@@ -11,6 +11,14 @@ assert.ok(script, "The actual layout loading script must exist.");
 const html = `<!doctype html><html><body>
 <style>.ind-global-loading {position:fixed;inset:0;z-index:4000;background:white}.ind-global-loading--hidden {opacity:0;pointer-events:none}</style>
 <div id="indGlobalLoading" class="ind-global-loading" role="status" aria-hidden="false"><span data-ind-loading-text>Loading</span></div>
+<nav id="sidebar">
+<a id="home" href="/Home/Index">Home</a><a id="visits" href="/Historial/History">Visits</a>
+<a id="expenses" href="/Gastos/ExpenseSheets">Expense sheets</a><a id="tickets" href="/Gastos/Tickets">Tickets</a>
+<a id="manual" href="/Home/Manual">Manual</a>
+<form action="/INDCompany/SetCompany" method="post"><button id="company">Company</button></form>
+<form action="/INDLocalization/SetCulture" method="post"><button id="language">Language</button></form>
+<form action="/Auth/Logout" method="post"><button id="logout">Logout</button></form>
+</nav>
 <a id="next" href="/Visitas/Detalle/test">Open detail</a><a id="hash" href="#section">Section</a>
 <a id="download" href="/file" download>Download</a>
 <button id="detail" onclick="window.location.href='/Visitas/Detalle/test'">Detail</button>
@@ -21,7 +29,7 @@ const html = `<!doctype html><html><body>
 test("global navigation loading behavior", async (t) => {
   const browser = await chromium.launch({ headless: true });
   try {
-    async function withPage(run, legacy = false) {
+    async function withPage(run, legacy = false, pendingPath = "/Visitas/Detalle/test", initialPath = "/Historial/History") {
       const page = await browser.newPage();
       if (legacy) await page.addInitScript(() => Object.defineProperty(window, "navigation", { value: undefined }));
       page.setDefaultTimeout(8000);
@@ -30,13 +38,13 @@ test("global navigation loading behavior", async (t) => {
       const pending = new Promise((resolve) => { release = resolve; });
       await page.route("https://loading-test.invalid/**", async (route) => {
         const path = new URL(route.request().url()).pathname;
-        if (path === "/Visitas/Detalle/test") await pending;
+        if (path === pendingPath) await pending;
         await route.fulfill(path === "/file"
           ? { status: 200, headers: { "Content-Disposition": 'attachment; filename="test.txt"' }, body: "test" }
           : { status: 200, contentType: "text/html", body: html });
       });
       try {
-        await page.goto("https://loading-test.invalid/Historial/History");
+        await page.goto("https://loading-test.invalid" + initialPath);
         await run(page, release);
       } finally {
         release();
@@ -95,7 +103,12 @@ test("global navigation loading behavior", async (t) => {
       release();
       await page.waitForURL("**/Visitas/Detalle/test", { waitUntil: "load" });
     }));
-    for (const [selector, legacy] of [["#next", false], ["#detail", false], ["#next", true], ["#detail", true]]) {
+    const destinations = [["#next", "/Visitas/Detalle/test"], ["#detail", "/Visitas/Detalle/test"],
+      ["#home", "/Home/Index"], ["#visits", "/Historial/History"], ["#expenses", "/Gastos/ExpenseSheets"],
+      ["#tickets", "/Gastos/Tickets"], ["#manual", "/Home/Manual"], ["#company", "/INDCompany/SetCompany"],
+      ["#language", "/INDLocalization/SetCulture"], ["#logout", "/Auth/Logout"]];
+    for (const [selector, destination] of destinations) {
+    for (const legacy of [false, true]) {
     await t.test(selector + (legacy ? " legacy" : "") + " delayed navigation shows feedback before the response", () => withPage(async (page, release) => {
       const observations = [];
       let responseReleased = false;
@@ -120,11 +133,23 @@ test("global navigation loading behavior", async (t) => {
       await new Promise((resolve) => setTimeout(resolve, 500));
       responseReleased = true;
       release();
-      await page.waitForURL("**/Visitas/Detalle/test", { waitUntil: "load" });
+      await page.waitForURL("**" + destination, { waitUntil: "load" });
       assert.deepEqual(observations, [{ hidden: "false", actions: 0, responseReleased: false }]);
       assert.equal(await visible(page), false);
-    }, legacy));
+    }, legacy, destination, selector === "#detail" ? "/Historial/History" : "/Unlisted/Detail"));
     }
+    }
+    await t.test("guarded menu navigation waits for confirmation and preserves legacy loading intent", () => withPage(async (page) => {
+      await page.evaluate(() => document.addEventListener("click", (event) => {
+        if (event.target.id !== "expenses") return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }, true));
+      await page.locator("#expenses").click();
+      assert.equal(await visible(page), false, "The confirmation must remain usable");
+      await start(page);
+      assert.equal(await visible(page), true, "An accepted menu navigation must show loading");
+    }, true, "/Gastos/ExpenseSheets", "/Unlisted/Detail"));
     await t.test("canceled unload leaves the page usable", () => withPage(async (page) => {
       await page.evaluate(() => {
         window.addEventListener("beforeunload", (event) => event.preventDefault(), { once: true });
