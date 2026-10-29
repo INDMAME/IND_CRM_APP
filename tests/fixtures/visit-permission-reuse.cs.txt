@@ -1,0 +1,221 @@
+using System.Reflection;
+using IND_CRM_APP.Services;
+using IND_CRM_APP.Models.CRM;
+using IND_CRM_APP.Models.Shared;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging.Abstractions;
+
+var count = 0;
+async Task Check(string name, Func<Task> test)
+{
+    await test();
+    Console.WriteLine("PASS " + name);
+    count++;
+}
+void Equal<T>(T expected, T actual)
+{
+    if (!EqualityComparer<T>.Default.Equals(expected, actual))
+        throw new Exception($"Expected {expected}, received {actual}.");
+}
+
+await Check("Preload and detail validation reuse successful data after unchanged context refresh", async () =>
+{
+    var f = new Fixture();
+    await f.Preload();
+    var result = await f.Validate();
+    Equal(ModuleRecordMutationPermissionStatus.Forbidden, result.Status);
+    Equal(1, f.Calls);
+    Equal(1, f.Refreshes);
+});
+await Check("Explicit same-as-visibility permission still allows another owner", async () =>
+{
+    var f = new Fixture { OwnerPolicy = 1, CanMutate = true };
+    await f.Preload();
+    Equal(true, (await f.Validate()).IsAllowed);
+    Equal(1, f.Calls);
+});
+await Check("Revoked permission revision reloads and denies", async () =>
+{
+    var f = new Fixture { OwnerPolicy = 1, CanMutate = true };
+    await f.Preload();
+    f.OnRefresh = () => { f.Http.Session.SetString("INDPermissionsRevision", "revoked"); f.CanMutate = false; };
+    Equal(false, (await f.Validate()).IsAllowed);
+    Equal(2, f.Calls);
+});
+await Check("Module denial still overrides cached owner permission", async () =>
+{
+    var f = new Fixture { OwnerPolicy = 1, CanMutate = true };
+    await f.Preload();
+    f.Module.AccessRightsInt = 1;
+    Equal(false, (await f.Validate()).IsAllowed);
+});
+await Check("Own record remains editable with module edit access", async () =>
+{
+    var f = new Fixture();
+    Equal(true, (await f.Validate("viewer")).IsAllowed);
+});
+foreach (var method in new[] { "POST", "PUT", "DELETE", "PATCH" })
+{
+    await Check(method + " never reuses permission data", async () =>
+    {
+        var f = new Fixture { OwnerPolicy = 1, CanMutate = true };
+        f.Http.Request.Method = method;
+        await f.Preload();
+        f.CanMutate = false;
+        Equal(false, (await f.Validate()).IsAllowed);
+        Equal(2, f.Calls);
+    });
+}
+foreach (var key in new[] { "INDCompanySelected", "AxUser", "ENTRAOID", "INDPermissionsRevision" })
+{
+    await Check(key + " isolates cached data", async () =>
+    {
+        var f = new Fixture();
+        await f.Preload();
+        f.Http.Session.SetString(key, "changed");
+        await f.Preload();
+        Equal(2, f.Calls);
+    });
+    await Check("Missing " + key + " disables reuse", async () =>
+    {
+        var f = new Fixture();
+        f.Http.Session.Remove(key);
+        await f.Preload();
+        await f.Preload();
+        Equal(2, f.Calls);
+    });
+}
+await Check("Module, app, include flag and token isolate cached data", async () =>
+{
+    var f = new Fixture();
+    await f.Preload();
+    await f.Service.GetVisibleUsersForViewAsync("test-token", new("CRM", "OTHER"), "test");
+    await f.Service.GetVisibleUsersForViewAsync("test-token", new("OTHER", "VISITAS_GESTION"), "test");
+    await f.Service.GetVisibleUsersForViewAsync("test-token", new("CRM", "VISITAS_GESTION", false), "test");
+    await f.Service.GetVisibleUsersForViewAsync("other-token", Fixture.Scope, "test");
+    Equal(5, f.Calls);
+});
+await Check("Next HTTP request cannot reuse prior data", async () =>
+{
+    var f = new Fixture();
+    await f.Preload();
+    f.Accessor.HttpContext = new DefaultHttpContext { Session = f.Http.Session };
+    f.Accessor.HttpContext.Request.Method = "GET";
+    await f.Preload();
+    Equal(2, f.Calls);
+});
+await Check("Failed envelope is retried", async () =>
+{
+    var f = new Fixture { Success = false };
+    await f.Preload();
+    f.Success = true;
+    await f.Preload();
+    Equal(2, f.Calls);
+});
+await Check("Exception in preload is retried", async () =>
+{
+    var f = new Fixture { Fail = true };
+    await f.Preload();
+    f.Fail = false;
+    await f.Preload();
+    Equal(2, f.Calls);
+});
+await Check("Scope change while awaiting response prevents caching", async () =>
+{
+    var f = new Fixture();
+    f.OnLoad = () => f.Http.Session.SetString("INDPermissionsRevision", "changed");
+    await f.Preload();
+    f.OnLoad = null;
+    await f.Preload();
+    Equal(2, f.Calls);
+});
+await Check("Successful empty visibility remains restrictive and reusable", async () =>
+{
+    var f = new Fixture { Empty = true };
+    await f.Preload();
+    Equal(false, (await f.Validate()).IsAllowed);
+    Equal(1, f.Calls);
+});
+Console.WriteLine($"{count} checks passed.");
+
+// Exercises the real service with controlled upstream responses and request state.
+sealed class Fixture
+{
+    public static readonly ModuleRecordMutationScope Scope = new("CRM", "VISITAS_GESTION");
+    public DefaultHttpContext Http { get; } = new() { Session = new TestSession() };
+    public HttpContextAccessor Accessor { get; } = new();
+    public ModuleRecordMutationPermissionService Service { get; }
+    public IndWebModule Module { get; } = new() { ModuleCode = "VISITAS_GESTION", AccessRightsInt = 4 };
+    public int Calls, Refreshes, OwnerPolicy;
+    public bool CanMutate, Fail, Empty;
+    public bool Success = true;
+    public Action? OnRefresh, OnLoad;
+
+    // Creates a request scope and proxies only the upstream methods under test.
+    public Fixture()
+    {
+        Http.Request.Method = "GET";
+        foreach (var pair in new[] { ("INDCompanySelected", "test-company"), ("AxUser", "viewer"), ("ENTRAOID", "test-oid"), ("INDPermissionsRevision", "revision") })
+            Http.Session.SetString(pair.Item1, pair.Item2);
+        Accessor.HttpContext = Http;
+        var api = Stub.Create<ICrmApiClient>((method, args) =>
+        {
+            if (method.Name != "GetVisibleUsersAsync") throw new Exception(method.Name);
+            Calls++;
+            if (Fail) throw new InvalidOperationException("Test upstream failure");
+            OnLoad?.Invoke();
+            return Task.FromResult(new PagedApiResponse<DataVisibilityVisibleUserDto>
+            {
+                Success = Success,
+                Items = Empty ? Array.Empty<DataVisibilityVisibleUserDto>() : new[]
+                {
+                    new DataVisibilityVisibleUserDto { AxUserId = "owner", MutationPolicyInt = OwnerPolicy, CanMutate = CanMutate }
+                }
+            });
+        });
+        var auth = Stub.Create<IIndAuthContextService>((method, args) =>
+        {
+            if (method.Name == "GetSelectedCompanyId") return "test-company";
+            if (method.Name != "EnsureContextAsync") throw new Exception(method.Name);
+            if (args?[0] is true) { Refreshes++; OnRefresh?.Invoke(); }
+            return Task.FromResult(new IndAuthContextResult
+            {
+                Success = true,
+                Context = new IndWebContext { Companies = new() { new IndWebCompany { CompanyId = "test-company", Modules = new() { Module } } } }
+            });
+        });
+        Service = new(api, auth, Accessor, NullLogger<ModuleRecordMutationPermissionService>.Instance);
+    }
+    // Loads the same data that the detail page preloads.
+    public Task<IReadOnlyList<DataVisibilityVisibleUserDto>> Preload() => Service.GetVisibleUsersForViewAsync("test-token", Scope, "visit-detail-preload");
+    // Runs the actual record authorization path used by the detail and mutation actions.
+    public Task<ModuleRecordMutationPermissionResult> Validate(string owner = "owner") => Service.ValidateAsync("test-token", new(Scope, 1, owner));
+}
+
+// Uses framework reflection proxies so tests need no mocking dependency.
+public class Stub : DispatchProxy
+{
+    public Func<MethodInfo, object?[]?, object?> Handler = null!;
+    protected override object? Invoke(MethodInfo? targetMethod, object?[]? args) => Handler(targetMethod!, args);
+    public static T Create<T>(Func<MethodInfo, object?[]?, object?> handler) where T : class
+    {
+        var proxy = Create<T, Stub>();
+        ((Stub)(object)proxy).Handler = handler;
+        return proxy;
+    }
+}
+
+// Stores session values in memory for isolated authorization tests.
+sealed class TestSession : ISession
+{
+    private readonly Dictionary<string, byte[]> values = new();
+    public bool IsAvailable => true;
+    public string Id => "test-session";
+    public IEnumerable<string> Keys => values.Keys;
+    public void Clear() => values.Clear();
+    public Task CommitAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public Task LoadAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public void Remove(string key) => values.Remove(key);
+    public void Set(string key, byte[] value) => values[key] = value;
+    public bool TryGetValue(string key, out byte[] value) => values.TryGetValue(key, out value!);
+}

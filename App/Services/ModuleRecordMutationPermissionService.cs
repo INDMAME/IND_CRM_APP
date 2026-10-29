@@ -312,6 +312,17 @@ namespace IND_CRM_APP.Services
         {
             var scope = NormalizeScope(rawScope);
             var viewerAxUserId = GetCurrentSessionAxUserId();
+            var httpContext = _httpContextAccessor.HttpContext;
+            var cacheKey = GetVisibleUsersRequestKey(token, scope);
+            if (cacheKey != null && httpContext!.Items.TryGetValue(cacheKey, out var cached) &&
+                cached is IReadOnlyList<DataVisibilityVisibleUserDto> cachedUsers)
+            {
+                _logger.LogInformation(
+                    "Module visible-users reused within read request. AppCode={AppCode}; ModuleCode={ModuleCode}; Reason={Reason}",
+                    scope.AppCode, scope.ModuleCode, SanitizeValue(reason));
+                return cachedUsers;
+            }
+
             _logger.LogInformation(
                 "Module visible-users load started. Reason={Reason}; ViewerAxUserId={ViewerAxUserId}; AppCode={AppCode}; ModuleCode={ModuleCode}; IncludeCrmUserId={IncludeCrmUserId}",
                 SanitizeValue(reason),
@@ -349,8 +360,39 @@ namespace IND_CRM_APP.Services
                 BuildPolicySummary(users),
                 BuildVisibleUserSample(users));
 
+            // Never retain failures or data loaded across an identity or permission change.
+            if (result.Success && cacheKey != null &&
+                cacheKey == GetVisibleUsersRequestKey(token, scope))
+            {
+                httpContext!.Items[cacheKey] = users;
+            }
+
             return users;
         }
+
+        // Reuses visibility only inside a fully scoped GET; writes always load fresh permissions.
+        private VisibleUsersRequestKey? GetVisibleUsersRequestKey(string token, ModuleRecordMutationScope scope)
+        {
+            var context = _httpContextAccessor.HttpContext;
+            if (context == null || !HttpMethods.IsGet(context.Request.Method))
+                return null;
+
+            var company = context.Session.GetString("INDCompanySelected");
+            var user = context.Session.GetString("AxUser");
+            var oid = context.Session.GetString("ENTRAOID");
+            var revision = context.Session.GetString("INDPermissionsRevision");
+            if (string.IsNullOrWhiteSpace(company) || string.IsNullOrWhiteSpace(user) ||
+                string.IsNullOrWhiteSpace(oid) || string.IsNullOrWhiteSpace(revision) ||
+                string.IsNullOrWhiteSpace(token))
+                return null;
+
+            return new VisibleUsersRequestKey(scope, company, user, oid, revision, token);
+        }
+
+        // The private key type isolates visibility entries from other request-local data.
+        private sealed record VisibleUsersRequestKey(
+            ModuleRecordMutationScope Scope, string Company, string AxUser,
+            string EntraOid, string PermissionsRevision, string Token);
 
         private string GetCurrentSessionAxUserId()
         {
