@@ -1029,21 +1029,19 @@
                 event.signal.addEventListener("abort", resetNavigation, { once: true });
             });
 
-            // Stop repeated actions while a document navigation is already pending.
+            // Block interaction until navigation or an explicit loading operation completes.
             const blockPendingAction = (event) => {
-                if (!navigationPending) return;
+                if (!navigationPending && activeCount === 0) return;
                 if (event.type === "keydown") {
-                    if (event.key === "Escape") {
-                        resetNavigation();
-                        return;
-                    }
-                    if (event.key !== "Enter" && event.key !== " ") return;
+                    if (event.key !== "Enter" && event.key !== " " && event.key !== "Escape" && event.key !== "Tab") return;
                 }
                 event.preventDefault();
                 event.stopImmediatePropagation();
             };
-            ["click", "dblclick", "submit", "keydown"].forEach(function (type) {
-                window.addEventListener(type, blockPendingAction, true);
+            // Capture presses before document-level outside-click and swipe handlers.
+            ["pointerdown", "pointerup", "mousedown", "mouseup", "touchstart", "touchmove", "touchend",
+                "click", "dblclick", "submit", "keydown", "wheel"].forEach(function (type) {
+                window.addEventListener(type, blockPendingAction, { capture: true, passive: false });
             });
 
             // Browser back/forward cache must not restore a blocked loading screen.

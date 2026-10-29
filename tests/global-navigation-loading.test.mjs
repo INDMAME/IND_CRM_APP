@@ -49,6 +49,52 @@ test("global navigation loading behavior", async (t) => {
     await t.test("initial load clears the spinner", () => withPage(async (page) => {
       assert.equal(await visible(page), false);
     }));
+    await t.test("loading prevents the sidebar outside-press handler from dismissing its backdrop", () => withPage(async (page) => {
+      await page.evaluate(() => {
+        window.outsidePresses = 0;
+        document.addEventListener("pointerdown", () => window.outsidePresses++, true);
+        document.addEventListener("touchstart", () => window.outsidePresses++, true);
+      });
+      await start(page);
+      await page.mouse.click(400, 300);
+      await page.evaluate(() => document.getElementById("indGlobalLoading").dispatchEvent(new Event("touchstart", { bubbles: true, cancelable: true })));
+      assert.equal(await page.evaluate(() => window.outsidePresses), 0);
+      assert.equal(await visible(page), true);
+      await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })));
+      await page.mouse.click(400, 300);
+      assert.equal(await page.evaluate(() => window.outsidePresses), 1);
+    }));
+    await t.test("manual async loading blocks backdrop presses until completion", () => withPage(async (page) => {
+      await page.evaluate(() => {
+        window.outsidePresses = 0;
+        document.addEventListener("pointerdown", () => window.outsidePresses++, true);
+        window.__indShowGlobalSpinner();
+      });
+      await page.mouse.click(400, 300);
+      assert.equal(await page.evaluate(() => window.outsidePresses), 0);
+      await page.evaluate(() => window.__indHideGlobalSpinner());
+      await page.mouse.click(400, 300);
+      assert.equal(await page.evaluate(() => window.outsidePresses), 1);
+    }));
+    await t.test("real backdrop pointer clicks cannot dismiss pending navigation", () => withPage(async (page, release) => {
+      const states = [];
+      page.on("console", (message) => {
+        if (message.text().startsWith("backdrop-state:")) states.push(message.text().slice(15));
+      });
+      await page.evaluate(() => {
+        const overlay = document.getElementById("indGlobalLoading");
+        new MutationObserver(() => console.log("backdrop-state:" + overlay.getAttribute("aria-hidden")))
+          .observe(overlay, { attributes: true, attributeFilter: ["aria-hidden"] });
+      });
+      await page.locator("#next").click({ noWaitAfter: true });
+      await page.mouse.click(400, 300);
+      await page.mouse.dblclick(400, 300);
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      assert.ok(states.length > 0, "Loading must have started");
+      assert.ok(states.every((state) => state === "false"), "Backdrop interaction must not hide loading: " + states);
+      release();
+      await page.waitForURL("**/Visitas/Detalle/test", { waitUntil: "load" });
+    }));
     for (const [selector, legacy] of [["#next", false], ["#detail", false], ["#next", true], ["#detail", true]]) {
     await t.test(selector + (legacy ? " legacy" : "") + " delayed navigation shows feedback before the response", () => withPage(async (page, release) => {
       const observations = [];
@@ -106,10 +152,10 @@ test("global navigation loading behavior", async (t) => {
       await page.locator("#action").click();
       assert.equal(await page.evaluate(() => window.actions), 1);
     }));
-    await t.test("Escape clears navigation feedback", () => withPage(async (page) => {
+    await t.test("Escape cannot hide feedback while the request is still pending", () => withPage(async (page) => {
       await start(page);
       await page.keyboard.press("Escape");
-      assert.equal(await visible(page), false);
+      assert.equal(await visible(page), true);
     }));
     await t.test("same-document links do not block the page", () => withPage(async (page) => {
       await page.locator("#hash").click();
