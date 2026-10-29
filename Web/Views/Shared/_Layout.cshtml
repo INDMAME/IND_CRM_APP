@@ -957,7 +957,26 @@
             if (!overlay) return;
 
             const label = overlay.querySelector("[data-ind-loading-text]");
+            const defaultMessage = label?.textContent || "";
             let activeCount = 0;
+            let navigationPending = false;
+
+            // Limit automatic loading feedback to visit pages, never file responses.
+            const isVisitPage = (value) => {
+                try {
+                    const url = new URL(value, window.location.href);
+                    return url.origin === window.location.origin &&
+                        /^\/(?:Historial\/History\/?|Visitas\/Create\/?|Visitas\/Detalle\/[^/]+\/?)$/i.test(url.pathname);
+                } catch { return false; }
+            };
+            let navigationExpected = isVisitPage(window.location.href);
+            document.addEventListener("click", function (event) {
+                const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
+                if (!anchor || event.defaultPrevented || event.ctrlKey || event.metaKey ||
+                    event.shiftKey || event.altKey || event.button !== 0 ||
+                    (anchor.target && anchor.target !== "_self")) return;
+                navigationExpected = !anchor.hasAttribute("download") && isVisitPage(anchor.href);
+            });
 
             const showOverlay = (message) => {
                 if (message && label) {
@@ -980,19 +999,66 @@
 
             window.__indHideGlobalSpinner = function () {
                 activeCount = Math.max(0, activeCount - 1);
-                if (activeCount === 0) {
+                if (activeCount === 0 && !navigationPending) {
                     hideOverlay();
                 }
             };
 
-            if (document.readyState === "complete") {
-                hideOverlay();
-                return;
-            }
+            // Keep feedback visible while the next document waits for the server.
+            window.addEventListener("beforeunload", function (event) {
+                const shouldShow = navigationExpected;
+                navigationExpected = isVisitPage(window.location.href);
+                queueMicrotask(function () {
+                    if (event.defaultPrevented || !shouldShow) return;
+                    navigationPending = true;
+                    document.body.setAttribute("aria-busy", "true");
+                    showOverlay(defaultMessage);
+                });
+            });
 
-            window.addEventListener("load", function () {
-                hideOverlay();
-            }, { once: true });
+            // Restore interaction when navigation is canceled or becomes a download.
+            const resetNavigation = () => {
+                navigationPending = false;
+                navigationExpected = isVisitPage(window.location.href);
+                document.body.removeAttribute("aria-busy");
+                if (activeCount === 0) hideOverlay();
+            };
+            window.navigation?.addEventListener("navigateerror", resetNavigation);
+            window.navigation?.addEventListener("navigate", function (event) {
+                navigationExpected = !event.downloadRequest && isVisitPage(event.destination.url);
+                event.signal.addEventListener("abort", resetNavigation, { once: true });
+            });
+
+            // Stop repeated actions while a document navigation is already pending.
+            const blockPendingAction = (event) => {
+                if (!navigationPending) return;
+                if (event.type === "keydown") {
+                    if (event.key === "Escape") {
+                        resetNavigation();
+                        return;
+                    }
+                    if (event.key !== "Enter" && event.key !== " ") return;
+                }
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            };
+            ["click", "dblclick", "submit", "keydown"].forEach(function (type) {
+                window.addEventListener(type, blockPendingAction, true);
+            });
+
+            // Browser back/forward cache must not restore a blocked loading screen.
+            window.addEventListener("pageshow", function (event) {
+                if (event.persisted) activeCount = 0;
+                resetNavigation();
+            });
+
+            if (document.readyState === "complete") {
+                if (activeCount === 0 && !navigationPending) hideOverlay();
+            } else {
+                window.addEventListener("load", function () {
+                    if (activeCount === 0 && !navigationPending) hideOverlay();
+                }, { once: true });
+            }
         })();
     </script>
 
