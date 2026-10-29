@@ -961,22 +961,40 @@
             let activeCount = 0;
             let navigationPending = false;
 
-            // Limit automatic loading feedback to visit pages, never file responses.
-            const isVisitPage = (value) => {
+            // Reuse rendered menu destinations without treating file responses as pages.
+            const menuPaths = new Set();
+            document.querySelectorAll("#sidebar a[href], #sidebar form[action]").forEach(function (item) {
+                if (item.hasAttribute("download") || (item.target && item.target !== "_self")) return;
+                try {
+                    const url = new URL(item.getAttribute("href") || item.getAttribute("action"), window.location.href);
+                    if (url.origin === window.location.origin) menuPaths.add(url.pathname.replace(/\/$/, "").toLowerCase());
+                } catch { /* An invalid menu URL must not disable loading feedback. */ }
+            });
+            const isLoadingDestination = (value) => {
                 try {
                     const url = new URL(value, window.location.href);
                     return url.origin === window.location.origin &&
-                        /^\/(?:Historial\/History\/?|Visitas\/Create\/?|Visitas\/Detalle\/[^/]+\/?)$/i.test(url.pathname);
+                        (menuPaths.has(url.pathname.replace(/\/$/, "").toLowerCase()) ||
+                            /^\/(?:Historial\/History\/?|Visitas\/Create\/?|Visitas\/Detalle\/[^/]+\/?)$/i.test(url.pathname));
                 } catch { return false; }
             };
-            let navigationExpected = isVisitPage(window.location.href);
-            document.addEventListener("click", function (event) {
+            let navigationExpected = isLoadingDestination(window.location.href);
+            // Capture intent before the unsaved-changes guard defers a menu action.
+            window.addEventListener("click", function (event) {
                 const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
                 if (!anchor || event.defaultPrevented || event.ctrlKey || event.metaKey ||
                     event.shiftKey || event.altKey || event.button !== 0 ||
                     (anchor.target && anchor.target !== "_self")) return;
-                navigationExpected = !anchor.hasAttribute("download") && isVisitPage(anchor.href);
-            });
+                navigationExpected = !anchor.hasAttribute("download") && isLoadingDestination(anchor.href);
+            }, true);
+            window.addEventListener("submit", function (event) {
+                const form = event.target;
+                if (!(form instanceof HTMLFormElement) || event.defaultPrevented) return;
+                const target = event.submitter?.getAttribute("formtarget") || form.target;
+                if (target && target !== "_self") return;
+                const action = event.submitter?.getAttribute("formaction") || form.action;
+                navigationExpected = isLoadingDestination(action);
+            }, true);
 
             const showOverlay = (message) => {
                 if (message && label) {
@@ -1007,7 +1025,7 @@
             // Keep feedback visible while the next document waits for the server.
             window.addEventListener("beforeunload", function (event) {
                 const shouldShow = navigationExpected;
-                navigationExpected = isVisitPage(window.location.href);
+                navigationExpected = isLoadingDestination(window.location.href);
                 queueMicrotask(function () {
                     if (event.defaultPrevented || !shouldShow) return;
                     navigationPending = true;
@@ -1019,13 +1037,13 @@
             // Restore interaction when navigation is canceled or becomes a download.
             const resetNavigation = () => {
                 navigationPending = false;
-                navigationExpected = isVisitPage(window.location.href);
+                navigationExpected = isLoadingDestination(window.location.href);
                 document.body.removeAttribute("aria-busy");
                 if (activeCount === 0) hideOverlay();
             };
             window.navigation?.addEventListener("navigateerror", resetNavigation);
             window.navigation?.addEventListener("navigate", function (event) {
-                navigationExpected = !event.downloadRequest && isVisitPage(event.destination.url);
+                navigationExpected = !event.downloadRequest && isLoadingDestination(event.destination.url);
                 event.signal.addEventListener("abort", resetNavigation, { once: true });
             });
 
