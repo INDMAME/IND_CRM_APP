@@ -1,15 +1,21 @@
 import { readFileSync } from "node:fs";
+import { createServer } from "node:http";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { chromium } from "@playwright/test";
+import { chromium, webkit } from "@playwright/test";
 
 const layoutPath = process.env.IND_LOADING_LAYOUT || new URL("../Web/Views/Shared/_Layout.cshtml", import.meta.url);
 const layout = readFileSync(layoutPath, "utf8");
 const script = [...layout.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)]
   .map((match) => match[1]).find((body) => body.includes('const overlay = document.getElementById("indGlobalLoading")'));
 assert.ok(script, "The actual layout loading script must exist.");
+const guardScript = [...layout.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)]
+  .map((match) => match[1]).find((body) => body.includes("const i18n = window.__IND_NAV_GUARD_I18N__"));
+assert.ok(guardScript, "The actual unsaved-changes guard must exist.");
 const html = `<!doctype html><html><body>
-<style>.ind-global-loading {position:fixed;inset:0;z-index:4000;background:white}.ind-global-loading--hidden {opacity:0;pointer-events:none}</style>
+<style>.hidden{display:none}.ind-global-loading {position:fixed;inset:0;z-index:4000;background:white}.ind-global-loading--hidden {opacity:0;pointer-events:none}</style>
+<div id="indNavGuardModal" class="hidden"><div id="indNavGuardModalBody"></div>
+<button id="indNavGuardModalConfirm">Yes</button><button id="indNavGuardModalCancel">No</button></div>
 <div id="indGlobalLoading" class="ind-global-loading" role="status" aria-hidden="false"><span data-ind-loading-text>Loading</span></div>
 <nav id="sidebar">
 <a id="home" href="/Home/Index">Home</a><a id="visits" href="/Historial/History">Visits</a>
@@ -21,30 +27,41 @@ const html = `<!doctype html><html><body>
 </nav>
 <a id="next" href="/Visitas/Detalle/test">Open detail</a><a id="hash" href="#section">Section</a>
 <a id="download" href="/file" download>Download</a>
-<button id="detail" onclick="window.location.href='/Visitas/Detalle/test'">Detail</button>
+<button id="detail" onclick="window.__indNavigateWithLoading('/Visitas/Detalle/test')">Detail</button>
 <button id="action" onclick="window.actions=(window.actions||0)+1">Action</button>
-<script>${script}</script></body></html>`;
+<script>${guardScript}</script><script>${script}</script></body></html>`;
 
 // Run the real Razor script in a browser without a business session or production writes.
 test("global navigation loading behavior", async (t) => {
-  const browser = await chromium.launch({ headless: true });
+  // WebKit needs a real network response to exercise attachment downloads.
+  const server = createServer((request, response) => {
+    response.writeHead(200, { "Content-Type": "application/octet-stream", "Content-Disposition": 'attachment; filename="test.txt"' });
+    response.end("test");
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const baseUrl = `http://127.0.0.1:${server.address().port}`;
+  const engine = process.env.IND_LOADING_BROWSER === "webkit" ? webkit : chromium;
+  const browser = await engine.launch({ headless: true });
   try {
-    async function withPage(run, legacy = false, pendingPath = "/Visitas/Detalle/test", initialPath = "/Historial/History") {
-      const page = await browser.newPage();
+    async function withPage(run, legacy = false, pendingPath = "/Visitas/Detalle/test", initialPath = "/Historial/History", noUnload = false) {
+      const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
       if (legacy) await page.addInitScript(() => Object.defineProperty(window, "navigation", { value: undefined }));
+      if (noUnload) await page.addInitScript(() => {
+        const add = window.addEventListener.bind(window);
+        window.addEventListener = (type, ...args) => { if (type !== "beforeunload") add(type, ...args); };
+      });
       page.setDefaultTimeout(8000);
       page.setDefaultNavigationTimeout(8000);
       let release;
       const pending = new Promise((resolve) => { release = resolve; });
-      await page.route("https://loading-test.invalid/**", async (route) => {
+      await page.route(baseUrl + "/**", async (route) => {
         const path = new URL(route.request().url()).pathname;
         if (path === pendingPath) await pending;
-        await route.fulfill(path === "/file"
-          ? { status: 200, headers: { "Content-Disposition": 'attachment; filename="test.txt"' }, body: "test" }
-          : { status: 200, contentType: "text/html", body: html });
+        if (path === "/file") return route.continue();
+        await route.fulfill({ status: 200, contentType: "text/html", body: html });
       });
       try {
-        await page.goto("https://loading-test.invalid" + initialPath);
+        await page.goto(baseUrl + initialPath);
         await run(page, release);
       } finally {
         release();
@@ -108,8 +125,8 @@ test("global navigation loading behavior", async (t) => {
       ["#tickets", "/Gastos/Tickets"], ["#manual", "/Home/Manual"], ["#company", "/INDCompany/SetCompany"],
       ["#language", "/INDLocalization/SetCulture"], ["#logout", "/Auth/Logout"]];
     for (const [selector, destination] of destinations) {
-    for (const legacy of [false, true]) {
-    await t.test(selector + (legacy ? " legacy" : "") + " delayed navigation shows feedback before the response", () => withPage(async (page, release) => {
+    for (const mode of ["modern", "legacy", "no-beforeunload"]) {
+    await t.test(selector + " " + mode + " delayed navigation shows feedback before the response", () => withPage(async (page, release) => {
       const observations = [];
       let responseReleased = false;
       page.on("console", (message) => {
@@ -136,7 +153,7 @@ test("global navigation loading behavior", async (t) => {
       await page.waitForURL("**" + destination, { waitUntil: "load" });
       assert.deepEqual(observations, [{ hidden: "false", actions: 0, responseReleased: false }]);
       assert.equal(await visible(page), false);
-    }, legacy, destination, selector === "#detail" ? "/Historial/History" : "/Unlisted/Detail"));
+    }, mode !== "modern", destination, selector === "#detail" ? "/Historial/History" : "/Unlisted/Detail", mode === "no-beforeunload"));
     }
     }
     await t.test("guarded menu navigation waits for confirmation and preserves legacy loading intent", () => withPage(async (page) => {
@@ -159,6 +176,33 @@ test("global navigation loading behavior", async (t) => {
       await page.locator("#action").click();
       assert.equal(await page.evaluate(() => window.actions), 1);
     }));
+    await t.test("real leave confirmation stays usable without beforeunload and loads only after acceptance", () => withPage(async (page, release) => {
+      await page.evaluate(() => window.__indSetNavigationGuard(true));
+      await page.locator("#expenses").click();
+      assert.equal(await visible(page), false);
+      await page.locator("#indNavGuardModalCancel").click();
+      assert.equal(await visible(page), false);
+      await page.locator("#expenses").click();
+      const states = [];
+      page.on("console", (message) => { if (message.text().startsWith("guard-loading:")) states.push(message.text()); });
+      await page.evaluate(() => {
+        const overlay = document.getElementById("indGlobalLoading");
+        new MutationObserver(() => console.log("guard-loading:" + overlay.getAttribute("aria-hidden")))
+          .observe(overlay, { attributes: true, attributeFilter: ["aria-hidden"] });
+      });
+      await page.locator("#indNavGuardModalConfirm").click({ noWaitAfter: true });
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      assert.ok(states.includes("guard-loading:false"));
+      release();
+      await page.waitForURL("**/Gastos/ExpenseSheets", { waitUntil: "load" });
+    }, true, "/Gastos/ExpenseSheets", "/Unlisted/Detail", true));
+    await t.test("document form validation cancels loading before a submit is replayed", () => withPage(async (page) => {
+      await page.evaluate(() => document.addEventListener("submit", (event) => event.preventDefault()));
+      await page.locator("#company").click();
+      assert.equal(await visible(page), false);
+      await page.locator("#action").click();
+      assert.equal(await page.evaluate(() => window.actions), 1);
+    }, true, "/INDCompany/SetCompany", "/Unlisted/Detail", true));
     await t.test("manual loads cannot hide a pending navigation", () => withPage(async (page) => {
       await start(page);
       await page.evaluate(() => { window.__indShowGlobalSpinner(); window.__indHideGlobalSpinner(); });
@@ -205,5 +249,5 @@ test("global navigation loading behavior", async (t) => {
       await page.keyboard.press("Enter");
       assert.equal(await page.evaluate(() => window.actions || 0), 0);
     }));
-  } finally { await browser.close(); }
+  } finally { await browser.close(); await new Promise((resolve) => server.close(resolve)); }
 });

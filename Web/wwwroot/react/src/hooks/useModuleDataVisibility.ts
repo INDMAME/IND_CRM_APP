@@ -31,6 +31,7 @@ type UseModuleDataVisibilityArgs = {
   moduleCode: string;
   includeCrmUserId?: boolean;
   allowCachedUsers?: boolean;
+  requireSuccessfulLoad?: boolean;
   preloadedUsers?: unknown[] | null;
   onForbidden?: () => void;
   onDebug?: (message: string, data?: Record<string, unknown>) => void;
@@ -89,6 +90,7 @@ export const useModuleDataVisibility = ({
   moduleCode,
   includeCrmUserId = true,
   allowCachedUsers = true,
+  requireSuccessfulLoad = false,
   preloadedUsers,
   onForbidden,
   onDebug,
@@ -164,11 +166,11 @@ export const useModuleDataVisibility = ({
 
         const users = normalizeModuleDataVisibilityUsers(getVisibleUsersResponseItems(response));
         const traceId = getVisibleUsersResponseTraceId(response);
-        if (!isVisibleUsersResponseSuccess(response) && users.length === 0) {
+        if (!isVisibleUsersResponseSuccess(response) && (requireSuccessfulLoad || users.length === 0)) {
           setVisibleUsers([]);
           setVisibleUsersLoading(false);
           setVisibleUsersError(getVisibleUsersResponseMessage(response) || indT("Api_RequestFailed", "Could not load visible users."));
-          setVisibleUsersReady(true);
+          setVisibleUsersReady(!requireSuccessfulLoad);
           activeAbortRef.current = null;
           return;
         }
@@ -178,7 +180,7 @@ export const useModuleDataVisibility = ({
         setVisibleUsersError("");
         setVisibleUsersReady(true);
         activeAbortRef.current = null;
-        setSessionJsonWithExpiry(cacheKey, { users, total: users.length, traceId }, CACHE_TTL_MS);
+        if (allowCachedUsers) setSessionJsonWithExpiry(cacheKey, { users, total: users.length, traceId }, CACHE_TTL_MS);
         onDebug?.("moduleDataVisibility:response", { appCode, moduleCode, count: users.length, traceId: traceId || "" });
       } catch (err: any) {
         if (requestId !== activeRequestIdRef.current) return;
@@ -189,7 +191,8 @@ export const useModuleDataVisibility = ({
 
         if (err instanceof ApiFetchError && err.status === 403) {
           setVisibleUsersLoading(false);
-          setVisibleUsersReady(true);
+          setVisibleUsersReady(!requireSuccessfulLoad);
+          if (requireSuccessfulLoad) setVisibleUsersError(indT("Auth_PermissionDenied_Body", "Access denied."));
           activeAbortRef.current = null;
           onForbidden?.();
           return;
@@ -198,7 +201,7 @@ export const useModuleDataVisibility = ({
         setVisibleUsers([]);
         setVisibleUsersLoading(false);
         setVisibleUsersError(err?.message || indT("Api_RequestFailed", "Could not load visible users."));
-        setVisibleUsersReady(true);
+        setVisibleUsersReady(!requireSuccessfulLoad);
         activeAbortRef.current = null;
         onDebug?.("moduleDataVisibility:error", { appCode, moduleCode, message: err?.message || "" });
       }
@@ -216,6 +219,7 @@ export const useModuleDataVisibility = ({
       onForbidden,
       permissionsRevision,
       preloadedUsers,
+      requireSuccessfulLoad,
     ]
   );
 

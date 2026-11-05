@@ -67,3 +67,8 @@
 
 # Preserve archived skill files byte-for-byte, including upstream Markdown hard breaks.
 docs/backups/codex-global-skills/** -whitespace
+
+# Preserve the PROD XPO export format in every checkout.
+.codex/Axapta/INDCRMUtilityService.xpo text eol=crlf
+.codex/Axapta/INDControlDataVisibilityResolver.xpo text eol=crlf
+tests/fixtures/visit-visibility-prod-before.xpo.txt text eol=crlf

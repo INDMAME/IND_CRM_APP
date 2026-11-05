@@ -54,7 +54,7 @@ namespace IND_CRM_APP.Controllers
             ViewBag.SelectedCompanyId = HttpContext.Session.GetString("INDCompanySelected") ?? string.Empty;
             ViewBag.CurrentAxUserId = GetCurrentSessionAxUserId() ?? string.Empty;
             ViewBag.PermissionsRevision = HttpContext.Session.GetString("INDPermissionsRevision") ?? string.Empty;
-            ViewBag.VisibleVisitUsers = await LoadVisibleVisitUsersForViewAsync(token);
+            // Resolve owners through the existing async endpoint after the page is visible.
 
             return View("~/Web/Views/Visitas/History.cshtml");
         }
@@ -121,7 +121,7 @@ namespace IND_CRM_APP.Controllers
 
                 return CreateApiPagedResponse(new
                 {
-                    Success = result.Success || items.Count > 0,
+                    Success = result.Success,
                     Message = result.Message ?? string.Empty,
                     Total = items.Count,
                     Page = responsePage,

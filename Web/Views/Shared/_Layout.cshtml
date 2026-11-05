@@ -752,7 +752,8 @@
                 event.stopImmediatePropagation?.();
 
                 requestNavigation(() => {
-                    window.location.assign(href);
+                    if (window.__indNavigateWithLoading) window.__indNavigateWithLoading(href);
+                    else window.location.assign(href);
                 });
             };
 
@@ -904,6 +905,8 @@
             const defaultMessage = label?.textContent || "";
             let activeCount = 0;
             let navigationPending = false;
+            let navigationGeneration = 0;
+            let continuingForm = null;
 
             // Reuse rendered menu destinations without treating file responses as pages.
             const menuPaths = new Set();
@@ -966,20 +969,78 @@
                 }
             };
 
+            // Show feedback on accepted actions; mobile Safari may never fire beforeunload.
+            const beginNavigation = () => {
+                navigationPending = true;
+                document.body.setAttribute("aria-busy", "true");
+                showOverlay(defaultMessage);
+            };
+
+            // Allow a paint before leaving, with a fallback for throttled animation frames.
+            const afterLoadingPaint = (action) => {
+                beginNavigation();
+                const generation = ++navigationGeneration;
+                let completed = false;
+                const run = () => {
+                    if (completed || generation !== navigationGeneration) return;
+                    completed = true;
+                    try { action(); } catch { resetNavigation(); }
+                };
+                window.requestAnimationFrame(() => window.requestAnimationFrame(run));
+                window.setTimeout(run, 100);
+            };
+
+            window.__indNavigateWithLoading = function (href) {
+                if (isLoadingDestination(href)) afterLoadingPaint(() => window.location.assign(href));
+                else window.location.assign(href);
+            };
+
+            // Window bubbling follows document validation and the unsaved-changes guard.
+            window.addEventListener("click", function (event) {
+                const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
+                if (!anchor || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey ||
+                    event.shiftKey || event.altKey || anchor.hasAttribute("download") ||
+                    (anchor.target && anchor.target !== "_self") || !isLoadingDestination(anchor.href)) return;
+                const url = new URL(anchor.href);
+                if (url.hash && url.pathname === location.pathname && url.search === location.search) return;
+                event.preventDefault();
+                window.__indNavigateWithLoading(anchor.href);
+            });
+            window.addEventListener("submit", function (event) {
+                const form = event.target;
+                if (!(form instanceof HTMLFormElement)) return;
+                if (continuingForm === form) {
+                    queueMicrotask(() => {
+                        continuingForm = null;
+                        if (event.defaultPrevented) resetNavigation();
+                    });
+                    return;
+                }
+                const submitter = event.submitter;
+                const target = submitter?.getAttribute("formtarget") || form.target;
+                const action = submitter?.getAttribute("formaction") || form.action;
+                if (event.defaultPrevented || (target && target !== "_self") || !isLoadingDestination(action)) return;
+                event.preventDefault();
+                afterLoadingPaint(() => {
+                    continuingForm = form;
+                    form.requestSubmit(submitter || undefined);
+                    if (!form.checkValidity()) { continuingForm = null; resetNavigation(); }
+                });
+            });
+
             // Keep feedback visible while the next document waits for the server.
             window.addEventListener("beforeunload", function (event) {
                 const shouldShow = navigationExpected;
                 navigationExpected = isLoadingDestination(window.location.href);
                 queueMicrotask(function () {
-                    if (event.defaultPrevented || !shouldShow) return;
-                    navigationPending = true;
-                    document.body.setAttribute("aria-busy", "true");
-                    showOverlay(defaultMessage);
+                    if (event.defaultPrevented) { resetNavigation(); return; }
+                    if (shouldShow && !navigationPending) beginNavigation();
                 });
             });
 
             // Restore interaction when navigation is canceled or becomes a download.
             const resetNavigation = () => {
+                navigationGeneration += 1;
                 navigationPending = false;
                 navigationExpected = isLoadingDestination(window.location.href);
                 document.body.removeAttribute("aria-busy");
@@ -994,6 +1055,7 @@
             // Block interaction until navigation or an explicit loading operation completes.
             const blockPendingAction = (event) => {
                 if (!navigationPending && activeCount === 0) return;
+                if (event.type === "submit" && event.target === continuingForm) return;
                 if (event.type === "keydown") {
                     if (event.key !== "Enter" && event.key !== " " && event.key !== "Escape" && event.key !== "Tab") return;
                 }

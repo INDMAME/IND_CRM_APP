@@ -45,7 +45,9 @@ export const useHistoryNavigation = ({
           ownerText,
         });
         const target = encodeURIComponent(linkId);
-        window.location.href = `/Visitas/Detalle/${target}`;
+        const href = `/Visitas/Detalle/${target}`;
+        if (window.__indNavigateWithLoading) window.__indNavigateWithLoading(href);
+        else window.location.href = href;
       }, navDelayMs);
     },
     [

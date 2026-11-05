@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMUtilityService descargados en Viernes 24/07/2026
+; Navision Axapta Class: INDCRMUtilityService descargados en Jueves 15/10/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -145,6 +145,8 @@ Formatversion: 1
         #    boolean         includeCrmUserId;
         #    Set             visibleAliases;
         #    Set             visibleAxUsers;
+        #    Set             mutationAliases;
+        #    INDPersonaTable mutationOwner;
         #    SetIterator     si;
         #    str             personAlias;
         #    UserId          axUserId;
@@ -283,12 +285,30 @@ Formatversion: 1
         #         && axUserId
         #         && visibleAxUsers.in(axUserId))
         #        {
-        #            canMutate = INDCRMUtilityService::ctrlCanMutateOwnerAxUserId(
-        #                viewerAxUserId,
-        #                companyId,
-        #                appCode,
-        #                moduleCode,
-        #                axUserId);
+        #            // MMS 2026.11.05: Resolve mutation visibility once per call, using today's scope.
+        #            canMutate = false;
+        #            if (moduleAccessLevel.RecId
+        #             && (moduleAccessLevel.MutationPolicy == INDMutationPolicy::SameAsVisibility
+        #              || (moduleAccessLevel.MutationPolicy == INDMutationPolicy::OwnOnly
+        #               && viewerAxUserId == axUserId)))
+        #            {
+        #                if (!mutationAliases)
+        #                {
+        #                    mutationAliases = INDControlDataVisibilityResolver::resolveVisiblePersonAliases(
+        #                        viewerAxUserId, companyId, appCode, moduleCode, today());
+        #                    if (!mutationAliases)
+        #                        mutationAliases = new Set(Types::String);
+        #                }
+        #
+        #                // Preserve canonical owner lookup when an AX user has multiple aliases.
+        #                changecompany (companyId)
+        #                {
+        #                    mutationOwner = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(axUserId);
+        #                }
+        #                canMutate = mutationOwner.RecId
+        #                    && mutationOwner.Alias
+        #                    && mutationAliases.in(mutationOwner.Alias);
+        #            }
         #
         #            lines += [[
         #                strFmt("%1", personAlias),

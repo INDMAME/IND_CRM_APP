@@ -35,6 +35,7 @@ export const useHistoryVisibleOwner = ({
     visibleUsersLoading,
     visibleUsersError,
     visibleUsersReady,
+    loadVisibleUsers,
   } = useModuleDataVisibility({
     enabled,
     companyId,
@@ -42,7 +43,9 @@ export const useHistoryVisibleOwner = ({
     permissionsRevision,
     appCode: APP_CODE,
     moduleCode: MODULE_CODE,
-    preloadedUsers: typeof window !== "undefined" ? window.__IND_VISIBLE_VISIT_USERS__ : undefined,
+    // Refresh authorization-dependent options on every entry, without browser-cache reuse.
+    allowCachedUsers: false,
+    requireSuccessfulLoad: true,
     onForbidden: showPermissionModal,
     onDebug,
   });
@@ -89,6 +92,7 @@ export const useHistoryVisibleOwner = ({
   }, [effectiveSelectedOwnerAxUserId, visibleVisitUserByOwnerAxUserId]);
 
   return {
+    loadVisibleUsers,
     visibleVisitUsers,
     visibleUsersLoading,
     visibleUsersError,

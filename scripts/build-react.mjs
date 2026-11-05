@@ -1,9 +1,10 @@
-import { rmSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { build } from "esbuild";
 
 const isProd = process.argv.includes("--prod");
+const visitsHotfix = process.argv.includes("--visits-hotfix");
 const typecheckScriptPath = resolve("node_modules", "typescript", "bin", "tsc");
 const typecheckResult = spawnSync(process.execPath, [typecheckScriptPath, "--noEmit", "-p", "tsconfig.json"], {
   stdio: "inherit",
@@ -35,9 +36,9 @@ const entryPoints = {
 };
 
 // Keep the chunk folder clean so old hashed files do not accumulate between builds.
-rmSync("Web/wwwroot/js/chunks", { recursive: true, force: true });
+if (!visitsHotfix) rmSync("Web/wwwroot/js/chunks", { recursive: true, force: true });
 
-await build({
+const result = await build({
   entryPoints,
   bundle: true,
   splitting: true,
@@ -50,4 +51,29 @@ await build({
   minify: isProd,
   jsx: "automatic",
   loader: { ".ts": "ts", ".tsx": "tsx" },
+  write: !visitsHotfix,
+  metafile: visitsHotfix,
 });
+
+// Preserve other entries and cached chunks when preparing a selective visit release.
+if (visitsHotfix) {
+  const selected = new Set();
+  const visit = (path) => {
+    if (selected.has(path)) return;
+    const output = result.metafile.outputs[path];
+    if (!output) throw new Error(`Missing hotfix output: ${path}`);
+    selected.add(path);
+    if (result.metafile.outputs[path + ".map"]) selected.add(path + ".map");
+    for (const dependency of output.imports) {
+      if (!dependency.external) visit(dependency.path);
+    }
+  };
+  visit("Web/wwwroot/js/history.js");
+  const paths = new Set([...selected].map((path) => resolve(path)));
+  for (const file of result.outputFiles) {
+    if (!paths.has(file.path)) continue;
+    mkdirSync(dirname(file.path), { recursive: true });
+    writeFileSync(file.path, file.contents);
+  }
+  console.log(`Visit hotfix: wrote ${paths.size} reachable files; retained other bundles.`);
+}

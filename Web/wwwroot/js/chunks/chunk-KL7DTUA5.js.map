@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../react/src/utils/userLabels.ts"],
+  "sourcesContent": ["const safeText = (value: unknown): string => String(value ?? \"\").trim();\r\n\r\nconst formatDisplayText = (value: string): string => value.toUpperCase();\r\n\r\n// Builds a compact display label for a person when both name and AX id are available.\r\nexport const formatUserNameWithId = (name: unknown, axUserId: unknown): string => {\r\n  const rawName = safeText(name);\r\n  const normalizedName = formatDisplayText(rawName);\r\n  const normalizedAxUserId = formatDisplayText(safeText(axUserId));\r\n  if (rawName && normalizedAxUserId && rawName.toUpperCase() === normalizedAxUserId.toUpperCase()) {\r\n    return normalizedAxUserId;\r\n  }\r\n\r\n  if (\r\n    normalizedName &&\r\n    normalizedAxUserId &&\r\n    normalizedName.toUpperCase() !== normalizedAxUserId.toUpperCase()\r\n  ) {\r\n    return `${normalizedName} (${normalizedAxUserId})`;\r\n  }\r\n\r\n  return normalizedName || normalizedAxUserId;\r\n};\r\n"],
+  "mappings": "AAAA,IAAMA,EAAYC,GAA2B,OAAOA,GAAS,EAAE,EAAE,KAAK,EAEhEC,EAAqBD,GAA0BA,EAAM,YAAY,EAG1DE,EAAuB,CAACC,EAAeC,IAA8B,CAChF,IAAMC,EAAUN,EAASI,CAAI,EACvBG,EAAiBL,EAAkBI,CAAO,EAC1CE,EAAqBN,EAAkBF,EAASK,CAAQ,CAAC,EAC/D,OAAIC,GAAWE,GAAsBF,EAAQ,YAAY,IAAME,EAAmB,YAAY,EACrFA,EAIPD,GACAC,GACAD,EAAe,YAAY,IAAMC,EAAmB,YAAY,EAEzD,GAAGD,CAAc,KAAKC,CAAkB,IAG1CD,GAAkBC,CAC3B",
+  "names": ["safeText", "value", "formatDisplayText", "formatUserNameWithId", "name", "axUserId", "rawName", "normalizedName", "normalizedAxUserId"]
+}

@@ -25,7 +25,7 @@
 
 @section Scripts {
     <script nonce="@cspNonce">
-        window.__IND_VISIBLE_VISIT_USERS__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.VisibleVisitUsers ?? new object[] { }));
+        window.__IND_VISIBLE_VISIT_USERS__ = undefined;
         window.__IND_I18N__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
             History_From = SR["History_From"].Value,
             History_To = SR["History_To"].Value,
@@ -36,6 +36,7 @@
             History_Filter_Owner_None = SR["History_Filter_Owner_None"].Value,
             History_Filter_Owner_Loading = SR["History_Filter_Owner_Loading"].Value,
             History_Filter_Clear = SR["History_Filter_Clear"].Value,
+            History_Filter_Refresh = SR["History_Filter_Refresh"].Value,
             History_Filter_Apply = SR["History_Filter_Apply"].Value,
             History_Quick_Custom = SR["History_Quick_Custom"].Value,
             History_Quick_7Days = SR["History_Quick_7Days"].Value,

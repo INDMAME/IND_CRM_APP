@@ -236,6 +236,7 @@ export const HistoryPage = ({
     visibleUsersLoading,
     visibleUsersError,
     visibleUsersReady,
+    loadVisibleUsers,
     ownerSelectValue,
     ownerFilterDisabled,
     canManageVisibleOwners,
@@ -394,7 +395,7 @@ export const HistoryPage = ({
   } = useHistoryLabels(locale);
   const showFilterActions = showFilters;
   const showSummary = !showFilters && !!startDate && !!endDate;
-  const showResults = !showFilters;
+  const showResults = !showFilters && visibleUsersReady;
   const showManualPicker = activeQuickFilter === "custom" && showManualPickerPanel;
   const showInlineSummary = !!startDate && !!endDate && !showManualPicker;
 
@@ -417,6 +418,7 @@ export const HistoryPage = ({
         </div>
       )}
       {showFilters && (
+        <fieldset disabled={!visibleUsersReady || visibleUsersLoading}>
         <HistoryFilterPanel
           activatorRef={activatorRef}
           popoverRef={popoverRef}
@@ -479,6 +481,7 @@ export const HistoryPage = ({
             applyFilters({ closePanel: true, page: 1 });
           }}
         />
+        </fieldset>
       )}
 
       <input type="hidden" id="fromDate" value={fromDateValue} readOnly />
@@ -486,7 +489,7 @@ export const HistoryPage = ({
 
       <HistoryResultsSection
         showResults={showResults}
-        isLoading={isLoading}
+        isLoading={isLoading || visibleUsersLoading || (!visibleUsersReady && !visibleUsersError)}
         loadingLabel={loadingLabel}
         timelineItems={timelineItems}
         noDataText={noVisitsInRangeLabel}
@@ -498,9 +501,23 @@ export const HistoryPage = ({
         onNavigate={handleNavigate}
         onPageChange={loadActivities}
       />
+      {visibleUsersError && (
+        <div role="alert" className="filter-card p-3 text-sm">
+          <p>{visibleUsersError}</p>
+          <button type="button" className="form-control" disabled={visibleUsersLoading}
+            onClick={() => void loadVisibleUsers(true)}>
+            {indT("History_Filter_Refresh", "Refresh")}
+          </button>
+        </div>
+      )}
       {canCreateVisit && (
         <FloatingActionButton
           route="/Visitas/Create?fresh=1"
+          onClick={() => {
+            const href = "/Visitas/Create?fresh=1";
+            if (window.__indNavigateWithLoading) window.__indNavigateWithLoading(href);
+            else window.location.href = href;
+          }}
           ariaLabel={createLabel}
           size={76}
           right={16}

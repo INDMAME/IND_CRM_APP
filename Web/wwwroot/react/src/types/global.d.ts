@@ -44,6 +44,7 @@ declare global {
     __indConfirmNavigation?: () => boolean;
     __indRequestNavigation?: (action?: (() => void) | null, message?: string) => boolean;
     __indShowGlobalSpinner?: (message?: string) => void;
+    __indNavigateWithLoading?: (href: string) => void;
     __indHideGlobalSpinner?: () => void;
     IND?: {
       showPermissionModal?: (opts?: Record<string, unknown>) => void;
