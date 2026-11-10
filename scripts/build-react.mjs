@@ -5,6 +5,8 @@ import { build } from "esbuild";
 
 const isProd = process.argv.includes("--prod");
 const visitsHotfix = process.argv.includes("--visits-hotfix");
+const expensesHotfix = process.argv.includes("--expenses-hotfix");
+const selectiveHotfix = visitsHotfix || expensesHotfix;
 const typecheckScriptPath = resolve("node_modules", "typescript", "bin", "tsc");
 const typecheckResult = spawnSync(process.execPath, [typecheckScriptPath, "--noEmit", "-p", "tsconfig.json"], {
   stdio: "inherit",
@@ -36,7 +38,7 @@ const entryPoints = {
 };
 
 // Keep the chunk folder clean so old hashed files do not accumulate between builds.
-if (!visitsHotfix) rmSync("Web/wwwroot/js/chunks", { recursive: true, force: true });
+if (!selectiveHotfix) rmSync("Web/wwwroot/js/chunks", { recursive: true, force: true });
 
 const result = await build({
   entryPoints,
@@ -51,12 +53,12 @@ const result = await build({
   minify: isProd,
   jsx: "automatic",
   loader: { ".ts": "ts", ".tsx": "tsx" },
-  write: !visitsHotfix,
-  metafile: visitsHotfix,
+  write: !selectiveHotfix,
+  metafile: selectiveHotfix,
 });
 
 // Preserve other entries and cached chunks when preparing a selective visit release.
-if (visitsHotfix) {
+if (selectiveHotfix) {
   const selected = new Set();
   const visit = (path) => {
     if (selected.has(path)) return;
@@ -68,12 +70,19 @@ if (visitsHotfix) {
       if (!dependency.external) visit(dependency.path);
     }
   };
-  visit("Web/wwwroot/js/history.js");
+  const selectedEntries = expensesHotfix
+    ? Object.keys(entryPoints).filter((name) => name.startsWith("expense-"))
+    : ["history"];
+  for (const name of selectedEntries) visit(`Web/wwwroot/js/${name}.js`);
   const paths = new Set([...selected].map((path) => resolve(path)));
   for (const file of result.outputFiles) {
     if (!paths.has(file.path)) continue;
     mkdirSync(dirname(file.path), { recursive: true });
     writeFileSync(file.path, file.contents);
   }
-  console.log(`Visit hotfix: wrote ${paths.size} reachable files; retained other bundles.`);
+  if (expensesHotfix) {
+    mkdirSync(".publish_expenses", { recursive: true });
+    writeFileSync(".publish_expenses/assets.json", JSON.stringify([...selected], null, 2));
+  }
+  console.log(`Selective hotfix: wrote ${paths.size} reachable files; retained other bundles.`);
 }

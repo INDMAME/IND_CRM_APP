@@ -186,6 +186,8 @@ let runtimeAuthSeed: Partial<ExpenseApiAuthSeed> = {};
 let cachedContext: ExpenseApiContext | null = null;
 let cachedContextKey = "";
 let contextPromise: Promise<ExpenseApiContext> | null = null;
+let contextPromiseKey = "";
+let contextGeneration = 0;
 const cachedCurrencyResponses = new Map<string, IndPagedResponse<ExpenseSheetCurrencyDto>>();
 const pendingCurrencyRequests = new Map<string, Promise<IndPagedResponse<ExpenseSheetCurrencyDto>>>();
 
@@ -484,6 +486,8 @@ type RawEntraContextCompany = {
   allowSelfManagement?: unknown;
   CrmUserId?: unknown;
   crmUserId?: unknown;
+  CurrencyCode?: unknown;
+  currencyCode?: unknown;
 };
 
 type NormalizedEntraContextCompany = {
@@ -491,6 +495,7 @@ type NormalizedEntraContextCompany = {
   isDefault: boolean;
   allowSelfManagement: boolean;
   crmUserId: string;
+  currencyCode: string;
 };
 
 type RawEntraContextHeader = {
@@ -524,6 +529,7 @@ const mapEntraContextCompany = (item: unknown): NormalizedEntraContextCompany | 
     isDefault: toFlagBool(raw.IsDefault ?? raw.isDefault) === true,
     allowSelfManagement: toFlagBool(raw.AllowSelfManagement ?? raw.allowSelfManagement) === true,
     crmUserId: safeText(raw.CrmUserId ?? raw.crmUserId),
+    currencyCode: safeText(raw.CurrencyCode ?? raw.currencyCode).toUpperCase(),
   };
 };
 
@@ -554,7 +560,7 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): E
   const axUserId = safeText(header.AxUserId ?? header.axUserId);
   const userName = safeText(header.UserName ?? header.userName);
   const defaultCompany = safeText(header.DefaultCompany ?? header.defaultCompany);
-  const defaultCurrencyCode = safeText(header.DefaultCurrencyCode ?? header.defaultCurrencyCode);
+  const headerDefaultCurrencyCode = safeText(header.DefaultCurrencyCode ?? header.defaultCurrencyCode).toUpperCase();
   const companiesRaw = Array.isArray(first.Companies)
     ? first.Companies
     : (Array.isArray(first.companies) ? first.companies : []);
@@ -583,6 +589,9 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): E
     selectedCompanyMatch || companies.find((item) => safeText(item.companyId) === companyId) || companies[0];
   const allowSelfManagement = selectedCompany?.allowSelfManagement === true;
   const crmUserId = safeText(selectedCompany?.crmUserId);
+  // The header currency belongs only to the user's default company.
+  const isDefaultCompany = !!defaultCompany && companyId.toUpperCase() === defaultCompany.toUpperCase();
+  const defaultCurrencyCode = safeText(selectedCompany?.currencyCode) || (isDefaultCompany ? headerDefaultCurrencyCode : "");
 
   if (!axUserId || !companyId) {
     throw new ApiFetchError("Could not resolve Entra company context.");
@@ -608,8 +617,9 @@ const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<Expen
     return waitForAbortableExpenseResult(Promise.resolve(cachedContext), signal);
   }
 
-  if (!contextPromise || cachedContextKey !== contextKey) {
-    cachedContextKey = contextKey;
+  if (!contextPromise || contextPromiseKey !== contextKey) {
+    contextPromiseKey = contextKey;
+    const generation = ++contextGeneration;
     const sharedContextPromise = (async () => {
       const contextPayload: EntraContextRequest = {
         appCode: seed.appCode,
@@ -626,6 +636,10 @@ const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<Expen
         body: JSON.stringify(contextPayload),
       });
 
+      // Discard responses started under an older company or authentication context.
+      if (generation !== contextGeneration || buildContextKey(seed) !== contextKey) {
+        throw new DOMException("Expense context changed.", "AbortError");
+      }
       const resolved = validateContextResponse(contextResponse);
       const nextContext: ExpenseApiContext = {
         ...resolved,
@@ -637,15 +651,18 @@ const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<Expen
       }
 
       cachedContext = nextContext;
+      cachedContextKey = contextKey;
       return nextContext;
     })();
 
     contextPromise = sharedContextPromise;
-    void sharedContextPromise.finally(() => {
+    const clearPendingContext = () => {
       if (contextPromise === sharedContextPromise) {
         contextPromise = null;
+        contextPromiseKey = "";
       }
-    });
+    };
+    void sharedContextPromise.then(clearPendingContext, clearPendingContext);
   }
 
   return await waitForAbortableExpenseResult(contextPromise, signal);
@@ -759,6 +776,9 @@ const mapLegacyListResponse = (
 
 // Sets runtime auth inputs used to resolve Entra context and mandatory expense headers.
 export const configureExpenseApiAuth = (seed: Partial<ExpenseApiAuthSeed>): void => {
+  contextGeneration++;
+  contextPromise = null;
+  contextPromiseKey = "";
   const strictFromSeed = toFlagBool(seed.strictApiRoutes);
   const strictFromRuntime =
     typeof runtimeAuthSeed.strictApiRoutes === "boolean" ? runtimeAuthSeed.strictApiRoutes : readRuntimeStrictApiFlag();
