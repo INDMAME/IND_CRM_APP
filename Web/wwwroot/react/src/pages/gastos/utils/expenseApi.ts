@@ -1,3 +1,4 @@
+import { expenseCurrencyCodes } from "../constants/currencyCodes.ts";
 import {
   ApiFetchError,
   fetchJson,
@@ -192,6 +193,7 @@ const cachedCurrencyResponses = new Map<string, IndPagedResponse<ExpenseSheetCur
 const pendingCurrencyRequests = new Map<string, Promise<IndPagedResponse<ExpenseSheetCurrencyDto>>>();
 
 const safeText = safeTextTransform;
+const isoCurrencyCodes = new Set(expenseCurrencyCodes);
 
 const toNullableNumber = toNullableNumberTransform;
 const isNonNegativeNumber = isNonNegativeNumberTransform;
@@ -1177,11 +1179,30 @@ export const getExpenseSheetSubordinates = async (
   return normalizeSubordinatesPagedResponse(response);
 };
 
-// Exposes the default currency resolved from Entra context for initial selections.
+// Resolves legacy company codes through its AX catalog for ISO controls and flags.
 export const getExpenseSheetDefaultCurrencyCode = async (options?: ApiFetchOptions): Promise<string> => {
   try {
     const context = await ensureExpenseApiContext(options);
-    return safeText(context.defaultCurrencyCode).toUpperCase();
+    const rawCode = safeText(context.defaultCurrencyCode).toUpperCase();
+    if (!rawCode || isoCurrencyCodes.has(rawCode)) return rawCode;
+
+    const generation = contextGeneration;
+    const selectedCompany = readWindowSelectedCompany();
+    let displayCode = rawCode;
+    try {
+      const catalog = await getExpenseSheetCurrencies(options);
+      if (catalog.Success) {
+        const matches = (catalog.Items ?? [])
+          .filter(item => safeText(item.CurrencyCode).toUpperCase() === rawCode)
+          .map(item => safeText(item.CurrencyCodeISO).toUpperCase());
+        const isoCodes = new Set(matches);
+        if (isoCodes.size === 1 && isoCurrencyCodes.has(matches[0])) displayCode = matches[0];
+      }
+    } catch {
+      // Keep the authoritative AX code when its display mapping is unavailable.
+    }
+    if (options?.signal?.aborted || generation !== contextGeneration || selectedCompany !== readWindowSelectedCompany()) return "";
+    return displayCode;
   } catch {
     return "";
   }

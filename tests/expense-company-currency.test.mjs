@@ -6,7 +6,7 @@ import test from "node:test";
 import { transformSync } from "esbuild";
 
 // Loads the real API module with an isolated browser and controlled context responses.
-function createContext({ selected = "AZM", header = {}, companies, deferred = false, camelCase = false } = {}) {
+function createContext({ selected = "AZM", header = {}, companies, deferred = false, camelCase = false, currencyResponse } = {}) {
   const modules = new Map();
   const pending = [];
   const calls = [];
@@ -21,8 +21,12 @@ function createContext({ selected = "AZM", header = {}, companies, deferred = fa
     file = path.resolve(file);
     if (path.basename(file) === "apiService.ts") return {
       ApiFetchError: Error, getCsrfToken: () => "",
-      fetchJson: async (url) => {
+      fetchJson: async (url, options) => {
         calls.push(url);
+        if (url === "/api/crm/expensesheets/currencies") {
+          assert.equal(options.headers["X-IND-Company"], browser.__IND_SELECTED_COMPANY__.trim().toUpperCase());
+          return currencyResponse ? await currencyResponse() : { Success: true, Items: [] };
+        }
         assert.equal(url, "/api/auth/entra/context");
         return deferred ? new Promise(resolve => pending.push(() => resolve(response))) : response;
       },
@@ -95,4 +99,45 @@ test("a late response from the old company cannot replace the current context", 
 test("an unavailable selected company does not fall back to another company's currency", async () => {
   const { api } = createContext({ selected: "UNKNOWN" });
   assert.equal(await api.getExpenseSheetDefaultCurrencyCode(), "");
+});
+
+test("legacy company currencies use their configured ISO code and reuse the company catalog", async () => {
+  for (const [raw, iso] of [[" mn ", " mxn "], ["WON", "KRW"], ["REAL", "BRL"]]) {
+    const { api, calls } = createContext({
+      companies: [{ CompanyId: "AZM", CurrencyCode: raw }],
+      currencyResponse: async () => ({ Success: true, Items: [{ CurrencyCode: raw, CurrencyCodeISO: iso }] }),
+    });
+    assert.equal(await api.getExpenseSheetDefaultCurrencyCode(), iso.trim().toUpperCase());
+    assert.equal(await api.getExpenseSheetDefaultCurrencyCode(), iso.trim().toUpperCase());
+    assert.equal(calls.filter(url => url.endsWith("/currencies")).length, 1);
+  }
+});
+
+test("unknown, unavailable, invalid or ambiguous ISO mappings preserve the original code", async () => {
+  for (const currencyResponse of [
+    async () => ({ Success: false, Items: [{ CurrencyCode: "MN", CurrencyCodeISO: "EUR" }] }),
+    async () => { throw new Error("Catalog unavailable"); },
+    async () => ({ Success: true, Items: [{ CurrencyCode: "MN", CurrencyCodeISO: "" }] }),
+    async () => ({ Success: true, Items: [{ CurrencyCode: "MN", CurrencyCodeISO: "UNKNOWN" }] }),
+    async () => ({ Success: true, Items: [{ CurrencyCode: "OTHER", CurrencyCodeISO: "MXN" }] }),
+    async () => ({ Success: true, Items: [{ CurrencyCode: "MN", CurrencyCodeISO: "MXN" }, { CurrencyCode: "MN", CurrencyCodeISO: "USD" }] }),
+  ]) {
+    const { api } = createContext({ companies: [{ CompanyId: "AZM", CurrencyCode: "MN" }], currencyResponse });
+    assert.equal(await api.getExpenseSheetDefaultCurrencyCode(), "MN");
+  }
+});
+
+test("a catalog response from the previous company is discarded", async () => {
+  let complete;
+  const { api, browser } = createContext({
+    companies: [{ CompanyId: "AZM", CurrencyCode: "MN" }, { CompanyId: "BRA", CurrencyCode: "BRL" }],
+    currencyResponse: () => new Promise(resolve => { complete = resolve; }),
+  });
+  const previous = api.getExpenseSheetDefaultCurrencyCode();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.ok(complete);
+  browser.__IND_SELECTED_COMPANY__ = "BRA";
+  assert.equal(await api.getExpenseSheetDefaultCurrencyCode(), "BRL");
+  complete({ Success: true, Items: [{ CurrencyCode: "MN", CurrencyCodeISO: "MXN" }] });
+  assert.equal(await previous, "");
 });
