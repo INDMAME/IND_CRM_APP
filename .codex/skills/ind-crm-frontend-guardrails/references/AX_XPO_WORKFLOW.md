@@ -29,7 +29,12 @@ Esta es la regla canónica para cualquier cambio de Axapta 3.0, X++, XPO o contr
 - Mantener llamadas HTTP, DLL, COM y correo fuera de `tts` siempre que sea posible. Deben ser `best-effort` cuando no formen parte de la transacción de negocio.
 - En contratos `container`, conservar las posiciones existentes. Los campos compatibles se añaden al final y se leen comprobando `conLen`.
 - No cambiar EDT, tabla, índice, relación o enum como efecto colateral de un cambio de método.
-- Los objetos AOT/X++ nuevos usan el prefijo `IND`. Las clases nuevas de C# no usan ese prefijo.
+- Nombres de los elementos AOT/X++ nuevos (regla de Marco, 2026-11-19, confirmada el 2026-11-23):
+  - Campo nuevo en una tabla estándar de Axapta: prefijo `IND`.
+  - Campo nuevo en una tabla propia: sin prefijo (por ejemplo, `WebLocked`).
+  - Tabla nueva (se evita crearlas): prefijo `CRM` solamente.
+  - Clases del receptor de la web CRM (CRM_INSERTEC): prefijo `CRMWeb`.
+- Las clases nuevas de C# no usan el prefijo `IND`.
 - Los comentarios deben ser breves, ASCII y coherentes con la instrucción global activa. No se traducen ni reformatean comentarios históricos fuera del bloque modificado.
 - Cuando corresponda una marca MMS, usar una sola marca en la unidad lógica modificada con fecha real y sin acumular un historial de marcas.
 
