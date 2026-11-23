@@ -1,0 +1,218 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Navision Axapta Class: CRMWebProspectStore unloaded at Jueves 19/11/2026
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+
+  CLASS #CRMWebProspectStore
+    PROPERTIES
+      Name                #CRMWebProspectStore
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #public class CRMWebProspectStore
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Web CRM receiver of prospects (CRMClientePotencialTable)
+        #    //MMS - 2026.11.19 - It writes the values sent by the web as they come, marks WebLocked and uses
+        #    //MMS - 2026.11.19 - the table insert() and update(), which keep CRMAccountTable and the sector
+        #    //MMS - 2026.11.19 - line. No business validation here.
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #accountRecId
+        #static RecId accountRecId(CRMClientePotencialTable _prospect)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: RecId of the CRMAccountTable row created by the prospect insert()
+        #    CRMAccountTable account;
+        #    ;
+        #    if (!_prospect.RecId)
+        #        return 0;
+        #
+        #    select firstonly account
+        #        where account.Origen     == CRMConsultaOrigen::ClientePotencial
+        #           && account.AccountNum == _prospect.ClientePotencialId;
+        #
+        #    return account.RecId;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #assignProspect
+        #static void assignProspect(CRMClientePotencialTable _prospect, container _data, boolean _isNew)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Copies positions 6 to 13 of the message into the prospect, as they come
+        #    //MMS - 2026.11.19 - UserId (responsible) is written only on creation.
+        #    ;
+        #    _prospect.Name            = conPeek(_data, 6);
+        #    _prospect.RazonSocial     = conPeek(_data, 7);
+        #    _prospect.City            = conPeek(_data, 8);
+        #    _prospect.CountryId       = conPeek(_data, 9);
+        #    _prospect.StatisticsGroup = conPeek(_data, 10);
+        #    _prospect.OrigenContacto  = conPeek(_data, 11);
+        #    _prospect.VATNum          = conPeek(_data, 12);
+        #
+        #    if (_isNew)
+        #        _prospect.UserId = conPeek(_data, 13);
+        #
+        #    _prospect.WebLocked = NoYes::Yes;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #prospectResult
+        #static container prospectResult(str _company, str _result, RecId _recId)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Applied or duplicate result of a prospect, read again after the commit
+        #    //MMS - 2026.11.19 - ClientePotencialId travels through strFmt: right-adjusted EDTs reach COM as 0.
+        #    CRMClientePotencialTable prospect;
+        #    ;
+        #    select firstonly prospect
+        #        where prospect.RecId == _recId;
+        #
+        #    return CRMWebStoreCommon::buildResult(_company, _result, prospect.RecId,
+        #                                          strFmt("%1", prospect.ClientePotencialId),
+        #                                          prospect.modifiedDate, prospect.modifiedTime,
+        #                                          "", "", CRMWebProspectStore::accountRecId(prospect), conNull());
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #upsert
+        #static container upsert(container _data)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Creates or updates a prospect (prospects/upsert)
+        #    //MMS - 2026.11.19 - Input: 1 company, 2 messageId, 3 externalId, 4 version,
+        #    //MMS - 2026.11.19 -   5 axRecId (CRMClientePotencialTable.RecId), 6 Name, 7 RazonSocial, 8 City,
+        #    //MMS - 2026.11.19 -   9 CountryId, 10 StatisticsGroup, 11 OrigenContacto, 12 VATNum,
+        #    //MMS - 2026.11.19 -   13 UserId (only on creation).
+        #    //MMS - 2026.11.19 - Output: CRMWebStoreCommon::buildResult, code = ClientePotencialId,
+        #    //MMS - 2026.11.19 - accountRecId = RecId of its CRMAccountTable row.
+        #    str                      company;
+        #    str 36                   messageId;
+        #    str 36                   externalId;
+        #    int                      version;
+        #    RecId                    axRecId;
+        #    str                      envelopeIssue;
+        #    CRMClientePotencialTable prospect;
+        #    CRMWebSyncMap            map;
+        #    NumberSeq                numberSeq;
+        #    boolean                  isNew;
+        #    str                      outcome;
+        #    str                      errorCode;
+        #    str                      errorMessage;
+        #    container                result;
+        #    ;
+        #    company = CRMWebStoreCommon::messageCompany(_data);
+        #    envelopeIssue = CRMWebStoreCommon::envelopeError(_data, 13);
+        #    if (envelopeIssue)
+        #        return CRMWebStoreCommon::rejected(company, "STORE_MESSAGE_INVALID", envelopeIssue);
+        #
+        #    messageId  = conPeek(_data, 2);
+        #    externalId = conPeek(_data, 3);
+        #    version    = conPeek(_data, 4);
+        #
+        #    infolog.clear(0);
+        #    try
+        #    {
+        #        axRecId = conPeek(_data, 5);
+        #
+        #        changecompany (company)
+        #        {
+        #            ttsbegin;
+        #
+        #            map = CRMWebSyncMap::find(externalId, CRMWebStoreCommon::entityProspect(), true);
+        #
+        #            //MMS - 2026.11.19 - Same message on a prospect that still exists (lost HTTP response).
+        #            if (map.RecId && map.LastMessageId == messageId && map.RefRecId)
+        #            {
+        #                select firstonly prospect
+        #                    where prospect.RecId == map.RefRecId;
+        #
+        #                if (prospect.RecId)
+        #                    outcome = "duplicate";
+        #            }
+        #
+        #            if (!outcome && CRMWebStoreCommon::versionBehind(map, version))
+        #            {
+        #                outcome      = "rejected";
+        #                errorCode    = "STORE_VERSION_BEHIND";
+        #                errorMessage = CRMWebStoreCommon::versionBehindMessage(map);
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                if (axRecId)
+        #                {
+        #                    select firstonly forupdate prospect
+        #                        where prospect.RecId == axRecId;
+        #
+        #                    if (!prospect.RecId)
+        #                    {
+        #                        outcome      = "rejected";
+        #                        errorCode    = "STORE_RECORD_NOT_FOUND";
+        #                        errorMessage = strFmt("El cliente potencial con RecId %1 no existe en Axapta.", axRecId);
+        #                    }
+        #                }
+        #                else if (map.RefRecId)
+        #                {
+        #                    select firstonly forupdate prospect
+        #                        where prospect.RecId == map.RefRecId;
+        #                }
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                isNew = !prospect.RecId;
+        #                if (isNew)
+        #                {
+        #                    numberSeq = NumberSeq::newGetNum(CustParameters::numRefCRMClientePotencialId());
+        #                    prospect.clear();
+        #                    prospect.ClientePotencialId = numberSeq.num();
+        #                }
+        #
+        #                CRMWebProspectStore::assignProspect(prospect, _data, isNew);
+        #
+        #                if (isNew)
+        #                    prospect.insert();
+        #                else
+        #                    prospect.update();
+        #
+        #                CRMWebStoreCommon::writeMap(externalId, CRMWebStoreCommon::entityProspect(),
+        #                                            tableNum(CRMClientePotencialTable), prospect.RecId, version, messageId);
+        #                outcome = "applied";
+        #            }
+        #
+        #            if (outcome == "applied" || outcome == "duplicate")
+        #            {
+        #                ttscommit;
+        #                result = CRMWebProspectStore::prospectResult(company, outcome, prospect.RecId);
+        #            }
+        #            else
+        #            {
+        #                ttsabort;
+        #                result = CRMWebStoreCommon::rejected(company, errorCode, errorMessage);
+        #            }
+        #        }
+        #    }
+        #    catch
+        #    {
+        #        if (appl.ttsLevel() > 0)
+        #            ttsabort;
+        #
+        #        result = CRMWebStoreCommon::rejected(company, "STORE_AX_EXCEPTION",
+        #                     strFmt("Error aplicando el cliente potencial en Axapta. %1", CRMWebStoreCommon::lastInfolog()));
+        #    }
+        #
+        #    return result;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+
+***Element: END

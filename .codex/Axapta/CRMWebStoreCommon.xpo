@@ -1,0 +1,279 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Navision Axapta Class: CRMWebStoreCommon unloaded at Jueves 19/11/2026
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+
+  CLASS #CRMWebStoreCommon
+    PROPERTIES
+      Name                #CRMWebStoreCommon
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #public class CRMWebStoreCommon
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Shared pieces of the web CRM receiver (CRMWeb*Store)
+        #    //MMS - 2026.11.19 - Envelope of every message, positions 1 to 4 of the container:
+        #    //MMS - 2026.11.19 -   1 company, 2 messageId (36), 3 externalId (36), 4 version (int >= 1)
+        #    //MMS - 2026.11.19 - Result container:
+        #    //MMS - 2026.11.19 -   [[result, recId, code, modifiedDate, modifiedTime, errorCode, errorMessage,
+        #    //MMS - 2026.11.19 -     company, accountRecId], [[externalId, recId], ...]]
+        #    //MMS - 2026.11.19 -   result = applied | duplicate | rejected; dates as yyyymmdd.
+        #    //MMS - 2026.11.19 - Contract: CRM_INSERTEC docs/RECEPTOR_CRMWEB.md, section 5.
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #buildResult
+        #static container buildResult(str       _company,
+        #                             str       _result,
+        #                             RecId     _recId,
+        #                             str       _code,
+        #                             date      _modifiedDate,
+        #                             int       _modifiedTime,
+        #                             str       _errorCode,
+        #                             str       _errorMessage,
+        #                             RecId     _accountRecId,
+        #                             container _attendees)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Builds the result container of every store operation
+        #    container header;
+        #    ;
+        #    header = [ _result,
+        #               _recId,
+        #               _code,
+        #               CRMWebStoreCommon::dateToStr(_modifiedDate),
+        #               _modifiedTime,
+        #               _errorCode,
+        #               _errorMessage,
+        #               strLwr(_company),
+        #               _accountRecId ];
+        #
+        #    return [header, _attendees];
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #dateToStr
+        #static str dateToStr(date _date)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Formats a date as yyyymmdd; empty for a null date
+        #    ;
+        #    return _date ? date2str(_date, 321, 2, 0, 2, 0, 4) : "";
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #entityAttendee
+        #static int entityAttendee()
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Entity type of a visit attendee in CRMWebSyncMap
+        #    ;
+        #    return 2;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #entityContact
+        #static int entityContact()
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Entity type of a contact in CRMWebSyncMap
+        #    ;
+        #    return 3;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #entityProspect
+        #static int entityProspect()
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Entity type of a prospect in CRMWebSyncMap
+        #    ;
+        #    return 4;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #entityVisit
+        #static int entityVisit()
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Entity type of a visit in CRMWebSyncMap
+        #    ;
+        #    return 1;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #envelopeError
+        #static str envelopeError(container _data, int _minLength)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Checks the envelope and the minimum length; returns the reason or ""
+        #    str company;
+        #    str messageId;
+        #    str externalId;
+        #    int version;
+        #    ;
+        #    if (conLen(_data) < _minLength)
+        #        return strFmt("Contenedor incompleto: %1 posiciones de %2.", conLen(_data), _minLength);
+        #
+        #    company    = conPeek(_data, 1);
+        #    messageId  = conPeek(_data, 2);
+        #    externalId = conPeek(_data, 3);
+        #    version    = conPeek(_data, 4);
+        #
+        #    if (!company || !messageId || !externalId || version < 1)
+        #        return "Empresa, messageId, externalId y version son obligatorios.";
+        #
+        #    if (strLen(messageId) > 36 || strLen(externalId) > 36)
+        #        return "messageId y externalId admiten 36 caracteres como maximo.";
+        #
+        #    return "";
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #lastInfolog
+        #static str lastInfolog()
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Text of the last infolog line, empty when there is none
+        #    int lineCount;
+        #    ;
+        #    lineCount = infolog.line();
+        #    if (lineCount <= 0)
+        #        return "";
+        #
+        #    return strLRTrim(infolog.text(lineCount));
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #markMapDeleted
+        #static void markMapDeleted(CRMWebSyncMap _map, str _messageId, int _version)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Marks the mapping of a deleted AX row (RefRecId = 0)
+        #    //MMS - 2026.11.19 - The map must be selected for update.
+        #    ;
+        #    if (!_map.RecId)
+        #        return;
+        #
+        #    _map.RefRecId      = 0;
+        #    _map.LastMessageId = _messageId;
+        #    _map.LastVersion   = _version;
+        #    _map.AppliedDate   = today();
+        #    _map.AppliedTime   = timeNow();
+        #    _map.update();
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #messageCompany
+        #static str messageCompany(container _data)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Company of the message (position 1), empty when missing
+        #    str companyId;
+        #    ;
+        #    if (conLen(_data) >= 1)
+        #        companyId = conPeek(_data, 1);
+        #
+        #    return companyId;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #ping
+        #static container ping(container _data)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Proves the session and the company switch
+        #    //MMS - 2026.11.19 - Input: [company]. Output: [[dataAreaId, companyName, axUser]].
+        #    str         company;
+        #    CompanyInfo companyInfo;
+        #    container   result;
+        #    ;
+        #    company = CRMWebStoreCommon::messageCompany(_data);
+        #    if (!company)
+        #        return [[ "", "", curUserId() ]];
+        #
+        #    changecompany (company)
+        #    {
+        #        companyInfo = CompanyInfo::find();
+        #        result      = [[ strFmt("%1", companyInfo.dataAreaId),
+        #                         strFmt("%1", companyInfo.Name),
+        #                         curUserId() ]];
+        #    }
+        #
+        #    return result;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #rejected
+        #static container rejected(str _company, str _errorCode, str _errorMessage)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Technical rejection result; nothing was written
+        #    ;
+        #    return CRMWebStoreCommon::buildResult(_company, "rejected", 0, "", dateNull(), 0,
+        #                                          _errorCode, _errorMessage, 0, conNull());
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #strToDate
+        #static date strToDate(str _value)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Converts a yyyymmdd text into a date; null date for an empty text
+        #    ;
+        #    return _value ? str2Date(_value, 321) : dateNull();
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #versionBehind
+        #static boolean versionBehind(CRMWebSyncMap _map, int _version)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: True when the message version is lower than the last applied one
+        #    ;
+        #    return _map.RecId && _version < _map.LastVersion;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #versionBehindMessage
+        #static str versionBehindMessage(CRMWebSyncMap _map)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Text of the STORE_VERSION_BEHIND rejection
+        #    ;
+        #    return strFmt("Axapta ya aplico la version %1 de este registro.", _map.LastVersion);
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #writeMap
+        #static void writeMap(str 36   _externalId,
+        #                     int      _entityType,
+        #                     TableId  _tableId,
+        #                     RecId    _recId,
+        #                     int      _version,
+        #                     str 36   _messageId)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Creates or updates the mapping web id -> AX record
+        #    //MMS - 2026.11.19 - Runs in the same transaction as the record it maps.
+        #    CRMWebSyncMap map;
+        #    ;
+        #    map = CRMWebSyncMap::find(_externalId, _entityType, true);
+        #    if (!map.RecId)
+        #    {
+        #        map.clear();
+        #        map.ExternalId = _externalId;
+        #        map.EntityType = _entityType;
+        #    }
+        #
+        #    map.RefTableId    = _tableId;
+        #    map.RefRecId      = _recId;
+        #    map.LastVersion   = _version;
+        #    map.LastMessageId = _messageId;
+        #    map.AppliedDate   = today();
+        #    map.AppliedTime   = timeNow();
+        #
+        #    if (map.RecId)
+        #        map.update();
+        #    else
+        #        map.insert();
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+
+***Element: END

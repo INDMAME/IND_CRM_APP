@@ -1,0 +1,428 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Navision Axapta Class: CRMWebVisitStore unloaded at Jueves 19/11/2026
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+
+  CLASS #CRMWebVisitStore
+    PROPERTIES
+      Name                #CRMWebVisitStore
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #public class CRMWebVisitStore
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Web CRM receiver of visits (CRMActividadTable) and their attendees
+        #    //MMS - 2026.11.19 - (CRMCustVendVisitaAsistenteTable). It writes the values sent by the web as
+        #    //MMS - 2026.11.19 - they come, marks WebLocked and uses the table insert(), update() and delete().
+        #    //MMS - 2026.11.19 - No business validation here: the web owns the rules.
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #applyAttendees
+        #static container applyAttendees(RecId     _activityRecId,
+        #                                container _data,
+        #                                int       _attendeeCount,
+        #                                str 36    _messageId,
+        #                                int       _version)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Applies the complete attendee list of a visit
+        #    //MMS - 2026.11.19 - Attendee i starts at position 29 + (i - 1) * 7:
+        #    //MMS - 2026.11.19 -   externalId, axRecId, type, name, position, contactRecId, createdByUserId
+        #    //MMS - 2026.11.19 - Rows found by axRecId or by the map (only of this visit) are updated, the
+        #    //MMS - 2026.11.19 - others inserted; rows of the visit missing in the message are deleted.
+        #    //MMS - 2026.11.19 - Returns [[externalId, recId], ...].
+        #    CRMCustVendVisitaAsistenteTable attendee;
+        #    CRMWebSyncMap                   map;
+        #    Set                             kept = new Set(Types::Integer);
+        #    container                       acks;
+        #    str 36                          attendeeExternalId;
+        #    RecId                           attendeeRecId;
+        #    int                             i;
+        #    int                             pos;
+        #    ;
+        #    for (i = 0; i < _attendeeCount; i++)
+        #    {
+        #        pos                = 29 + i * 7;
+        #        attendeeExternalId = conPeek(_data, pos);
+        #        attendeeRecId      = conPeek(_data, pos + 1);
+        #
+        #        if (!attendeeRecId)
+        #        {
+        #            map           = CRMWebSyncMap::find(attendeeExternalId, CRMWebStoreCommon::entityAttendee());
+        #            attendeeRecId = map.RefRecId;
+        #        }
+        #
+        #        attendee.clear();
+        #        if (attendeeRecId)
+        #        {
+        #            select firstonly forupdate attendee
+        #                where attendee.RecId    == attendeeRecId
+        #                   && attendee.RefRecId == _activityRecId;
+        #        }
+        #
+        #        if (!attendee.RecId)
+        #        {
+        #            attendee.clear();
+        #            attendee.RefRecId = _activityRecId;
+        #        }
+        #
+        #        attendee.AsistenteTipo      = conPeek(_data, pos + 2);
+        #        attendee.AsistenteId        = conPeek(_data, pos + 3);
+        #        attendee.AsistenteCargo     = conPeek(_data, pos + 4);
+        #        attendee.ContactoRecId      = conPeek(_data, pos + 5);
+        #        attendee.INDCreatedByUserId = conPeek(_data, pos + 6);
+        #        attendee.WebLocked          = NoYes::Yes;
+        #
+        #        if (attendee.RecId)
+        #            attendee.update();
+        #        else
+        #            attendee.insert();
+        #
+        #        kept.add(attendee.RecId);
+        #        CRMWebStoreCommon::writeMap(attendeeExternalId, CRMWebStoreCommon::entityAttendee(),
+        #                                    tableNum(CRMCustVendVisitaAsistenteTable), attendee.RecId,
+        #                                    _version, _messageId);
+        #        acks += [[ attendeeExternalId, attendee.RecId ]];
+        #    }
+        #
+        #    while select forupdate attendee
+        #        where attendee.RefRecId == _activityRecId
+        #    {
+        #        if (kept.in(attendee.RecId))
+        #            continue;
+        #
+        #        map = CRMWebSyncMap::findByRef(tableNum(CRMCustVendVisitaAsistenteTable), attendee.RecId, true);
+        #        CRMWebStoreCommon::markMapDeleted(map, _messageId, _version);
+        #        attendee.delete();
+        #    }
+        #
+        #    return acks;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #assignVisit
+        #static void assignVisit(CRMActividadTable _activity, container _data)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Copies positions 6 to 27 of the message into the visit, as they come
+        #    ;
+        #    _activity.AccountNum          = conPeek(_data, 6);
+        #    _activity.Origen              = conPeek(_data, 7);
+        #    _activity.CustAccount         = conPeek(_data, 8);
+        #    _activity.OrigenCustAccount   = conPeek(_data, 9);
+        #    _activity.RefRecId            = conPeek(_data, 10);
+        #    _activity.Name                = conPeek(_data, 11);
+        #    _activity.Country             = conPeek(_data, 12);
+        #    _activity.UserId              = conPeek(_data, 13);
+        #    _activity.INDCreatedByUserId  = conPeek(_data, 14);
+        #    _activity.Division            = conPeek(_data, 15);
+        #    _activity.TransDate           = CRMWebStoreCommon::strToDate(conPeek(_data, 16));
+        #    _activity.DateRealRealizacion = CRMWebStoreCommon::strToDate(conPeek(_data, 17));
+        #    _activity.ActividadType       = conPeek(_data, 18);
+        #    _activity.Status              = conPeek(_data, 19);
+        #    _activity.Prioridad           = conPeek(_data, 20);
+        #    _activity.TipoVisita          = conPeek(_data, 21);
+        #    _activity.ContactMethod       = conPeek(_data, 22);
+        #    _activity.VisitaValoracion    = conPeek(_data, 23);
+        #    _activity.Description         = conPeek(_data, 24);
+        #    _activity.Comentarios         = conPeek(_data, 25);
+        #    _activity.VisitaAntecedentes  = conPeek(_data, 26);
+        #    _activity.VisitaConclusiones  = conPeek(_data, 27);
+        #    _activity.WebLocked           = NoYes::Yes;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #attendeeAcks
+        #static container attendeeAcks(RecId _activityRecId)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Attendee mappings [[externalId, recId], ...] of a visit, from CRMWebSyncMap
+        #    CRMCustVendVisitaAsistenteTable attendee;
+        #    CRMWebSyncMap                   map;
+        #    container                       acks;
+        #    ;
+        #    while select attendee
+        #        order by RecId
+        #        where attendee.RefRecId == _activityRecId
+        #    {
+        #        map = CRMWebSyncMap::findByRef(tableNum(CRMCustVendVisitaAsistenteTable), attendee.RecId);
+        #        if (map.ExternalId)
+        #            acks += [[ map.ExternalId, attendee.RecId ]];
+        #    }
+        #
+        #    return acks;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #remove
+        #static container remove(container _data)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Deletes a visit and its attendees (visits/delete)
+        #    //MMS - 2026.11.19 - Input: 1 company, 2 messageId, 3 externalId, 4 version, 5 axRecId.
+        #    //MMS - 2026.11.19 - A visit that no longer exists is applied.
+        #    str                             company;
+        #    str 36                          messageId;
+        #    str 36                          externalId;
+        #    int                             version;
+        #    RecId                           axRecId;
+        #    RecId                           recId;
+        #    str                             envelopeIssue;
+        #    CRMActividadTable               activity;
+        #    CRMCustVendVisitaAsistenteTable attendee;
+        #    CRMWebSyncMap                   map;
+        #    CRMWebSyncMap                   attendeeMap;
+        #    str                             outcome;
+        #    str                             errorCode;
+        #    str                             errorMessage;
+        #    container                       result;
+        #    ;
+        #    company = CRMWebStoreCommon::messageCompany(_data);
+        #    envelopeIssue = CRMWebStoreCommon::envelopeError(_data, 5);
+        #    if (envelopeIssue)
+        #        return CRMWebStoreCommon::rejected(company, "STORE_MESSAGE_INVALID", envelopeIssue);
+        #
+        #    messageId  = conPeek(_data, 2);
+        #    externalId = conPeek(_data, 3);
+        #    version    = conPeek(_data, 4);
+        #
+        #    infolog.clear(0);
+        #    try
+        #    {
+        #        axRecId = conPeek(_data, 5);
+        #
+        #        changecompany (company)
+        #        {
+        #            ttsbegin;
+        #
+        #            map = CRMWebSyncMap::find(externalId, CRMWebStoreCommon::entityVisit(), true);
+        #
+        #            if (CRMWebStoreCommon::versionBehind(map, version))
+        #            {
+        #                outcome      = "rejected";
+        #                errorCode    = "STORE_VERSION_BEHIND";
+        #                errorMessage = CRMWebStoreCommon::versionBehindMessage(map);
+        #            }
+        #            else
+        #            {
+        #                recId = axRecId ? axRecId : map.RefRecId;
+        #                if (recId)
+        #                {
+        #                    select firstonly forupdate activity
+        #                        where activity.RecId == recId;
+        #                }
+        #
+        #                if (activity.RecId)
+        #                {
+        #                    while select forupdate attendee
+        #                        where attendee.RefRecId == activity.RecId
+        #                    {
+        #                        attendeeMap = CRMWebSyncMap::findByRef(tableNum(CRMCustVendVisitaAsistenteTable), attendee.RecId, true);
+        #                        CRMWebStoreCommon::markMapDeleted(attendeeMap, messageId, version);
+        #                        attendee.delete();
+        #                    }
+        #
+        #                    activity.delete();
+        #                }
+        #
+        #                CRMWebStoreCommon::writeMap(externalId, CRMWebStoreCommon::entityVisit(),
+        #                                            tableNum(CRMActividadTable), 0, version, messageId);
+        #                outcome = "applied";
+        #            }
+        #
+        #            if (outcome == "applied")
+        #            {
+        #                ttscommit;
+        #                result = CRMWebStoreCommon::buildResult(company, outcome, recId, "", dateNull(), 0,
+        #                                                        "", "", 0, conNull());
+        #            }
+        #            else
+        #            {
+        #                ttsabort;
+        #                result = CRMWebStoreCommon::rejected(company, errorCode, errorMessage);
+        #            }
+        #        }
+        #    }
+        #    catch
+        #    {
+        #        if (appl.ttsLevel() > 0)
+        #            ttsabort;
+        #
+        #        result = CRMWebStoreCommon::rejected(company, "STORE_AX_EXCEPTION",
+        #                     strFmt("Error borrando la visita en Axapta. %1", CRMWebStoreCommon::lastInfolog()));
+        #    }
+        #
+        #    return result;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #upsert
+        #static container upsert(container _data)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Creates or updates a visit with its complete attendee list (visits/upsert)
+        #    //MMS - 2026.11.19 - Input: 1 company, 2 messageId, 3 externalId, 4 version, 5 axRecId,
+        #    //MMS - 2026.11.19 -   6 AccountNum, 7 Origen, 8 CustAccount, 9 OrigenCustAccount, 10 RefRecId,
+        #    //MMS - 2026.11.19 -   11 Name, 12 Country, 13 UserId, 14 INDCreatedByUserId, 15 Division,
+        #    //MMS - 2026.11.19 -   16 TransDate (yyyymmdd), 17 DateRealRealizacion (yyyymmdd), 18 ActividadType,
+        #    //MMS - 2026.11.19 -   19 Status, 20 Prioridad, 21 TipoVisita, 22 ContactMethod, 23 VisitaValoracion,
+        #    //MMS - 2026.11.19 -   24 Description, 25 Comentarios, 26 VisitaAntecedentes, 27 VisitaConclusiones,
+        #    //MMS - 2026.11.19 -   28 attendee count, 29.. 7 values per attendee (see applyAttendees).
+        #    //MMS - 2026.11.19 - Output: CRMWebStoreCommon::buildResult, code = ActividadId.
+        #    str               company;
+        #    str 36            messageId;
+        #    str 36            externalId;
+        #    int               version;
+        #    RecId             axRecId;
+        #    int               attendeeCount;
+        #    str               envelopeIssue;
+        #    CRMActividadTable activity;
+        #    CRMWebSyncMap     map;
+        #    NumberSeq         numberSeq;
+        #    boolean           isNew;
+        #    container         acks;
+        #    str               outcome;
+        #    str               errorCode;
+        #    str               errorMessage;
+        #    container         result;
+        #    ;
+        #    company = CRMWebStoreCommon::messageCompany(_data);
+        #    envelopeIssue = CRMWebStoreCommon::envelopeError(_data, 28);
+        #    if (envelopeIssue)
+        #        return CRMWebStoreCommon::rejected(company, "STORE_MESSAGE_INVALID", envelopeIssue);
+        #
+        #    messageId  = conPeek(_data, 2);
+        #    externalId = conPeek(_data, 3);
+        #    version    = conPeek(_data, 4);
+        #
+        #    infolog.clear(0);
+        #    try
+        #    {
+        #        axRecId       = conPeek(_data, 5);
+        #        attendeeCount = conPeek(_data, 28);
+        #
+        #        if (attendeeCount < 0 || conLen(_data) < 28 + attendeeCount * 7)
+        #            return CRMWebStoreCommon::rejected(company, "STORE_MESSAGE_INVALID", "Lista de asistentes incompleta.");
+        #
+        #        changecompany (company)
+        #        {
+        #            ttsbegin;
+        #
+        #            map = CRMWebSyncMap::find(externalId, CRMWebStoreCommon::entityVisit(), true);
+        #
+        #            //MMS - 2026.11.19 - Same message on a visit that still exists (lost HTTP response).
+        #            if (map.RecId && map.LastMessageId == messageId && map.RefRecId)
+        #            {
+        #                select firstonly activity
+        #                    where activity.RecId == map.RefRecId;
+        #
+        #                if (activity.RecId)
+        #                    outcome = "duplicate";
+        #            }
+        #
+        #            if (!outcome && CRMWebStoreCommon::versionBehind(map, version))
+        #            {
+        #                outcome      = "rejected";
+        #                errorCode    = "STORE_VERSION_BEHIND";
+        #                errorMessage = CRMWebStoreCommon::versionBehindMessage(map);
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                if (axRecId)
+        #                {
+        #                    select firstonly forupdate activity
+        #                        where activity.RecId == axRecId;
+        #
+        #                    if (!activity.RecId)
+        #                    {
+        #                        outcome      = "rejected";
+        #                        errorCode    = "STORE_RECORD_NOT_FOUND";
+        #                        errorMessage = strFmt("La visita con RecId %1 no existe en Axapta.", axRecId);
+        #                    }
+        #                }
+        #                else if (map.RefRecId)
+        #                {
+        #                    select firstonly forupdate activity
+        #                        where activity.RecId == map.RefRecId;
+        #                }
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                isNew = !activity.RecId;
+        #                if (isNew)
+        #                {
+        #                    numberSeq = NumberSeq::newGetNum(CustParameters::numRefCustVsititaRefractariosId());
+        #                    activity.clear();
+        #                    activity.ActividadId = numberSeq.num();
+        #                }
+        #
+        #                CRMWebVisitStore::assignVisit(activity, _data);
+        #
+        #                if (isNew)
+        #                    activity.insert();
+        #                else
+        #                    activity.update();
+        #
+        #                acks = CRMWebVisitStore::applyAttendees(activity.RecId, _data, attendeeCount, messageId, version);
+        #
+        #                CRMWebStoreCommon::writeMap(externalId, CRMWebStoreCommon::entityVisit(),
+        #                                            tableNum(CRMActividadTable), activity.RecId, version, messageId);
+        #                outcome = "applied";
+        #            }
+        #
+        #            if (outcome == "applied" || outcome == "duplicate")
+        #            {
+        #                ttscommit;
+        #                if (outcome == "duplicate")
+        #                    acks = CRMWebVisitStore::attendeeAcks(activity.RecId);
+        #
+        #                result = CRMWebVisitStore::visitResult(company, outcome, activity.RecId, acks);
+        #            }
+        #            else
+        #            {
+        #                ttsabort;
+        #                result = CRMWebStoreCommon::rejected(company, errorCode, errorMessage);
+        #            }
+        #        }
+        #    }
+        #    catch
+        #    {
+        #        if (appl.ttsLevel() > 0)
+        #            ttsabort;
+        #
+        #        result = CRMWebStoreCommon::rejected(company, "STORE_AX_EXCEPTION",
+        #                     strFmt("Error aplicando la visita en Axapta. %1", CRMWebStoreCommon::lastInfolog()));
+        #    }
+        #
+        #    return result;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #visitResult
+        #static container visitResult(str _company, str _result, RecId _recId, container _acks)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Applied or duplicate result of a visit, read again after the commit
+        #    //MMS - 2026.11.19 - ActividadId travels through strFmt: right-adjusted EDTs reach COM as 0.
+        #    CRMActividadTable activity;
+        #    ;
+        #    select firstonly activity
+        #        where activity.RecId == _recId;
+        #
+        #    return CRMWebStoreCommon::buildResult(_company, _result, activity.RecId,
+        #                                          strFmt("%1", activity.ActividadId),
+        #                                          activity.modifiedDate, activity.modifiedTime,
+        #                                          "", "", 0, _acks);
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+
+***Element: END

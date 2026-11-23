@@ -1,0 +1,192 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Navision Axapta Class: CRMWebContactStore unloaded at Jueves 19/11/2026
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+
+  CLASS #CRMWebContactStore
+    PROPERTIES
+      Name                #CRMWebContactStore
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #public class CRMWebContactStore
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Web CRM receiver of contacts (CRMContactoTable)
+        #    //MMS - 2026.11.19 - It writes the values sent by the web as they come, marks WebLocked and uses
+        #    //MMS - 2026.11.19 - the table insert() and update(). No business validation here.
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #assignContact
+        #static void assignContact(CRMContactoTable _contact, container _data, boolean _isNew)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Copies positions 6 to 13 of the message into the contact, as they come
+        #    //MMS - 2026.11.19 - AccountNum, Origen, Empresa and PhoneEmpresa are written only on creation.
+        #    ;
+        #    if (_isNew)
+        #    {
+        #        _contact.AccountNum   = conPeek(_data, 6);
+        #        _contact.Origen       = conPeek(_data, 7);
+        #        _contact.Empresa      = conPeek(_data, 12);
+        #        _contact.PhoneEmpresa = conPeek(_data, 13);
+        #    }
+        #
+        #    _contact.Name      = conPeek(_data, 8);
+        #    _contact.Cargo     = conPeek(_data, 9);
+        #    _contact.Email     = conPeek(_data, 10);
+        #    _contact.Phone     = conPeek(_data, 11);
+        #    _contact.WebLocked = NoYes::Yes;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #contactResult
+        #static container contactResult(str _company, str _result, RecId _recId)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Applied or duplicate result of a contact, read again after the commit
+        #    CRMContactoTable contact;
+        #    ;
+        #    select firstonly contact
+        #        where contact.RecId == _recId;
+        #
+        #    return CRMWebStoreCommon::buildResult(_company, _result, contact.RecId, "",
+        #                                          contact.modifiedDate, contact.modifiedTime,
+        #                                          "", "", 0, conNull());
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #upsert
+        #static container upsert(container _data)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Creates or updates a contact (contacts/upsert)
+        #    //MMS - 2026.11.19 - Input: 1 company, 2 messageId, 3 externalId, 4 version, 5 axRecId,
+        #    //MMS - 2026.11.19 -   6 AccountNum*, 7 Origen*, 8 Name, 9 Cargo, 10 Email, 11 Phone,
+        #    //MMS - 2026.11.19 -   12 Empresa*, 13 PhoneEmpresa* (* only on creation).
+        #    //MMS - 2026.11.19 - Output: CRMWebStoreCommon::buildResult.
+        #    str              company;
+        #    str 36           messageId;
+        #    str 36           externalId;
+        #    int              version;
+        #    RecId            axRecId;
+        #    str              envelopeIssue;
+        #    CRMContactoTable contact;
+        #    CRMWebSyncMap    map;
+        #    boolean          isNew;
+        #    str              outcome;
+        #    str              errorCode;
+        #    str              errorMessage;
+        #    container        result;
+        #    ;
+        #    company = CRMWebStoreCommon::messageCompany(_data);
+        #    envelopeIssue = CRMWebStoreCommon::envelopeError(_data, 13);
+        #    if (envelopeIssue)
+        #        return CRMWebStoreCommon::rejected(company, "STORE_MESSAGE_INVALID", envelopeIssue);
+        #
+        #    messageId  = conPeek(_data, 2);
+        #    externalId = conPeek(_data, 3);
+        #    version    = conPeek(_data, 4);
+        #
+        #    infolog.clear(0);
+        #    try
+        #    {
+        #        axRecId = conPeek(_data, 5);
+        #
+        #        changecompany (company)
+        #        {
+        #            ttsbegin;
+        #
+        #            map = CRMWebSyncMap::find(externalId, CRMWebStoreCommon::entityContact(), true);
+        #
+        #            //MMS - 2026.11.19 - Same message on a contact that still exists (lost HTTP response).
+        #            if (map.RecId && map.LastMessageId == messageId && map.RefRecId)
+        #            {
+        #                select firstonly contact
+        #                    where contact.RecId == map.RefRecId;
+        #
+        #                if (contact.RecId)
+        #                    outcome = "duplicate";
+        #            }
+        #
+        #            if (!outcome && CRMWebStoreCommon::versionBehind(map, version))
+        #            {
+        #                outcome      = "rejected";
+        #                errorCode    = "STORE_VERSION_BEHIND";
+        #                errorMessage = CRMWebStoreCommon::versionBehindMessage(map);
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                if (axRecId)
+        #                {
+        #                    select firstonly forupdate contact
+        #                        where contact.RecId == axRecId;
+        #
+        #                    if (!contact.RecId)
+        #                    {
+        #                        outcome      = "rejected";
+        #                        errorCode    = "STORE_RECORD_NOT_FOUND";
+        #                        errorMessage = strFmt("El contacto con RecId %1 no existe en Axapta.", axRecId);
+        #                    }
+        #                }
+        #                else if (map.RefRecId)
+        #                {
+        #                    select firstonly forupdate contact
+        #                        where contact.RecId == map.RefRecId;
+        #                }
+        #            }
+        #
+        #            if (!outcome)
+        #            {
+        #                isNew = !contact.RecId;
+        #                if (isNew)
+        #                    contact.clear();
+        #
+        #                CRMWebContactStore::assignContact(contact, _data, isNew);
+        #
+        #                if (isNew)
+        #                    contact.insert();
+        #                else
+        #                    contact.update();
+        #
+        #                CRMWebStoreCommon::writeMap(externalId, CRMWebStoreCommon::entityContact(),
+        #                                            tableNum(CRMContactoTable), contact.RecId, version, messageId);
+        #                outcome = "applied";
+        #            }
+        #
+        #            if (outcome == "applied" || outcome == "duplicate")
+        #            {
+        #                ttscommit;
+        #                result = CRMWebContactStore::contactResult(company, outcome, contact.RecId);
+        #            }
+        #            else
+        #            {
+        #                ttsabort;
+        #                result = CRMWebStoreCommon::rejected(company, errorCode, errorMessage);
+        #            }
+        #        }
+        #    }
+        #    catch
+        #    {
+        #        if (appl.ttsLevel() > 0)
+        #            ttsabort;
+        #
+        #        result = CRMWebStoreCommon::rejected(company, "STORE_AX_EXCEPTION",
+        #                     strFmt("Error aplicando el contacto en Axapta. %1", CRMWebStoreCommon::lastInfolog()));
+        #    }
+        #
+        #    return result;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+
+***Element: END

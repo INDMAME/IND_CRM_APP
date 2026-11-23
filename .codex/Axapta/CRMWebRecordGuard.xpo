@@ -1,0 +1,49 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Navision Axapta Class: CRMWebRecordGuard unloaded at Jueves 19/11/2026
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+
+  CLASS #CRMWebRecordGuard
+    PROPERTIES
+      Name                #CRMWebRecordGuard
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #public class CRMWebRecordGuard
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Lock of the records managed by the web CRM (field WebLocked)
+        #    //MMS - 2026.11.19 - Called from validateWrite() and validateDelete() of the locked tables, which
+        #    //MMS - 2026.11.19 - only run from forms. The web receiver (CRMWeb*Store) writes with insert(),
+        #    //MMS - 2026.11.19 - update() and delete() and never passes through this check.
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #checkChange
+        #static boolean checkChange(Common _record)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Rejects the change of a record with WebLocked = Yes
+        #    //MMS - 2026.11.19 - The field is found by name, so this compiles before the tables have it.
+        #    int lockFieldId;
+        #    ;
+        #    lockFieldId = fieldName2Id(_record.TableId, "WebLocked");
+        #
+        #    if (lockFieldId && _record.(lockFieldId) == NoYes::Yes)
+        #        return checkFailed("Registro gestionado por la web CRM: solo se puede modificar desde la web.");
+        #
+        #    return true;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+
+***Element: END

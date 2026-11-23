@@ -1,0 +1,341 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : CRMWebSyncMap unloaded at Jueves 19/11/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+
+  TABLE #CRMWebSyncMap
+    PROPERTIES
+      Name                #CRMWebSyncMap
+      Label               #Correspondencia web CRM
+      FormRef             #
+      TitleField1         #ExternalId
+      TitleField2         #EntityType
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #Yes
+      ModifiedTime        #Yes
+      ModifiedBy          #Yes
+      ModifiedTransactionId #No
+      CreatedDate         #Yes
+      CreatedTime         #Yes
+      CreatedBy           #Yes
+      CreatedTransactionId #No
+    ENDPROPERTIES
+
+    FIELDS
+      FIELD #ExternalId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ExternalId
+          Label               #Id. web
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMWebSyncMap
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          StringSize          #36
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #EntityType
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #EntityType
+          Label               #Entidad
+          HelpText            #1 visita, 2 asistente, 3 contacto, 4 cliente potencial
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMWebSyncMap
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #RefTableId
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #RefTableId
+          Label               #Tabla
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMWebSyncMap
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #RefTableId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #RefRecId
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #RefRecId
+          Label               #RecId
+          HelpText            #RecId del registro de Axapta; 0 si se borro
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMWebSyncMap
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #RefRecId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #LastVersion
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #LastVersion
+          Label               #Versión web
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMWebSyncMap
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #LastMessageId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #LastMessageId
+          Label               #Último mensaje
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMWebSyncMap
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          StringSize          #36
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #AppliedDate
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #AppliedDate
+          Label               #Fecha aplicación
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMWebSyncMap
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #AppliedTime
+        TIME
+        PROPERTIES
+          Type                #Time
+          Name                #AppliedTime
+          Label               #Hora aplicación
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMWebSyncMap
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #timeOfDay
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #ExternalId
+          #EntityType
+          #RefRecId
+          #LastVersion
+          #AppliedDate
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+
+    INDICES
+      #ExternalIdEntityIdx
+      PROPERTIES
+        Name                #ExternalIdEntityIdx
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+
+      INDEXFIELDS
+        #ExternalId
+        #EntityType
+      ENDINDEXFIELDS
+      
+      #RefIdx
+      PROPERTIES
+        Name                #RefIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+
+      INDEXFIELDS
+        #RefTableId
+        #RefRecId
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+    ENDREFERENCES
+
+    DELETEACTIONS
+    ENDDELETEACTIONS
+
+    METHODS
+      Version: 3
+      SOURCE #find
+        #static CRMWebSyncMap find(str 36 _externalId, int _entityType, boolean _forUpdate = false)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Finds the mapping of a web id and entity type (unique index)
+        #    CRMWebSyncMap map;
+        #    ;
+        #    if (!_externalId)
+        #        return map;
+        #
+        #    map.selectForUpdate(_forUpdate);
+        #
+        #    select firstonly map
+        #        index hint ExternalIdEntityIdx
+        #        where map.ExternalId == _externalId
+        #           && map.EntityType == _entityType;
+        #
+        #    return map;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+      SOURCE #findByRef
+        #static CRMWebSyncMap findByRef(TableId _tableId, RecId _recId, boolean _forUpdate = false)
+        #{
+        #    //MMS - 2026.11.19 - INICIO: Finds the mapping of an AX record (table id and RecId)
+        #    CRMWebSyncMap map;
+        #    ;
+        #    if (!_tableId || !_recId)
+        #        return map;
+        #
+        #    map.selectForUpdate(_forUpdate);
+        #
+        #    select firstonly map
+        #        index hint RefIdx
+        #        where map.RefTableId == _tableId
+        #           && map.RefRecId   == _recId;
+        #
+        #    return map;
+        #    //MMS - 2026.11.19 - FIN
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+
+
+***Element: END

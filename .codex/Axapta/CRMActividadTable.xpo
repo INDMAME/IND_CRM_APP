@@ -819,13 +819,13 @@ Formatversion: 1
           EnumType            #INDContactMethod
         ENDPROPERTIES
         
-      FIELD #INDCreatedByWeb
+      FIELD #WebLocked
         ENUM
         PROPERTIES
           Type                #Enum
-          Name                #INDCreatedByWeb
-          Label               #Creado desde la web
-          HelpText            #Registro creado desde la web CRM: solo se modifica desde la web
+          Name                #WebLocked
+          Label               #Bloqueado por la web CRM
+          HelpText            #Registro gestionado por la web CRM: solo se modifica desde la web
           GroupPrompt         #
           SaveContents        #Yes
           Mandatory           #No
@@ -1842,8 +1842,9 @@ Formatversion: 1
         #
         #    ret = super();
         #
-        #    //INDMMS_ExternalCRM - 2026.10.26
-        #    ret = ret && INDCrmWebRecordGuard::checkChange(this);
+        #    //MMS - 2026.11.19 - INICIO: Web CRM lock check (CRMWebRecordGuard)
+        #    ret = ret && CRMWebRecordGuard::checkChange(this);
+        #    //MMS - 2026.11.19 - FIN
         #
         #    return ret;
         #}
@@ -1859,8 +1860,9 @@ Formatversion: 1
         #    if (curExt() == "REF" && this.TipoVisita == CRMTipoVisita::None)
         #        ret = checkFailed("Debes rellenar el campo 'Tipo de Visita'");
         #
-        #    //INDMMS_ExternalCRM - 2026.10.26
-        #    ret = ret && INDCrmWebRecordGuard::checkChange(this);
+        #    //MMS - 2026.11.19 - INICIO: Web CRM lock check (CRMWebRecordGuard)
+        #    ret = ret && CRMWebRecordGuard::checkChange(this);
+        #    //MMS - 2026.11.19 - FIN
         #
         #    return ret;
         #}
