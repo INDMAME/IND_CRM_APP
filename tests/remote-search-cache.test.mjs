@@ -62,6 +62,7 @@ function createRenderer(entry = componentPath, boundary = {}) {
   const mocks = {
     "react": React,
     "FloatingList.tsx": { __esModule: true, default: "floating-list" },
+    "FloatingLayerContext.ts": { useFloatingLayerActive: () => false },
     "Spinner.tsx": { __esModule: true, default: "spinner" },
     "chevrons.tsx": { SelectChevron: "chevron" },
     "useOutsideClick.ts": { useOutsideClick() {} },
@@ -111,7 +112,13 @@ function createRenderer(entry = componentPath, boundary = {}) {
         addEventListener: (_event, listener) => scrollListeners.add(listener),
         removeEventListener: (_event, listener) => scrollListeners.delete(listener),
       };
-      node.props.ref.current = { ...scrollElement, parentElement: scrollElement };
+      // Only the parent panel scrolls; native scroll events do not bubble to its child.
+      node.props.ref.current = {
+        ...scrollElement,
+        addEventListener() {},
+        removeEventListener() {},
+        parentElement: scrollElement,
+      };
     }
     return { ...node, props: { ...node.props, children: resolve(node.props.children, `${location}/children`) } };
   };

@@ -80,6 +80,7 @@ const ClientSearchCombobox = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const autoLoadPageRef = useRef<string | null>(null);
 
   // Shows lookup failures where the user can act on them inside an active modal.
   const reportLookupError = useCallback((error: unknown, message: string) => {
@@ -254,14 +255,35 @@ const ClientSearchCombobox = ({
   }, [loadingMore, loading, hasMore, fetchedQuery, page, minChars, reportLookupError]);
 
   useEffect(() => {
-    if (!open || !listRef.current) return;
-    const el = listRef.current;
+    // FloatingList owns scrolling; its inner options element does not scroll.
+    const el = listRef.current?.parentElement;
+    if (!open) {
+      autoLoadPageRef.current = null;
+      return;
+    }
+    if (!el) return;
     const onScroll = () => {
       if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) loadMore();
     };
+    // Fill a panel that cannot scroll yet, without repeatedly retrying a failed page.
+    const fillPanel = () => {
+      if (loading || loadingMore || !hasMore || query.trim().toLowerCase() !== fetchedQuery) return;
+      if (el.clientHeight <= 0 || el.scrollHeight > el.clientHeight + 1) return;
+      const nextPageKey = `${fetchedQuery}:${page + 1}`;
+      if (autoLoadPageRef.current === nextPageKey) return;
+      autoLoadPageRef.current = nextPageKey;
+      void loadMore();
+    };
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(fillPanel);
+    observer?.observe(el);
+    if (listRef.current) observer?.observe(listRef.current);
     el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [open, loadMore]);
+    fillPanel();
+    return () => {
+      observer?.disconnect();
+      el.removeEventListener("scroll", onScroll);
+    };
+  }, [open, loadMore, loading, loadingMore, hasMore, query, fetchedQuery, page]);
 
   const selectOption = (opt: ClientOption) => {
     setSelected(opt);
